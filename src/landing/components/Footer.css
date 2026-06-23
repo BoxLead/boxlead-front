@@ -55,6 +55,7 @@
   box-shadow: 0 2px 8px rgba(129, 140, 248, 0.2);
 }
 
+.footer-legal-entity,
 .footer-copyright {
   font-size: 0.8125rem;
   color: var(--landing-text-muted);

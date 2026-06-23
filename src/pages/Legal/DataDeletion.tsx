@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
 import "./Legal.css";
 
 export function DataDeletion() {
@@ -11,8 +12,9 @@ export function DataDeletion() {
       <p className="legal-updated">Last updated: March 29, 2026</p>
 
       <p>
-        If you no longer wish to use BoxLead and want all your data permanently
-        removed from our systems, follow the steps below. This process ensures
+        If you no longer wish to use {PRODUCT_NAME} and want all your data
+        permanently removed from our systems, follow the steps below.{" "}
+        {PRODUCT_NAME} is operated by {LEGAL_ENTITY_NAME}. This process ensures
         complete erasure of your Leads, Conversations, and Messages from our
         database.
       </p>
@@ -48,8 +50,11 @@ export function DataDeletion() {
       </p>
       <div className="legal-contact">
         <p>
+          <strong>{LEGAL_ENTITY_NAME}</strong>
+        </p>
+        <p>
           <strong>Email:</strong>{" "}
-          <a href="mailto:support@boxlead.io">support@boxlead.io</a>
+          <a href="mailto:support@boxlead.app">support@boxlead.app</a>
         </p>
         <p>
           <strong>Subject:</strong> Data Deletion Request
@@ -86,7 +91,7 @@ export function DataDeletion() {
       <p>
         For more information about how we handle your data, see our{" "}
         <Link to="/privacy-policy">Privacy Policy</Link>. If you have any
-        questions about the deletion process, contact us at{" "}
+        questions about the deletion process, contact {LEGAL_ENTITY_NAME} at{" "}
         <a href="mailto:support@boxlead.app">support@boxlead.app</a>.
       </p>
     </div>

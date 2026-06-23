@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
 import "./Footer.css";
 
 export function Footer() {
@@ -11,10 +12,13 @@ export function Footer() {
         <div className="footer-brand">
           <div className="footer-logo">
             <span className="footer-logo-icon">⚡</span>
-            BoxLead
+            {PRODUCT_NAME}
           </div>
+          <p className="footer-legal-entity">
+            {PRODUCT_NAME} es una marca de {LEGAL_ENTITY_NAME}.
+          </p>
           <p className="footer-copyright">
-            © {year} BoxLead. Todos los derechos reservados.
+            © {year} {LEGAL_ENTITY_NAME}. Todos los derechos reservados.
           </p>
         </div>
         <nav className="footer-links">

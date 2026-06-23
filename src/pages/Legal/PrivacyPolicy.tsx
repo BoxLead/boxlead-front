@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
 import "./Legal.css";
 
 export function PrivacyPolicy() {
@@ -11,10 +12,11 @@ export function PrivacyPolicy() {
       <p className="legal-updated">Last updated: March 29, 2026</p>
 
       <p>
-        BoxLead ("we", "us", or "our") operates a customer relationship
-        management (CRM) platform that helps businesses manage conversations and
-        leads from Facebook and Instagram. This Privacy Policy explains what
-        data we collect, how we use it, and your rights regarding that data.
+        {LEGAL_ENTITY_NAME} ("we", "us", or "our") operates {PRODUCT_NAME}, a
+        customer relationship management (CRM) platform that helps businesses
+        manage conversations and leads from Facebook and Instagram. This Privacy
+        Policy explains what data we collect, how we use it, and your rights
+        regarding that data.
       </p>
 
       <h2>1. Data We Collect</h2>
@@ -128,7 +130,7 @@ export function PrivacyPolicy() {
 
       <div className="legal-contact">
         <p>
-          <strong>Questions?</strong> Contact us at{" "}
+          <strong>{LEGAL_ENTITY_NAME}</strong> — Questions? Contact us at{" "}
           <a href="mailto:support@boxlead.app">support@boxlead.app</a>
         </p>
       </div>
