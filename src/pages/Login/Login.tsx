@@ -28,7 +28,7 @@ export function Login() {
     <AuthLayout>
       <div className="auth-card">
         <h1 className="auth-title">Iniciar sesión</h1>
-        <p className="auth-subtitle">Entrá para ver qué hizo tu agente.</p>
+        <p className="auth-subtitle">Ingresá a tu cuenta de BoxLead.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
           {error ? (
             <div className="auth-error" role="alert">
