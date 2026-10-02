@@ -22,7 +22,8 @@ npm run preview   # Serve dist/ locally
 ### Key Files
 - `src/App.tsx` — All route definitions
 - `src/main.tsx` — React root (BrowserRouter > AuthProvider > App)
-- `src/context/AuthContext.tsx` — JWT auth state management
+- `src/context/AuthContext.tsx` — `AuthProvider` (JWT auth state); `src/context/auth.ts` — `useAuth`
+- `src/hooks/` — `useApiQuery` (data loading), `useDocumentTitle`
 - `src/api/client.ts` — HTTP client with auto-auth headers
 - `src/api/types.ts` — All API type definitions
 - `src/index.css` — Global design tokens (`--signal-*`)
@@ -43,6 +44,7 @@ npm run preview   # Serve dist/ locally
 - `--signal-*` tokens for app UI, `--landing-*` for landing page
 - `type` keyword for TypeScript type aliases
 - Type-only imports: `import type { X } from '...'`
+- No comments in code; UI copy in Spanish (legal pages in English)
 
 ### Auth Flow
 1. JWT stored in localStorage (`signal_token`, `signal_user`)

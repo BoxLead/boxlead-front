@@ -12,13 +12,14 @@ public/               # favicon, og-image, robots.txt, sitemap.xml
 src/
 ├── main.tsx          # BrowserRouter > AuthProvider > App
 ├── App.tsx           # Routes (everything but the landing is lazy-loaded)
-├── index.css         # App design tokens (--signal-*)
+├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
 ├── api/              # HTTP client and API types
-├── context/          # AuthContext (JWT)
-├── components/       # ProtectedRoute, Layout, Sidebar
+├── context/          # AuthProvider (AuthContext.tsx) and useAuth (auth.ts)
+├── hooks/            # useApiQuery, useDocumentTitle
+├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, badges, EmptyState, Loading, ScrollToTop
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Connections, OAuthCallback, Legal
-├── landing/          # Public landing: LandingPage, components/, icons/
-└── util/
+├── landing/          # Public landing: LandingPage and its sections
+└── util/             # company, format, labels, oauth, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -33,6 +34,8 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
+The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
+
 ## Conventions
 
 - Never use `any`; use `unknown` and narrow.
@@ -40,13 +43,18 @@ terraform/            # Infrastructure (do not modify without approval)
 - Named exports, except `App`.
 - Components use the `function` keyword, one per file, with a co-located `.css` file.
 - No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing.
-- All HTTP calls go through `src/api/client.ts`.
+- No comments in code.
+- UI copy is in Spanish; the legal pages stay in English.
+- Load data with `useApiQuery`; mutations call `api` from `src/api/client.ts` directly.
+- Every page sets its tab title with `useDocumentTitle`.
+- Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
+- Every screen needs loading, empty and error states, and must work from 320px wide.
+- Animations are CSS only and respect `prefers-reduced-motion`.
 
 ## Landing
 
-- Lives in `src/landing/`, isolated from the app UI. Dark theme only, copy in Spanish.
-- Animations are CSS only. `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
-- Must work from 320px to desktop and respect `prefers-reduced-motion`.
+- Lives in `src/landing/`, dark theme only.
+- `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
 - Keep the legal entity, the legal page links and the support email in the footer (required for Meta app review).
 
 ## Safety
