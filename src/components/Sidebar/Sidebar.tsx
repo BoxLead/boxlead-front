@@ -1,32 +1,41 @@
-import { NavLink } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import type { ReactNode } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../../context/auth";
+import { InboxIcon, LogoutIcon, PlugIcon, UsersIcon } from "../icons/UiIcons";
+import { Logo } from "../Logo/Logo";
 import "./Sidebar.css";
 
-const links = [
-  { to: "/app/inbox", label: "Inbox" },
-  { to: "/app/leads", label: "Leads" },
-  { to: "/app/connections", label: "Connections" },
-] as const;
+type NavItem = {
+  to: string;
+  label: string;
+  icon: ReactNode;
+};
+
+const links: NavItem[] = [
+  { to: "/app/inbox", label: "Bandeja", icon: <InboxIcon /> },
+  { to: "/app/leads", label: "Leads", icon: <UsersIcon /> },
+  { to: "/app/connections", label: "Conexiones", icon: <PlugIcon /> },
+];
 
 export function Sidebar() {
   const { user, logout } = useAuth();
 
   return (
-    <aside className="sidebar" aria-label="Main navigation">
-      <div className="sidebar-brand">
-        <span className="sidebar-logo">BoxLead</span>
-      </div>
+    <aside className="sidebar" aria-label="Navegación principal">
+      <Link to="/app/inbox" className="sidebar-brand" aria-label="BoxLead">
+        <Logo />
+      </Link>
       <nav className="sidebar-nav">
-        {links.map(({ to, label }) => (
+        {links.map(({ to, label, icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               `sidebar-link${isActive ? " sidebar-link-active" : ""}`
             }
-            end={to === "/app/inbox"}
           >
-            {label}
+            {icon}
+            <span>{label}</span>
           </NavLink>
         ))}
       </nav>
@@ -35,7 +44,8 @@ export function Sidebar() {
           {user?.email}
         </div>
         <button type="button" className="sidebar-logout" onClick={logout}>
-          Log out
+          <LogoutIcon />
+          <span>Cerrar sesión</span>
         </button>
       </div>
     </aside>

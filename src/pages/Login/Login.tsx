@@ -2,9 +2,12 @@ import { type FormEvent, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/auth";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 export function Login() {
+  useDocumentTitle("Iniciar sesión");
+
   const { token, login, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,11 +19,7 @@ export function Login() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     clearError();
-    try {
-      await login({ email: email.trim(), password });
-    } catch {
-      /* error surfaced via context */
-    }
+    await login({ email: email.trim(), password });
   }
 
   return (
