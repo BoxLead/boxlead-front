@@ -1,16 +1,10 @@
 import { Link } from "react-router-dom";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
-import "./Legal.css";
+import { LegalLayout } from "./LegalLayout";
 
 export function TermsOfService() {
   return (
-    <div className="legal-page">
-      <Link to="/" className="legal-back">
-        &larr; Back to BoxLead
-      </Link>
-      <h1>Terms of Service</h1>
-      <p className="legal-updated">Last updated: March 29, 2026</p>
-
+    <LegalLayout title="Terms of Service" updated="March 29, 2026">
       <p>
         These Terms of Service ("Terms") govern your access to and use of the{" "}
         {PRODUCT_NAME} platform and services, operated by {LEGAL_ENTITY_NAME}.
@@ -130,6 +124,6 @@ export function TermsOfService() {
           <a href="mailto:support@boxlead.app">support@boxlead.app</a>
         </p>
       </div>
-    </div>
+    </LegalLayout>
   );
 }

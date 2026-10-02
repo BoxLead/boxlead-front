@@ -1,16 +1,10 @@
 import { Link } from "react-router-dom";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
-import "./Legal.css";
+import { LegalLayout } from "./LegalLayout";
 
 export function PrivacyPolicy() {
   return (
-    <div className="legal-page">
-      <Link to="/" className="legal-back">
-        &larr; Back to BoxLead
-      </Link>
-      <h1>Privacy Policy</h1>
-      <p className="legal-updated">Last updated: March 29, 2026</p>
-
+    <LegalLayout title="Privacy Policy" updated="March 29, 2026">
       <p>
         {LEGAL_ENTITY_NAME} ("we", "us", or "our") operates {PRODUCT_NAME}, a
         customer relationship management (CRM) platform that helps businesses
@@ -134,6 +128,6 @@ export function PrivacyPolicy() {
           <a href="mailto:support@boxlead.app">support@boxlead.app</a>
         </p>
       </div>
-    </div>
+    </LegalLayout>
   );
 }
