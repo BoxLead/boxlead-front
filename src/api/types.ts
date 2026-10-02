@@ -12,12 +12,6 @@ export type MessageDirection = "INBOUND" | "OUTBOUND";
 
 export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "LOST" | "CLOSED";
 
-export type AuthResponse = {
-  token: string;
-  userId: string;
-  email: string;
-};
-
 export type AuthUser = {
   userId: string;
   email: string;
