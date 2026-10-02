@@ -1,7 +1,10 @@
 import { type FormEvent, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
+import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { useAuth } from "../../context/AuthContext";
-import "./Register.css";
+
+const MIN_PASSWORD_LENGTH = 6;
 
 export function Register() {
   const { token, register, isLoading, error, clearError } = useAuth();
@@ -28,62 +31,60 @@ export function Register() {
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-title">Create account</h1>
-        <p className="auth-subtitle">
-          Start managing social leads in one place
-        </p>
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {error ? (
-            <div className="auth-error" role="alert">
-              {error}
-            </div>
-          ) : null}
-          <label className="auth-label">
-            Name <span className="auth-optional">(optional)</span>
-            <input
-              className="auth-input"
-              type="text"
-              name="name"
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-          <label className="auth-label">
-            Email
-            <input
-              className="auth-input"
-              type="email"
-              name="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </label>
-          <label className="auth-label">
-            Password
-            <input
-              className="auth-input"
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
-          <button className="auth-submit" type="submit" disabled={isLoading}>
-            {isLoading ? "Creating account…" : "Create account"}
-          </button>
-        </form>
-        <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-      </div>
-    </div>
+    <AuthLayout>
+      <h1 className="auth-title">Crear cuenta</h1>
+      <p className="auth-subtitle">Empezá a usar BoxLead en minutos.</p>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        {error ? (
+          <div className="auth-error" role="alert">
+            {error}
+          </div>
+        ) : null}
+        <label className="auth-label">
+          <span>
+            Nombre <span className="auth-optional">(opcional)</span>
+          </span>
+          <input
+            className="auth-input"
+            type="text"
+            name="name"
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </label>
+        <label className="auth-label">
+          Email
+          <input
+            className="auth-input"
+            type="email"
+            name="email"
+            autoComplete="email"
+            placeholder="vos@tuempresa.com"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </label>
+        <PasswordField
+          autoComplete="new-password"
+          minLength={MIN_PASSWORD_LENGTH}
+          hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`}
+          value={password}
+          onChange={setPassword}
+        />
+        <button className="auth-submit" type="submit" disabled={isLoading}>
+          {isLoading ? "Creando cuenta…" : "Crear cuenta"}
+        </button>
+      </form>
+      <p className="auth-terms">
+        Al crear tu cuenta aceptás los{" "}
+        <Link to="/terms-of-service">Términos de servicio</Link> y la{" "}
+        <Link to="/privacy-policy">Política de privacidad</Link>.
+      </p>
+      <p className="auth-footer">
+        ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
+      </p>
+    </AuthLayout>
   );
 }
