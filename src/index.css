@@ -1,30 +1,33 @@
 :root {
-  --signal-bg: #f4f5f7;
-  --signal-surface: #ffffff;
-  --signal-surface-elevated: #ffffff;
-  --signal-border: #e2e4e9;
-  --signal-text: #3d3d45;
-  --signal-text-muted: #6b6b76;
-  --signal-heading: #1a1a1f;
-  --signal-accent: #4f46e5;
-  --signal-accent-hover: #4338ca;
-  --signal-accent-muted: rgba(79, 70, 229, 0.12);
-  --signal-danger: #dc2626;
-  --signal-danger-muted: rgba(220, 38, 38, 0.1);
-  --signal-success: #059669;
-  --signal-radius-sm: 6px;
-  --signal-radius-md: 10px;
-  --signal-radius-lg: 14px;
-  --signal-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06);
-  --signal-sidebar-bg: #1e1e24;
-  --signal-sidebar-text: #c4c4ce;
-  --signal-sidebar-active: #ffffff;
-  --signal-sidebar-hover: rgba(255, 255, 255, 0.08);
-  --signal-bubble-inbound: #eef0f4;
-  --signal-bubble-outbound: #4f46e5;
-  --signal-bubble-outbound-text: #ffffff;
-  --signal-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --signal-navy: #132c44;
+  --signal-cream: #eaeadc;
+  --signal-bg: #0a1521;
+  --signal-bg-subtle: #0d1b2a;
+  --signal-surface: #112233;
+  --signal-surface-elevated: #172d43;
+  --signal-border: rgba(234, 234, 220, 0.12);
+  --signal-text: #b7c4d0;
+  --signal-text-muted: #7c8c9b;
+  --signal-heading: #f1f1e6;
+  --signal-accent: #8fc1ee;
+  --signal-accent-hover: #b3d6f5;
+  --signal-accent-muted: rgba(143, 193, 238, 0.14);
+  --signal-accent-contrast: #132c44;
+  --signal-danger: #f08a8a;
+  --signal-danger-muted: rgba(240, 138, 138, 0.1);
+  --signal-success: #5fd3a0;
+  --signal-radius-sm: 8px;
+  --signal-radius-md: 12px;
+  --signal-radius-lg: 18px;
+  --signal-shadow: 0 24px 60px rgba(2, 8, 15, 0.55);
+  --signal-sidebar-bg: #0d1b2a;
+  --signal-sidebar-text: #b7c4d0;
+  --signal-sidebar-active: #f1f1e6;
+  --signal-sidebar-hover: rgba(234, 234, 220, 0.06);
+  --signal-bubble-inbound: #172d43;
+  --signal-bubble-outbound: #eaeadc;
+  --signal-bubble-outbound-text: #132c44;
+  --signal-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --signal-mono: ui-monospace, "SF Mono", Consolas, monospace;
   --signal-space-xs: 4px;
   --signal-space-sm: 8px;
@@ -38,38 +41,11 @@
   line-height: 1.5;
   color: var(--signal-text);
   background-color: var(--signal-bg);
-  color-scheme: light dark;
+  color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --signal-bg: #121214;
-    --signal-surface: #1c1c21;
-    --signal-surface-elevated: #24242b;
-    --signal-border: #34343d;
-    --signal-text: #c8c8d0;
-    --signal-text-muted: #8e8e9a;
-    --signal-heading: #f2f2f6;
-    --signal-accent: #818cf8;
-    --signal-accent-hover: #a5b4fc;
-    --signal-accent-muted: rgba(129, 140, 248, 0.15);
-    --signal-danger: #f87171;
-    --signal-danger-muted: rgba(248, 113, 113, 0.12);
-    --signal-success: #34d399;
-    --signal-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.35);
-    --signal-sidebar-bg: #0f0f12;
-    --signal-sidebar-text: #9ca3af;
-    --signal-sidebar-active: #f9fafb;
-    --signal-sidebar-hover: rgba(255, 255, 255, 0.06);
-    --signal-bubble-inbound: #2a2a32;
-    --signal-bubble-outbound: #4f46e5;
-    --signal-bubble-outbound-text: #ffffff;
-  }
 }
 
 *,

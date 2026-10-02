@@ -21,10 +21,10 @@ export function LogoMark(props: SVGProps<SVGSVGElement>) {
 
 export function Logo() {
   return (
-    <span className="landing-logo">
-      <LogoMark className="landing-logo-mark" />
-      <span className="landing-logo-text">
-        <span className="landing-logo-bold">BOX</span>LEAD
+    <span className="brand-logo">
+      <LogoMark className="brand-logo-mark" />
+      <span className="brand-logo-text">
+        <span className="brand-logo-bold">BOX</span>LEAD
       </span>
     </span>
   );

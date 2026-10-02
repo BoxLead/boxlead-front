@@ -85,16 +85,16 @@
 }
 
 @media (max-width: 480px) {
-  .landing-header .landing-logo {
+  .landing-header .brand-logo {
     gap: 9px;
   }
 
-  .landing-header .landing-logo-mark {
+  .landing-header .brand-logo-mark {
     width: 28px;
     height: 34px;
   }
 
-  .landing-header .landing-logo-text {
+  .landing-header .brand-logo-text {
     font-size: 1.1875rem;
   }
 
