@@ -1,0 +1,145 @@
+.thread-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.thread-pane-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 12px var(--signal-space-md);
+  border-bottom: 1px solid var(--signal-border);
+}
+
+.thread-pane-back {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--signal-radius-sm);
+  background: transparent;
+  color: var(--signal-heading);
+}
+
+.thread-pane-back:hover {
+  background: var(--signal-sidebar-hover);
+}
+
+.thread-pane-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.thread-pane-title {
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--signal-space-md);
+}
+
+.thread-status {
+  margin: 0 0 var(--signal-space-md);
+  font-size: 0.875rem;
+  color: var(--signal-text-muted);
+  text-align: center;
+}
+
+.thread-error {
+  color: var(--signal-danger);
+}
+
+.bubble-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bubble {
+  max-width: min(78%, 560px);
+  align-self: flex-start;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  background: var(--signal-bubble-inbound);
+  color: var(--signal-heading);
+  animation: bubble-enter 0.3s var(--signal-ease) both;
+}
+
+.bubble-outbound {
+  align-self: flex-end;
+  border-radius: 14px;
+  border-bottom-right-radius: 4px;
+  background: var(--signal-bubble-outbound);
+  color: var(--signal-bubble-outbound-text);
+}
+
+.bubble-reply {
+  margin-left: var(--signal-space-xl);
+}
+
+.bubble-author {
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--signal-accent);
+}
+
+.bubble-content {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble-empty {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.bubble-time {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.6875rem;
+  opacity: 0.7;
+}
+
+@keyframes bubble-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (max-width: 760px) {
+  .thread-pane-back {
+    display: inline-flex;
+  }
+
+  .bubble {
+    max-width: 88%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    animation: none;
+  }
+}
