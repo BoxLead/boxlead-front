@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   # Must match Terraform variable ssm_prefix (default /signal-front/)
   SIGNAL_FRONT_SSM_PREFIX: /signal-front/
@@ -18,19 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
       - name: Lint
-        run: npm run lint
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: lint
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   build:
     name: Build
@@ -38,34 +42,63 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build with VITE_API_BASE_URL from SSM
+      - name: Read VITE_API_BASE_URL from SSM
+        id: config
         run: |
           set -euo pipefail
           PARAM="${SIGNAL_FRONT_SSM_PREFIX}VITE_API_BASE_URL"
-          VITE_API_BASE_URL=$(aws ssm get-parameter --name "$PARAM" --query Parameter.Value --output text)
-          export VITE_API_BASE_URL
-          npm run build
+          VALUE=$(aws ssm get-parameter --name "$PARAM" --query Parameter.Value --output text)
+          echo "api_base_url=$VALUE" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: runtime
+          load: true
+          tags: boxlead-front:${{ github.sha }}
+          build-args: |
+            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test image
+        run: |
+          set -euo pipefail
+          docker run -d --name smoke --read-only --tmpfs /tmp -p 8080:8080 "boxlead-front:${GITHUB_SHA}"
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://localhost:8080/healthz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8080/healthz > /dev/null
+          curl -fsS http://localhost:8080/app/inbox | grep -q '<div id="root">'
+          docker rm -f smoke
+
+      - name: Export static files
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: export
+          push: false
+          outputs: type=local,dest=dist
+          build-args: |
+            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
+          cache-from: type=gha
 
       - name: Upload dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -76,13 +109,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -2,12 +2,15 @@
 
 SPA for BoxLead: a public landing page plus the app (inbox, leads, connections). Deployed as static assets to S3 + CloudFront.
 
-**Stack:** Vite 8, React 19, TypeScript 5.9 (strict), react-router-dom 7, vanilla CSS, ESLint 9.
+**Stack:** Node 24, Vite 8, React 19, TypeScript 6 (strict), react-router-dom 7, vanilla CSS, ESLint 10, Docker + nginx.
 
 ## Structure
 
 ```
 index.html            # Entry HTML, SEO metadata
+Dockerfile            # Multi-stage build: lint, build, export (static files), runtime (nginx)
+docker/nginx.conf     # SPA fallback, caching, security headers, /healthz
+docker-compose.yml    # Runs the production image locally
 public/               # favicon, og-image, robots.txt, sitemap.xml
 src/
 ├── main.tsx          # BrowserRouter > AuthProvider > App
@@ -56,6 +59,13 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 - Lives in `src/landing/`, dark theme only.
 - `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
 - Keep the legal entity, the legal page links and the support email in the footer (required for Meta app review).
+
+## Build and deploy
+
+- The Dockerfile is the single source for the Node version; CI lints and builds through it.
+- `VITE_API_BASE_URL` is a build argument baked into the bundle.
+- CD builds and smoke-tests the image, then exports the static files to S3 + CloudFront.
+- TypeScript stays below 6.1 until `typescript-eslint` supports newer versions.
 
 ## Safety
 
