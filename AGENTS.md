@@ -12,7 +12,7 @@
 | UI | React | 19.x |
 | Language | TypeScript | 5.9 (strict mode) |
 | Routing | react-router-dom | 7.x |
-| Animations | Framer Motion | 12.x (landing page only) |
+| Animations | CSS (transitions, keyframes, scroll-driven) | — |
 | Linting | ESLint | 9.x |
 | Deployment | S3 + CloudFront via Terraform | — |
 | CI/CD | GitHub Actions | — |
@@ -32,7 +32,9 @@ signal-front/
 │
 ├── public/                    # Static assets (served as-is)
 │   ├── favicon.svg
-│   └── icons.svg
+│   ├── og-image.png
+│   ├── robots.txt
+│   └── sitemap.xml
 │
 ├── src/
 │   ├── main.tsx               # React root: BrowserRouter > AuthProvider > App
@@ -64,13 +66,17 @@ signal-front/
 │   ├── landing/               # Public landing page (no auth required)
 │   │   ├── LandingPage.tsx     # Page orchestrator
 │   │   ├── LandingPage.css     # Landing-specific design tokens
+│   │   ├── icons/              # PlatformIcons.tsx (brand logos), UiIcons.tsx (line icons)
 │   │   └── components/         # Landing section components
+│   │       ├── Logo.tsx / Logo.css
 │   │       ├── Header.tsx / Header.css
 │   │       ├── HeroSection.tsx / HeroSection.css
+│   │       ├── AgentDemo.tsx / AgentDemo.css
 │   │       ├── IntegrationsMarquee.tsx / IntegrationsMarquee.css
 │   │       ├── ProductOverview.tsx / ProductOverview.css
-│   │       ├── FeaturesGrid.tsx / FeaturesGrid.css
-│   │       ├── BenefitsSection.tsx / BenefitsSection.css
+│   │       ├── HowItWorks.tsx / HowItWorks.css
+│   │       ├── AgentFlow.tsx / AgentFlow.css
+│   │       ├── FaqSection.tsx / FaqSection.css
 │   │       ├── CtaSection.tsx / CtaSection.css
 │   │       └── Footer.tsx / Footer.css
 │   │
@@ -199,7 +205,7 @@ npm run preview  # Serve dist/ locally
 
 - The landing page lives in `src/landing/` — completely isolated from the app UI.
 - Uses its own CSS variables (`--landing-*`) to avoid conflicts with `--signal-*`.
-- Uses **Framer Motion** for scroll-reveal and entrance animations.
+- Animations are CSS only: `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`, plus scroll-driven effects behind `@supports (animation-timeline: view())`. No animation libraries.
 - Must be fully responsive (375px → 1440px+).
 - Dark theme only (no light/dark toggle on landing).
 - All copy is in **Spanish** (target market: LATAM).
