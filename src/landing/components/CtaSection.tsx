@@ -1,43 +1,117 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { SUPPORT_EMAIL } from "../../util/company";
+import {
+  InstagramIcon,
+  MercadoLibreIcon,
+  MessengerIcon,
+  WhatsAppIcon,
+} from "../icons/PlatformIcons";
+import { ArrowRightIcon, CheckIcon } from "../icons/UiIcons";
 import "./CtaSection.css";
+
+type Activity = {
+  icon: ReactNode;
+  title: string;
+  result: string;
+};
+
+const ICON_SIZE = 20;
+
+const activity: Activity[] = [
+  {
+    icon: <WhatsAppIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    title: "Consulta de stock",
+    result: "Respondido",
+  },
+  {
+    icon: <InstagramIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    title: "Comentario en una publicación",
+    result: "Respondido",
+  },
+  {
+    icon: <MercadoLibreIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    title: "Pregunta sobre facturación",
+    result: "Respondido",
+  },
+  {
+    icon: <MessengerIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    title: "Pedido de precios",
+    result: "Lead calificado",
+  },
+  {
+    icon: <WhatsAppIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    title: "Consulta por envíos",
+    result: "Lead calificado",
+  },
+];
+
+function ActivityGroup({ hidden = false }: { hidden?: boolean }) {
+  return (
+    <ul className="cta-feed-group" aria-hidden={hidden || undefined}>
+      {activity.map((item) => (
+        <li className="cta-feed-item" key={item.title}>
+          <span className="cta-feed-icon">{item.icon}</span>
+          <span className="cta-feed-body">
+            <span className="cta-feed-title">{item.title}</span>
+            <span className="cta-feed-result">
+              <CheckIcon width={14} height={14} />
+              {item.result}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function CtaSection() {
   return (
-    <section className="cta-section landing-section">
-      {/* Multiple layered ambient glows */}
-      <div className="cta-glow cta-glow-1" aria-hidden="true" />
-      <div className="cta-glow cta-glow-2" aria-hidden="true" />
-
+    <section className="landing-section">
       <div className="landing-container">
-        <motion.div
-          className="cta-content"
-          initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
-        >
-          <span className="landing-section-label">Empezá hoy</span>
-          <h2 className="cta-title">
-            Tu competencia ya está perdiendo leads.{" "}
-            <span className="landing-gradient-text">¿Y vos?</span>
-          </h2>
-          <p className="cta-subtitle">
-            Configurá BoxLead en minutos y empezá a responder más rápido, vender
-            más y medir todo.
-          </p>
-          <div className="cta-actions">
-            <Link
-              to="/register"
-              className="landing-btn landing-btn-primary cta-btn-lg"
-            >
-              Empezar ahora — es gratis →
-            </Link>
+        <div className="cta-card">
+          <div>
+            <h2 className="cta-title">Poné tus ventas en automático</h2>
+            <p className="cta-subtitle">
+              Tu próximo cliente ya te está escribiendo. Que le responda tu
+              agente.
+            </p>
+            <div className="cta-actions">
+              <Link
+                to="/register"
+                className="landing-btn landing-btn-primary landing-btn-lg"
+              >
+                Empezar ahora
+                <ArrowRightIcon width={18} height={18} />
+              </Link>
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="landing-btn landing-btn-secondary landing-btn-lg"
+              >
+                Hablar con nosotros
+              </a>
+            </div>
+            <p className="cta-note">
+              Una suscripción mensual · Todos tus canales
+            </p>
           </div>
-          <p className="cta-note">
-            Sin tarjeta de crédito • Setup en 5 minutos
-          </p>
-        </motion.div>
+
+          <div className="cta-feed">
+            <div className="cta-feed-head">
+              <span>Tu agente</span>
+              <span className="cta-feed-live">
+                <span className="cta-feed-live-dot" />
+                En automático
+              </span>
+            </div>
+            <div className="cta-feed-viewport">
+              <div className="cta-feed-track">
+                <ActivityGroup />
+                <ActivityGroup hidden />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

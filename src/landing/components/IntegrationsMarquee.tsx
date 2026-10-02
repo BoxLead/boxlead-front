@@ -13,75 +13,62 @@ import "./IntegrationsMarquee.css";
 type Platform = {
   name: string;
   icon: ReactNode;
-  color: string;
 };
+
+const ICON_SIZE = 22;
 
 const platforms: Platform[] = [
   {
     name: "WhatsApp",
-    color: "#25D366",
-    icon: <WhatsAppIcon />,
+    icon: <WhatsAppIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
   {
     name: "Instagram",
-    color: "#E1306C",
-    icon: <InstagramIcon />,
+    icon: <InstagramIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
   {
     name: "Messenger",
-    color: "#0099FF",
-    icon: <MessengerIcon />,
+    icon: <MessengerIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
   {
     name: "MercadoLibre",
-    color: "#FFE600",
-    icon: <MercadoLibreIcon />,
+    icon: <MercadoLibreIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
-  {
-    name: "TikTok",
-    color: "#ffffff",
-    icon: <TikTokIcon />,
-  },
+  { name: "TikTok", icon: <TikTokIcon width={ICON_SIZE} height={ICON_SIZE} /> },
   {
     name: "LinkedIn",
-    color: "#0A66C2",
-    icon: <LinkedInIcon />,
+    icon: <LinkedInIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
   {
     name: "Google Ads",
-    color: "#4285F4",
-    icon: <GoogleAdsIcon />,
+    icon: <GoogleAdsIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
 ];
 
-function MarqueeGroup() {
+function MarqueeGroup({ hidden = false }: { hidden?: boolean }) {
   return (
-    <div className="marquee-group">
-      {platforms.map((p) => (
-        <div
-          className="marquee-item"
-          key={p.name}
-          style={{ "--platform-color": p.color } as React.CSSProperties}
-        >
-          <div className="marquee-icon">{p.icon}</div>
-          <span className="marquee-item-label">{p.name}</span>
-        </div>
+    <ul className="marquee-group" aria-hidden={hidden || undefined}>
+      {platforms.map((platform) => (
+        <li className="marquee-item" key={platform.name}>
+          {platform.icon}
+          <span>{platform.name}</span>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
 export function IntegrationsMarquee() {
   return (
-    <section className="marquee-section">
-      <p className="marquee-label">
+    <section className="marquee-section" aria-labelledby="marquee-label">
+      <p className="marquee-label" id="marquee-label">
         Conectado con las plataformas donde están tus clientes
       </p>
-      <div className="marquee-track" aria-hidden="true">
-        <MarqueeGroup />
-        <MarqueeGroup />
-        <MarqueeGroup />
-        <MarqueeGroup />
+      <div className="marquee-viewport">
+        <div className="marquee-track">
+          <MarqueeGroup />
+          <MarqueeGroup hidden />
+        </div>
       </div>
     </section>
   );

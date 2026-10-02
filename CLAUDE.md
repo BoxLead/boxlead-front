@@ -26,14 +26,14 @@ npm run preview   # Serve dist/ locally
 - `src/api/client.ts` — HTTP client with auto-auth headers
 - `src/api/types.ts` — All API type definitions
 - `src/index.css` — Global design tokens (`--signal-*`)
-- `src/landing/` — Public landing page (isolated from app)
+- `src/landing/` — Public landing page (isolated from app, CSS-only animations)
 
 ### Route Structure
 ```
-/           → Public landing page
-/login      → Login
-/register   → Register
-/app/*      → Protected app (inbox, leads, connections)
+/                 → Public landing page
+/login, /register → Auth
+/privacy-policy, /terms-of-service, /data-deletion → Legal
+/app/*            → Protected app (inbox, leads, connections)
 ```
 
 ### Patterns

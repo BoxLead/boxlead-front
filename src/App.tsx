@@ -1,41 +1,79 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Layout } from "./components/Layout/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { Connections } from "./pages/Connections/Connections";
-import { Inbox } from "./pages/Inbox/Inbox";
-import { LeadDetail } from "./pages/LeadDetail/LeadDetail";
-import { Leads } from "./pages/Leads/Leads";
-import { Login } from "./pages/Login/Login";
-import { OAuthCallback } from "./pages/OAuthCallback/OAuthCallback";
-import { DataDeletion } from "./pages/Legal/DataDeletion";
-import { PrivacyPolicy } from "./pages/Legal/PrivacyPolicy";
-import { TermsOfService } from "./pages/Legal/TermsOfService";
-import { Register } from "./pages/Register/Register";
 import { LandingPage } from "./landing/LandingPage";
+
+const Layout = lazy(() =>
+  import("./components/Layout/Layout").then((m) => ({ default: m.Layout })),
+);
+const Connections = lazy(() =>
+  import("./pages/Connections/Connections").then((m) => ({
+    default: m.Connections,
+  })),
+);
+const Inbox = lazy(() =>
+  import("./pages/Inbox/Inbox").then((m) => ({ default: m.Inbox })),
+);
+const LeadDetail = lazy(() =>
+  import("./pages/LeadDetail/LeadDetail").then((m) => ({
+    default: m.LeadDetail,
+  })),
+);
+const Leads = lazy(() =>
+  import("./pages/Leads/Leads").then((m) => ({ default: m.Leads })),
+);
+const Login = lazy(() =>
+  import("./pages/Login/Login").then((m) => ({ default: m.Login })),
+);
+const OAuthCallback = lazy(() =>
+  import("./pages/OAuthCallback/OAuthCallback").then((m) => ({
+    default: m.OAuthCallback,
+  })),
+);
+const DataDeletion = lazy(() =>
+  import("./pages/Legal/DataDeletion").then((m) => ({
+    default: m.DataDeletion,
+  })),
+);
+const PrivacyPolicy = lazy(() =>
+  import("./pages/Legal/PrivacyPolicy").then((m) => ({
+    default: m.PrivacyPolicy,
+  })),
+);
+const TermsOfService = lazy(() =>
+  import("./pages/Legal/TermsOfService").then((m) => ({
+    default: m.TermsOfService,
+  })),
+);
+const Register = lazy(() =>
+  import("./pages/Register/Register").then((m) => ({ default: m.Register })),
+);
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/terms-of-service" element={<TermsOfService />} />
-      <Route path="/data-deletion" element={<DataDeletion />} />
-      <Route element={<ProtectedRoute />}>
-        <Route
-          path="/app/oauth/callback/:platform"
-          element={<OAuthCallback />}
-        />
-        <Route path="/app" element={<Layout />}>
-          <Route index element={<Navigate to="/app/inbox" replace />} />
-          <Route path="inbox" element={<Inbox />} />
-          <Route path="leads" element={<Leads />} />
-          <Route path="leads/:leadId" element={<LeadDetail />} />
-          <Route path="connections" element={<Connections />} />
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/data-deletion" element={<DataDeletion />} />
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/app/oauth/callback/:platform"
+            element={<OAuthCallback />}
+          />
+          <Route path="/app" element={<Layout />}>
+            <Route index element={<Navigate to="/app/inbox" replace />} />
+            <Route path="inbox" element={<Inbox />} />
+            <Route path="leads" element={<Leads />} />
+            <Route path="leads/:leadId" element={<LeadDetail />} />
+            <Route path="connections" element={<Connections />} />
+          </Route>
         </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
