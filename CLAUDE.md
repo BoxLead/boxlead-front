@@ -17,6 +17,7 @@ npm run dev       # Dev server at localhost:5173
 npm run build     # TypeScript check + production build
 npm run lint      # ESLint
 npm run preview   # Serve dist/ locally
+docker compose up --build   # Production image at localhost:3000
 ```
 
 ### Key Files
