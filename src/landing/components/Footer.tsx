@@ -4,7 +4,7 @@ import {
   PRODUCT_NAME,
   SUPPORT_EMAIL,
 } from "../../util/company";
-import { Logo } from "./Logo";
+import { Logo } from "../../components/Logo/Logo";
 import "./Footer.css";
 
 export function Footer() {

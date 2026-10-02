@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
 import "./Login.css";
 
@@ -7,6 +8,7 @@ export function Login() {
   const { token, login, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   if (token) {
     return <Navigate to="/app/inbox" replace />;
@@ -23,10 +25,10 @@ export function Login() {
   }
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
-        <h1 className="auth-title">Sign in</h1>
-        <p className="auth-subtitle">Welcome back to BoxLead</p>
+        <h1 className="auth-title">Iniciar sesión</h1>
+        <p className="auth-subtitle">Ingresá a tu cuenta de BoxLead.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
           {error ? (
             <div className="auth-error" role="alert">
@@ -40,31 +42,42 @@ export function Login() {
               type="email"
               name="email"
               autoComplete="email"
+              placeholder="vos@tuempresa.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </label>
           <label className="auth-label">
-            Password
-            <input
-              className="auth-input"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            Contraseña
+            <span className="auth-password">
+              <input
+                className="auth-input"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((shown) => !shown)}
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            </span>
           </label>
           <button className="auth-submit" type="submit" disabled={isLoading}>
-            {isLoading ? "Signing in…" : "Sign in"}
+            {isLoading ? "Ingresando…" : "Ingresar"}
           </button>
         </form>
         <p className="auth-footer">
-          No account? <Link to="/register">Create one</Link>
+          ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
         </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

@@ -6,7 +6,7 @@ import {
   WhatsAppIcon,
 } from "../icons/PlatformIcons";
 import { CheckIcon } from "../icons/UiIcons";
-import { LogoMark } from "./Logo";
+import { LogoMark } from "../../components/Logo/Logo";
 import "./AgentDemo.css";
 
 type Scene = {

@@ -52,8 +52,6 @@ html:has(.landing) {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background: #0a1521;
-  color-scheme: dark;
 }
 
 .landing h1,
