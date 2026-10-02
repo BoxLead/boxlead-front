@@ -4,8 +4,12 @@ import {
   MercadoLibreIcon,
   MessengerIcon,
   WhatsAppIcon,
-} from "../icons/PlatformIcons";
-import { BoltIcon, PlugIcon, SlidersIcon } from "../icons/UiIcons";
+} from "../../components/icons/PlatformIcons";
+import {
+  BoltIcon,
+  PlugIcon,
+  SlidersIcon,
+} from "../../components/icons/UiIcons";
 import "./HowItWorks.css";
 
 type Step = {

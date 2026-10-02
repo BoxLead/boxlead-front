@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDownIcon } from "../icons/UiIcons";
+import { ChevronDownIcon } from "../../components/icons/UiIcons";
 import "./FaqSection.css";
 
 type Faq = {

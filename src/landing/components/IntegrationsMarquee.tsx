@@ -7,7 +7,7 @@ import {
   TikTokIcon,
   LinkedInIcon,
   GoogleAdsIcon,
-} from "../icons/PlatformIcons";
+} from "../../components/icons/PlatformIcons";
 import "./IntegrationsMarquee.css";
 
 type Platform = {

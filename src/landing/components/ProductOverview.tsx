@@ -1,4 +1,4 @@
-import { CheckIcon, CloseIcon } from "../icons/UiIcons";
+import { CheckIcon, CloseIcon } from "../../components/icons/UiIcons";
 import "./ProductOverview.css";
 
 const pains = [

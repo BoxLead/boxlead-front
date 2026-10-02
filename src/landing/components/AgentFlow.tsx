@@ -5,7 +5,7 @@ import {
   PipelineIcon,
   SparkIcon,
   TargetIcon,
-} from "../icons/UiIcons";
+} from "../../components/icons/UiIcons";
 import "./AgentFlow.css";
 
 type Stage = {

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRightIcon } from "../icons/UiIcons";
+import { ArrowRightIcon } from "../../components/icons/UiIcons";
 import { AgentDemo } from "./AgentDemo";
 import "./HeroSection.css";
 

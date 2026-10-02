@@ -4,8 +4,8 @@ import {
   InstagramIcon,
   MercadoLibreIcon,
   WhatsAppIcon,
-} from "../icons/PlatformIcons";
-import { CheckIcon } from "../icons/UiIcons";
+} from "../../components/icons/PlatformIcons";
+import { CheckIcon } from "../../components/icons/UiIcons";
 import { LogoMark } from "../../components/Logo/Logo";
 import "./AgentDemo.css";
 
