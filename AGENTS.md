@@ -69,7 +69,8 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 
 ## Security
 
-- The JWT lives in `localStorage` (`src/api/client.ts`); expired tokens are discarded on read. Moving it to an `httpOnly` cookie needs backend support.
+- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token; `localStorage` holds only `signal_user` (id and email) as a display hint.
+- Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
 - Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked.
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
 - OAuth redirects go through `beginOAuthRedirect` and are checked on return with `consumeOAuthSession` (`state` validation).
