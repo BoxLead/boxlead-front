@@ -30,7 +30,8 @@
   --signal-bubble-inbound: #172d43;
   --signal-bubble-outbound: #eaeadc;
   --signal-bubble-outbound-text: #132c44;
-  --signal-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --signal-font:
+    "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --signal-mono: ui-monospace, "SF Mono", Consolas, monospace;
   --signal-space-xs: 4px;
   --signal-space-sm: 8px;
