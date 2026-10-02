@@ -1,6 +1,0 @@
-@import "../Login/Login.css";
-
-.auth-optional {
-  font-weight: 400;
-  color: var(--signal-text-muted);
-}
