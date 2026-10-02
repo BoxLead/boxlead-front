@@ -1,7 +1,9 @@
-import type { AuthResponse, LoginRequest, RegisterRequest } from "./types";
+import type { AuthUser, LoginRequest, RegisterRequest } from "./types";
 
-const TOKEN_KEY = "signal_token";
 const USER_KEY = "signal_user";
+const LEGACY_TOKEN_KEY = "signal_token";
+const CSRF_HEADER = "X-Requested-With";
+const CSRF_HEADER_VALUE = "boxlead-web";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -23,31 +25,39 @@ export function apiUrl(path: string): string {
   return `/api${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+function toAuthUser(value: unknown): AuthUser | null {
+  if (
+    value &&
+    typeof value === "object" &&
+    "userId" in value &&
+    "email" in value &&
+    typeof value.userId === "string" &&
+    typeof value.email === "string"
+  ) {
+    return { userId: value.userId, email: value.email };
+  }
+  return null;
 }
 
-export function getStoredUser(): { userId: string; email: string } | null {
+export function getStoredUser(): AuthUser | null {
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
   const raw = localStorage.getItem(USER_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as { userId: string; email: string };
+    return toAuthUser(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
-export function persistAuth(res: AuthResponse): void {
-  localStorage.setItem(TOKEN_KEY, res.token);
-  localStorage.setItem(
-    USER_KEY,
-    JSON.stringify({ userId: res.userId, email: res.email }),
-  );
+export function persistUser(user: AuthUser): void {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function clearAuth(): void {
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
+  sessionStorage.clear();
 }
 
 function clearAuthAndGoLogin(): void {
@@ -83,18 +93,16 @@ async function request<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
+    [CSRF_HEADER]: CSRF_HEADER_VALUE,
   };
   if (options?.body !== undefined) {
     headers["Content-Type"] = "application/json";
-  }
-  const token = options?.skipAuth ? null : getStoredToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(apiUrl(path), {
     method,
     headers,
+    credentials: "include",
     body:
       options?.body === undefined ? undefined : JSON.stringify(options.body),
   });
@@ -116,20 +124,35 @@ async function request<T>(
   return data as T;
 }
 
+async function requestUser(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<AuthUser> {
+  const data = await request<unknown>(method, path, { body, skipAuth: true });
+  const user = toAuthUser(data);
+  if (!user) {
+    throw new ApiError("Respuesta de sesión inválida.", 500, data);
+  }
+  return user;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
 
-  post: <T>(path: string, body?: unknown, opts?: { skipAuth?: boolean }) =>
-    request<T>("POST", path, { body, skipAuth: opts?.skipAuth }),
+  post: <T>(path: string, body?: unknown) => request<T>("POST", path, { body }),
 
   patch: <T>(path: string, body: unknown) =>
     request<T>("PATCH", path, { body }),
 
   delete: (path: string) => request<void>("DELETE", path),
 
-  login: (body: LoginRequest) =>
-    request<AuthResponse>("POST", "/auth/login", { body, skipAuth: true }),
+  login: (body: LoginRequest) => requestUser("POST", "/auth/login", body),
 
   register: (body: RegisterRequest) =>
-    request<AuthResponse>("POST", "/auth/register", { body, skipAuth: true }),
+    requestUser("POST", "/auth/register", body),
+
+  me: () => requestUser("GET", "/auth/me"),
+
+  logout: () => request<void>("POST", "/auth/logout", { skipAuth: true }),
 };

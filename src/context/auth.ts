@@ -2,7 +2,6 @@ import { createContext, useContext } from "react";
 import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
 
 export type AuthContextValue = {
-  token: string | null;
   user: AuthUser | null;
   login: (body: LoginRequest) => Promise<void>;
   register: (body: RegisterRequest) => Promise<void>;

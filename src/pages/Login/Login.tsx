@@ -8,11 +8,11 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 export function Login() {
   useDocumentTitle("Iniciar sesión");
 
-  const { token, login, isLoading, error, clearError } = useAuth();
+  const { user, login, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  if (token) {
+  if (user) {
     return <Navigate to="/app/inbox" replace />;
   }
 

@@ -28,7 +28,8 @@
   --landing-content-padding: clamp(20px, 5vw, 40px);
   --landing-header-height: 76px;
 
-  --landing-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --landing-font:
+    "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --landing-radius-sm: 8px;
   --landing-radius-md: 12px;

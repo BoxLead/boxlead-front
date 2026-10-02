@@ -48,8 +48,9 @@ docker compose up --build   # Production image at localhost:3000
 - No comments in code; UI copy in Spanish (legal pages in English)
 
 ### Auth Flow
-1. JWT stored in localStorage (`signal_token`, `signal_user`)
-2. `ProtectedRoute` checks token → redirects to `/login` if missing
-3. `api/client.ts` attaches `Authorization: Bearer` header automatically
-4. 401 response → `clearAuthAndGoLogin()` → hard redirect to `/login`
-5. Post-login → navigate to `/app/inbox`
+1. The session is an `httpOnly` cookie set by the API; the frontend never sees the token
+2. `localStorage` keeps only `signal_user` (`userId`, `email`) as a display hint
+3. `ProtectedRoute` checks the user → redirects to `/login` if missing; `AuthProvider` confirms it with `GET /auth/me`
+4. `api/client.ts` sends `credentials: "include"` and `X-Requested-With: boxlead-web` on every request
+5. 401 response → `clearAuthAndGoLogin()` → hard redirect to `/login`
+6. Post-login → navigate to `/app/inbox`; logout calls `POST /auth/logout`

@@ -10,12 +10,12 @@ const MIN_PASSWORD_LENGTH = 6;
 export function Register() {
   useDocumentTitle("Crear cuenta");
 
-  const { token, register, isLoading, error, clearError } = useAuth();
+  const { user, register, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  if (token) {
+  if (user) {
     return <Navigate to="/app/inbox" replace />;
   }
 
