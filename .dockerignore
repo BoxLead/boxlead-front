@@ -1,0 +1,13 @@
+.git
+.github
+.agents
+.env
+.env.*
+!.env.example
+node_modules
+dist
+terraform
+docker-compose.yml
+Dockerfile
+*.md
+*.log
