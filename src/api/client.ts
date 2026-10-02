@@ -1,4 +1,9 @@
-import type { AuthResponse, LoginRequest, RegisterRequest } from "./types";
+import type {
+  AuthResponse,
+  AuthUser,
+  LoginRequest,
+  RegisterRequest,
+} from "./types";
 
 const TOKEN_KEY = "signal_token";
 const USER_KEY = "signal_user";
@@ -23,15 +28,49 @@ export function apiUrl(path: string): string {
   return `/api${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+function tokenExpiry(token: string): number | null {
+  const payload = token.split(".")[1];
+  if (!payload) return null;
+  try {
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    const claims: unknown = JSON.parse(json);
+    if (claims && typeof claims === "object" && "exp" in claims) {
+      const { exp } = claims;
+      return typeof exp === "number" ? exp * 1000 : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
-export function getStoredUser(): { userId: string; email: string } | null {
+export function getStoredToken(): string | null {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  const expiry = tokenExpiry(token);
+  if (expiry !== null && expiry <= Date.now()) {
+    clearAuth();
+    return null;
+  }
+  return token;
+}
+
+export function getStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as { userId: string; email: string };
+    const user: unknown = JSON.parse(raw);
+    if (
+      user &&
+      typeof user === "object" &&
+      "userId" in user &&
+      "email" in user &&
+      typeof user.userId === "string" &&
+      typeof user.email === "string"
+    ) {
+      return { userId: user.userId, email: user.email };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -48,6 +87,7 @@ export function persistAuth(res: AuthResponse): void {
 export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  sessionStorage.clear();
 }
 
 function clearAuthAndGoLogin(): void {
