@@ -6,8 +6,8 @@ import {
   MercadoLibreIcon,
   MessengerIcon,
   WhatsAppIcon,
-} from "../icons/PlatformIcons";
-import { ArrowRightIcon, CheckIcon } from "../icons/UiIcons";
+} from "../../components/icons/PlatformIcons";
+import { ArrowRightIcon, CheckIcon } from "../../components/icons/UiIcons";
 import "./CtaSection.css";
 
 type Activity = {

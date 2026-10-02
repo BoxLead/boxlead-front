@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type {
@@ -6,160 +6,162 @@ import type {
   ConversationResponse,
   LeadResponse,
 } from "../../api/types";
+import { ArrowLeftIcon } from "../../components/icons/UiIcons";
+import { Loading } from "../../components/Loading";
+import { PlatformBadge } from "../../components/PlatformBadge/PlatformBadge";
+import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
+import { useApiQuery } from "../../hooks/useApiQuery";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { formatShortDate } from "../../util/format";
+import { leadDisplayName } from "../../util/labels";
 import "./LeadDetail.css";
 
 export function LeadDetail() {
   const { leadId } = useParams<{ leadId: string }>();
-  const [lead, setLead] = useState<LeadResponse | null>(null);
-  const [conversations, setConversations] = useState<ConversationResponse[]>(
-    [],
-  );
-  const [commentThreads, setCommentThreads] = useState<
-    CommentThreadResponse[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const lead = useApiQuery<LeadResponse>(leadId ? `/leads/${leadId}` : null);
+  const allConversations =
+    useApiQuery<ConversationResponse[]>("/conversations");
+  const allThreads = useApiQuery<CommentThreadResponse[]>("/comments/threads");
   const [starting, setStarting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!leadId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [l, c, t] = await Promise.all([
-        api.get<LeadResponse>(`/leads/${leadId}`),
-        api.get<ConversationResponse[]>("/conversations"),
-        api.get<CommentThreadResponse[]>("/comments/threads"),
-      ]);
-      setLead(l);
-      setConversations(c.filter((conv) => conv.leadId === leadId));
-      setCommentThreads(t.filter((thread) => thread.leadId === leadId));
-    } catch (e) {
-      setError(
-        e instanceof ApiError ? e.message : "Failed to load lead details",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [leadId]);
+  useDocumentTitle(lead.data ? leadDisplayName(lead.data) : "Lead");
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const conversations = (allConversations.data ?? []).filter(
+    (c) => c.leadId === leadId,
+  );
+  const threads = (allThreads.data ?? []).filter((t) => t.leadId === leadId);
 
   async function handleStartConversation() {
-    if (!leadId) return;
+    if (!lead.data) return;
     setStarting(true);
+    setActionError(null);
     try {
       await api.post<ConversationResponse>("/conversations", {
-        leadId,
-        platform: lead?.platform,
+        leadId: lead.data.id,
+        platform: lead.data.platform,
       });
-      await loadData();
+      allConversations.reload();
     } catch (e) {
-      setError(
-        e instanceof ApiError ? e.message : "Failed to start conversation",
+      setActionError(
+        e instanceof ApiError
+          ? e.message
+          : "No pudimos iniciar la conversación.",
       );
     } finally {
       setStarting(false);
     }
   }
 
-  if (loading) {
+  const backLink = (
+    <Link to="/app/leads" className="lead-detail-back">
+      <ArrowLeftIcon width={16} height={16} />
+      Leads
+    </Link>
+  );
+
+  if (lead.loading) {
     return (
-      <div className="page-lead-detail">
-        <p className="lead-detail-status">Loading lead…</p>
+      <div className="page">
+        {backLink}
+        <Loading inline />
       </div>
     );
   }
 
-  if (error && !lead) {
+  if (!lead.data) {
     return (
-      <div className="page-lead-detail">
-        <div className="page-banner page-banner-error" role="alert">
-          {error}
+      <div className="page">
+        {backLink}
+        <div className="page-banner" role="alert">
+          {lead.error ?? "No encontramos este lead."}
         </div>
       </div>
     );
   }
 
-  if (!lead) return null;
-
-  const displayName =
-    lead.name?.trim() || lead.email?.trim() || lead.externalLeadId || "Lead";
+  const error = actionError ?? allConversations.error ?? allThreads.error;
 
   return (
-    <div className="page-lead-detail">
+    <div className="page">
+      {backLink}
       <header className="page-header lead-detail-header">
-        <Link to="/app/leads" className="lead-detail-back">
-          &larr; Back to Leads
-        </Link>
-        <div className="lead-detail-heading">
-          <h1>{displayName}</h1>
-          <span className="lead-detail-platform">{lead.platform}</span>
-          <span
-            className={`lead-detail-badge lead-detail-badge-${lead.status.toLowerCase()}`}
-          >
-            {lead.status}
-          </span>
+        <h1 className="page-title">{leadDisplayName(lead.data)}</h1>
+        <div className="lead-detail-tags">
+          <PlatformBadge platform={lead.data.platform} />
+          <StatusBadge status={lead.data.status} />
         </div>
       </header>
 
       {error ? (
-        <div className="page-banner page-banner-error" role="alert">
+        <div className="page-banner" role="alert">
           {error}
         </div>
       ) : null}
 
       <div className="lead-detail-grid">
-        <section className="lead-detail-info panel">
-          <h2 className="panel-title">Contact Info</h2>
+        <section className="panel lead-detail-card">
+          <h2 className="panel-title">Contacto</h2>
           <dl className="lead-detail-dl">
-            <div className="lead-detail-dl-row">
+            <div>
               <dt>Email</dt>
-              <dd>{lead.email?.trim() || "—"}</dd>
+              <dd>
+                {lead.data.email?.trim() ? (
+                  <a href={`mailto:${lead.data.email.trim()}`}>
+                    {lead.data.email.trim()}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
             </div>
-            <div className="lead-detail-dl-row">
-              <dt>Phone</dt>
-              <dd>{lead.phone?.trim() || "—"}</dd>
+            <div>
+              <dt>Teléfono</dt>
+              <dd>
+                {lead.data.phone?.trim() ? (
+                  <a href={`tel:${lead.data.phone.trim()}`}>
+                    {lead.data.phone.trim()}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
             </div>
-            <div className="lead-detail-dl-row">
-              <dt>Created</dt>
-              <dd>{formatShortDate(lead.createdAt)}</dd>
+            <div>
+              <dt>Creado</dt>
+              <dd>{formatShortDate(lead.data.createdAt)}</dd>
             </div>
           </dl>
         </section>
 
-        <section className="lead-detail-section panel">
-          <div className="lead-detail-section-header">
-            <h2 className="panel-title">Conversations</h2>
+        <section className="panel lead-detail-card">
+          <div className="lead-detail-card-head">
+            <h2 className="panel-title">Conversaciones</h2>
             <button
               type="button"
-              className="lead-detail-action"
+              className="btn btn-secondary btn-sm"
               disabled={starting}
-              onClick={handleStartConversation}
+              onClick={() => void handleStartConversation()}
             >
-              {starting ? "Starting…" : "+ New Conversation"}
+              {starting ? "Iniciando…" : "Nueva conversación"}
             </button>
           </div>
           {conversations.length === 0 ? (
             <p className="lead-detail-empty">
-              No conversations yet. Start one to message this lead.
+              Todavía no hay conversaciones con este lead.
             </p>
           ) : (
             <ul className="lead-detail-list">
               {conversations.map((c) => (
-                <li key={c.id} className="lead-detail-list-item">
-                  <Link to="/app/inbox" className="lead-detail-list-link">
-                    <span className="lead-detail-list-platform">
-                      {c.platform}
-                    </span>
-                    <span className="lead-detail-list-label">
-                      {c.externalThreadId ?? "DM Conversation"}
-                    </span>
-                    <span className="lead-detail-list-meta">
-                      {c.status} &middot; {formatShortDate(c.updatedAt)}
+                <li key={c.id}>
+                  <Link
+                    to={`/app/inbox?id=${c.id}`}
+                    className="lead-detail-link"
+                  >
+                    <PlatformBadge platform={c.platform} />
+                    <span className="lead-detail-link-meta">
+                      {c.status === "OPEN" ? "Abierta" : "Cerrada"} ·{" "}
+                      {formatShortDate(c.updatedAt)}
                     </span>
                   </Link>
                 </li>
@@ -168,25 +170,23 @@ export function LeadDetail() {
           )}
         </section>
 
-        <section className="lead-detail-section panel">
-          <h2 className="panel-title">Comment Threads</h2>
-          {commentThreads.length === 0 ? (
+        <section className="panel lead-detail-card">
+          <h2 className="panel-title">Comentarios</h2>
+          {threads.length === 0 ? (
             <p className="lead-detail-empty">
-              No comment threads for this lead.
+              Este lead no comentó en tus publicaciones.
             </p>
           ) : (
             <ul className="lead-detail-list">
-              {commentThreads.map((t) => (
-                <li key={t.id} className="lead-detail-list-item">
-                  <Link to="/app/inbox" className="lead-detail-list-link">
-                    <span className="lead-detail-list-platform">
-                      {t.platform}
-                    </span>
-                    <span className="lead-detail-list-label">
-                      {t.mediaProductType ?? "Post"} &middot;{" "}
-                      {t.externalMediaId}
-                    </span>
-                    <span className="lead-detail-list-meta">
+              {threads.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    to={`/app/inbox?tab=comments&id=${t.id}`}
+                    className="lead-detail-link"
+                  >
+                    <PlatformBadge platform={t.platform} />
+                    <span className="lead-detail-link-meta">
+                      {t.mediaProductType ?? "Publicación"} ·{" "}
                       {formatShortDate(t.updatedAt)}
                     </span>
                   </Link>

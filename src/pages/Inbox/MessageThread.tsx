@@ -1,128 +1,140 @@
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { api, ApiError } from "../../api/client";
-import type { MessageResponse } from "../../api/types";
+import type {
+  ConversationResponse,
+  CreateMessageRequest,
+  LeadResponse,
+  MessageResponse,
+} from "../../api/types";
+import { SendIcon } from "../../components/icons/UiIcons";
+import { useApiQuery } from "../../hooks/useApiQuery";
 import { formatShortDate } from "../../util/format";
+import { ThreadPane } from "./ThreadPane";
 import "./MessageThread.css";
 
-type Props = {
-  conversationId: string | null;
-  onSent?: () => void;
+type MessageThreadProps = {
+  conversation: ConversationResponse;
+  lead: LeadResponse | undefined;
+  onBack: () => void;
+  onSent: () => void;
 };
 
-export function MessageThread({ conversationId, onSent }: Props) {
-  const [messages, setMessages] = useState<MessageResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function MessageThread({
+  conversation,
+  lead,
+  onBack,
+  onSent,
+}: MessageThreadProps) {
+  const path = `/conversations/${conversation.id}/messages`;
+  const { data, error, loading, reload } = useApiQuery<MessageResponse[]>(path);
   const [draft, setDraft] = useState("");
-
-  const loadMessages = useCallback(async () => {
-    if (!conversationId) {
-      setMessages([]);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const list = await api.get<MessageResponse[]>(
-        `/conversations/${conversationId}/messages`,
-      );
-      setMessages(list);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to load messages");
-    } finally {
-      setLoading(false);
-    }
-  }, [conversationId]);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const messages = data ?? [];
 
   useEffect(() => {
-    void loadMessages();
-  }, [loadMessages]);
+    const node = scrollRef.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [data]);
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!conversationId || !draft.trim()) return;
+  async function send() {
+    const content = draft.trim();
+    if (!content || sending) return;
     setSending(true);
-    setError(null);
+    setSendError(null);
     try {
-      await api.post<MessageResponse>(
-        `/conversations/${conversationId}/messages`,
-        {
-          direction: "OUTBOUND",
-          content: draft.trim(),
-        },
-      );
+      const body: CreateMessageRequest = { direction: "OUTBOUND", content };
+      await api.post<MessageResponse>(path, body);
       setDraft("");
-      await loadMessages();
-      onSent?.();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to send");
+      reload();
+      onSent();
+    } catch (e) {
+      setSendError(
+        e instanceof ApiError ? e.message : "No pudimos enviar el mensaje.",
+      );
     } finally {
       setSending(false);
     }
   }
 
-  if (!conversationId) {
-    return (
-      <div className="message-thread message-thread-placeholder">
-        <p>Select a conversation to read and reply to messages.</p>
-      </div>
-    );
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    void send();
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      void send();
+    }
   }
 
   return (
-    <div className="message-thread">
-      <div className="message-thread-header">
-        <h2>Messages</h2>
-      </div>
-      <div className="message-scroll">
-        {loading ? (
-          <p className="message-thread-status">Loading messages…</p>
-        ) : null}
-        {error ? (
-          <p className="message-thread-error" role="alert">
-            {error}
+    <ThreadPane
+      lead={lead}
+      platform={conversation.platform}
+      onBack={onBack}
+      footer={
+        <form className="message-compose" onSubmit={handleSubmit}>
+          <label className="visually-hidden" htmlFor="reply-input">
+            Tu respuesta
+          </label>
+          <textarea
+            id="reply-input"
+            className="message-compose-input"
+            rows={1}
+            placeholder="Escribí una respuesta…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={sending}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary message-compose-send"
+            disabled={sending || !draft.trim()}
+          >
+            <SendIcon width={18} height={18} />
+            <span>{sending ? "Enviando…" : "Enviar"}</span>
+          </button>
+        </form>
+      }
+    >
+      <div className="thread-scroll" ref={scrollRef}>
+        {loading ? <p className="thread-status">Cargando mensajes…</p> : null}
+        {(error ?? sendError) ? (
+          <p className="thread-status thread-error" role="alert">
+            {error ?? sendError}
           </p>
         ) : null}
-        <ul className="message-list" aria-live="polite">
-          {messages.map((m) => (
+        {!loading && !error && messages.length === 0 ? (
+          <p className="thread-status">Todavía no hay mensajes.</p>
+        ) : null}
+        <ul className="bubble-list" aria-live="polite">
+          {messages.map((message) => (
             <li
-              key={m.id}
-              className={`message-bubble message-bubble-${m.direction.toLowerCase()}`}
+              key={message.id}
+              className={`bubble${message.direction === "OUTBOUND" ? " bubble-outbound" : ""}`}
             >
-              <div className="message-bubble-content">
-                {m.content?.trim() || (
-                  <em className="message-empty">(no text)</em>
+              <div className="bubble-content">
+                {message.content?.trim() || (
+                  <em className="bubble-empty">(sin texto)</em>
                 )}
               </div>
-              <time className="message-bubble-time" dateTime={m.createdAt}>
-                {formatShortDate(m.createdAt)}
+              <time className="bubble-time" dateTime={message.createdAt}>
+                {formatShortDate(message.createdAt)}
               </time>
             </li>
           ))}
         </ul>
       </div>
-      <form className="message-compose" onSubmit={handleSubmit}>
-        <label className="visually-hidden" htmlFor="reply-input">
-          Your reply
-        </label>
-        <textarea
-          id="reply-input"
-          className="message-compose-input"
-          rows={2}
-          placeholder="Write a reply…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          disabled={sending}
-        />
-        <button
-          type="submit"
-          className="message-compose-send"
-          disabled={sending || !draft.trim()}
-        >
-          {sending ? "Sending…" : "Send"}
-        </button>
-      </form>
-    </div>
+    </ThreadPane>
   );
 }

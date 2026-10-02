@@ -1,63 +1,63 @@
-.page-connections {
-  padding: 0 var(--signal-space-lg) var(--signal-space-xl);
-}
-
-.conn-banner {
-  margin-bottom: var(--signal-space-md);
-}
-
 .conn-section {
-  margin-bottom: var(--signal-space-lg);
-  padding: var(--signal-space-lg);
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-md);
-  background: var(--signal-surface);
+  margin-bottom: var(--signal-space-xl);
 }
 
-.conn-section-title {
-  font-size: 1rem;
-  margin-bottom: var(--signal-space-sm);
+.conn-section > .panel-title {
+  margin-bottom: 12px;
 }
 
-.conn-section-desc {
+.conn-channels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--signal-space-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.conn-channel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--signal-space-lg);
+  padding: 20px;
+  transition: border-color 0.2s ease;
+}
+
+.conn-channel:hover {
+  border-color: rgba(234, 234, 220, 0.24);
+}
+
+.conn-channel-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.conn-channel-name {
+  font-size: 1.0625rem;
+}
+
+.conn-channel-desc {
+  margin: 2px 0 0;
   font-size: 0.875rem;
   color: var(--signal-text-muted);
-  line-height: 1.5;
-  margin-bottom: var(--signal-space-md);
 }
 
-.conn-code {
-  font-family: var(--signal-mono);
-  font-size: 0.8125rem;
-  padding: 2px 6px;
-  background: var(--signal-bg);
-  border-radius: var(--signal-radius-sm);
-  word-break: break-all;
-}
-
-.conn-actions {
+.conn-channel-foot {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--signal-space-sm);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.conn-connect-btn {
-  padding: var(--signal-space-sm) var(--signal-space-lg);
-  border: none;
-  border-radius: var(--signal-radius-sm);
-  background: var(--signal-accent);
-  color: var(--signal-accent-contrast);
-  font-weight: 600;
-}
-
-.conn-connect-btn:hover {
-  background: var(--signal-accent-hover);
-}
-
-.conn-status,
-.conn-empty {
+.conn-channel-state {
+  font-size: 0.8125rem;
   color: var(--signal-text-muted);
-  font-size: 0.9375rem;
+}
+
+.conn-channel-state-on {
+  color: var(--signal-success);
 }
 
 .conn-list {
@@ -69,80 +69,69 @@
 .conn-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--signal-space-md);
-  padding: var(--signal-space-md) 0;
+  gap: 12px;
+  padding: 14px var(--signal-space-md);
   border-bottom: 1px solid var(--signal-border);
 }
 
 .conn-row:last-child {
   border-bottom: none;
-  padding-bottom: 0;
-}
-
-.conn-row:first-child {
-  padding-top: 0;
 }
 
 .conn-row-main {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--signal-space-sm) var(--signal-space-md);
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
   min-width: 0;
 }
 
-.conn-platform {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--signal-accent);
-  background: var(--signal-accent-muted);
-  padding: 4px 8px;
-  border-radius: var(--signal-radius-sm);
-}
-
 .conn-name {
-  font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--signal-text);
+  color: var(--signal-heading);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 280px;
 }
 
-.conn-external {
-  font-family: var(--signal-mono);
-  font-size: 0.75rem;
-  color: var(--signal-text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 200px;
-}
-
-.conn-time {
+.conn-meta {
   font-size: 0.8125rem;
   color: var(--signal-text-muted);
 }
 
-.conn-disconnect {
-  flex-shrink: 0;
-  padding: var(--signal-space-xs) var(--signal-space-md);
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-sm);
-  background: transparent;
-  color: var(--signal-danger);
-  font-weight: 500;
+.conn-confirm {
+  display: flex;
+  gap: var(--signal-space-sm);
 }
 
-.conn-disconnect:hover:not(:disabled) {
-  background: var(--signal-danger-muted);
+.conn-empty {
+  margin: 0;
+  padding: var(--signal-space-lg);
+  color: var(--signal-text-muted);
 }
 
-.conn-disconnect:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.conn-skeleton {
+  height: 72px;
+}
+
+@media (max-width: 560px) {
+  .conn-row {
+    flex-wrap: wrap;
+  }
+
+  .conn-row > .btn,
+  .conn-confirm {
+    width: 100%;
+  }
+
+  .conn-confirm .btn,
+  .conn-row > .btn {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conn-channel {
+    transition: none;
+  }
 }

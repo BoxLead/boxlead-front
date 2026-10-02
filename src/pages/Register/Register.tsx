@@ -2,11 +2,14 @@ import { type FormEvent, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/auth";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 const MIN_PASSWORD_LENGTH = 6;
 
 export function Register() {
+  useDocumentTitle("Crear cuenta");
+
   const { token, register, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,15 +22,11 @@ export function Register() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     clearError();
-    try {
-      await register({
-        email: email.trim(),
-        password,
-        name: name.trim() || undefined,
-      });
-    } catch {
-      /* error surfaced via context */
-    }
+    await register({
+      email: email.trim(),
+      password,
+      name: name.trim() || undefined,
+    });
   }
 
   return (

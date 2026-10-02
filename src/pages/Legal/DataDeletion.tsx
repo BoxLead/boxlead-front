@@ -1,16 +1,10 @@
 import { Link } from "react-router-dom";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
-import "./Legal.css";
+import { LegalLayout } from "./LegalLayout";
 
 export function DataDeletion() {
   return (
-    <div className="legal-page">
-      <Link to="/" className="legal-back">
-        &larr; Back to BoxLead
-      </Link>
-      <h1>Data Deletion Instructions</h1>
-      <p className="legal-updated">Last updated: March 29, 2026</p>
-
+    <LegalLayout title="Data Deletion Instructions" updated="March 29, 2026">
       <p>
         If you no longer wish to use {PRODUCT_NAME} and want all your data
         permanently removed from our systems, follow the steps below.{" "}
@@ -94,6 +88,6 @@ export function DataDeletion() {
         questions about the deletion process, contact {LEGAL_ENTITY_NAME} at{" "}
         <a href="mailto:support@boxlead.app">support@boxlead.app</a>.
       </p>
-    </div>
+    </LegalLayout>
   );
 }
