@@ -1,76 +1,51 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../../api/client";
 import type {
   AccountConnectionResponse,
   PlatformType,
   WhatsAppConfig,
 } from "../../api/types";
+import { PlatformBadge } from "../../components/PlatformBadge/PlatformBadge";
+import { useApiQuery } from "../../hooks/useApiQuery";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import {
   loadFacebookSdk,
   launchWhatsAppSignup,
   type WhatsAppSignupEvent,
 } from "../../util/facebook-sdk";
 import { formatShortDate } from "../../util/format";
+import { platformLabel } from "../../util/labels";
 import { redirectUriFor } from "../../util/oauth";
 import "./Connections.css";
 
-const REDIRECT_PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "MELI"];
+type Channel = {
+  platform: PlatformType;
+  description: string;
+};
 
-function platformLabel(p: PlatformType): string {
-  switch (p) {
-    case "META":
-      return "Meta";
-    case "INSTAGRAM":
-      return "Instagram";
-    case "WHATSAPP":
-      return "WhatsApp";
-    case "MELI":
-      return "MercadoLibre";
-    default:
-      return p;
-  }
-}
+const CHANNELS: Channel[] = [
+  { platform: "WHATSAPP", description: "Mensajes de WhatsApp Business." },
+  { platform: "INSTAGRAM", description: "Mensajes directos y comentarios." },
+  { platform: "META", description: "Mensajes de tu página de Facebook." },
+  { platform: "MELI", description: "Preguntas de tus publicaciones." },
+];
+
+type SignupData = {
+  phone_number_id?: string;
+  waba_id?: string;
+};
 
 export function Connections() {
-  const [connections, setConnections] = useState<AccountConnectionResponse[]>(
-    [],
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [whatsAppBusy, setWhatsAppBusy] = useState(false);
-  const [waConfig, setWaConfig] = useState<WhatsAppConfig | null>(null);
+  useDocumentTitle("Conexiones");
 
-  const signupDataRef = useRef<{
-    phone_number_id?: string;
-    waba_id?: string;
-  } | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const list =
-        await api.get<AccountConnectionResponse[]>("/oauth/connections");
-      setConnections(list);
-    } catch (e) {
-      setError(
-        e instanceof ApiError ? e.message : "Failed to load connections",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-    void api
-      .get<WhatsAppConfig>("/oauth/whatsapp/config")
-      .then(setWaConfig)
-      .catch(() => {
-        /* WhatsApp config unavailable; button will stay disabled */
-      });
-  }, [load]);
+  const connections =
+    useApiQuery<AccountConnectionResponse[]>("/oauth/connections");
+  const waConfig = useApiQuery<WhatsAppConfig>("/oauth/whatsapp/config");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState<PlatformType | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const signupDataRef = useRef<SignupData | null>(null);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -84,171 +59,204 @@ export function Connections() {
           };
         }
       } catch {
-        // not a JSON message from Facebook, ignore
+        return;
       }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  async function handleConnect(platform: PlatformType) {
-    setError(null);
-    try {
-      const uri = redirectUriFor(platform);
-      const res = await api.get<{ url: string; codeVerifier?: string }>(
-        `/oauth/${platform}/auth-url?redirectUri=${encodeURIComponent(uri)}`,
-      );
-      if (res.codeVerifier) {
-        sessionStorage.setItem("oauth_code_verifier", res.codeVerifier);
-      }
-      window.location.href = res.url;
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not start OAuth");
+  async function connectWithRedirect(platform: PlatformType) {
+    const uri = redirectUriFor(platform);
+    const res = await api.get<{ url: string; codeVerifier?: string }>(
+      `/oauth/${platform}/auth-url?redirectUri=${encodeURIComponent(uri)}`,
+    );
+    if (res.codeVerifier) {
+      sessionStorage.setItem("oauth_code_verifier", res.codeVerifier);
     }
+    window.location.href = res.url;
   }
 
-  async function handleWhatsAppConnect() {
-    if (!waConfig) {
-      setError("WhatsApp app ID or config ID is not configured");
+  async function connectWhatsApp(config: WhatsAppConfig) {
+    signupDataRef.current = null;
+    await loadFacebookSdk(config.appId);
+    const code = await launchWhatsAppSignup(config.configId);
+    const signupData = signupDataRef.current as SignupData | null;
+    const phoneNumberId = signupData?.phone_number_id;
+    const wabaId = signupData?.waba_id;
+
+    if (!phoneNumberId || !wabaId) {
+      setActionError(
+        "El alta de WhatsApp terminó, pero no recibimos los datos de la cuenta. Probá de nuevo.",
+      );
       return;
     }
-    setError(null);
-    setWhatsAppBusy(true);
-    signupDataRef.current = null;
 
+    await api.post<AccountConnectionResponse[]>("/oauth/WHATSAPP/callback", {
+      code,
+      redirectUri: "",
+      phoneNumberId,
+      wabaId,
+    });
+    connections.reload();
+  }
+
+  async function handleConnect(platform: PlatformType) {
+    setActionError(null);
+    setConnecting(platform);
     try {
-      await loadFacebookSdk(waConfig.appId);
-      const code = await launchWhatsAppSignup(waConfig.configId);
-
-      // The ref is mutated by the 'message' event listener during the await above,
-      // so we re-read it here. TypeScript control-flow analysis can't track this.
-      const signupData = signupDataRef.current as {
-        phone_number_id?: string;
-        waba_id?: string;
-      } | null;
-      const phoneNumberId = signupData?.phone_number_id;
-      const wabaId = signupData?.waba_id;
-
-      if (!phoneNumberId || !wabaId) {
-        setError(
-          "WhatsApp signup completed but asset IDs were not received. Please try again.",
-        );
-        return;
+      if (platform === "WHATSAPP") {
+        if (!waConfig.data) {
+          setActionError("WhatsApp todavía no está configurado.");
+          return;
+        }
+        await connectWhatsApp(waConfig.data);
+      } else {
+        await connectWithRedirect(platform);
       }
-
-      await api.post<AccountConnectionResponse[]>("/oauth/WHATSAPP/callback", {
-        code,
-        redirectUri: "",
-        phoneNumberId,
-        wabaId,
-      });
-
-      await load();
     } catch (e) {
-      setError(
-        e instanceof ApiError ? e.message : "WhatsApp connection failed",
+      setActionError(
+        e instanceof ApiError
+          ? e.message
+          : `No pudimos conectar ${platformLabel(platform)}.`,
       );
     } finally {
-      setWhatsAppBusy(false);
+      setConnecting(null);
     }
   }
 
   async function handleDisconnect(id: string) {
-    setBusyId(id);
-    setError(null);
+    setRemovingId(id);
+    setActionError(null);
     try {
       await api.delete(`/oauth/connections/${id}`);
-      await load();
+      connections.reload();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to disconnect");
+      setActionError(
+        e instanceof ApiError ? e.message : "No pudimos desconectar la cuenta.",
+      );
     } finally {
-      setBusyId(null);
+      setRemovingId(null);
+      setConfirmId(null);
     }
   }
 
+  const list = connections.data ?? [];
+  const error = actionError ?? connections.error;
+
   return (
-    <div className="page-connections">
+    <div className="page">
       <header className="page-header">
-        <h1>Connected accounts</h1>
-        <p className="page-header-desc">
-          Link Meta Pages, Instagram Business accounts, WhatsApp Business
-          accounts, and MercadoLibre so webhooks and messages route to your
-          workspace.
-        </p>
+        <div>
+          <h1 className="page-title">Conexiones</h1>
+          <p className="page-header-desc">
+            Conectá tus canales para que los mensajes lleguen a tu bandeja.
+          </p>
+        </div>
       </header>
 
       {error ? (
-        <div className="page-banner page-banner-error conn-banner" role="alert">
+        <div className="page-banner" role="alert">
           {error}
         </div>
       ) : null}
 
-      <section className="conn-section panel">
-        <h2 className="conn-section-title">Add a channel</h2>
-        <p className="conn-section-desc">
-          For Meta, Instagram, and MercadoLibre you will be redirected to
-          approve access. For WhatsApp, a popup will guide you through the
-          Embedded Signup flow.
-        </p>
-        <div className="conn-actions">
-          {REDIRECT_PLATFORMS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              className="conn-connect-btn"
-              onClick={() => void handleConnect(p)}
-            >
-              Connect {platformLabel(p)}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="conn-connect-btn"
-            disabled={whatsAppBusy || !waConfig}
-            onClick={() => void handleWhatsAppConnect()}
-          >
-            {whatsAppBusy ? "Connecting…" : "Connect WhatsApp"}
-          </button>
-        </div>
+      <section className="conn-section">
+        <h2 className="panel-title">Canales</h2>
+        <ul className="conn-channels">
+          {CHANNELS.map(({ platform, description }) => {
+            const count = list.filter((c) => c.platform === platform).length;
+            const unavailable = platform === "WHATSAPP" && !waConfig.data;
+            return (
+              <li key={platform} className="panel conn-channel">
+                <div className="conn-channel-head">
+                  <PlatformBadge platform={platform} iconOnly />
+                  <div>
+                    <h3 className="conn-channel-name">
+                      {platformLabel(platform)}
+                    </h3>
+                    <p className="conn-channel-desc">{description}</p>
+                  </div>
+                </div>
+                <div className="conn-channel-foot">
+                  <span
+                    className={`conn-channel-state${count > 0 ? " conn-channel-state-on" : ""}`}
+                  >
+                    {count === 0
+                      ? "Sin conectar"
+                      : count === 1
+                        ? "1 cuenta conectada"
+                        : `${count} cuentas conectadas`}
+                  </span>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${count > 0 ? "btn-secondary" : "btn-primary"}`}
+                    disabled={connecting !== null || unavailable}
+                    onClick={() => void handleConnect(platform)}
+                  >
+                    {connecting === platform
+                      ? "Conectando…"
+                      : count > 0
+                        ? "Agregar otra"
+                        : "Conectar"}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
-      <section className="conn-section panel">
-        <h2 className="conn-section-title">Active connections</h2>
-        {loading ? (
-          <p className="conn-status">Loading…</p>
-        ) : connections.length === 0 ? (
-          <p className="conn-empty">No accounts linked yet.</p>
+      <section className="conn-section">
+        <h2 className="panel-title">Cuentas conectadas</h2>
+        {connections.loading ? (
+          <div className="conn-skeleton skeleton" aria-hidden="true" />
+        ) : list.length === 0 ? (
+          <p className="panel conn-empty">
+            Todavía no conectaste ninguna cuenta.
+          </p>
         ) : (
-          <ul className="conn-list">
-            {connections.map((c) => (
+          <ul className="panel conn-list">
+            {list.map((c) => (
               <li key={c.id} className="conn-row">
+                <PlatformBadge platform={c.platform} iconOnly />
                 <div className="conn-row-main">
-                  <span className="conn-platform">
-                    {platformLabel(c.platform)}
-                  </span>
                   <span className="conn-name">
                     {c.displayName ?? c.externalAccountId}
                   </span>
-                  {c.displayName ? (
-                    <span
-                      className="conn-external"
-                      title={c.externalAccountId}
-                    >
-                      {c.externalAccountId}
-                    </span>
-                  ) : null}
-                  <span className="conn-time">
-                    Linked {formatShortDate(c.connectedAt)}
+                  <span className="conn-meta">
+                    {platformLabel(c.platform)} · Conectada el{" "}
+                    {formatShortDate(c.connectedAt)}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="conn-disconnect"
-                  disabled={busyId === c.id}
-                  onClick={() => void handleDisconnect(c.id)}
-                >
-                  {busyId === c.id ? "Removing…" : "Disconnect"}
-                </button>
+                {confirmId === c.id ? (
+                  <div className="conn-confirm">
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      disabled={removingId === c.id}
+                      onClick={() => void handleDisconnect(c.id)}
+                    >
+                      {removingId === c.id ? "Quitando…" : "Sí, desconectar"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={removingId === c.id}
+                      onClick={() => setConfirmId(null)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setConfirmId(c.id)}
+                  >
+                    Desconectar
+                  </button>
+                )}
               </li>
             ))}
           </ul>

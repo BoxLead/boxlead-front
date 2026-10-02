@@ -1,76 +1,28 @@
-.oauth-callback-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--signal-space-lg);
-  background: var(--signal-bg);
-}
-
-.oauth-callback-card {
-  max-width: 420px;
-  width: 100%;
-  background: var(--signal-surface);
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-lg);
-  padding: var(--signal-space-xl);
-  box-shadow: var(--signal-shadow);
-  text-align: center;
-}
-
-.oauth-callback-card h1 {
-  font-size: 1.25rem;
-  margin-bottom: var(--signal-space-md);
-}
-
 .oauth-callback-msg {
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  color: var(--signal-text-muted);
+  margin: var(--signal-space-md) 0 var(--signal-space-lg);
 }
 
-.oauth-callback-ok {
-  color: var(--signal-success);
-}
-
-.oauth-callback-err {
-  color: var(--signal-danger);
-}
-
-.oauth-callback-spinner {
-  width: 32px;
-  height: 32px;
-  margin: var(--signal-space-lg) auto 0;
-  border: 3px solid var(--signal-border);
-  border-top-color: var(--signal-accent);
-  border-radius: 50%;
-  animation: oauth-spin 0.8s linear infinite;
-}
-
-@keyframes oauth-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.oauth-callback-btn {
+  width: 100%;
+  min-height: 48px;
 }
 
 .oauth-callback-list {
-  text-align: left;
-  margin: var(--signal-space-md) 0 0;
-  padding-left: var(--signal-space-lg);
-  font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--signal-space-sm);
+  list-style: none;
+  margin: 0;
+  padding: 0;
   color: var(--signal-text);
 }
 
-.oauth-callback-back {
-  margin-top: var(--signal-space-lg);
-  padding: var(--signal-space-sm) var(--signal-space-lg);
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-sm);
-  background: var(--signal-surface);
-  color: var(--signal-accent);
-  font-weight: 600;
+.oauth-callback-list strong {
+  color: var(--signal-heading);
 }
 
-.oauth-callback-back:hover {
-  background: var(--signal-accent-muted);
+.oauth-callback-spinner {
+  display: flex;
+  justify-content: center;
+  padding: var(--signal-space-md) 0;
 }
