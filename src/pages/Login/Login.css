@@ -148,6 +148,7 @@
 
 .auth-footer {
   margin: var(--signal-space-lg) 0 0;
+  text-align: center;
   font-size: 0.9375rem;
   color: var(--signal-text-muted);
 }
