@@ -37,7 +37,7 @@ The app is served on `http://localhost:3000`. Two variables can be set in the en
 | `VITE_API_BASE_URL` | `http://localhost:8080` | API origin, baked into the bundle        |
 | `WEB_PORT`          | `3000`                  | Host port                                |
 
-`VITE_API_BASE_URL` is a build argument: changing it requires a rebuild, and the API must allow the app origin in CORS.
+`VITE_API_BASE_URL` is a build argument: changing it requires a rebuild, and the API must allow the app origin in CORS. Its origin is also added to the Content Security Policy that production builds inject into `index.html`.
 
 Without Compose:
 
