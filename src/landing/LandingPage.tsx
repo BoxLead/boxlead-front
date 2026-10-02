@@ -10,7 +10,6 @@ import { FaqSection } from "./components/FaqSection";
 import { CtaSection } from "./components/CtaSection";
 import { Footer } from "./components/Footer";
 
-/** Fades in every `[data-reveal]` element the first time it scrolls into view. */
 function useScrollReveal() {
   useEffect(() => {
     const nodes = document.querySelectorAll(".landing [data-reveal]");

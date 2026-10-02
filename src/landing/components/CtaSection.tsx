@@ -18,7 +18,6 @@ type Activity = {
 
 const ICON_SIZE = 20;
 
-/* Illustrative examples of what the agent handles on its own. */
 const activity: Activity[] = [
   {
     icon: <WhatsAppIcon width={ICON_SIZE} height={ICON_SIZE} />,

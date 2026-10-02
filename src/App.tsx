@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LandingPage } from "./landing/LandingPage";
 
-/* Everything except the landing page is code-split so `/` ships only what it renders. */
 const Layout = lazy(() =>
   import("./components/Layout/Layout").then((m) => ({ default: m.Layout })),
 );

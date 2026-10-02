@@ -37,7 +37,6 @@
   line-height: 1.4;
 }
 
-/* Items cascade in once the card has been revealed */
 .product-list li {
   display: flex;
   align-items: center;

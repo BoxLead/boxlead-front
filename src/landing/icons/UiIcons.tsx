@@ -1,8 +1,3 @@
-/**
- * Line icons for the landing page UI. All share one stroke style and
- * inherit `currentColor`, so they can be tinted from CSS.
- */
-
 import type { ReactNode, SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement>;

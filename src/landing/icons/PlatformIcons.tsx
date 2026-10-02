@@ -1,17 +1,6 @@
-/**
- * Platform icon components shared across the landing page.
- *
- * Each icon accepts standard SVG props so it can be sized arbitrarily.
- * Usage:
- *   <WhatsAppIcon width={32} height={32} />
- *   <InstagramIcon width={24} className="my-class" />
- */
-
 import type { SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement>;
-
-// ─── WhatsApp ───────────────────────────────────────────────────────────────
 
 export function WhatsAppIcon({ width = 40, height = 40, ...props }: IconProps) {
   return (
@@ -39,8 +28,6 @@ export function WhatsAppIcon({ width = 40, height = 40, ...props }: IconProps) {
     </svg>
   );
 }
-
-// ─── Instagram ──────────────────────────────────────────────────────────────
 
 export function InstagramIcon({
   width = 40,
@@ -89,8 +76,6 @@ export function InstagramIcon({
   );
 }
 
-// ─── Messenger ──────────────────────────────────────────────────────────────
-
 export function MessengerIcon({
   width = 40,
   height = 40,
@@ -121,8 +106,6 @@ export function MessengerIcon({
     </svg>
   );
 }
-
-// ─── MercadoLibre ───────────────────────────────────────────────────────────
 
 export function MercadoLibreIcon({
   width = 40,
@@ -157,8 +140,6 @@ export function MercadoLibreIcon({
     </svg>
   );
 }
-
-// ─── TikTok ─────────────────────────────────────────────────────────────────
 
 export function TikTokIcon({ width = 40, height = 40, ...props }: IconProps) {
   return (
@@ -214,8 +195,6 @@ export function TikTokIcon({ width = 40, height = 40, ...props }: IconProps) {
   );
 }
 
-// ─── LinkedIn ───────────────────────────────────────────────────────────────
-
 export function LinkedInIcon({ width = 40, height = 40, ...props }: IconProps) {
   return (
     <svg
@@ -238,8 +217,6 @@ export function LinkedInIcon({ width = 40, height = 40, ...props }: IconProps) {
     </svg>
   );
 }
-
-// ─── Google Ads ─────────────────────────────────────────────────────────────
 
 export function GoogleAdsIcon({
   width = 40,

@@ -53,7 +53,6 @@ const scenes: Scene[] = [
   },
 ];
 
-/** Phases of a scene: lead writes → agent types → agent replies → outcome. */
 const PHASE_DURATIONS = [1100, 1500, 1300, 3200];
 const LAST_PHASE = PHASE_DURATIONS.length - 1;
 

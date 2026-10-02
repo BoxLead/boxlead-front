@@ -44,7 +44,6 @@
   color: var(--landing-text-muted);
 }
 
-/* ── Agent activity feed ── */
 .cta-feed {
   border-radius: var(--landing-radius-md);
   border: 1px solid var(--landing-border-strong);
@@ -168,7 +167,6 @@
   }
 }
 
-/* The card grows into place as it scrolls into view */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .cta-card {
@@ -210,7 +208,6 @@
     font-size: 0.875rem;
   }
 
-  /* Title and result stack so nothing gets truncated on narrow screens */
   .cta-feed-item {
     padding-inline: 14px;
   }

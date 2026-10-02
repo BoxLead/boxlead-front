@@ -1,7 +1,6 @@
 import type { SVGProps } from "react";
 import "./Logo.css";
 
-/** BoxLead mark: a cube with an inbound arrow. Inherits `currentColor`. */
 export function LogoMark(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

@@ -14,7 +14,6 @@
   padding: 0;
 }
 
-/* ── Connector between stages, with a pulse travelling along it ── */
 .agent-flow-line {
   position: absolute;
   top: 25px;
@@ -47,7 +46,6 @@
   text-align: center;
 }
 
-/* Each tile lights up as the pulse reaches it */
 .agent-flow-icon {
   animation: agent-flow-active var(--agent-flow-cycle) linear infinite;
 }
@@ -76,7 +74,6 @@
   max-width: 230px;
 }
 
-/* ── Human handoff note ── */
 .agent-flow-handoff {
   display: flex;
   align-items: center;

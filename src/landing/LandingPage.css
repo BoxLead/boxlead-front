@@ -1,15 +1,7 @@
-/* ======================================================
-   Landing Page — Design Tokens & Shared Styles
-   Prefix: --landing-*
-   Scope: used exclusively by src/landing/ components
-   ====================================================== */
-
 .landing {
-  /* ── Brand ── */
   --landing-navy: #132c44;
   --landing-cream: #eaeadc;
 
-  /* ── Surfaces (deep navy, derived from the brand color) ── */
   --landing-bg: #0a1521;
   --landing-bg-subtle: #0d1b2a;
   --landing-surface: #112233;
@@ -17,41 +9,33 @@
   --landing-border: rgba(234, 234, 220, 0.08);
   --landing-border-strong: rgba(234, 234, 220, 0.16);
 
-  /* ── Text ── */
   --landing-text: #b7c4d0;
   --landing-text-muted: #7c8c9b;
   --landing-heading: #f1f1e6;
 
-  /* ── Accent ── */
   --landing-accent: #8fc1ee;
   --landing-accent-soft: rgba(143, 193, 238, 0.1);
   --landing-accent-border: rgba(143, 193, 238, 0.22);
 
-  /* ── Semantic ── */
   --landing-success: #5fd3a0;
   --landing-success-soft: rgba(95, 211, 160, 0.1);
   --landing-error: #f08a8a;
   --landing-error-soft: rgba(240, 138, 138, 0.08);
 
-  /* ── Layout ── */
   --landing-section-gap: clamp(64px, 8vw, 108px);
   --landing-content-max: 1160px;
   --landing-content-narrow: 760px;
   --landing-content-padding: clamp(20px, 5vw, 40px);
   --landing-header-height: 76px;
 
-  /* ── Typography ── */
   --landing-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* ── Radii ── */
   --landing-radius-sm: 8px;
   --landing-radius-md: 12px;
   --landing-radius-lg: 18px;
 
-  /* ── Shadows ── */
   --landing-shadow-lg: 0 24px 60px rgba(2, 8, 15, 0.55);
 
-  /* ── Motion ── */
   --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   background: var(--landing-bg);
@@ -89,7 +73,6 @@ html:has(.landing) {
   border-radius: 4px;
 }
 
-/* ── Section containers ── */
 .landing-section {
   width: 100%;
   padding: var(--landing-section-gap) var(--landing-content-padding);
@@ -108,7 +91,6 @@ html:has(.landing) {
   width: 100%;
 }
 
-/* ── Section headings ── */
 .landing-section-head {
   max-width: var(--landing-content-narrow);
   margin: 0 auto clamp(40px, 5vw, 64px);
@@ -134,7 +116,6 @@ html:has(.landing) {
   text-wrap: balance;
 }
 
-/* ── Icon tile shared by steps and agent flow ── */
 .landing-icon-tile {
   display: inline-flex;
   align-items: center;
@@ -148,7 +129,6 @@ html:has(.landing) {
   color: var(--landing-accent);
 }
 
-/* ── Buttons ── */
 .landing-btn {
   display: inline-flex;
   align-items: center;
@@ -210,14 +190,12 @@ html:has(.landing) {
   font-size: 1rem;
 }
 
-/* ── Cards lift on hover ── */
 .landing-card {
   border-radius: var(--landing-radius-lg);
   border: 1px solid var(--landing-border);
   background: var(--landing-surface);
 }
 
-/* Hover effects only where a real pointer exists, so they never stick on touch */
 @media (hover: hover) {
   .landing-card:hover {
     border-color: var(--landing-border-strong);
@@ -230,12 +208,10 @@ html:has(.landing) {
   }
 }
 
-/* ── Scroll progress bar (scroll-driven, progressive enhancement) ── */
 .landing-progress {
   display: none;
 }
 
-/* ── Scroll reveal (class toggled by LandingPage observer) ── */
 .landing [data-reveal] {
   opacity: 0;
   transform: translateY(40px) scale(0.97);

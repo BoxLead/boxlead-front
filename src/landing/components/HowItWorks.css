@@ -8,7 +8,6 @@
   padding: 28px 0 0;
 }
 
-/* Track + fill that grows with scroll, linking the three steps */
 .how-steps::before,
 .how-steps::after {
   content: "";
@@ -30,6 +29,8 @@
 }
 
 .how-step {
+  display: flex;
+  flex-direction: column;
   padding: clamp(24px, 2.8vw, 34px);
 }
 
@@ -59,12 +60,6 @@
   margin: 0;
 }
 
-.how-step {
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── Mini visual at the bottom of each step ── */
 .how-visual {
   display: flex;
   flex-wrap: wrap;
