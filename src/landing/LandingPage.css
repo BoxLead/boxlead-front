@@ -5,81 +5,101 @@
    ====================================================== */
 
 .landing {
-  /* ── Color Palette (no pure blacks — sophisticated charcoal/slate) ── */
-  --landing-bg: #0a0a12;
-  --landing-bg-subtle: #0f0f1a;
-  --landing-surface: #141420;
-  --landing-surface-elevated: #1c1c2e;
-  --landing-border: rgba(255, 255, 255, 0.06);
-  --landing-border-strong: rgba(255, 255, 255, 0.12);
+  /* ── Brand ── */
+  --landing-navy: #132c44;
+  --landing-cream: #eaeadc;
 
-  /* Text */
-  --landing-text: #a8a8c0;
-  --landing-text-muted: #636380;
-  --landing-heading: #ededed;
-  --landing-heading-secondary: #c8c8dd;
+  /* ── Surfaces (deep navy, derived from the brand color) ── */
+  --landing-bg: #0a1521;
+  --landing-bg-subtle: #0d1b2a;
+  --landing-surface: #112233;
+  --landing-surface-elevated: #172d43;
+  --landing-border: rgba(234, 234, 220, 0.08);
+  --landing-border-strong: rgba(234, 234, 220, 0.16);
 
-  /* Accent — lavender/indigo */
-  --landing-accent: #818cf8;
-  --landing-accent-hover: #a78bfa;
-  --landing-accent-glow: rgba(129, 140, 248, 0.12);
-  --landing-accent-gradient: linear-gradient(
-    135deg,
-    #818cf8 0%,
-    #a78bfa 50%,
-    #c084fc 100%
-  );
-  --landing-accent-gradient-vivid: linear-gradient(
-    135deg,
-    #6366f1 0%,
-    #8b5cf6 50%,
-    #a855f7 100%
-  );
+  /* ── Text ── */
+  --landing-text: #b7c4d0;
+  --landing-text-muted: #7c8c9b;
+  --landing-heading: #f1f1e6;
 
-  /* Semantic */
-  --landing-success: #34d399;
-  --landing-warning: #fbbf24;
-  --landing-error: #f87171;
+  /* ── Accent ── */
+  --landing-accent: #8fc1ee;
+  --landing-accent-soft: rgba(143, 193, 238, 0.1);
+  --landing-accent-border: rgba(143, 193, 238, 0.22);
 
-  /* Spacing */
-  --landing-section-gap: clamp(80px, 10vw, 140px);
-  --landing-content-max: 1200px;
-  --landing-content-narrow: 800px;
+  /* ── Semantic ── */
+  --landing-success: #5fd3a0;
+  --landing-success-soft: rgba(95, 211, 160, 0.1);
+  --landing-error: #f08a8a;
+  --landing-error-soft: rgba(240, 138, 138, 0.08);
+
+  /* ── Layout ── */
+  --landing-section-gap: clamp(64px, 8vw, 108px);
+  --landing-content-max: 1160px;
+  --landing-content-narrow: 760px;
   --landing-content-padding: clamp(20px, 5vw, 40px);
+  --landing-header-height: 76px;
 
-  /* Typography */
-  --landing-font-heading: "Inter", system-ui, -apple-system, sans-serif;
-  --landing-font-body: "Inter", system-ui, -apple-system, sans-serif;
-  --landing-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* ── Typography ── */
+  --landing-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* Radii */
+  /* ── Radii ── */
   --landing-radius-sm: 8px;
   --landing-radius-md: 12px;
-  --landing-radius-lg: 20px;
-  --landing-radius-xl: 28px;
+  --landing-radius-lg: 18px;
 
-  /* Shadows */
-  --landing-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --landing-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --landing-shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.5);
-  --landing-shadow-glow: 0 0 60px rgba(129, 140, 248, 0.08);
-  --landing-shadow-glow-strong: 0 0 80px rgba(129, 140, 248, 0.15);
+  /* ── Shadows ── */
+  --landing-shadow-lg: 0 24px 60px rgba(2, 8, 15, 0.55);
 
-  /* Reset for landing scope */
+  /* ── Motion ── */
+  --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
   background: var(--landing-bg);
   color: var(--landing-text);
-  font-family: var(--landing-font-body);
-  line-height: 1.7;
-  overflow-x: hidden;
+  font-family: var(--landing-font);
+  font-size: 1.0625rem;
+  line-height: 1.6;
   min-height: 100vh;
-  scroll-behavior: smooth;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Section Container ── */
+html:has(.landing) {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: #0a1521;
+  color-scheme: dark;
+}
+
+.landing h1,
+.landing h2,
+.landing h3 {
+  font-family: var(--landing-font);
+  color: var(--landing-heading);
+}
+
+.landing a:hover {
+  text-decoration: none;
+}
+
+.landing :focus-visible {
+  outline: 2px solid var(--landing-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Section containers ── */
 .landing-section {
   width: 100%;
   padding: var(--landing-section-gap) var(--landing-content-padding);
   position: relative;
+  scroll-margin-top: var(--landing-header-height);
+}
+
+.landing-section-alt {
+  background: var(--landing-bg-subtle);
+  border-block: 1px solid var(--landing-border);
 }
 
 .landing-container {
@@ -88,51 +108,44 @@
   width: 100%;
 }
 
-.landing-container-narrow {
+/* ── Section headings ── */
+.landing-section-head {
   max-width: var(--landing-content-narrow);
-  margin: 0 auto;
-  width: 100%;
+  margin: 0 auto clamp(40px, 5vw, 64px);
+  text-align: center;
 }
 
-/* ── Section headings ── */
 .landing-section-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: inline-block;
   font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--landing-accent);
-  margin-bottom: 16px;
-}
-
-.landing-section-label::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--landing-accent);
-  opacity: 0.6;
+  margin-bottom: 14px;
 }
 
 .landing-section-title {
-  font-family: var(--landing-font-heading);
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-size: clamp(1.875rem, 4.2vw, 3rem);
   font-weight: 700;
-  line-height: 1.15;
-  color: var(--landing-heading);
-  margin: 0 0 16px;
+  line-height: 1.1;
   letter-spacing: -0.03em;
+  margin: 0;
+  text-wrap: balance;
 }
 
-.landing-section-subtitle {
-  font-size: clamp(1rem, 2vw, 1.1875rem);
-  color: var(--landing-text);
-  line-height: 1.7;
-  margin: 0;
-  max-width: 600px;
+/* ── Icon tile shared by steps and agent flow ── */
+.landing-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--landing-radius-md);
+  background: var(--landing-surface-elevated);
+  border: 1px solid var(--landing-accent-border);
+  color: var(--landing-accent);
 }
 
 /* ── Buttons ── */
@@ -141,122 +154,181 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 32px;
-  border: none;
+  padding: 14px 26px;
+  border: 1px solid transparent;
   border-radius: var(--landing-radius-sm);
-  font-family: var(--landing-font-body);
-  font-size: 0.9375rem;
+  font-family: var(--landing-font);
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s var(--landing-ease);
+}
+
+.landing-btn svg {
+  transition: transform 0.2s var(--landing-ease);
+}
+
+.landing-btn:hover svg {
+  transform: translateX(3px);
 }
 
 .landing-btn-primary {
-  background: var(--landing-accent-gradient);
-  color: #ffffff;
-  box-shadow:
-    0 4px 20px rgba(129, 140, 248, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-/* Animated shimmer on primary buttons */
-.landing-btn-primary::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 100%
-  );
-  z-index: 1;
-  transition: left 0.5s ease;
-}
-
-.landing-btn-primary:hover::before {
-  left: 100%;
+  background: var(--landing-cream);
+  color: var(--landing-navy);
 }
 
 .landing-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 40px rgba(129, 140, 248, 0.4),
-    0 0 80px rgba(129, 140, 248, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  text-decoration: none;
+  background: #ffffff;
+  transform: translateY(-1px);
 }
 
 .landing-btn-secondary {
   background: transparent;
   color: var(--landing-heading);
-  border: 1px solid var(--landing-border-strong);
-  backdrop-filter: blur(8px);
+  border-color: var(--landing-border-strong);
 }
 
 .landing-btn-secondary:hover {
-  border-color: var(--landing-accent);
-  color: var(--landing-accent);
-  background: var(--landing-accent-glow);
-  box-shadow: 0 0 30px rgba(129, 140, 248, 0.1);
-  text-decoration: none;
+  border-color: var(--landing-cream);
+  background: rgba(234, 234, 220, 0.05);
 }
 
-/* ── Glass effect ── */
-.landing-glass {
-  background: rgba(20, 20, 32, 0.6);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+.landing-btn-sm {
+  min-height: 40px;
+  padding: 9px 16px;
+  font-size: 0.875rem;
+}
+
+.landing-btn-lg {
+  padding: 16px 30px;
+  font-size: 1rem;
+}
+
+/* ── Cards lift on hover ── */
+.landing-card {
+  border-radius: var(--landing-radius-lg);
   border: 1px solid var(--landing-border);
+  background: var(--landing-surface);
 }
 
-/* ── Gradient text ── */
-.landing-gradient-text {
-  background: var(--landing-accent-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ── Section divider fade ── */
-.landing-section-divider {
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--landing-border-strong) 50%,
-    transparent 100%
-  );
-}
-
-/* ── Floating ambient orbs (used as decorative background) ── */
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
+/* Hover effects only where a real pointer exists, so they never stick on touch */
+@media (hover: hover) {
+  .landing-card:hover {
+    border-color: var(--landing-border-strong);
   }
-  33% {
-    transform: translate(30px, -20px) scale(1.05);
-  }
-  66% {
-    transform: translate(-15px, 15px) scale(0.95);
+
+  .landing [data-reveal].landing-card.is-visible:hover {
+    transform: translateY(-6px);
+    transition-delay: 0s;
+    transition-duration: 0.3s;
   }
 }
 
-@keyframes float-slower {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
+/* ── Scroll progress bar (scroll-driven, progressive enhancement) ── */
+.landing-progress {
+  display: none;
+}
+
+/* ── Scroll reveal (class toggled by LandingPage observer) ── */
+.landing [data-reveal] {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  transition:
+    opacity 0.8s var(--landing-ease),
+    transform 0.8s var(--landing-ease),
+    border-color 0.25s ease;
+}
+
+.landing [data-reveal-from="left"] {
+  transform: translateX(-56px);
+}
+
+.landing [data-reveal-from="right"] {
+  transform: translateX(56px);
+}
+
+@media (max-width: 760px) {
+  .landing [data-reveal] {
+    transform: translateY(28px);
   }
-  50% {
-    transform: translate(-25px, 25px) scale(1.04);
+
+  .landing [data-reveal-from="left"] {
+    transform: translateX(-24px);
+  }
+
+  .landing [data-reveal-from="right"] {
+    transform: translateX(24px);
+  }
+
+  .landing-section-head {
+    margin-bottom: 32px;
+  }
+}
+
+.landing [data-reveal="1"] {
+  transition-delay: 0.12s;
+}
+
+.landing [data-reveal="2"] {
+  transition-delay: 0.24s;
+}
+
+.landing [data-reveal="3"] {
+  transition-delay: 0.36s;
+}
+
+.landing [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .landing-progress {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1001;
+      height: 2px;
+      background: var(--landing-accent);
+      transform-origin: 0 50%;
+      animation: landing-progress linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+@keyframes landing-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing) {
+    scroll-behavior: auto;
+  }
+
+  .landing [data-reveal],
+  .landing [data-reveal].landing-card.is-visible:hover {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .landing-btn,
+  .landing-btn svg {
+    transition: none;
   }
 }

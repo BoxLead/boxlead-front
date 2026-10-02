@@ -1,0 +1,152 @@
+.how-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 28px 0 0;
+}
+
+/* Track + fill that grows with scroll, linking the three steps */
+.how-steps::before,
+.how-steps::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.how-steps::before {
+  background: var(--landing-border-strong);
+}
+
+.how-steps::after {
+  background: var(--landing-accent);
+  transform-origin: 0 50%;
+}
+
+.how-step {
+  padding: clamp(24px, 2.8vw, 34px);
+}
+
+.how-step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.how-step-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--landing-border-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.how-step-title {
+  font-size: 1.3125rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+
+.how-step-desc {
+  margin: 0;
+}
+
+.how-step {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Mini visual at the bottom of each step ── */
+.how-visual {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: auto 0 0;
+  padding: 24px 0 0;
+}
+
+.how-visual-channels li {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--landing-radius-md);
+  border: 1px solid var(--landing-border-strong);
+  background: var(--landing-bg);
+}
+
+.how-visual-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--landing-border-strong);
+  background: var(--landing-bg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--landing-heading);
+}
+
+.how-visual-done li {
+  border-color: rgba(95, 211, 160, 0.25);
+  background: var(--landing-success-soft);
+  color: var(--landing-success);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .how-steps::after {
+      animation: how-line linear both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 55%;
+    }
+  }
+}
+
+@keyframes how-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 680px) {
+  .how-steps {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 0;
+  }
+
+  .how-steps::before,
+  .how-steps::after {
+    display: none;
+  }
+}
+
+@media (min-width: 681px) and (max-width: 900px) {
+  .how-step {
+    padding: 20px;
+  }
+
+  .how-visual-channels li {
+    width: 38px;
+    height: 38px;
+  }
+
+  .how-visual-channels svg {
+    width: 20px;
+    height: 20px;
+  }
+}

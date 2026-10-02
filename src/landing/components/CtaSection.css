@@ -1,87 +1,245 @@
-.cta-section {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Layered ambient glows for depth */
-.cta-glow {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(100px);
-}
-
-.cta-glow-1 {
-  top: -20%;
-  left: 30%;
-  width: 500px;
-  height: 400px;
-  background: radial-gradient(
-    ellipse,
-    rgba(129, 140, 248, 0.08) 0%,
-    transparent 70%
-  );
-  animation: float-slow 20s ease-in-out infinite;
-}
-
-.cta-glow-2 {
-  bottom: -30%;
-  right: 20%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(
-    ellipse,
-    rgba(192, 132, 252, 0.06) 0%,
-    transparent 70%
-  );
-  animation: float-slower 25s ease-in-out infinite;
-}
-
-.cta-content {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
+.cta-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: center;
-  gap: 24px;
-  position: relative;
-  z-index: 1;
+  gap: clamp(32px, 5vw, 64px);
+  padding: clamp(28px, 4vw, 52px);
+  border-radius: var(--landing-radius-lg);
+  border: 1px solid var(--landing-border-strong);
+  background:
+    radial-gradient(
+      ellipse 70% 120% at 0% 0%,
+      rgba(36, 82, 124, 0.5) 0%,
+      transparent 70%
+    ),
+    var(--landing-surface);
 }
 
 .cta-title {
-  font-family: var(--landing-font-heading);
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  font-weight: 800;
-  line-height: 1.12;
-  color: var(--landing-heading);
-  margin: 0;
+  margin: 0 0 14px;
+  font-size: clamp(2rem, 4.4vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.08;
   letter-spacing: -0.03em;
-  max-width: 700px;
+  text-wrap: balance;
 }
 
 .cta-subtitle {
-  font-size: clamp(1rem, 2vw, 1.125rem);
-  color: var(--landing-text);
-  max-width: 500px;
-  line-height: 1.7;
-  margin: 0;
+  max-width: 440px;
+  margin: 0 0 28px;
+  font-size: clamp(1.0625rem, 1.7vw, 1.25rem);
+  text-wrap: pretty;
 }
 
 .cta-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  justify-content: center;
-}
-
-.cta-btn-lg {
-  padding: 16px 40px;
-  font-size: 1rem;
 }
 
 .cta-note {
-  font-size: 0.8125rem;
+  margin: 18px 0 0;
+  font-size: 0.875rem;
   color: var(--landing-text-muted);
+}
+
+/* ── Agent activity feed ── */
+.cta-feed {
+  border-radius: var(--landing-radius-md);
+  border: 1px solid var(--landing-border-strong);
+  background: var(--landing-bg);
+  overflow: hidden;
+}
+
+.cta-feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--landing-border);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--landing-heading);
+  white-space: nowrap;
+}
+
+.cta-feed-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--landing-success);
+}
+
+.cta-feed-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--landing-success);
+  animation: cta-feed-pulse 1.6s ease-in-out infinite;
+}
+
+.cta-feed-viewport {
+  height: 232px;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    black 14%,
+    black 86%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    black 14%,
+    black 86%,
+    transparent 100%
+  );
+}
+
+.cta-feed-track {
+  animation: cta-feed-scroll 16s linear infinite;
+}
+
+.cta-feed:hover .cta-feed-track {
+  animation-play-state: paused;
+}
+
+.cta-feed-group {
+  list-style: none;
   margin: 0;
-  letter-spacing: 0.01em;
+  padding: 0;
+}
+
+.cta-feed-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 58px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--landing-border);
+  font-size: 0.9375rem;
+}
+
+.cta-feed-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.cta-feed-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cta-feed-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--landing-heading);
+}
+
+.cta-feed-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--landing-success);
+}
+
+@keyframes cta-feed-scroll {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes cta-feed-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The card grows into place as it scrolls into view */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .cta-card {
+      animation: cta-grow linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
+@keyframes cta-grow {
+  from {
+    opacity: 0.3;
+    transform: scale(0.88);
+  }
+}
+
+@media (max-width: 860px) {
+  .cta-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .cta-actions {
+    flex-direction: column;
+  }
+
+  .cta-actions .landing-btn {
+    width: 100%;
+  }
+
+  .cta-card {
+    padding: 24px 20px;
+  }
+
+  .cta-feed-head {
+    padding-inline: 14px;
+    font-size: 0.875rem;
+  }
+
+  /* Title and result stack so nothing gets truncated on narrow screens */
+  .cta-feed-item {
+    padding-inline: 14px;
+  }
+
+  .cta-feed-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .cta-feed-title {
+    flex: none;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-feed-track,
+  .cta-feed-live-dot {
+    animation: none;
+  }
+
+  .cta-feed-viewport {
+    height: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .cta-feed-group[aria-hidden="true"] {
+    display: none;
+  }
 }

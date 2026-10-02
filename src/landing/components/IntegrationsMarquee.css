@@ -1,155 +1,98 @@
 .marquee-section {
-  border-top: 1px solid var(--landing-border);
-  border-bottom: 1px solid var(--landing-border);
+  padding: 36px 0 40px;
+  border-block: 1px solid var(--landing-border);
   background: var(--landing-bg-subtle);
-  padding: 52px 0;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Fade edges for seamless looping effect */
-.marquee-section::before,
-.marquee-section::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 120px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.marquee-section::before {
-  left: 0;
-  background: linear-gradient(
-    90deg,
-    var(--landing-bg-subtle) 0%,
-    transparent 100%
-  );
-}
-
-.marquee-section::after {
-  right: 0;
-  background: linear-gradient(
-    270deg,
-    var(--landing-bg-subtle) 0%,
-    transparent 100%
-  );
 }
 
 .marquee-label {
-  text-align: center;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--landing-text-muted);
-  letter-spacing: 0.05em;
-  margin-bottom: 36px;
-  text-transform: uppercase;
+  margin: 0 0 22px;
   padding: 0 var(--landing-content-padding);
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--landing-text-muted);
+}
+
+.marquee-viewport {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
 }
 
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee-scroll 35s linear infinite;
+  animation: marquee-scroll 38s linear infinite;
 }
 
-.marquee-track:hover {
+.marquee-viewport:hover .marquee-track {
   animation-play-state: paused;
 }
 
 .marquee-group {
   display: flex;
-  align-items: center;
-  gap: 64px;
-  padding: 0 32px;
-  flex-shrink: 0;
+  gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0 7px;
 }
 
 .marquee-item {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  cursor: default;
-}
-
-/* Monochrome by default — desaturate + dim for dark theme harmony */
-.marquee-icon {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: 100px;
   border: 1px solid var(--landing-border);
-  padding: 10px;
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.marquee-icon svg {
-  width: 30px;
-  height: 30px;
-  filter: grayscale(0.6) brightness(0.8);
-  transition: filter 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* On hover: restore color + glow with platform accent */
-.marquee-item:hover .marquee-icon {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--platform-color, var(--landing-border-strong));
-  box-shadow: 0 0 24px
-    color-mix(in srgb, var(--platform-color, #818cf8) 20%, transparent);
-  transform: translateY(-4px);
-}
-
-.marquee-item:hover .marquee-icon svg {
-  filter: grayscale(0) brightness(1);
-}
-
-.marquee-item:hover .marquee-item-label {
-  color: var(--landing-heading-secondary);
-}
-
-.marquee-item-label {
-  font-size: 0.75rem;
+  background: var(--landing-surface);
+  color: var(--landing-heading);
+  font-size: 1rem;
   font-weight: 500;
-  color: var(--landing-text-muted);
   white-space: nowrap;
-  letter-spacing: 0.01em;
-  transition: color 0.3s ease;
+}
+
+.marquee-item svg {
+  flex-shrink: 0;
 }
 
 @keyframes marquee-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
+  to {
     transform: translateX(-50%);
   }
 }
 
-@media (max-width: 640px) {
+@media (prefers-reduced-motion: reduce) {
+  .marquee-viewport {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .marquee-track {
+    animation: none;
+    width: auto;
+    justify-content: center;
+  }
+
   .marquee-group {
-    gap: 44px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 var(--landing-content-padding);
   }
 
-  .marquee-icon {
-    width: 44px;
-    height: 44px;
-    padding: 8px;
-  }
-
-  .marquee-icon svg {
-    width: 26px;
-    height: 26px;
-  }
-
-  .marquee-section::before,
-  .marquee-section::after {
-    width: 60px;
+  .marquee-group[aria-hidden="true"] {
+    display: none;
   }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Logo } from "./Logo";
 import "./Header.css";
 
 export function Header() {
@@ -8,36 +8,41 @@ export function Header() {
 
   useEffect(() => {
     function handleScroll() {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 12);
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <motion.header
-      className={`landing-header${scrolled ? " header-scrolled" : ""}`}
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }}
-    >
+    <header className={`landing-header${scrolled ? " header-scrolled" : ""}`}>
       <div className="landing-header-inner">
-        <Link to="/" className="header-logo">
-          <span className="header-logo-icon">⚡</span>
-          BoxLead
+        <Link to="/" className="header-logo" aria-label="BoxLead — inicio">
+          <Logo />
         </Link>
-        <nav className="header-nav">
-          <a href="#features" className="header-nav-link">
-            Funcionalidades
+        <nav className="header-nav" aria-label="Principal">
+          <a href="#como-funciona" className="header-nav-link">
+            Cómo funciona
           </a>
-          <a href="#benefits" className="header-nav-link">
-            Beneficios
+          <a href="#agente" className="header-nav-link">
+            El agente
           </a>
-          <Link to="/login" className="header-signin">
-            Iniciar sesión
-          </Link>
+          <a href="#faq" className="header-nav-link">
+            Preguntas
+          </a>
         </nav>
+        <div className="header-actions">
+          <Link to="/login" className="header-signin">
+            Ingresar
+          </Link>
+          <Link
+            to="/register"
+            className="landing-btn landing-btn-primary landing-btn-sm"
+          >
+            Empezar
+          </Link>
+        </div>
       </div>
-    </motion.header>
+    </header>
   );
 }

@@ -1,0 +1,23 @@
+.landing-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--landing-heading);
+}
+
+.landing-logo-mark {
+  width: 34px;
+  height: 41px;
+  flex-shrink: 0;
+}
+
+.landing-logo-text {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.landing-logo-bold {
+  font-weight: 700;
+}
