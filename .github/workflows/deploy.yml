@@ -12,9 +12,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Must match Terraform variable ssm_prefix (default /signal-front/)
   SIGNAL_FRONT_SSM_PREFIX: /signal-front/
-  # Set GitHub secret AWS_REGION to the same value as Terraform aws_region (e.g. us-east-2).
 
 jobs:
   test:
