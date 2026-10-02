@@ -14,7 +14,7 @@ import type {
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { platformLabel } from "../../util/labels";
-import { redirectUriFor } from "../../util/oauth";
+import { consumeOAuthSession, redirectUriFor } from "../../util/oauth";
 import "./OAuthCallback.css";
 
 const ALLOWED: PlatformType[] = ["META", "INSTAGRAM", "WHATSAPP", "MELI"];
@@ -36,6 +36,9 @@ export function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [session] = useState(() =>
+    consumeOAuthSession(searchParams.get("state")),
+  );
 
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
@@ -51,8 +54,11 @@ export function OAuthCallback() {
     if (!code) {
       return "Falta el código de autorización. Probá conectar de nuevo.";
     }
+    if (!session.valid) {
+      return "No pudimos verificar que esta conexión se inició desde tu cuenta. Probá conectar de nuevo.";
+    }
     return null;
-  }, [platformParam, oauthError, oauthDesc, code]);
+  }, [platformParam, oauthError, oauthDesc, code, session.valid]);
 
   const platform = platformParam as PlatformType;
 
@@ -61,14 +67,11 @@ export function OAuthCallback() {
 
     let cancelled = false;
     let redirectTimer: ReturnType<typeof setTimeout> | undefined;
-    const codeVerifier =
-      sessionStorage.getItem("oauth_code_verifier") ?? undefined;
-    sessionStorage.removeItem("oauth_code_verifier");
 
     const body: OAuthCallbackRequest = {
       code,
       redirectUri: redirectUriFor(platform),
-      codeVerifier,
+      codeVerifier: session.codeVerifier,
     };
 
     api
@@ -97,7 +100,7 @@ export function OAuthCallback() {
       cancelled = true;
       if (redirectTimer !== undefined) clearTimeout(redirectTimer);
     };
-  }, [blockingError, code, platform, navigate]);
+  }, [blockingError, code, platform, navigate, session.codeVerifier]);
 
   const errorMessage =
     blockingError ?? (outcome?.status === "error" ? outcome.message : null);

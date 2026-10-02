@@ -15,7 +15,11 @@ import {
 } from "../../util/facebook-sdk";
 import { formatShortDate } from "../../util/format";
 import { platformLabel } from "../../util/labels";
-import { redirectUriFor } from "../../util/oauth";
+import {
+  beginOAuthRedirect,
+  isFacebookOrigin,
+  redirectUriFor,
+} from "../../util/oauth";
 import "./Connections.css";
 
 type Channel = {
@@ -49,7 +53,7 @@ export function Connections() {
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      if (!event.origin.endsWith("facebook.com")) return;
+      if (!isFacebookOrigin(event.origin)) return;
       try {
         const data = JSON.parse(event.data) as WhatsAppSignupEvent;
         if (data.type === "WA_EMBEDDED_SIGNUP" && data.event !== "CANCEL") {
@@ -71,10 +75,7 @@ export function Connections() {
     const res = await api.get<{ url: string; codeVerifier?: string }>(
       `/oauth/${platform}/auth-url?redirectUri=${encodeURIComponent(uri)}`,
     );
-    if (res.codeVerifier) {
-      sessionStorage.setItem("oauth_code_verifier", res.codeVerifier);
-    }
-    window.location.href = res.url;
+    beginOAuthRedirect(res.url, res.codeVerifier);
   }
 
   async function connectWhatsApp(config: WhatsAppConfig) {
