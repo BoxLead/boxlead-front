@@ -1,6 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { Loading } from "./components/Loading";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ScrollToTop } from "./components/ScrollToTop";
 import { LandingPage } from "./landing/LandingPage";
 
 const Layout = lazy(() =>
@@ -51,7 +53,8 @@ const Register = lazy(() =>
 
 export default function App() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<Loading />}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
