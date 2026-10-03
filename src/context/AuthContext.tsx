@@ -5,45 +5,42 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  api,
-  ApiError,
-  clearAuth,
-  getStoredUser,
-  persistUser,
-} from "../api/client";
+import { useLocation, useNavigate } from "react-router-dom";
+import { api, ApiError, clearAuth } from "../api/client";
 import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
+import { Loading } from "../components/Loading";
 import { AuthContext } from "./auth";
+
+const SESSION_ROUTES = /^\/(app|login|register)(\/|$)/;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
+  const { pathname } = useLocation();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hadStoredUser = useState(() => user !== null)[0];
+  const needsSession = SESSION_ROUTES.test(pathname);
 
   useEffect(() => {
-    if (!hadStoredUser) return;
+    if (sessionChecked || !needsSession) return;
     let cancelled = false;
     api.me().then(
       (current) => {
         if (cancelled) return;
-        persistUser(current);
         setUser(current);
+        setSessionChecked(true);
       },
-      (e: unknown) => {
-        if (cancelled || !(e instanceof ApiError)) return;
-        if (e.status === 401 || e.status === 403) {
-          clearAuth();
-          setUser(null);
-        }
+      () => {
+        if (cancelled) return;
+        setUser(null);
+        setSessionChecked(true);
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [hadStoredUser]);
+  }, [sessionChecked, needsSession]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -53,8 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const current = await request();
-        persistUser(current);
         setUser(current);
+        setSessionChecked(true);
         navigate("/app/inbox", { replace: true });
       } catch (e) {
         setError(e instanceof ApiError ? e.message : fallbackError);
@@ -89,5 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user, login, register, logout, isLoading, error, clearError],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {needsSession && !sessionChecked ? <Loading /> : children}
+    </AuthContext.Provider>
+  );
 }
