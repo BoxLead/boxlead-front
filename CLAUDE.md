@@ -23,7 +23,7 @@ docker compose up --build   # Production image at localhost:3000
 ### Key Files
 - `src/App.tsx` — All route definitions
 - `src/main.tsx` — React root (BrowserRouter > AuthProvider > App)
-- `src/context/AuthContext.tsx` — `AuthProvider` (JWT auth state); `src/context/auth.ts` — `useAuth`
+- `src/context/AuthContext.tsx` — `AuthProvider` (session state from `/auth/me`); `src/context/auth.ts` — `useAuth`
 - `src/hooks/` — `useApiQuery` (data loading), `useDocumentTitle`
 - `src/api/client.ts` — HTTP client with auto-auth headers
 - `src/api/types.ts` — All API type definitions
@@ -49,8 +49,8 @@ docker compose up --build   # Production image at localhost:3000
 
 ### Auth Flow
 1. The session is an `httpOnly` cookie set by the API; the frontend never sees the token
-2. `localStorage` keeps only `signal_user` (`userId`, `email`) as a display hint
-3. `ProtectedRoute` checks the user → redirects to `/login` if missing; `AuthProvider` confirms it with `GET /auth/me`
+2. Nothing is kept in `localStorage`; the user lives in memory
+3. On `/app`, `/login` and `/register`, `AuthProvider` calls `GET /auth/me` and shows a loader until it answers; then `ProtectedRoute` redirects to `/login` if there is no user
 4. `api/client.ts` sends `credentials: "include"` and `X-Requested-With: boxlead-web` on every request
 5. 401 response → `clearAuthAndGoLogin()` → hard redirect to `/login`
 6. Post-login → navigate to `/app/inbox`; logout calls `POST /auth/logout`

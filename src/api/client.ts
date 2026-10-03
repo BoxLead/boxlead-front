@@ -1,7 +1,5 @@
 import type { AuthUser, LoginRequest, RegisterRequest } from "./types";
 
-const USER_KEY = "signal_user";
-const LEGACY_TOKEN_KEY = "signal_token";
 const CSRF_HEADER = "X-Requested-With";
 const CSRF_HEADER_VALUE = "boxlead-web";
 
@@ -39,24 +37,7 @@ function toAuthUser(value: unknown): AuthUser | null {
   return null;
 }
 
-export function getStoredUser(): AuthUser | null {
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
-  const raw = localStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try {
-    return toAuthUser(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
-
-export function persistUser(user: AuthUser): void {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
 export function clearAuth(): void {
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
   sessionStorage.clear();
 }
 

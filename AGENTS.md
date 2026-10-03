@@ -69,7 +69,8 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 
 ## Security
 
-- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token; `localStorage` holds only `signal_user` (id and email) as a display hint.
+- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage`; the user lives in memory and comes from `GET /auth/me`.
+- `AuthProvider` asks `GET /auth/me` only on `/app`, `/login` and `/register`, and shows a loader there until it answers, so the landing never calls the API.
 - Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
 - Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked.
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
