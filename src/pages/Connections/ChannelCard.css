@@ -1,0 +1,218 @@
+.channel-card {
+  --channel-accent: var(--signal-accent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--signal-space-md);
+  padding: 20px;
+  overflow: hidden;
+  scroll-margin: 96px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.channel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--channel-accent);
+  opacity: 0.85;
+}
+
+.channel-card-meli {
+  --channel-accent: var(--platform-meli);
+}
+
+.channel-card-whatsapp {
+  --channel-accent: var(--platform-whatsapp);
+}
+
+.channel-card-instagram {
+  --channel-accent: var(--platform-instagram);
+}
+
+.channel-card-meta {
+  --channel-accent: var(--platform-messenger);
+}
+
+.channel-card-featured {
+  grid-column: 1 / -1;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(255, 230, 0, 0.07), transparent 55%),
+    var(--signal-surface);
+}
+
+.channel-card-highlight {
+  border-color: var(--channel-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--channel-accent) 25%, transparent);
+}
+
+.channel-card-head {
+  display: grid;
+  grid-template-areas:
+    "logo title"
+    "logo status";
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  justify-items: start;
+  gap: 8px 14px;
+}
+
+.channel-card-featured .channel-card-head {
+  grid-template-areas: "logo title status";
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.channel-card-status {
+  grid-area: status;
+}
+
+.channel-card-logo {
+  grid-area: logo;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg);
+}
+
+.channel-card-title {
+  grid-area: title;
+  min-width: 0;
+}
+
+.channel-card-title h2 {
+  font-size: 1.0625rem;
+}
+
+.channel-card-title p {
+  margin: 2px 0 0;
+  color: var(--signal-text-muted);
+  font-size: 0.875rem;
+}
+
+.channel-card-intro {
+  display: grid;
+  gap: var(--signal-space-md);
+}
+
+.channel-card-featured .channel-card-intro {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--signal-space-lg);
+}
+
+.channel-card-subtitle {
+  margin: 0 0 8px;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.channel-card-syncs {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.channel-card-syncs li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.channel-card-syncs svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--signal-success);
+}
+
+.channel-card-steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  font-size: 0.875rem;
+}
+
+.channel-card-steps li {
+  display: flex;
+  gap: 10px;
+  counter-increment: step;
+}
+
+.channel-card-steps li::before {
+  content: counter(step);
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--channel-accent);
+  color: var(--platform-meli-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.channel-card-accounts {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-sm);
+  list-style: none;
+}
+
+.channel-card-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+@media (max-width: 480px) {
+  .channel-card {
+    padding: 16px;
+  }
+
+  .channel-card-featured .channel-card-head {
+    grid-template-areas:
+      "logo title"
+      "logo status";
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .channel-card-logo {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .channel-card-featured .channel-card-intro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .channel-card-foot .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .channel-card {
+    transition: none;
+  }
+}

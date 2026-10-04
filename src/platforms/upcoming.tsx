@@ -4,7 +4,9 @@ import type { PlatformDefinition } from "./types";
 
 const readOnly = {
   connect: null,
+  addAnother: "Agregar otra cuenta",
   syncs: [],
+  howItWorks: [],
   stageLabels: { PRE_SALE: "Mensajes" },
   reply: () => ({ kind: "chat" as const, maxLength: null, placeholder: "Escribí un mensaje", hint: null }),
   explainError: () => null,

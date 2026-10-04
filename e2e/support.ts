@@ -30,3 +30,25 @@ export async function expectAccessible(page: Page) {
     .analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
+
+export async function screenshot(page: Page, name: string) {
+  const dir = process.env.SCREENSHOT_DIR;
+  if (!dir) return;
+  const width = page.viewportSize()?.width ?? 0;
+  await page.screenshot({ path: `${dir}/${name}-${width}.png`, fullPage: true, animations: "disabled" });
+}
+
+export async function routeOAuthProvider(
+  page: Page,
+  host: string,
+  respond: (authorizeUrl: URL) => Record<string, string>,
+) {
+  await page.route(`https://${host}/**`, async (route) => {
+    const authorizeUrl = new URL(route.request().url());
+    const redirect = new URL(authorizeUrl.searchParams.get("redirect_uri") ?? "");
+    for (const [key, value] of Object.entries(respond(authorizeUrl))) {
+      redirect.searchParams.set(key, value);
+    }
+    await route.fulfill({ status: 302, headers: { location: redirect.toString() } });
+  });
+}

@@ -30,8 +30,10 @@ export type PlatformDefinition = {
   id: PlatformType;
   name: string;
   accountNoun: string;
+  addAnother: string;
   summary: string;
   syncs: string[];
+  howItWorks: string[];
   connect: ConnectMethod | null;
   stageLabels: Partial<Record<SalesStage, string>>;
   reply: (stage: SalesStage) => ReplyPolicy;

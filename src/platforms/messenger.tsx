@@ -8,8 +8,14 @@ export const messenger: PlatformDefinition = {
   id: "META",
   name: "Messenger",
   accountNoun: "página de Facebook",
+  addAnother: "Agregar otra página",
   summary: "Respondé los mensajes que llegan a tu página de Facebook.",
   syncs: ["Mensajes de tu página"],
+  howItWorks: [
+    "Iniciás sesión con Facebook y elegís tu página.",
+    "Los mensajes que recibe la página llegan a la bandeja.",
+    "Respondés desde BoxLead en nombre de la página.",
+  ],
   connect: "redirect",
   stageLabels: { PRE_SALE: "Mensajes" },
   reply: () => ({

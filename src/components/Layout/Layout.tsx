@@ -2,7 +2,6 @@ import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Loading } from "../Loading";
 import { Sidebar } from "../Sidebar/Sidebar";
-import { ToastProvider } from "../ui/ToastProvider";
 import "./Layout.css";
 
 export function Layout() {
@@ -14,15 +13,13 @@ export function Layout() {
   }, [pathname]);
 
   return (
-    <ToastProvider>
-      <div className="layout">
-        <Sidebar />
-        <main className="layout-content" ref={contentRef}>
-          <Suspense fallback={<Loading inline />}>
-            <Outlet />
-          </Suspense>
-        </main>
-      </div>
-    </ToastProvider>
+    <div className="layout">
+      <Sidebar />
+      <main className="layout-content" ref={contentRef}>
+        <Suspense fallback={<Loading inline />}>
+          <Outlet />
+        </Suspense>
+      </main>
+    </div>
   );
 }

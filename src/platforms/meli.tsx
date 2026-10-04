@@ -62,11 +62,17 @@ export const meli: PlatformDefinition = {
   id: "MELI",
   name: "MercadoLibre",
   accountNoun: "cuenta de vendedor",
+  addAnother: "Agregar otra cuenta",
   summary: "Respondé las preguntas de tus publicaciones y los mensajes de tus ventas desde BoxLead.",
   syncs: [
     "Preguntas de tus publicaciones",
     "Mensajes de postventa",
     "Datos de contacto de cada compra",
+  ],
+  howItWorks: [
+    "Autorizás a BoxLead desde tu cuenta de vendedor de MercadoLibre.",
+    "Las preguntas nuevas y los mensajes de tus ventas llegan a la bandeja.",
+    "Respondés desde BoxLead y la respuesta se publica en MercadoLibre.",
   ],
   connect: "redirect",
   stageLabels: { PRE_SALE: "Preguntas", POST_SALE: "Postventa" },
