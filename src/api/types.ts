@@ -8,6 +8,8 @@ export type PlatformType =
 
 export type ConversationStatus = "OPEN" | "CLOSED";
 
+export type SalesStage = "PRE_SALE" | "POST_SALE";
+
 export type MessageDirection = "INBOUND" | "OUTBOUND";
 
 export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "LOST" | "CLOSED";
@@ -33,7 +35,14 @@ export type ConversationResponse = {
   leadId: string;
   platform: PlatformType;
   externalThreadId: string | null;
+  salesStage: SalesStage;
   status: ConversationStatus;
+  leadName?: string | null;
+  lastMessagePreview?: string | null;
+  lastMessageDirection?: MessageDirection | null;
+  lastMessageAt?: string | null;
+  lastReadAt?: string | null;
+  unreadCount?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -44,6 +53,7 @@ export type MessageResponse = {
   direction: MessageDirection;
   externalMessageId: string | null;
   content: string | null;
+  contextRef?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -63,8 +73,16 @@ export type LeadResponse = {
   email: string | null;
   phone: string | null;
   status: LeadStatus;
+  postSaleOnly: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type UpdateLeadRequest = {
+  status?: LeadStatus;
+  name?: string;
+  email?: string;
+  phone?: string;
 };
 
 export type AccountConnectionResponse = {
@@ -73,11 +91,14 @@ export type AccountConnectionResponse = {
   externalAccountId: string;
   displayName: string | null;
   connectedAt: string;
+  needsReconnection: boolean;
+  lastEventAt?: string | null;
+  failedEventCount?: number;
 };
 
 export type OAuthCallbackRequest = {
   code: string;
-  redirectUri: string;
+  redirectUri?: string;
   phoneNumberId?: string;
   wabaId?: string;
   codeVerifier?: string;
@@ -109,4 +130,37 @@ export type CommentResponse = {
   text: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ContextItemKind = "LISTING" | "ORDER";
+
+export type ContextLine = {
+  externalItemId: string | null;
+  title: string | null;
+  quantity: number | null;
+  unitPrice: number | null;
+  currency: string | null;
+};
+
+export type ContextItem = {
+  kind: ContextItemKind;
+  externalId: string;
+  title: string | null;
+  imageUrl: string | null;
+  url: string | null;
+  price: number | null;
+  currency: string | null;
+  status: string | null;
+  quantity: number | null;
+  createdAt: string | null;
+  lines: ContextLine[];
+};
+
+export type ConversationContextResponse = {
+  items: ContextItem[];
+};
+
+export type AuthUrlResponse = {
+  url: string;
+  codeVerifier?: string;
 };
