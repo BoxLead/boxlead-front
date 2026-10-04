@@ -1,57 +1,39 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type {
   CommentThreadResponse,
   ConversationResponse,
   LeadResponse,
 } from "../../api/types";
-import { ArrowLeftIcon } from "../../components/icons/UiIcons";
-import { Loading } from "../../components/Loading";
-import { PlatformBadge } from "../../components/PlatformBadge/PlatformBadge";
-import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
+import { ArrowLeftIcon, ChatIcon, ExternalLinkIcon } from "../../components/icons/UiIcons";
+import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
+import { Avatar } from "../../components/ui/Avatar";
+import { Banner } from "../../components/ui/Banner";
+import { Tag } from "../../components/ui/Tag";
+import { invalidateQueries } from "../../data/queryCache";
+import { leadKey } from "../../data/leads";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { formatShortDate } from "../../util/format";
+import { getPlatform, hasStages, stageLabel } from "../../platforms";
+import { formatDate, formatRelative } from "../../util/format";
 import { leadDisplayName } from "../../util/labels";
 import "./LeadDetail.css";
 
 export function LeadDetail() {
-  const { leadId } = useParams<{ leadId: string }>();
-  const lead = useApiQuery<LeadResponse>(leadId ? `/leads/${leadId}` : null);
-  const allConversations =
-    useApiQuery<ConversationResponse[]>("/conversations");
-  const allThreads = useApiQuery<CommentThreadResponse[]>("/comments/threads");
+  const { leadId = "" } = useParams<{ leadId: string }>();
+  const navigate = useNavigate();
+  const lead = useApiQuery<LeadResponse>(leadId ? leadKey(leadId) : null);
+  const conversations = useApiQuery<ConversationResponse[]>(
+    leadId ? `/conversations?leadId=${encodeURIComponent(leadId)}` : null,
+  );
+  const threads = useApiQuery<CommentThreadResponse[]>(
+    leadId ? `/comments/threads?leadId=${encodeURIComponent(leadId)}` : null,
+  );
   const [starting, setStarting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   useDocumentTitle(lead.data ? leadDisplayName(lead.data) : "Lead");
-
-  const conversations = (allConversations.data ?? []).filter(
-    (c) => c.leadId === leadId,
-  );
-  const threads = (allThreads.data ?? []).filter((t) => t.leadId === leadId);
-
-  async function handleStartConversation() {
-    if (!lead.data) return;
-    setStarting(true);
-    setActionError(null);
-    try {
-      await api.post<ConversationResponse>("/conversations", {
-        leadId: lead.data.id,
-        platform: lead.data.platform,
-      });
-      allConversations.reload();
-    } catch (e) {
-      setActionError(
-        e instanceof ApiError
-          ? e.message
-          : "No pudimos iniciar la conversación.",
-      );
-    } finally {
-      setStarting(false);
-    }
-  }
 
   const backLink = (
     <Link to="/app/leads" className="lead-detail-back">
@@ -64,7 +46,11 @@ export function LeadDetail() {
     return (
       <div className="page">
         {backLink}
-        <Loading inline />
+        <div className="lead-detail-skeleton" aria-hidden="true">
+          <div className="skeleton lead-detail-skeleton-head" />
+          <div className="skeleton lead-detail-skeleton-card" />
+          <div className="skeleton lead-detail-skeleton-card" />
+        </div>
       </div>
     );
   }
@@ -73,96 +59,148 @@ export function LeadDetail() {
     return (
       <div className="page">
         {backLink}
-        <div className="page-banner" role="alert">
-          {lead.error ?? "No encontramos este lead."}
-        </div>
+        <Banner tone="danger" title="No encontramos este lead">
+          {lead.error ?? "Puede que se haya eliminado o que el enlace sea de otra cuenta."}
+        </Banner>
       </div>
     );
   }
 
-  const error = actionError ?? allConversations.error ?? allThreads.error;
+  const current = lead.data;
+  const platform = getPlatform(current.platform);
+  const name = leadDisplayName(current);
+  const contactFields = platform.contactFields(current);
+  const ownConversations = (conversations.data ?? [])
+    .filter((c) => c.leadId === current.id)
+    .sort((a, b) => (b.lastMessageAt ?? b.updatedAt).localeCompare(a.lastMessageAt ?? a.updatedAt));
+  const ownThreads = (threads.data ?? []).filter((t) => t.leadId === current.id);
+
+  async function startConversation() {
+    setStarting(true);
+    setActionError(null);
+    try {
+      const created = await api.post<ConversationResponse>("/conversations", {
+        leadId: current.id,
+        platform: current.platform,
+      });
+      await invalidateQueries("/conversations");
+      navigate(`/app/inbox?id=${created.id}`);
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : "No pudimos iniciar la conversación.");
+      setStarting(false);
+    }
+  }
 
   return (
-    <div className="page">
+    <div className="page lead-detail">
       {backLink}
-      <header className="page-header lead-detail-header">
-        <h1 className="page-title">{leadDisplayName(lead.data)}</h1>
-        <div className="lead-detail-tags">
-          <PlatformBadge platform={lead.data.platform} />
-          <StatusBadge status={lead.data.status} />
+      <header className="lead-detail-header">
+        <Avatar name={name} platform={current.platform} size="lg" />
+        <div className="lead-detail-identity">
+          <h1 className="page-title">{name}</h1>
+          <p className="lead-detail-sub">
+            <span>{platform.name}</span>
+            {hasStages(current.platform) ? (
+              current.postSaleOnly ? (
+                <Tag tone="success">Comprador</Tag>
+              ) : (
+                <Tag tone="meli">Hizo preguntas</Tag>
+              )
+            ) : null}
+            <span>Desde {formatDate(current.createdAt)}</span>
+          </p>
         </div>
+        <StatusSelect lead={current} size="md" />
       </header>
 
-      {error ? (
-        <div className="page-banner" role="alert">
-          {error}
-        </div>
+      {actionError ? (
+        <Banner tone="danger" title="No pudimos iniciar la conversación" className="lead-detail-banner">
+          {actionError}
+        </Banner>
       ) : null}
 
       <div className="lead-detail-grid">
-        <section className="panel lead-detail-card">
-          <h2 className="panel-title">Contacto</h2>
-          <dl className="lead-detail-dl">
-            <div>
-              <dt>Email</dt>
-              <dd>
-                {lead.data.email?.trim() ? (
-                  <a href={`mailto:${lead.data.email.trim()}`}>
-                    {lead.data.email.trim()}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Teléfono</dt>
-              <dd>
-                {lead.data.phone?.trim() ? (
-                  <a href={`tel:${lead.data.phone.trim()}`}>
-                    {lead.data.phone.trim()}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Creado</dt>
-              <dd>{formatShortDate(lead.data.createdAt)}</dd>
-            </div>
-          </dl>
+        <section className="panel lead-detail-card" aria-labelledby="lead-contact">
+          <h2 className="panel-title" id="lead-contact">
+            Contacto
+          </h2>
+          {contactFields.length === 0 ? (
+            <p className="lead-detail-muted">
+              {platform.name} todavía no compartió datos de contacto de esta persona.
+            </p>
+          ) : (
+            <dl className="lead-detail-dl">
+              {contactFields.map((field) => (
+                <div key={field.label}>
+                  <dt>{field.label}</dt>
+                  <dd>
+                    {field.href ? (
+                      <a
+                        href={field.href}
+                        {...(field.href.startsWith("https://") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      >
+                        {field.value}
+                        {field.href.startsWith("https://") ? <ExternalLinkIcon width={14} height={14} /> : null}
+                      </a>
+                    ) : (
+                      field.value
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </section>
 
-        <section className="panel lead-detail-card">
+        <section className="panel lead-detail-card" aria-labelledby="lead-conversations">
           <div className="lead-detail-card-head">
-            <h2 className="panel-title">Conversaciones</h2>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              disabled={starting}
-              onClick={() => void handleStartConversation()}
-            >
-              {starting ? "Iniciando…" : "Nueva conversación"}
-            </button>
+            <h2 className="panel-title" id="lead-conversations">
+              Conversaciones
+            </h2>
+            {platform.canStartConversation && ownConversations.length === 0 && conversations.data ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={starting}
+                onClick={() => void startConversation()}
+              >
+                {starting ? "Abriendo…" : "Nueva conversación"}
+              </button>
+            ) : null}
           </div>
-          {conversations.length === 0 ? (
-            <p className="lead-detail-empty">
-              Todavía no hay conversaciones con este lead.
-            </p>
+          {conversations.loading ? (
+            <div className="skeleton lead-detail-skeleton-row" aria-hidden="true" />
+          ) : ownConversations.length === 0 ? (
+            <p className="lead-detail-muted">Todavía no hay conversaciones con esta persona.</p>
           ) : (
             <ul className="lead-detail-list">
-              {conversations.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    to={`/app/inbox?id=${c.id}`}
-                    className="lead-detail-link"
-                  >
-                    <PlatformBadge platform={c.platform} />
-                    <span className="lead-detail-link-meta">
-                      {c.status === "OPEN" ? "Abierta" : "Cerrada"} ·{" "}
-                      {formatShortDate(c.updatedAt)}
+              {ownConversations.map((conversation) => (
+                <li key={conversation.id}>
+                  <Link to={`/app/inbox?id=${conversation.id}`} className="lead-detail-conversation">
+                    <ChatIcon width={18} height={18} />
+                    <span className="lead-detail-conversation-body">
+                      <span className="lead-detail-conversation-top">
+                        {hasStages(conversation.platform) ? (
+                          <Tag tone={conversation.salesStage === "POST_SALE" ? "success" : "meli"}>
+                            {stageLabel(conversation.platform, conversation.salesStage)}
+                          </Tag>
+                        ) : (
+                          <span>{getPlatform(conversation.platform).name}</span>
+                        )}
+                        <time dateTime={conversation.lastMessageAt ?? conversation.updatedAt}>
+                          {formatRelative(conversation.lastMessageAt ?? conversation.updatedAt)}
+                        </time>
+                      </span>
+                      {conversation.lastMessagePreview ? (
+                        <span className="lead-detail-conversation-preview">
+                          {conversation.lastMessageDirection === "OUTBOUND" ? "Vos: " : ""}
+                          {conversation.lastMessagePreview}
+                        </span>
+                      ) : null}
                     </span>
+                    {conversation.unreadCount ? (
+                      <span className="lead-detail-unread">{conversation.unreadCount} sin leer</span>
+                    ) : null}
                   </Link>
                 </li>
               ))}
@@ -170,31 +208,28 @@ export function LeadDetail() {
           )}
         </section>
 
-        <section className="panel lead-detail-card">
-          <h2 className="panel-title">Comentarios</h2>
-          {threads.length === 0 ? (
-            <p className="lead-detail-empty">
-              Este lead no comentó en tus publicaciones.
-            </p>
-          ) : (
+        {ownThreads.length > 0 ? (
+          <section className="panel lead-detail-card" aria-labelledby="lead-comments">
+            <h2 className="panel-title" id="lead-comments">
+              Comentarios
+            </h2>
             <ul className="lead-detail-list">
-              {threads.map((t) => (
-                <li key={t.id}>
-                  <Link
-                    to={`/app/inbox?tab=comments&id=${t.id}`}
-                    className="lead-detail-link"
-                  >
-                    <PlatformBadge platform={t.platform} />
-                    <span className="lead-detail-link-meta">
-                      {t.mediaProductType ?? "Publicación"} ·{" "}
-                      {formatShortDate(t.updatedAt)}
+              {ownThreads.map((thread) => (
+                <li key={thread.id}>
+                  <Link to={`/app/inbox?view=comments&id=${thread.id}`} className="lead-detail-conversation">
+                    <ChatIcon width={18} height={18} />
+                    <span className="lead-detail-conversation-body">
+                      <span className="lead-detail-conversation-top">
+                        <span>Comentarios en {getPlatform(thread.platform).name}</span>
+                        <time dateTime={thread.updatedAt}>{formatRelative(thread.updatedAt)}</time>
+                      </span>
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
+        ) : null}
       </div>
     </div>
   );
