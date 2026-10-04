@@ -8,18 +8,22 @@ SPA for BoxLead: a public landing page plus the app (inbox, leads, connections).
 
 ```
 index.html            # Entry HTML, SEO metadata
-Dockerfile            # Multi-stage build: lint, build, export (static files), runtime (nginx)
+Dockerfile            # Multi-stage build: lint, test, build, export (static files), runtime (nginx)
 docker/nginx.conf     # SPA fallback, caching, security headers, /healthz
 docker-compose.yml    # Runs the production image locally
 public/               # favicon, og-image, robots.txt, sitemap.xml
+e2e/                  # Playwright specs and mock-api/ (stateful mock of the backend contract)
 src/
-├── main.tsx          # BrowserRouter > AuthProvider > App
+├── main.tsx          # BrowserRouter > AuthProvider > ToastProvider > App
 ├── App.tsx           # Routes (everything but the landing is lazy-loaded)
 ├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
 ├── api/              # HTTP client and API types
 ├── context/          # AuthProvider (AuthContext.tsx) and useAuth (auth.ts)
-├── hooks/            # useApiQuery, useDocumentTitle
-├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, badges, EmptyState, Loading, ScrollToTop
+├── data/             # queryCache (shared request cache behind useApiQuery) and lead mutations
+├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
+├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
+├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, EmptyState, Loading, ScrollToTop
+│   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
 └── util/             # company, format, labels, oauth, facebook-sdk
@@ -37,7 +41,11 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
-The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
+Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&buyers=1`.
+
+## Channels
+
+Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
 
 ## Conventions
 
@@ -48,7 +56,7 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 - No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing.
 - No comments in code.
 - UI copy is in Spanish; the legal pages stay in English.
-- Load data with `useApiQuery`; mutations call `api` from `src/api/client.ts` directly.
+- Load data with `useApiQuery` (shared cache, `refreshInterval` polls only while the tab is visible); mutations call `api` and then `invalidateQueries` or `setQueryData`.
 - Every page sets its tab title with `useDocumentTitle`.
 - Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
 - Every screen needs loading, empty and error states, and must work from 320px wide.
@@ -82,4 +90,4 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 
 Do not modify without explicit approval: `terraform/`, `.github/workflows/`, `.env.example`, or the behavior of `ProtectedRoute.tsx`.
 
-Run `npm run lint` and `npm run build` before considering work complete.
+Run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before considering work complete. New behaviour gets unit tests next to the code (`*.test.ts(x)`) and an end-to-end spec in `e2e/`, with the mock API extended to match the backend contract.

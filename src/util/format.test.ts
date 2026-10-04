@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatListTime, formatMoney, formatRelative, truncate } from "./format";
+import { formatListTime, formatMoney, formatRelative } from "./format";
 
 const NOW = new Date("2026-10-04T15:00:00-03:00").getTime();
 const minus = (ms: number) => new Date(NOW - ms).toISOString();
@@ -38,12 +38,5 @@ describe("formatMoney", () => {
     expect(formatMoney(10.5, "USD")).toContain("10,50");
     expect(formatMoney(5, "XXXX")).toContain("5");
     expect(formatMoney(null, "ARS")).toBe("");
-  });
-});
-
-describe("truncate", () => {
-  it("adds an ellipsis only when needed", () => {
-    expect(truncate("hola", 10)).toBe("hola");
-    expect(truncate("hola mundo", 5)).toBe("hola…");
   });
 });

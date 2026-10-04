@@ -1,81 +1,194 @@
-.leads-filters {
-  display: flex;
-  flex-wrap: wrap;
+.leads-funnel {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--signal-space-sm);
   margin-bottom: var(--signal-space-md);
 }
 
-.leads-filter {
-  min-height: 34px;
-  padding: 0 14px;
+.leads-funnel-step {
+  --step-color: var(--signal-accent);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
   border: 1px solid var(--signal-border);
-  border-radius: 100px;
-  background: transparent;
+  border-top: 3px solid var(--step-color);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-surface);
   color: var(--signal-text);
-  font-size: 0.875rem;
-  font-weight: 500;
+  text-align: left;
   transition:
-    background-color 0.15s ease,
     border-color 0.15s ease,
-    color 0.15s ease;
+    background-color 0.15s ease;
 }
 
-.leads-filter:hover {
-  border-color: rgba(234, 234, 220, 0.3);
+.leads-funnel-step:hover {
+  background: var(--signal-surface-elevated);
+}
+
+.leads-funnel-active,
+.leads-funnel-active:hover {
+  border-color: var(--step-color);
+  background: color-mix(in srgb, var(--step-color) 12%, var(--signal-surface));
+}
+
+.leads-funnel-contacted {
+  --step-color: var(--signal-warning);
+}
+
+.leads-funnel-qualified {
+  --step-color: var(--signal-success);
+}
+
+.leads-funnel-lost {
+  --step-color: var(--signal-danger);
+}
+
+.leads-funnel-closed {
+  --step-color: var(--signal-text-muted);
+}
+
+.leads-funnel-count {
   color: var(--signal-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
-.leads-filter-active,
-.leads-filter-active:hover {
-  border-color: var(--signal-cream);
-  background: var(--signal-cream);
-  color: var(--signal-navy);
+.leads-funnel-label {
+  font-size: 0.8125rem;
+}
+
+.leads-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px var(--signal-space-md);
+  margin-bottom: var(--signal-space-md);
+}
+
+.leads-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  max-width: 360px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-sm);
+  background: var(--signal-bg-subtle);
+  color: var(--signal-text-muted);
+}
+
+.leads-search:focus-within {
+  border-color: var(--signal-accent);
+}
+
+.leads-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+}
+
+.leads-search input::placeholder {
+  color: var(--signal-text-muted);
+}
+
+.leads-buyers-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--signal-text);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.leads-buyers-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--signal-accent);
 }
 
 .leads-table-wrap {
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .leads-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
 }
 
 .leads-table th {
-  padding: 12px var(--signal-space-md);
+  padding: 10px var(--signal-space-md);
   border-bottom: 1px solid var(--signal-border);
+  color: var(--signal-text-muted);
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.06em;
   text-align: left;
-  color: var(--signal-text-muted);
-  white-space: nowrap;
+  text-transform: uppercase;
 }
 
 .leads-table td {
-  padding: 14px var(--signal-space-md);
+  padding: 12px var(--signal-space-md);
   border-bottom: 1px solid var(--signal-border);
   vertical-align: middle;
 }
 
-.leads-table tr:last-child td {
+.leads-table tbody tr:last-child td {
   border-bottom: none;
-}
-
-.leads-row {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 
 .leads-row:hover {
   background: var(--signal-sidebar-hover);
 }
 
+.leads-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.leads-person-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .leads-name {
-  font-weight: 600;
+  overflow: hidden;
   color: var(--signal-heading);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leads-person-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
+
+.leads-contact {
+  color: var(--signal-text);
+}
+
+.leads-contact span {
+  display: block;
+  overflow-wrap: anywhere;
 }
 
 .leads-cell-muted {
@@ -84,24 +197,31 @@
 }
 
 .leads-empty {
-  display: flex;
-  min-height: 320px;
+  padding: var(--signal-space-xl) var(--signal-space-md);
 }
 
 .leads-skeleton {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: var(--signal-space-sm);
 }
 
 .leads-skeleton-row {
-  height: 52px;
+  height: 60px;
+}
+
+@media (max-width: 900px) {
+  .leads-funnel {
+    grid-template-columns: repeat(5, minmax(112px, 1fr));
+    margin-right: calc(var(--signal-space-md) * -1);
+    padding-right: var(--signal-space-md);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
 }
 
 @media (max-width: 760px) {
-  .leads-table-wrap {
-    border: none;
-    background: transparent;
+  .leads-search {
+    max-width: none;
   }
 
   .leads-table thead {
@@ -109,19 +229,22 @@
   }
 
   .leads-table,
-  .leads-table tbody {
+  .leads-table tbody,
+  .leads-table tr,
+  .leads-table td {
     display: block;
   }
 
-  .leads-row {
+  .leads-table tr {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px 12px;
-    margin-bottom: var(--signal-space-sm);
-    padding: var(--signal-space-md);
-    border: 1px solid var(--signal-border);
-    border-radius: var(--signal-radius-md);
-    background: var(--signal-surface);
+    padding: 14px var(--signal-space-md);
+    border-bottom: 1px solid var(--signal-border);
+  }
+
+  .leads-table tbody tr:last-child {
+    border-bottom: none;
   }
 
   .leads-table td {
@@ -129,13 +252,16 @@
     border: none;
   }
 
-  .leads-table td:nth-child(n + 4) {
+  .leads-table td:nth-child(3),
+  .leads-table td:nth-child(4) {
     grid-column: 1 / -1;
-    font-size: 0.875rem;
-    color: var(--signal-text-muted);
+    padding-left: 44px;
+    font-size: 0.8125rem;
   }
+}
 
-  .leads-table td:nth-child(n + 4)::before {
-    content: attr(data-label) ": ";
+@media (prefers-reduced-motion: reduce) {
+  .leads-funnel-step {
+    transition: none;
   }
 }

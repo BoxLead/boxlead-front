@@ -15,12 +15,18 @@ npm run dev
 
 The dev server runs on `http://localhost:5173` and proxies `/api` to the API.
 
-| Command           | Description                  |
-| ----------------- | ---------------------------- |
-| `npm run dev`     | Dev server                   |
-| `npm run build`   | Typecheck + production build |
-| `npm run lint`    | ESLint                       |
-| `npm run preview` | Serve `dist/` locally        |
+| Command              | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| `npm run dev`        | Dev server                                       |
+| `npm run build`      | Typecheck + production build                     |
+| `npm run lint`       | ESLint                                           |
+| `npm test`           | Unit tests (Vitest)                              |
+| `npm run test:e2e`   | End-to-end tests (Playwright, desktop and 320px) |
+| `npm run mock-api`   | Mock API on port 8090 with demo data             |
+| `npm run dev:mock`   | Dev server against the mock API                  |
+| `npm run preview`    | Serve `dist/` locally                            |
+
+The first run of the end-to-end suite needs a browser: `npx playwright install chromium`. The mock API signs in with any email and the password `demo1234`, and `POST /__reset` with `{"scenario":"empty"}` or `{"scenario":"meli-reconnect"}` switches its data.
 
 ## Docker
 

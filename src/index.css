@@ -252,16 +252,6 @@ button {
   color: var(--signal-text);
 }
 
-.page-banner {
-  margin-bottom: var(--signal-space-md);
-  padding: 12px var(--signal-space-md);
-  border: 1px solid rgba(240, 138, 138, 0.25);
-  border-radius: var(--signal-radius-sm);
-  background: var(--signal-danger-muted);
-  color: var(--signal-danger);
-  font-size: 0.9375rem;
-}
-
 .skeleton {
   border-radius: var(--signal-radius-sm);
   background: linear-gradient(
