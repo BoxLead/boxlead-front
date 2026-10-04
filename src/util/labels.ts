@@ -25,7 +25,7 @@ export function leadDisplayName(lead: LeadResponse | undefined): string {
     lead.name?.trim() ||
     lead.email?.trim() ||
     lead.phone?.trim() ||
-    lead.externalLeadId ||
-    "Lead sin nombre"
+    (getPlatform(lead.platform).externalIdIsContact ? lead.externalLeadId : null) ||
+    `Contacto de ${getPlatform(lead.platform).name}`
   );
 }

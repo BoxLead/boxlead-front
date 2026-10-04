@@ -44,8 +44,9 @@ export function ChoiceGroup<T extends string>({
             {choice.icon ? <span className="choice-icon">{choice.icon}</span> : null}
             <span>{choice.label}</span>
             {choice.count ? (
-              <span className="choice-count" aria-label={`${choice.count} sin leer`}>
-                {choice.count > 99 ? "99+" : choice.count}
+              <span className="choice-count">
+                <span aria-hidden="true">{choice.count > 99 ? "99+" : choice.count}</span>
+                <span className="visually-hidden">, {choice.count} sin leer</span>
               </span>
             ) : null}
           </button>

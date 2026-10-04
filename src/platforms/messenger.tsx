@@ -31,5 +31,9 @@ export const messenger: PlatformDefinition = {
     return null;
   },
   contactFields: emailAndPhone,
+  hasContext: false,
+  contextStatus: () => null,
+  externalIdIsContact: false,
+  canStartConversation: true,
   logo: (size) => <MessengerIcon width={size} height={size} aria-hidden="true" />,
 };
