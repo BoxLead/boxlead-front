@@ -1,0 +1,82 @@
+.avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: hsl(var(--avatar-hue) 45% 26%);
+  color: hsl(var(--avatar-hue) 70% 86%);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+}
+
+.avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: 0.875rem;
+}
+
+.avatar-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 1.125rem;
+}
+
+.avatar-platform {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--signal-surface);
+  border-radius: 50%;
+  background: var(--signal-bg);
+}
+
+.avatar-lg .avatar-platform {
+  width: 24px;
+  height: 24px;
+}
+
+.avatar-hue-208 {
+  --avatar-hue: 208;
+}
+
+.avatar-hue-32 {
+  --avatar-hue: 32;
+}
+
+.avatar-hue-152 {
+  --avatar-hue: 152;
+}
+
+.avatar-hue-268 {
+  --avatar-hue: 268;
+}
+
+.avatar-hue-340 {
+  --avatar-hue: 340;
+}
+
+.avatar-hue-186 {
+  --avatar-hue: 186;
+}
+
+.avatar-hue-12 {
+  --avatar-hue: 12;
+}
+
+.avatar-hue-96 {
+  --avatar-hue: 96;
+}

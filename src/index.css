@@ -18,6 +18,12 @@
   --signal-success: #5fd3a0;
   --signal-success-muted: rgba(95, 211, 160, 0.1);
   --signal-warning: #f0c878;
+  --signal-warning-muted: rgba(240, 200, 120, 0.1);
+  --platform-meli: #ffe600;
+  --platform-meli-ink: #2d3277;
+  --platform-whatsapp: #25d366;
+  --platform-instagram: #e1306c;
+  --platform-messenger: #0a7cff;
   --signal-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --signal-radius-sm: 8px;
   --signal-radius-md: 12px;
