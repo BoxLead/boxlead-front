@@ -1,4 +1,5 @@
 .layout {
+  --signal-text-muted: #91a0ae;
   display: flex;
   height: 100vh;
   height: 100dvh;

@@ -29,6 +29,13 @@ function explainError(status: number, message: string): PlatformErrorView | null
       action: null,
     };
   }
+  if (status === 409 && /has no MELI user id/i.test(message)) {
+    return {
+      title: "No pudimos identificar al comprador",
+      detail: "Este contacto no tiene un usuario de MercadoLibre asociado, así que no se le puede responder desde BoxLead.",
+      action: null,
+    };
+  }
   if (status === 409 && /no order\/pack/i.test(message)) {
     return {
       title: "Todavía no hay una venta asociada",

@@ -1,4 +1,3 @@
-import { loginPathFor } from "../util/redirect";
 import type { AuthUser, LoginRequest, RegisterRequest } from "./types";
 
 const CSRF_HEADER = "X-Requested-With";
@@ -44,9 +43,9 @@ export function clearAuth(): void {
 
 function clearAuthAndGoLogin(): void {
   clearAuth();
-  const { pathname, search } = window.location;
-  if (pathname.startsWith("/app")) {
-    window.location.assign(loginPathFor(`${pathname}${search}`));
+  const p = window.location.pathname;
+  if (p.startsWith("/app")) {
+    window.location.assign("/login");
   }
 }
 
