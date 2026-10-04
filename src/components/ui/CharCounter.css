@@ -1,0 +1,15 @@
+.char-counter {
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.char-counter-near {
+  color: var(--signal-warning);
+}
+
+.char-counter-over {
+  color: var(--signal-danger);
+  font-weight: 600;
+}
