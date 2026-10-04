@@ -1,9 +1,10 @@
 import { type FormEvent, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { useAuth } from "../../context/auth";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { DEFAULT_APP_PATH, NEXT_PARAM, safeAppPath } from "../../util/redirect";
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -14,9 +15,11 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [searchParams] = useSearchParams();
+  const next = safeAppPath(searchParams.get(NEXT_PARAM)) ?? DEFAULT_APP_PATH;
 
   if (user) {
-    return <Navigate to="/app/inbox" replace />;
+    return <Navigate to={next} replace />;
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -26,7 +29,7 @@ export function Register() {
       email: email.trim(),
       password,
       name: name.trim() || undefined,
-    });
+    }, next);
   }
 
   return (
