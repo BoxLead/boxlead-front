@@ -31,6 +31,7 @@ describe("MercadoLibre", () => {
   it.each([
     [409, "MELI account 9 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar MercadoLibre"],
     [409, "Cannot send MELI message: MELI only lets you answer open pre-sale questions, and this buyer has none unanswered.", null, "No hay preguntas pendientes"],
+    [409, "Cannot send MELI message: lead 7 has no MELI user id", null, "No pudimos identificar al comprador"],
     [409, "Cannot send MELI message: no order/pack is known for this conversation yet. It is learned from the buyer's next message.", null, "Todavía no hay una venta asociada"],
     [400, "MELI answers are limited to 2000 characters", null, "El mensaje es demasiado largo"],
     [400, "MELI messages are limited to 350 characters", null, "El mensaje es demasiado largo"],
