@@ -14,6 +14,9 @@ COPY . .
 FROM source AS lint
 RUN npm run lint
 
+FROM lint AS test
+RUN npm test
+
 FROM source AS build
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
