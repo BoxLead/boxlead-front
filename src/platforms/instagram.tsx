@@ -9,8 +9,14 @@ export const instagram: PlatformDefinition = {
   id: "INSTAGRAM",
   name: "Instagram",
   accountNoun: "cuenta profesional",
+  addAnother: "Agregar otra cuenta",
   summary: "Respondé mensajes directos y seguí los comentarios de tus publicaciones y reels.",
   syncs: ["Mensajes directos", "Comentarios en publicaciones y reels"],
+  howItWorks: [
+    "Autorizás a BoxLead desde tu cuenta profesional de Instagram.",
+    "Los mensajes directos y los comentarios llegan a la bandeja.",
+    "Respondés los mensajes directos desde BoxLead.",
+  ],
   connect: "redirect",
   stageLabels: { PRE_SALE: "Mensajes" },
   reply: () => ({
