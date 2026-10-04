@@ -1,6 +1,6 @@
 import { MercadoLibreMark } from "../components/icons/PlatformIcons";
 import { emailAndPhone, lengthError, reconnectError } from "./shared";
-import type { PlatformDefinition, PlatformErrorView } from "./types";
+import type { ContextStatus, PlatformDefinition, PlatformErrorView } from "./types";
 
 export const MELI_ANSWER_LIMIT = 2000;
 export const MELI_MESSAGE_LIMIT = 350;
@@ -65,6 +65,26 @@ function explainError(status: number, message: string): PlatformErrorView | null
   return null;
 }
 
+const LISTING_STATUS: Record<string, ContextStatus> = {
+  active: { label: "Activa", tone: "success" },
+  paused: { label: "Pausada", tone: "warning" },
+  closed: { label: "Finalizada", tone: "neutral" },
+  under_review: { label: "En revisión", tone: "warning" },
+  inactive: { label: "Inactiva", tone: "neutral" },
+};
+
+const ORDER_STATUS: Record<string, ContextStatus> = {
+  paid: { label: "Pagada", tone: "success" },
+  confirmed: { label: "Confirmada", tone: "neutral" },
+  payment_required: { label: "Pago pendiente", tone: "warning" },
+  payment_in_process: { label: "Pago en proceso", tone: "warning" },
+  partially_paid: { label: "Pago parcial", tone: "warning" },
+  partially_refunded: { label: "Devolución parcial", tone: "warning" },
+  pending_cancel: { label: "Cancelándose", tone: "danger" },
+  cancelled: { label: "Cancelada", tone: "danger" },
+  invalid: { label: "Inválida", tone: "danger" },
+};
+
 export const meli: PlatformDefinition = {
   id: "MELI",
   name: "MercadoLibre",
@@ -95,9 +115,17 @@ export const meli: PlatformDefinition = {
           kind: "questions",
           maxLength: MELI_ANSWER_LIMIT,
           placeholder: "Escribí tu respuesta",
-          hint: "Se publica en la publicación como respuesta a la pregunta pendiente más antigua.",
+          hint: "Se publica como respuesta a la pregunta pendiente más antigua.",
         },
   explainError,
   contactFields: emailAndPhone,
+  hasContext: true,
+  contextStatus: (kind, status) => {
+    if (!status) return null;
+    const table = kind === "ORDER" ? ORDER_STATUS : LISTING_STATUS;
+    return table[status.toLowerCase()] ?? { label: status, tone: "neutral" };
+  },
+  externalIdIsContact: false,
+  canStartConversation: false,
   logo: (size) => <MercadoLibreMark width={size} height={size} aria-hidden="true" />,
 };

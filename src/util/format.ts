@@ -73,3 +73,9 @@ export function formatDate(iso: string | null | undefined): string {
     ...(sameYear ? {} : { year: "numeric" }),
   });
 }
+
+export function formatTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+}

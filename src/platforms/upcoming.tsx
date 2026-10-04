@@ -11,6 +11,10 @@ const readOnly = {
   reply: () => ({ kind: "chat" as const, maxLength: null, placeholder: "Escribí un mensaje", hint: null }),
   explainError: () => null,
   contactFields: emailAndPhone,
+  hasContext: false,
+  contextStatus: () => null,
+  canStartConversation: false,
+  externalIdIsContact: false,
 };
 
 export const tiktok: PlatformDefinition = {

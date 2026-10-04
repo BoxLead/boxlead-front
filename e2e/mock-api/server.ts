@@ -299,6 +299,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     if (parts[2] === "context" && method === "GET") {
       if (conversation.platform !== "MELI") return send(res, 200, { items: [] });
+      const account = connectionFor(conversation);
+      if (account?.needsReconnection) {
+        return fail(res, 409, `MELI account ${account.id} must be reconnected: its authorization expired or was revoked`);
+      }
       if (conversation.salesStage === "POST_SALE") {
         const orders = conversation.replyContextId ? state.orders[conversation.replyContextId] ?? [] : [];
         return send(res, 200, { items: orders.map(absoluteImage) });

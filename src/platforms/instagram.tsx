@@ -38,5 +38,9 @@ export const instagram: PlatformDefinition = {
       : [];
     return [...profile, ...emailAndPhone(lead)];
   },
+  hasContext: false,
+  contextStatus: () => null,
+  externalIdIsContact: false,
+  canStartConversation: true,
   logo: (size) => <InstagramIcon width={size} height={size} aria-hidden="true" />,
 };

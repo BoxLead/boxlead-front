@@ -73,7 +73,7 @@ describe("ChoiceGroup", () => {
     expect(screen.getByRole("button", { name: "Todos" })).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(screen.getByRole("button", { name: /MercadoLibre/ }));
     expect(onChange).toHaveBeenCalledWith("MELI");
-    expect(screen.getByLabelText("3 sin leer")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^MercadoLibre\s*,\s*3 sin leer$/ })).toBeInTheDocument();
   });
 });
 

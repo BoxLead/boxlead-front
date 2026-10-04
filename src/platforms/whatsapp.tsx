@@ -40,5 +40,9 @@ export const whatsapp: PlatformDefinition = {
     if (lead.email) fields.push({ label: "Email", value: lead.email, href: `mailto:${lead.email}` });
     return fields;
   },
+  hasContext: false,
+  contextStatus: () => null,
+  externalIdIsContact: true,
+  canStartConversation: true,
   logo: (size) => <WhatsAppIcon width={size} height={size} aria-hidden="true" />,
 };

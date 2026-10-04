@@ -2,6 +2,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const FACEBOOK_SOURCES = 'https://*.facebook.com https://*.facebook.net https://*.fbcdn.net'
+const MERCADOLIBRE_IMAGES = 'https://*.mlstatic.com'
 
 function contentSecurityPolicy(apiBaseUrl: string | undefined): Plugin {
   const apiOrigin = apiBaseUrl ? new URL(apiBaseUrl).origin : ''
@@ -10,7 +11,7 @@ function contentSecurityPolicy(apiBaseUrl: string | undefined): Plugin {
     `script-src 'self' https://connect.facebook.net`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
-    `img-src 'self' data: ${FACEBOOK_SOURCES}`,
+    `img-src 'self' data: ${FACEBOOK_SOURCES} ${MERCADOLIBRE_IMAGES}`,
     `connect-src 'self' ${apiOrigin} ${FACEBOOK_SOURCES}`.replace(/\s+/g, ' '),
     `frame-src ${FACEBOOK_SOURCES}`,
     "object-src 'none'",
