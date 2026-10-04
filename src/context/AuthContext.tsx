@@ -1,5 +1,4 @@
 import {
-  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -11,7 +10,6 @@ import { api, ApiError, clearAuth } from "../api/client";
 import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
 import { clearQueryCache } from "../data/queryCache";
-import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
 import { AuthContext } from "./auth";
 
 const SESSION_ROUTES = /^\/(app|login|register)(\/|$)/;
@@ -48,11 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = useCallback(() => setError(null), []);
 
   const authenticate = useCallback(
-    async (
-      request: () => Promise<AuthUser>,
-      fallbackError: string,
-      redirectTo?: string,
-    ) => {
+    async (request: () => Promise<AuthUser>, fallbackError: string) => {
       setError(null);
       setIsLoading(true);
       try {
@@ -60,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearQueryCache();
         setUser(current);
         setSessionChecked(true);
-        navigate(safeAppPath(redirectTo) ?? DEFAULT_APP_PATH, { replace: true });
+        navigate("/app/inbox", { replace: true });
       } catch (e) {
         setError(e instanceof ApiError ? e.message : fallbackError);
       } finally {
@@ -71,14 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const login = useCallback(
-    (body: LoginRequest, redirectTo?: string) =>
-      authenticate(() => api.login(body), "No pudimos iniciar sesión.", redirectTo),
+    (body: LoginRequest) =>
+      authenticate(() => api.login(body), "No pudimos iniciar sesión."),
     [authenticate],
   );
 
   const register = useCallback(
-    (body: RegisterRequest, redirectTo?: string) =>
-      authenticate(() => api.register(body), "No pudimos crear la cuenta.", redirectTo),
+    (body: RegisterRequest) =>
+      authenticate(() => api.register(body), "No pudimos crear la cuenta."),
     [authenticate],
   );
 
@@ -86,10 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void api.logout().catch(() => undefined);
     clearAuth();
     clearQueryCache();
-    startTransition(() => {
-      setUser(null);
-      navigate("/login", { replace: true });
-    });
+    setUser(null);
+    navigate("/login", { replace: true });
   }, [navigate]);
 
   const value = useMemo(
