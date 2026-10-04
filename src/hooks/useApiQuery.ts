@@ -1,46 +1,72 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, ApiError } from "../api/client";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+import {
+  fetchQuery,
+  getQueryState,
+  isStale,
+  subscribe,
+  type QueryState,
+} from "../data/queryCache";
 
-type Result<T> = {
-  path: string;
-  data?: T;
-  error?: string;
+type Options = {
+  refreshInterval?: number;
 };
 
-const FALLBACK_ERROR = "No pudimos cargar los datos. Probá de nuevo.";
+const NO_KEY: QueryState<never> = {
+  data: undefined,
+  error: null,
+  status: "idle",
+  fetching: false,
+  fetchedAt: 0,
+};
 
-export function useApiQuery<T>(path: string | null) {
-  const [result, setResult] = useState<Result<T> | null>(null);
-  const [version, setVersion] = useState(0);
+const noop = () => undefined;
+
+export function useApiQuery<T>(key: string | null, options: Options = {}) {
+  const { refreshInterval } = options;
+
+  const subscribeToKey = useCallback(
+    (listener: () => void) => (key ? subscribe(key, listener) : noop),
+    [key],
+  );
+  const state = useSyncExternalStore(subscribeToKey, () =>
+    key ? getQueryState<T>(key) : NO_KEY,
+  );
 
   useEffect(() => {
-    if (!path) return;
-    let cancelled = false;
-    api.get<T>(path).then(
-      (data) => {
-        if (!cancelled) setResult({ path, data });
-      },
-      (e: unknown) => {
-        if (!cancelled) {
-          setResult({
-            path,
-            error: e instanceof ApiError ? e.message : FALLBACK_ERROR,
-          });
-        }
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [path, version]);
+    if (key && isStale(key)) void fetchQuery(key);
+  }, [key]);
 
-  const reload = useCallback(() => setVersion((v) => v + 1), []);
-  const current = result && result.path === path ? result : null;
+  useEffect(() => {
+    if (!key) return;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible" && isStale(key)) {
+        void fetchQuery(key);
+      }
+    };
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    window.addEventListener("focus", refreshIfVisible);
+    const timer = refreshInterval
+      ? setInterval(() => {
+          if (document.visibilityState === "visible") void fetchQuery(key);
+        }, refreshInterval)
+      : null;
+    return () => {
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+      window.removeEventListener("focus", refreshIfVisible);
+      if (timer) clearInterval(timer);
+    };
+  }, [key, refreshInterval]);
+
+  const reload = useCallback(
+    () => (key ? fetchQuery(key) : Promise.resolve()),
+    [key],
+  );
 
   return {
-    data: current?.data,
-    error: current?.error ?? null,
-    loading: path !== null && current === null,
+    data: state.data,
+    error: state.error,
+    loading: key !== null && state.data === undefined && state.status !== "error",
+    refreshing: state.fetching && state.data !== undefined,
     reload,
   };
 }

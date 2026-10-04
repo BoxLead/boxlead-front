@@ -9,6 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError, clearAuth } from "../api/client";
 import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
+import { clearQueryCache } from "../data/queryCache";
 import { AuthContext } from "./auth";
 
 const SESSION_ROUTES = /^\/(app|login|register)(\/|$)/;
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const current = await request();
+        clearQueryCache();
         setUser(current);
         setSessionChecked(true);
         navigate("/app/inbox", { replace: true });
@@ -77,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     void api.logout().catch(() => undefined);
     clearAuth();
+    clearQueryCache();
     setUser(null);
     navigate("/login", { replace: true });
   }, [navigate]);
