@@ -21,6 +21,11 @@ const LeadDetail = lazy(() =>
     default: m.LeadDetail,
   })),
 );
+const Categories = lazy(() =>
+  import("./pages/Categories/Categories").then((m) => ({
+    default: m.Categories,
+  })),
+);
 const Leads = lazy(() =>
   import("./pages/Leads/Leads").then((m) => ({ default: m.Leads })),
 );
@@ -72,6 +77,7 @@ export default function App() {
             <Route path="inbox" element={<Inbox />} />
             <Route path="leads" element={<Leads />} />
             <Route path="leads/:leadId" element={<LeadDetail />} />
+            <Route path="categories" element={<Categories />} />
             <Route path="connections" element={<Connections />} />
           </Route>
         </Route>
