@@ -41,11 +41,11 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
-Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&buyers=1`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox and leads state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&buyers=1`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
 ## Channels
 
-Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
+Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. Instagram comments are `COMMENT` messages inside the chat of the person who wrote them, shown as events with a link to the post (`/conversations/{id}/context` returns `POST` items) and answered in public through `commentReply`. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
 
 ## Conventions
 

@@ -1,6 +1,11 @@
 import { useCallback, useState } from "react";
 import { api, ApiError } from "../../api/client";
-import type { ConversationResponse, MessageResponse, PlatformType } from "../../api/types";
+import type {
+  ConversationResponse,
+  CreateMessageRequest,
+  MessageResponse,
+  PlatformType,
+} from "../../api/types";
 import { invalidateQueries, setQueryData } from "../../data/queryCache";
 import { getPlatform } from "../../platforms";
 import type { PlatformErrorView } from "../../platforms/types";
@@ -35,6 +40,30 @@ export function useConversationSender(conversationId: string, platform: Platform
   const [pending, setPending] = useState<PendingMessage[]>([]);
   const [failure, setFailure] = useState<PlatformErrorView | null>(null);
 
+  const post = useCallback(
+    async (body: CreateMessageRequest) => {
+      const created = await api.post<MessageResponse>(messagesKey(conversationId), body);
+      setQueryData<MessageResponse[]>(messagesKey(conversationId), (current) => [
+        ...(current ?? []).filter((m) => m.id !== created.id),
+        created,
+      ]);
+      setQueryData<ConversationResponse[]>(CONVERSATIONS_KEY, (current) =>
+        (current ?? []).map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                lastMessagePreview: created.content,
+                lastMessageDirection: "OUTBOUND",
+                lastMessageAt: created.createdAt,
+              }
+            : c,
+        ),
+      );
+      void invalidateQueries(CONVERSATIONS_KEY);
+    },
+    [conversationId],
+  );
+
   const deliver = useCallback(
     async (message: PendingMessage) => {
       setFailure(null);
@@ -43,28 +72,8 @@ export function useConversationSender(conversationId: string, platform: Platform
         { ...message, status: "sending" },
       ]);
       try {
-        const created = await api.post<MessageResponse>(messagesKey(conversationId), {
-          direction: "OUTBOUND",
-          content: message.content,
-        });
-        setQueryData<MessageResponse[]>(messagesKey(conversationId), (current) => [
-          ...(current ?? []).filter((m) => m.id !== created.id),
-          created,
-        ]);
-        setQueryData<ConversationResponse[]>(CONVERSATIONS_KEY, (current) =>
-          (current ?? []).map((c) =>
-            c.id === conversationId
-              ? {
-                  ...c,
-                  lastMessagePreview: created.content,
-                  lastMessageDirection: "OUTBOUND",
-                  lastMessageAt: created.createdAt,
-                }
-              : c,
-          ),
-        );
+        await post({ direction: "OUTBOUND", content: message.content });
         setPending((current) => current.filter((p) => p.tempId !== message.tempId));
-        void invalidateQueries(CONVERSATIONS_KEY);
         return true;
       } catch (error) {
         setFailure(explain(platform, error));
@@ -74,7 +83,7 @@ export function useConversationSender(conversationId: string, platform: Platform
         return false;
       }
     },
-    [conversationId, platform],
+    [platform, post],
   );
 
   const send = useCallback(
@@ -86,6 +95,20 @@ export function useConversationSender(conversationId: string, platform: Platform
         status: "sending",
       }),
     [deliver],
+  );
+
+  const replyToComment = useCallback(
+    async (commentId: string, content: string) => {
+      setFailure(null);
+      try {
+        await post({ direction: "OUTBOUND", kind: "COMMENT", content, replyToMessageId: commentId });
+        return true;
+      } catch (error) {
+        setFailure(explain(platform, error));
+        return false;
+      }
+    },
+    [platform, post],
   );
 
   const retry = useCallback(
@@ -101,5 +124,5 @@ export function useConversationSender(conversationId: string, platform: Platform
     setFailure(null);
   }, []);
 
-  return { pending, failure, send, retry, discard, dismissFailure: () => setFailure(null) };
+  return { pending, failure, send, replyToComment, retry, discard, dismissFailure: () => setFailure(null) };
 }

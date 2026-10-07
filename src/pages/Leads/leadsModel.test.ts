@@ -5,7 +5,6 @@ import { filterLeads, statusCounts } from "./leadsModel";
 const lead = (patch: Partial<LeadResponse>): LeadResponse => ({
   id: Math.random().toString(36),
   platform: "MELI",
-  campaignId: null,
   externalLeadId: null,
   name: null,
   email: null,

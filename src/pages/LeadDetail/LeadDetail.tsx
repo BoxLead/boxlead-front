@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
-import type {
-  CommentThreadResponse,
-  ConversationResponse,
-  LeadResponse,
-} from "../../api/types";
+import type { ConversationResponse, LeadResponse } from "../../api/types";
 import { ArrowLeftIcon, ChatIcon, ExternalLinkIcon } from "../../components/icons/UiIcons";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
 import { Avatar } from "../../components/ui/Avatar";
@@ -26,9 +22,6 @@ export function LeadDetail() {
   const lead = useApiQuery<LeadResponse>(leadId ? leadKey(leadId) : null);
   const conversations = useApiQuery<ConversationResponse[]>(
     leadId ? `/conversations?leadId=${encodeURIComponent(leadId)}` : null,
-  );
-  const threads = useApiQuery<CommentThreadResponse[]>(
-    leadId ? `/comments/threads?leadId=${encodeURIComponent(leadId)}` : null,
   );
   const [starting, setStarting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -73,7 +66,6 @@ export function LeadDetail() {
   const ownConversations = (conversations.data ?? [])
     .filter((c) => c.leadId === current.id)
     .sort((a, b) => (b.lastMessageAt ?? b.updatedAt).localeCompare(a.lastMessageAt ?? a.updatedAt));
-  const ownThreads = (threads.data ?? []).filter((t) => t.leadId === current.id);
 
   async function startConversation() {
     setStarting(true);
@@ -207,29 +199,6 @@ export function LeadDetail() {
             </ul>
           )}
         </section>
-
-        {ownThreads.length > 0 ? (
-          <section className="panel lead-detail-card" aria-labelledby="lead-comments">
-            <h2 className="panel-title" id="lead-comments">
-              Comentarios
-            </h2>
-            <ul className="lead-detail-list">
-              {ownThreads.map((thread) => (
-                <li key={thread.id}>
-                  <Link to={`/app/inbox?view=comments&id=${thread.id}`} className="lead-detail-conversation">
-                    <ChatIcon width={18} height={18} />
-                    <span className="lead-detail-conversation-body">
-                      <span className="lead-detail-conversation-top">
-                        <span>Comentarios en {getPlatform(thread.platform).name}</span>
-                        <time dateTime={thread.updatedAt}>{formatRelative(thread.updatedAt)}</time>
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
       </div>
     </div>
   );

@@ -65,6 +65,13 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
       ),
     [context.data],
   );
+  const posts = useMemo(
+    () =>
+      new Map<string, ContextItem>(
+        (context.data?.items ?? []).filter((i) => i.kind === "POST").map((i) => [i.externalId, i]),
+      ),
+    [context.data],
+  );
   const orders = (context.data?.items ?? []).filter((i) => i.kind === "ORDER");
   const contextIssue = context.error ? platform.explainError(409, context.error) : null;
   const questions = policy.kind === "questions" ? pairQuestions(list) : null;
@@ -138,8 +145,11 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
             messages={list}
             pending={sender.pending}
             contactName={row.displayName}
+            posts={posts}
+            commentPolicy={platform.commentReply}
             onRetry={sender.retry}
             onDiscard={sender.discard}
+            onReplyToComment={sender.replyToComment}
           />
         )}
       </div>

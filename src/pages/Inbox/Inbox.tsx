@@ -1,22 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import type {
-  CommentThreadResponse,
-  ConversationResponse,
-  LeadResponse,
-  PlatformType,
-  SalesStage,
-} from "../../api/types";
+import type { ConversationResponse, LeadResponse, PlatformType, SalesStage } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { ChatIcon, InboxIcon } from "../../components/icons/UiIcons";
+import { InboxIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
-import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
-import { leadDisplayName } from "../../util/labels";
-import { CommentList } from "./CommentList";
-import { CommentThreadView } from "./CommentThreadView";
 import { ConversationList } from "./ConversationList";
 import { ConversationView } from "./ConversationView";
 import {
@@ -28,8 +18,6 @@ import {
 } from "./inboxModel";
 import { CONVERSATIONS_KEY } from "./useConversationSender";
 import "./Inbox.css";
-
-type View = "conversations" | "comments";
 
 const LIST_REFRESH_MS = 15_000;
 const STAGES: SalesStage[] = ["PRE_SALE", "POST_SALE"];
@@ -47,7 +35,6 @@ export function Inbox() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");
-  const view: View = searchParams.get("view") === "comments" ? "comments" : "conversations";
   const selectedId = searchParams.get("id");
   const filters: InboxFilters = {
     channel: parseChannel(searchParams.get("channel")),
@@ -59,11 +46,7 @@ export function Inbox() {
   const conversations = useApiQuery<ConversationResponse[]>(CONVERSATIONS_KEY, {
     refreshInterval: LIST_REFRESH_MS,
   });
-  const threads = useApiQuery<CommentThreadResponse[]>("/comments/threads", {
-    refreshInterval: view === "comments" ? LIST_REFRESH_MS * 2 : undefined,
-  });
-  const needsLeads =
-    (conversations.data ?? []).some((c) => !c.leadName) || (threads.data ?? []).length > 0;
+  const needsLeads = (conversations.data ?? []).some((c) => !c.leadName);
   const leads = useApiQuery<LeadResponse[]>(needsLeads ? "/leads?includePostSale=true" : null);
 
   const leadsById = useMemo(
@@ -73,10 +56,7 @@ export function Inbox() {
   const rows = useMemo(() => toRows(conversations.data ?? [], leadsById), [conversations.data, leadsById]);
   const visible = filterRows(rows, filters);
   const channels = channelsIn(rows, CONNECTABLE_PLATFORMS.map((p) => p.id));
-  const totalUnread = rows.reduce((sum, row) => sum + row.unread, 0);
-  const selectedRow = view === "conversations" ? rows.find((row) => row.id === selectedId) : undefined;
-  const threadList = threads.data ?? [];
-  const selectedThread = view === "comments" ? threadList.find((t) => t.id === selectedId) : undefined;
+  const selectedRow = rows.find((row) => row.id === selectedId);
 
   const linkWith = useCallback(
     (patch: Record<string, string | null>) => {
@@ -109,13 +89,6 @@ export function Inbox() {
     if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
   }
 
-  const nameOfThread = (thread: CommentThreadResponse) => {
-    const lead = leadsById.get(thread.leadId);
-    return lead ? leadDisplayName(lead) : "Usuario de Instagram";
-  };
-
-  const listError = view === "conversations" ? conversations.error : threads.error;
-  const listLoading = view === "conversations" ? conversations.loading : threads.loading;
   const isOpen = Boolean(selectedId);
   const backTo = linkWith({ id: null });
 
@@ -123,27 +96,17 @@ export function Inbox() {
     <div className={`inbox${isOpen ? " inbox-open" : ""}`}>
       <header className="inbox-header">
         <h1 className="page-title">Bandeja</h1>
-        <ChoiceGroup<View>
-          label="Vista"
-          variant="segmented"
-          value={view}
-          onChange={(next) => setSearchParams(next === "comments" ? { view: "comments" } : {}, { replace: true })}
-          choices={[
-            { value: "conversations", label: "Conversaciones", count: totalUnread },
-            { value: "comments", label: "Comentarios" },
-          ]}
-        />
       </header>
 
       <div className={`inbox-panels${isOpen ? " inbox-panels-open" : ""}`}>
-        <aside className="inbox-list" aria-label={view === "comments" ? "Lista de comentarios" : "Lista de conversaciones"}>
-          {listError && !(view === "conversations" ? conversations.data : threads.data) ? (
+        <aside className="inbox-list" aria-label="Lista de conversaciones">
+          {conversations.error && !conversations.data ? (
             <div className="inbox-list-message">
               <Banner tone="danger" title="No pudimos cargar la bandeja">
-                {listError}
+                {conversations.error}
               </Banner>
             </div>
-          ) : listLoading ? (
+          ) : conversations.loading ? (
             <ul className="conversation-items" aria-hidden="true">
               {[0, 1, 2, 3, 4].map((i) => (
                 <li key={i} className="conversation-item-skeleton">
@@ -152,41 +115,26 @@ export function Inbox() {
                 </li>
               ))}
             </ul>
-          ) : view === "conversations" ? (
-            rows.length === 0 ? (
-              <EmptyState
-                icon={<InboxIcon />}
-                title="Tu bandeja está vacía"
-                hint="Cuando alguien te escriba por un canal conectado, la conversación aparece acá."
-                action={
-                  <Link to="/app/connections" className="btn btn-secondary btn-sm">
-                    Conectar un canal
-                  </Link>
-                }
-              />
-            ) : (
-              <ConversationList
-                rows={rows}
-                visible={visible}
-                channels={channels}
-                filters={filters}
-                selectedId={selectedId}
-                linkFor={(id) => linkWith({ id })}
-                onFiltersChange={updateFilters}
-              />
-            )
-          ) : threadList.length === 0 ? (
+          ) : rows.length === 0 ? (
             <EmptyState
-              icon={<ChatIcon />}
-              title="Sin comentarios por ahora"
-              hint="Los comentarios en tus publicaciones y reels de Instagram aparecen acá."
+              icon={<InboxIcon />}
+              title="Tu bandeja está vacía"
+              hint="Cuando alguien te escriba o comente en un canal conectado, la conversación aparece acá."
+              action={
+                <Link to="/app/connections" className="btn btn-secondary btn-sm">
+                  Conectar un canal
+                </Link>
+              }
             />
           ) : (
-            <CommentList
-              threads={[...threadList].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))}
-              nameOf={nameOfThread}
+            <ConversationList
+              rows={rows}
+              visible={visible}
+              channels={channels}
+              filters={filters}
               selectedId={selectedId}
               linkFor={(id) => linkWith({ id })}
+              onFiltersChange={updateFilters}
             />
           )}
         </aside>
@@ -194,14 +142,7 @@ export function Inbox() {
         <div className="inbox-main">
           {selectedRow ? (
             <ConversationView key={selectedRow.id} row={selectedRow} backTo={backTo} />
-          ) : selectedThread ? (
-            <CommentThreadView
-              key={selectedThread.id}
-              thread={selectedThread}
-              name={nameOfThread(selectedThread)}
-              backTo={backTo}
-            />
-          ) : selectedId && !listLoading ? (
+          ) : selectedId && !conversations.loading ? (
             <EmptyState
               icon={<InboxIcon />}
               title="No encontramos esta conversación"
@@ -215,12 +156,8 @@ export function Inbox() {
           ) : (
             <EmptyState
               icon={<InboxIcon />}
-              title={view === "comments" ? "Elegí un comentario" : "Elegí una conversación"}
-              hint={
-                view === "comments"
-                  ? "Vas a ver el hilo completo de comentarios."
-                  : "Respondé desde acá y el mensaje sale por el canal de origen."
-              }
+              title="Elegí una conversación"
+              hint="Respondé desde acá y el mensaje sale por el canal de origen."
             />
           )}
         </div>

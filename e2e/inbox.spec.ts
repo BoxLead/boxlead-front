@@ -14,7 +14,7 @@ test.beforeEach(async () => {
 test("lists every channel by recent activity with unread counts", async ({ page }) => {
   await login(page);
   const items = list(page).getByRole("link");
-  await expect(items).toHaveCount(5);
+  await expect(items).toHaveCount(6);
   await expect(items.first()).toContainText("Martín Herrera");
   await expect(items.first()).toContainText("2 sin leer");
   await expect(page.getByRole("group", { name: "Canal" }).getByRole("button")).toHaveText([
@@ -128,14 +128,54 @@ test("WhatsApp chats send messages and group them by day", async ({ page }, test
   await expect(list(page).getByRole("link", { name: /Martín Herrera/ })).toContainText("Vos: Dale, quedo atento.");
 });
 
-test("Instagram comments open as a read-only thread", async ({ page }) => {
+test("Instagram comments are events of the chat, link to the post and are answered in public", async ({ page }) => {
   await login(page);
-  await page.getByRole("group", { name: "Vista" }).getByRole("button", { name: "Comentarios" }).click();
-  await page.getByRole("list", { name: "Comentarios" }).getByRole("link", { name: /nico\.audio/ }).click();
-  await expect(page.locator(".conversation-header-meta")).toContainText("Comentó en un reel");
-  await expect(page.locator(".comment-replies")).toContainText("¡Te escribimos por privado!");
-  await expect(page.getByText("Los comentarios se responden desde Instagram")).toBeVisible();
+  await openConversation(page, "nico.audio");
+
+  const events = page.locator(".comment-event");
+  await expect(events).toHaveCount(3);
+  await expect(events.first()).toContainText("Comentó en un reel");
+  await expect(events.first().getByRole("link", { name: /Flip 6 en stock/ })).toHaveAttribute(
+    "href",
+    "https://www.instagram.com/reel/C9mockReel1/",
+  );
+  await expect(events.nth(1)).toContainText("Respondiste en público");
+  await expect(events.nth(1)).toContainText("¡Te escribimos por privado!");
+  await expect(events.first()).toContainText("Respondido en público");
+  await expect(events.first().getByRole("button", { name: "Responder en público" })).toHaveCount(0);
   await expectAccessible(page);
+  await screenshot(page, "inbox-instagram-comments");
+
+  const pendingComment = events.nth(2);
+  await expect(pendingComment).toContainText("¿Y lo tienen en azul?");
+  await pendingComment.getByRole("button", { name: "Responder en público" }).click();
+  await page.getByLabel("Responder en público a nico.audio").fill("¡Sí! Lo tenemos en azul y en negro.");
+  await page.locator(".comment-event-reply").getByRole("button", { name: "Enviar" }).click();
+
+  await expect(events).toHaveCount(4);
+  await expect(events.last()).toContainText("Respondiste en público");
+  await expect(events.last()).toContainText("Lo tenemos en azul y en negro");
+  await expect(pendingComment).toContainText("Respondido en público");
+  await expect(pendingComment.getByRole("button", { name: "Responder en público" })).toHaveCount(0);
+});
+
+test("an Instagram message refused for the window is a private reply to the last comment, once", async ({ page }) => {
+  await login(page);
+  await openConversation(page, "nico.audio");
+  const composer = page.getByLabel("Responder a nico.audio");
+  const send = page.locator(".conversation-footer").getByRole("button", { name: "Enviar" });
+  await expect(page.getByText(/respuesta privada a su último comentario/)).toBeVisible();
+
+  await composer.fill("Te paso el precio por acá.");
+  await send.click();
+  await expect(page.locator(".bubble-outbound").last()).toContainText("Te paso el precio por acá.");
+
+  await composer.fill("¿Te sirve?");
+  await send.click();
+  const alert = page.getByRole("alert").filter({ hasText: "Ya no podés escribirle por privado" });
+  await expect(alert).toBeVisible();
+  await expect(page.locator(".bubble-failed")).toContainText("No se envió.");
+  await screenshot(page, "inbox-instagram-private-reply-closed");
 });
 
 test("an unknown conversation link explains itself", async ({ page }) => {

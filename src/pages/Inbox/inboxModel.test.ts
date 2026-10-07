@@ -28,7 +28,7 @@ const message = (patch: Partial<MessageResponse>): MessageResponse => ({
 describe("toRows", () => {
   it("prefers the summary name, falls back to the lead and sorts by last activity", () => {
     const leads = new Map<string, LeadResponse>([
-      ["l2", { id: "l2", platform: "WHATSAPP", campaignId: null, externalLeadId: "549", name: null, email: null, phone: "+549", status: "NEW", postSaleOnly: false, createdAt: "", updatedAt: "" }],
+      ["l2", { id: "l2", platform: "WHATSAPP", externalLeadId: "549", name: null, email: null, phone: "+549", status: "NEW", postSaleOnly: false, createdAt: "", updatedAt: "" }],
     ]);
     const rows = toRows(
       [
