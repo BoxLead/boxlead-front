@@ -22,7 +22,7 @@ src/
 ├── data/             # queryCache (shared request cache behind useApiQuery) and lead mutations
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
-├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, CategoryTag, EmptyState, Loading, ScrollToTop
+├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
