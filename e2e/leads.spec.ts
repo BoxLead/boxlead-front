@@ -72,3 +72,29 @@ test("an unknown lead explains itself", async ({ page }) => {
   await login(page, "/app/leads/00000000-0000-4000-8000-000000000000");
   await expect(page.getByText("No encontramos este lead")).toBeVisible();
 });
+
+test("assigns a category from the table and filters by it", async ({ page }) => {
+  await login(page, "/app/leads");
+  await page.getByLabel("Categoría de sofi.decoraciones").selectOption({ label: "Reclamo" });
+  await expect(page.getByRole("status").filter({ hasText: "sofi.decoraciones pasó a Reclamo." })).toBeVisible();
+
+  await page.getByLabel("Filtrar por categoría").selectOption({ label: "Reclamo" });
+  await expect(page).toHaveURL(/category=/);
+  await expect(rows(page)).toHaveCount(1);
+  await expect(rows(page)).toContainText("sofi.decoraciones");
+
+  await page.getByLabel("Filtrar por categoría").selectOption({ label: "Sin categoría" });
+  await expect(rows(page)).toHaveCount(2);
+  await screenshot(page, "leads-categories");
+});
+
+test("the category can be cleared from the lead detail", async ({ page }) => {
+  await login(page, "/app/leads");
+  await page.getByRole("link", { name: "Martín Herrera" }).click();
+  const select = page.getByLabel("Categoría de Martín Herrera");
+  await expect(select).toHaveValue(/.+/);
+  await select.selectOption({ label: "Sin categoría" });
+  await expect(page.getByRole("status").filter({ hasText: "Martín Herrera quedó sin categoría." })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Categoría de Martín Herrera")).toHaveValue("");
+});

@@ -1,6 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type {
   AccountConnectionResponse,
+  CategoryColor,
+  CategoryResponse,
   ConversationResponse,
   LeadResponse,
   LeadStatus,
@@ -28,6 +30,9 @@ const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "G
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 const MELI_ANSWER_LIMIT = 2000;
 const MELI_MESSAGE_LIMIT = 350;
+const CATEGORY_COLORS: CategoryColor[] = ["BLUE", "GREEN", "YELLOW", "ORANGE", "RED", "PURPLE", "PINK", "GRAY"];
+const MAX_CATEGORIES = 30;
+const NAME_IN_USE = "Category name already in use";
 
 let state: MockState = buildState("default");
 
@@ -169,6 +174,33 @@ function meliReply(
   };
 }
 
+function withLeadCount(category: Omit<CategoryResponse, "leadCount">): CategoryResponse {
+  return { ...category, leadCount: state.leads.filter((l) => l.categoryId === category.id).length };
+}
+
+function nameTaken(name: string, exceptId: string | null): boolean {
+  const wanted = name.toLocaleLowerCase("es-AR");
+  return state.categories.some((c) => c.id !== exceptId && c.name.toLocaleLowerCase("es-AR") === wanted);
+}
+
+function normalizeDescription(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function validateCategory(body: Record<string, unknown>, creating: boolean): string | null {
+  const name = body.name;
+  if (creating || name !== undefined) {
+    if (typeof name !== "string" || !name.trim() || name.length > 40) return "Validation failed";
+  }
+  if (body.description !== undefined && body.description !== null) {
+    if (typeof body.description !== "string" || body.description.length > 280) return "Validation failed";
+  }
+  if (creating || body.color !== undefined) {
+    if (!CATEGORY_COLORS.includes(body.color as CategoryColor)) return "Validation failed";
+  }
+  return null;
+}
+
 function oauthUrl(platform: PlatformType, redirectUri: string) {
   const host = platform === "MELI" ? "auth.mercadolibre.test" : "www.facebook.test";
   const url = new URL(`https://${host}/authorization`);
@@ -183,7 +215,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   res.setHeader("Vary", "Origin");
   const method = req.method ?? "GET";
   if (method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
     return send(res, 200);
   }
@@ -224,7 +256,70 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, USER);
 
+  if (parts[0] === "categories") {
+    if (parts.length === 1 && method === "GET") {
+      return send(res, 200, [...state.categories].sort((a, b) => a.position - b.position).map(withLeadCount));
+    }
+    if (parts.length === 1 && method === "POST") {
+      const body = await readBody(req);
+      const invalid = validateCategory(body, true);
+      if (invalid) return fail(res, 400, invalid);
+      if (state.categories.length >= MAX_CATEGORIES) {
+        return fail(res, 409, `You can have up to ${MAX_CATEGORIES} categories`);
+      }
+      const name = (body.name as string).trim();
+      if (nameTaken(name, null)) return fail(res, 409, NAME_IN_USE);
+      const now = new Date().toISOString();
+      const created = {
+        id: nextId("ca7e"),
+        name,
+        description: normalizeDescription(body.description),
+        color: body.color as CategoryColor,
+        position: state.categories.length,
+        createdAt: now,
+        updatedAt: now,
+      };
+      state.categories.push(created);
+      return send(res, 201, withLeadCount(created));
+    }
+    const category = state.categories.find((c) => c.id === parts[1]);
+    if (!category) return fail(res, 404, "Category not found");
+    if (method === "PATCH") {
+      const body = await readBody(req);
+      const invalid = validateCategory(body, false);
+      if (invalid) return fail(res, 400, invalid);
+      if (typeof body.name === "string") {
+        const name = body.name.trim();
+        if (nameTaken(name, category.id)) return fail(res, 409, NAME_IN_USE);
+        category.name = name;
+      }
+      if (typeof body.description === "string") category.description = normalizeDescription(body.description);
+      if (typeof body.color === "string") category.color = body.color as CategoryColor;
+      category.updatedAt = new Date().toISOString();
+      return send(res, 200, withLeadCount(category));
+    }
+    if (method === "DELETE") {
+      state.categories = state.categories.filter((c) => c.id !== category.id);
+      for (const leadRef of state.leads) {
+        if (leadRef.categoryId === category.id) leadRef.categoryId = null;
+      }
+      return send(res, 204);
+    }
+  }
+
   if (parts[0] === "leads") {
+    if (parts[2] === "category" && method === "PUT") {
+      const leadRef = state.leads.find((l) => l.id === parts[1]);
+      if (!leadRef) return fail(res, 404, "Lead not found");
+      const body = await readBody(req);
+      const categoryId = typeof body.categoryId === "string" ? body.categoryId : null;
+      if (categoryId && !state.categories.some((c) => c.id === categoryId)) {
+        return fail(res, 400, "Category not found or does not belong to you");
+      }
+      leadRef.categoryId = categoryId;
+      leadRef.updatedAt = new Date().toISOString();
+      return send(res, 200, leadRef);
+    }
     if (parts.length === 1 && method === "GET") {
       const status = url.searchParams.get("status");
       const includePostSale = url.searchParams.get("includePostSale") === "true";

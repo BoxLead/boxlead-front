@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import type { LeadResponse, LeadStatus, PlatformType } from "../../api/types";
+import type { CategoryResponse, LeadResponse, LeadStatus, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { SearchIcon, UsersIcon } from "../../components/icons/UiIcons";
+import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
+import { ChevronDownIcon, SearchIcon, UsersIcon } from "../../components/icons/UiIcons";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
 import { ChoiceGroup, type Choice } from "../../components/ui/ChoiceGroup";
 import { Tag } from "../../components/ui/Tag";
+import { CATEGORIES_KEY } from "../../data/categories";
 import { ALL_LEADS_KEY } from "../../data/leads";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS, getPlatform } from "../../platforms";
+import { UNCATEGORIZED } from "../../util/categories";
 import { formatRelative } from "../../util/format";
 import { LEAD_STATUSES, leadDisplayName, leadStatusLabel } from "../../util/labels";
 import { filterLeads, statusCounts, type LeadFilters } from "./leadsModel";
@@ -31,10 +34,13 @@ export function Leads() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const leads = useApiQuery<LeadResponse[]>(ALL_LEADS_KEY);
+  const categories = useApiQuery<CategoryResponse[]>(CATEGORIES_KEY);
+  const categoryList = categories.data ?? [];
   const filters: LeadFilters = {
     status: parseStatus(searchParams.get("status")),
     channel: parseChannel(searchParams.get("channel")),
     includeBuyers: searchParams.get("buyers") === "1",
+    category: searchParams.get("category"),
     query,
   };
 
@@ -102,6 +108,24 @@ export function Leads() {
             value={filters.channel}
             onChange={(channel) => setParam("channel", channel === "ALL" ? null : channel)}
           />
+        ) : null}
+        {categoryList.length > 0 ? (
+          <label className="leads-category-filter">
+            <span className="visually-hidden">Filtrar por categoría</span>
+            <select
+              value={filters.category ?? ""}
+              onChange={(event) => setParam("category", event.target.value || null)}
+            >
+              <option value="">Todas las categorías</option>
+              {categoryList.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+              <option value={UNCATEGORIZED}>Sin categoría</option>
+            </select>
+            <ChevronDownIcon width={14} height={14} />
+          </label>
         ) : null}
         {buyers > 0 ? (
           <label className="leads-buyers-toggle">
@@ -175,6 +199,7 @@ export function Leads() {
               <tr>
                 <th scope="col">Contacto</th>
                 <th scope="col">Estado</th>
+                <th scope="col">Categoría</th>
                 <th scope="col">Datos</th>
                 <th scope="col">Primer contacto</th>
               </tr>
@@ -201,6 +226,9 @@ export function Leads() {
                     </td>
                     <td>
                       <StatusSelect lead={lead} />
+                    </td>
+                    <td>
+                      <CategorySelect lead={lead} categories={categoryList} />
                     </td>
                     <td className="leads-contact">
                       {lead.email || lead.phone ? (

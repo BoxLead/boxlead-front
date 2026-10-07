@@ -1,5 +1,6 @@
 import type {
   AccountConnectionResponse,
+  CategoryResponse,
   CommentResponse,
   CommentThreadResponse,
   ContextItem,
@@ -20,7 +21,10 @@ export type StoredConversation = Omit<
   | "unreadCount"
 > & { replyContextId: string | null };
 
+export type StoredCategory = Omit<CategoryResponse, "leadCount">;
+
 export type MockState = {
+  categories: StoredCategory[];
   leads: LeadResponse[];
   conversations: StoredConversation[];
   messages: MessageResponse[];
@@ -68,6 +72,7 @@ function lead(
     phone: null,
     status: "NEW",
     postSaleOnly: false,
+    categoryId: null,
     createdAt: ago(minutes),
     updatedAt: ago(minutes),
     ...extra,
@@ -136,8 +141,26 @@ function listing(
   };
 }
 
+const DEFAULT_CATEGORIES: Array<Pick<StoredCategory, "name" | "description" | "color">> = [
+  { name: "Consulta", description: "Personas que preguntan por un producto o servicio antes de decidir.", color: "BLUE" },
+  { name: "Presupuesto", description: "Pedidos de precio, cotización o condiciones de compra.", color: "GREEN" },
+  { name: "Postventa", description: "Clientes que ya compraron y consultan por envío, uso o factura.", color: "PURPLE" },
+  { name: "Reclamo", description: "Problemas, devoluciones o quejas que necesitan atención.", color: "RED" },
+];
+
+export function defaultCategories(): StoredCategory[] {
+  return DEFAULT_CATEGORIES.map((category, position) => ({
+    ...category,
+    id: nextId("ca7e"),
+    position,
+    createdAt: ago(60 * 24 * 30),
+    updatedAt: ago(60 * 24 * 30),
+  }));
+}
+
 export function emptyState(): MockState {
   return {
+    categories: defaultCategories(),
     leads: [],
     conversations: [],
     messages: [],
@@ -202,7 +225,8 @@ export function buildState(scenario: Scenario): MockState {
   state.listings[auriculares.externalId] = auriculares;
   state.listings[parlante.externalId] = parlante;
 
-  const martin = lead("MELI", "MARTINGOMEZ_82", "MARTIN_ML_1", 300);
+  const [consulta, presupuesto, postventa] = state.categories;
+  const martin = lead("MELI", "MARTINGOMEZ_82", "MARTIN_ML_1", 300, { categoryId: consulta.id });
   const preSale = conversation(martin, `${MELI_SELLER_ID}_99120001`, 300);
   state.leads.push(martin);
   state.conversations.push(preSale);
@@ -235,6 +259,7 @@ export function buildState(scenario: Scenario): MockState {
     postSaleOnly: true,
     email: "carolina.paz@example.com",
     phone: "1155550199",
+    categoryId: postventa.id,
   });
   const postSale = conversation(carolina, `${MELI_SELLER_ID}_99120002`, 60 * 26, {
     salesStage: "POST_SALE",
@@ -280,6 +305,7 @@ export function buildState(scenario: Scenario): MockState {
   const herrera = lead("WHATSAPP", "Martín Herrera", "5491155550142", 90, {
     phone: "+5491155550142",
     status: "CONTACTED",
+    categoryId: presupuesto.id,
   });
   const whatsapp = conversation(herrera, `774400112233_5491155550142`, 90);
   state.leads.push(herrera);
