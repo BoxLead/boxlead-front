@@ -127,6 +127,8 @@ export const api = {
   patch: <T>(path: string, body: unknown) =>
     request<T>("PATCH", path, { body }),
 
+  put: <T>(path: string, body: unknown) => request<T>("PUT", path, { body }),
+
   delete: (path: string) => request<void>("DELETE", path),
 
   login: (body: LoginRequest) => requestUser("POST", "/auth/login", body),

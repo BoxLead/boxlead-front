@@ -1,0 +1,65 @@
+.category-select {
+  --category-color: var(--signal-text-muted);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  color: var(--category-color);
+}
+
+.category-select::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+}
+
+.category-select-empty::before {
+  border: 1px dashed currentColor;
+  background: transparent;
+}
+
+.category-select select {
+  max-width: 100%;
+  height: 30px;
+  padding: 0 28px 0 24px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--category-color) 35%, transparent);
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--category-color) 10%, transparent);
+  color: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  appearance: none;
+  cursor: pointer;
+}
+
+.category-select select:hover:not(:disabled) {
+  border-color: var(--category-color);
+}
+
+.category-select select:disabled {
+  opacity: 0.6;
+}
+
+.category-select select option {
+  background: var(--signal-surface);
+  color: var(--signal-heading);
+}
+
+.category-select svg {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+}
+
+.category-select-md select {
+  height: 36px;
+  font-size: 0.875rem;
+}

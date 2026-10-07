@@ -19,6 +19,14 @@
   --signal-success-muted: rgba(95, 211, 160, 0.1);
   --signal-warning: #f0c878;
   --signal-warning-muted: rgba(240, 200, 120, 0.1);
+  --category-blue: #7cb7f0;
+  --category-green: #5fd3a0;
+  --category-yellow: #f0d36b;
+  --category-orange: #f3a65a;
+  --category-red: #f08a8a;
+  --category-purple: #b9a2f2;
+  --category-pink: #f29bc9;
+  --category-gray: #a7b4c0;
   --platform-meli: #ffe600;
   --platform-meli-ink: #2d3277;
   --platform-whatsapp: #25d366;
@@ -250,6 +258,38 @@ button {
   margin: 6px 0 0;
   max-width: 560px;
   color: var(--signal-text);
+}
+
+.category-color-blue {
+  --category-color: var(--category-blue);
+}
+
+.category-color-green {
+  --category-color: var(--category-green);
+}
+
+.category-color-yellow {
+  --category-color: var(--category-yellow);
+}
+
+.category-color-orange {
+  --category-color: var(--category-orange);
+}
+
+.category-color-red {
+  --category-color: var(--category-red);
+}
+
+.category-color-purple {
+  --category-color: var(--category-purple);
+}
+
+.category-color-pink {
+  --category-color: var(--category-pink);
+}
+
+.category-color-gray {
+  --category-color: var(--category-gray);
 }
 
 .skeleton {
