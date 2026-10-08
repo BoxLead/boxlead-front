@@ -23,10 +23,10 @@ src/
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
 ├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
-│   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
+│   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # company, dates, format, labels, links, metrics, oauth, redirect, facebook-sdk
+└── util/             # classNames, company, dates, format, labels, links, metrics, oauth, redirect, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -49,13 +49,15 @@ Each lead belongs to at most one category (`categoryId`). Categories come from `
 
 ## Metrics
 
-The page reads `GET /metrics?from&to&timezone` for the current period, the previous one and the last 12 weeks, plus `GET /metrics/settings` for the assumptions (ticket, minutes per reply, business hours). The contract lives in `api/types.ts` and the backend brief in `boxlead-core/METRICS.md`. Every segment is one channel and one category, so filters are applied in the browser without new requests.
+The page reads `GET /metrics?from&to&timezone` for the current period, the previous one and the last 12 weeks, plus `GET /metrics/settings` for the assumptions (minutes per reply and business hours). The contract lives in `api/types.ts` and the backend brief in `boxlead-core/METRICS.md`. Every segment is one channel and one category, so filters are applied in the browser without new requests.
 
 Until the backend ships those endpoints `METRICS_DEMO` in `data/metrics.ts` answers both keys locally with `metricsDemo.ts` through `setQueryResolver`. The demo data is deterministic, uses the account categories and assumptions, and the page shows a "Datos de ejemplo" tag. To switch to the API set `METRICS_DEMO` to false, add the routes to `e2e/mock-api` and delete the demo files.
 
-The page is built around one chart. The indicator tabs (leads, answered in 5 minutes, qualification, sales, revenue) switch it, and it compares with the previous period and shows the 14 day estimate for counts. The breakdown by channel or category filters the whole page when a row is clicked, and ignores its own filter so the other rows stay visible. Signals are at most three short lines, each rule needs a minimum sample and repeats nothing the page already shows.
+The page only shows what BoxLead can measure. Sales and revenue are left out on purpose because they are hard to attribute, and ad spend for a cost per lead is the next step (see `METRICS.md`).
 
-Series, totals, rates, funnel, breakdowns, signals and the forecast are pure functions in `pages/Metrics/` with unit tests. Charts are plain SVG with no chart library and read with pointer, touch and keyboard. Rates use a 7 day rolling window, the 90 day view is weekly, and the current day is drawn apart because it is not over. Qualification and sales count what happened in the period, the funnel follows the leads that arrived in it. Keep the page sober, one accent color for data and green or red only for changes.
+The page is built around one chart. The indicator tabs (leads, answered in 5 minutes, first response and qualification) switch it, compare with the previous period and show the 14 day estimate for leads. The funnel (leads, contacted, qualified) explains each step on hover, touch or focus and draws the previous period as an outline. The breakdown by channel or category filters the whole page when a row is clicked, and ignores its own filter so the other rows stay visible. Signals are at most three short lines, each rule needs a minimum sample and repeats nothing the page already shows.
+
+`useMetricsView` only loads data. `buildMetricsView` and `buildChartData` turn the reports into what the page draws, and they, the model (`metricsModel`, `breakdown`, `hours`, `series`), the signals, the forecast and the chart layouts are pure functions with unit tests. Charts are plain SVG with no chart library and read with pointer, touch and keyboard. Rates and response times use a 7 day rolling window, the 90 day view and sparse counts are weekly, and the current day is drawn apart because it is not over. Keep the page sober, one accent color for data and green or red only for changes.
 
 ## Channels
 
@@ -67,14 +69,15 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - `type` aliases and `import type` for type-only imports.
 - Named exports, except `App`.
 - Components use the `function` keyword, one per file, with a co-located `.css` file.
-- No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing.
+- No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing. Derive tints from a token with `color-mix` instead of writing a new color.
+- Shared primitives live in `index.css` (`.btn`, `.btn-icon`, `.panel`, `.field`, `.input`, `.select`, `.form-error`) and in `components/ui` (`Dialog` for every modal). Compose conditional classes with `cx` from `util/classNames`.
 - No comments in code.
 - UI copy is in Spanish; the legal pages stay in English.
 - Load data with `useApiQuery` (shared cache, `refreshInterval` polls only while the tab is visible); mutations call `api` and then `invalidateQueries` or `setQueryData`.
 - Every page sets its tab title with `useDocumentTitle`.
 - Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
 - Every screen needs loading, empty and error states, and must work from 320px wide.
-- Animations are CSS only and respect `prefers-reduced-motion`.
+- Animations are CSS, except number tweens with `useAnimatedNumber`, and all of them respect `prefers-reduced-motion`.
 
 ## Landing
 
