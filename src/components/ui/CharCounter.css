@@ -13,3 +13,7 @@
   color: var(--signal-danger);
   font-weight: 600;
 }
+
+.field > .char-counter {
+  justify-self: end;
+}

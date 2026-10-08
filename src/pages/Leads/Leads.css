@@ -101,42 +101,10 @@
   color: var(--signal-text-muted);
 }
 
-.leads-category-filter {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  color: var(--signal-text-muted);
-}
-
-.leads-category-filter select {
-  height: 38px;
+.leads-category-filter .select {
+  width: auto;
   max-width: 240px;
-  padding: 0 32px 0 12px;
-  overflow: hidden;
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-sm);
-  background: var(--signal-bg-subtle);
-  color: var(--signal-heading);
-  font-size: 0.875rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  appearance: none;
-  cursor: pointer;
-}
-
-.leads-category-filter select:focus-visible {
-  border-color: var(--signal-accent);
-}
-
-.leads-category-filter select option {
-  background: var(--signal-surface);
-  color: var(--signal-heading);
-}
-
-.leads-category-filter svg {
-  position: absolute;
-  right: 12px;
-  pointer-events: none;
+  min-height: 38px;
 }
 
 .leads-buyers-toggle {
