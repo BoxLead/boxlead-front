@@ -1,6 +1,6 @@
 # BoxLead Frontend
 
-SPA for BoxLead: a public landing page plus the app (inbox, leads, connections). Deployed as static assets to S3 + CloudFront.
+SPA for BoxLead: a public landing page plus the app (inbox, leads, metrics, categories, connections). Deployed as static assets to S3 + CloudFront.
 
 **Stack:** Node 24, Vite 8, React 19, TypeScript 6 (strict), react-router-dom 7, vanilla CSS, ESLint 10, Docker + nginx.
 
@@ -19,14 +19,14 @@ src/
 ├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
 ├── api/              # HTTP client and API types
 ├── context/          # AuthProvider (AuthContext.tsx) and useAuth (auth.ts)
-├── data/             # queryCache (shared request cache behind useApiQuery) and lead mutations
+├── data/             # queryCache (shared request cache behind useApiQuery), lead and category mutations, metrics source and demo data
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
 ├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
-├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Categories, Connections, OAuthCallback, Legal
+├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # company, format, labels, oauth, redirect, facebook-sdk
+└── util/             # company, dates, format, labels, metrics, oauth, redirect, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -36,20 +36,28 @@ terraform/            # Infrastructure (do not modify without approval)
 /                                   Landing (public)
 /login, /register                   Auth (public)
 /privacy-policy, /terms-of-service, /data-deletion   Legal (public)
-/app/inbox, /app/leads, /app/leads/:leadId, /app/categories, /app/connections   Protected
+/app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
 /app/oauth/callback/:platform       Protected
 *                                   Redirects to /
 ```
 
-Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&category=<id or none>&buyers=1`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` `/app/leads?status=NEW&channel=MELI&category=<id or none>&buyers=1` and `/app/metrics?period=7&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
 ## Categories
 
 Each lead belongs to at most one category (`categoryId`). Categories come from `GET /categories` (`data/categories.ts`), every account starts with four defaults, and colors are a fixed palette mapped to `category-color-*` classes in `index.css`. Assigning goes through `PUT /leads/{id}/category` with an optimistic update. Deleting a category leaves its leads without one.
 
+## Metrics
+
+The page reads `GET /metrics?from&to&timezone` for the current period, the previous one and the last 12 weeks, plus `GET /metrics/settings` for the assumptions (ticket, minutes per reply, business hours). The contract lives in `api/types.ts` and the backend brief in `boxlead-core/METRICS.md`. Every segment is one channel and one category, so filters are applied in the browser without new requests.
+
+Until the backend ships those endpoints `METRICS_DEMO` in `data/metrics.ts` answers both keys locally with `metricsDemo.ts` through `setQueryResolver`. The demo data is deterministic, uses the account categories and assumptions, and the page shows a "Datos de ejemplo" tag. To switch to the API set `METRICS_DEMO` to false, add the routes to `e2e/mock-api` and delete the demo files.
+
+Rates, funnel, breakdowns, insights and the forecast are pure functions in `pages/Metrics/` with unit tests. Charts are plain SVG with no chart library, and every chart has a "Ver datos" table. Qualification and sales count what happened in the period, the funnel follows the leads that arrived in it.
+
 ## Channels
 
-Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
+Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, chart color, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
 
 ## Conventions
 
