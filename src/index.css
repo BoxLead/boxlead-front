@@ -32,6 +32,7 @@
   --platform-whatsapp: #25d366;
   --platform-instagram: #e1306c;
   --platform-messenger: #0a7cff;
+  --platform-other: #a7b4c0;
   --signal-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --signal-radius-sm: 8px;
   --signal-radius-md: 12px;
@@ -290,6 +291,26 @@ button {
 
 .category-color-gray {
   --category-color: var(--category-gray);
+}
+
+.platform-color-meli {
+  --platform-color: var(--platform-meli);
+}
+
+.platform-color-whatsapp {
+  --platform-color: var(--platform-whatsapp);
+}
+
+.platform-color-instagram {
+  --platform-color: var(--platform-instagram);
+}
+
+.platform-color-messenger {
+  --platform-color: #3b95ff;
+}
+
+.platform-color-other {
+  --platform-color: var(--platform-other);
 }
 
 .skeleton {

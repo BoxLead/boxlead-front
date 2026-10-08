@@ -48,5 +48,6 @@ export type PlatformDefinition = {
   contextStatus: (kind: ContextItemKind, status: string | null) => ContextStatus | null;
   canStartConversation: boolean;
   externalIdIsContact: boolean;
+  colorClass: string;
   logo: (size: number) => ReactNode;
 };

@@ -35,5 +35,6 @@ export const messenger: PlatformDefinition = {
   contextStatus: () => null,
   externalIdIsContact: false,
   canStartConversation: true,
+  colorClass: "platform-color-messenger",
   logo: (size) => <MessengerIcon width={size} height={size} aria-hidden="true" />,
 };

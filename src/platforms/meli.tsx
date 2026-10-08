@@ -127,5 +127,6 @@ export const meli: PlatformDefinition = {
   },
   externalIdIsContact: false,
   canStartConversation: false,
+  colorClass: "platform-color-meli",
   logo: (size) => <MercadoLibreMark width={size} height={size} aria-hidden="true" />,
 };
