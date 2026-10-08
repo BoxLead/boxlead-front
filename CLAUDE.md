@@ -42,7 +42,7 @@ docker compose up --build   # Production image at localhost:3000
 /                 → Public landing page
 /login, /register → Auth
 /privacy-policy, /terms-of-service, /data-deletion → Legal
-/app/*            → Protected app (inbox, leads, connections)
+/app/*            → Protected app (inbox, leads, categories, connections)
 ```
 
 ### Patterns

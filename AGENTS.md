@@ -22,9 +22,9 @@ src/
 ├── data/             # queryCache (shared request cache behind useApiQuery) and lead mutations
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
-├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, EmptyState, Loading, ScrollToTop
+├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
-├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Connections, OAuthCallback, Legal
+├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
 └── util/             # company, format, labels, oauth, redirect, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
@@ -36,12 +36,16 @@ terraform/            # Infrastructure (do not modify without approval)
 /                                   Landing (public)
 /login, /register                   Auth (public)
 /privacy-policy, /terms-of-service, /data-deletion   Legal (public)
-/app/inbox, /app/leads, /app/leads/:leadId, /app/connections   Protected
+/app/inbox, /app/leads, /app/leads/:leadId, /app/categories, /app/connections   Protected
 /app/oauth/callback/:platform       Protected
 *                                   Redirects to /
 ```
 
-Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&buyers=1`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&category=<id or none>&buyers=1`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+
+## Categories
+
+Each lead belongs to at most one category (`categoryId`). Categories come from `GET /categories` (`data/categories.ts`), every account starts with four defaults, and colors are a fixed palette mapped to `category-color-*` classes in `index.css`. Assigning goes through `PUT /leads/{id}/category` with an optimistic update. Deleting a category leaves its leads without one.
 
 ## Channels
 
