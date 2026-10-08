@@ -17,11 +17,11 @@ const lead = (patch: Partial<LeadResponse>): LeadResponse => ({
 });
 
 const leads = [
-  lead({ id: "a", name: "Martín Gómez", status: "CONTACTED", createdAt: "2026-10-02T10:00:00Z" }),
+  lead({ id: "a", name: "Martín Gómez", status: "CONTACTED", categoryId: "cat-1", createdAt: "2026-10-02T10:00:00Z" }),
   lead({ id: "b", name: "Carolina", postSaleOnly: true, email: "caro@example.com", phone: "11 5555-0199" }),
   lead({ id: "c", platform: "WHATSAPP", name: "Herrera", phone: "+54 9 11 5555 0142", status: "QUALIFIED" }),
 ];
-const base = { status: null, channel: "ALL" as const, includeBuyers: false, query: "" };
+const base = { status: null, channel: "ALL" as const, includeBuyers: false, category: null, query: "" };
 
 describe("filterLeads", () => {
   it("hides post-sale buyers unless asked and sorts newest first", () => {
@@ -38,6 +38,14 @@ describe("filterLeads", () => {
     expect(filterLeads(leads, { ...base, query: "martin" }).map((l) => l.id)).toEqual(["a"]);
     expect(filterLeads(leads, { ...base, includeBuyers: true, query: "caro@" }).map((l) => l.id)).toEqual(["b"]);
     expect(filterLeads(leads, { ...base, query: "5555 0142" }).map((l) => l.id)).toEqual(["c"]);
+  });
+});
+
+describe("category filter", () => {
+  it("keeps one category or the leads without one", () => {
+    expect(filterLeads(leads, { ...base, category: "cat-1" }).map((l) => l.id)).toEqual(["a"]);
+    expect(filterLeads(leads, { ...base, category: "none" }).map((l) => l.id)).toEqual(["c"]);
+    expect(filterLeads(leads, { ...base, category: "missing" })).toEqual([]);
   });
 });
 

@@ -1,12 +1,20 @@
 import type { LeadResponse, LeadStatus, PlatformType } from "../../api/types";
+import { UNCATEGORIZED } from "../../util/categories";
 import { LEAD_STATUSES, leadDisplayName } from "../../util/labels";
 
 export type LeadFilters = {
   status: LeadStatus | null;
   channel: PlatformType | "ALL";
   includeBuyers: boolean;
+  category: string | null;
   query: string;
 };
+
+function matchesCategory(lead: LeadResponse, category: string | null): boolean {
+  if (category === null) return true;
+  if (category === UNCATEGORIZED) return !lead.categoryId;
+  return lead.categoryId === category;
+}
 
 function normalize(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es-AR");
@@ -21,6 +29,7 @@ export function filterLeads(leads: LeadResponse[], filters: LeadFilters): LeadRe
         (filters.includeBuyers || !lead.postSaleOnly) &&
         (!filters.status || lead.status === filters.status) &&
         (filters.channel === "ALL" || lead.platform === filters.channel) &&
+        matchesCategory(lead, filters.category) &&
         (!query ||
           normalize(leadDisplayName(lead)).includes(query) ||
           normalize(lead.email ?? "").includes(query) ||

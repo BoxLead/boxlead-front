@@ -79,6 +79,7 @@ export type LeadResponse = {
   phone: string | null;
   status: LeadStatus;
   postSaleOnly: boolean;
+  categoryId?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -145,4 +146,37 @@ export type ConversationContextResponse = {
 export type AuthUrlResponse = {
   url: string;
   codeVerifier?: string;
+};
+
+export type CategoryColor =
+  | "BLUE"
+  | "GREEN"
+  | "YELLOW"
+  | "ORANGE"
+  | "RED"
+  | "PURPLE"
+  | "PINK"
+  | "GRAY";
+
+export type CategoryResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  color: CategoryColor;
+  position: number;
+  leadCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateCategoryRequest = {
+  name: string;
+  description?: string;
+  color: CategoryColor;
+};
+
+export type UpdateCategoryRequest = {
+  name?: string;
+  description?: string;
+  color?: CategoryColor;
 };

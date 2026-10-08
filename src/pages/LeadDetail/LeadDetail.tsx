@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
-import type { ConversationResponse, LeadResponse } from "../../api/types";
+import type {
+  CategoryResponse,
+  ConversationResponse,
+  LeadResponse,
+} from "../../api/types";
 import { ArrowLeftIcon, ChatIcon, ExternalLinkIcon } from "../../components/icons/UiIcons";
+import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
 import { Tag } from "../../components/ui/Tag";
+import { CATEGORIES_KEY } from "../../data/categories";
 import { invalidateQueries } from "../../data/queryCache";
 import { leadKey } from "../../data/leads";
 import { useApiQuery } from "../../hooks/useApiQuery";
@@ -20,6 +26,7 @@ export function LeadDetail() {
   const { leadId = "" } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
   const lead = useApiQuery<LeadResponse>(leadId ? leadKey(leadId) : null);
+  const categories = useApiQuery<CategoryResponse[]>(CATEGORIES_KEY);
   const conversations = useApiQuery<ConversationResponse[]>(
     leadId ? `/conversations?leadId=${encodeURIComponent(leadId)}` : null,
   );
@@ -102,7 +109,10 @@ export function LeadDetail() {
             <span>Desde {formatDate(current.createdAt)}</span>
           </p>
         </div>
-        <StatusSelect lead={current} size="md" />
+        <div className="lead-detail-controls">
+          <StatusSelect lead={current} size="md" />
+          {categories.data ? <CategorySelect lead={current} categories={categories.data} size="md" /> : null}
+        </div>
       </header>
 
       {actionError ? (
