@@ -16,6 +16,7 @@ import {
   isWithinBusinessHours,
   RESPONSE_BUCKETS,
 } from "../util/metrics";
+import { effectsFor } from "./metricsDemoScenario";
 
 type ChannelProfile = {
   platform: PlatformType;
@@ -25,7 +26,6 @@ type ChannelProfile = {
   weekdays: number[];
   hours: number[];
   agentShare: number;
-  campaign: boolean;
 };
 
 export const DEMO_SETTINGS: MetricsSettings = {
@@ -41,20 +41,18 @@ const PROFILES: ChannelProfile[] = [
     leadsPerDay: 9,
     qualifyRate: 0.26,
     closeRate: 0.34,
-    weekdays: [0.9, 1.2, 1.0, 1.0, 0.95, 1.1, 1.05],
+    weekdays: [0.85, 1.25, 1.0, 1.05, 0.9, 1.15, 1.1],
     hours: [3, 2, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 5, 5, 6, 7, 8, 11, 13, 13, 10, 6],
     agentShare: 0.76,
-    campaign: true,
   },
   {
     platform: "WHATSAPP",
     leadsPerDay: 6,
     qualifyRate: 0.44,
     closeRate: 0.42,
-    weekdays: [1.15, 1.1, 1.05, 1.05, 1.0, 0.7, 0.5],
+    weekdays: [1.2, 1.15, 1.05, 1.05, 1.0, 0.6, 0.35],
     hours: [1, 1, 0, 0, 0, 1, 1, 3, 6, 9, 11, 12, 10, 8, 7, 8, 9, 10, 9, 7, 5, 4, 3, 2],
     agentShare: 0.68,
-    campaign: false,
   },
   {
     platform: "META",
@@ -64,7 +62,6 @@ const PROFILES: ChannelProfile[] = [
     weekdays: [1, 1, 1, 1, 1, 0.9, 0.8],
     hours: [2, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 7, 7, 8, 8, 7, 5, 3],
     agentShare: 0.8,
-    campaign: false,
   },
   {
     platform: "MELI",
@@ -74,7 +71,6 @@ const PROFILES: ChannelProfile[] = [
     weekdays: [0.9, 0.95, 0.95, 1.0, 1.05, 1.2, 1.25],
     hours: [5, 3, 2, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 6, 6, 7, 8, 10, 12, 12, 9],
     agentShare: 0.8,
-    campaign: false,
   },
 ];
 
@@ -84,7 +80,9 @@ const UNCATEGORIZED_WEIGHT = 0.12;
 const AGENT_SPEED = [0.93, 0.06, 0.01, 0, 0, 0, 0];
 const HUMAN_SPEED_OPEN = [0.06, 0.2, 0.22, 0.22, 0.16, 0.11, 0.03];
 const HUMAN_SPEED_CLOSED = [0.02, 0.04, 0.07, 0.12, 0.25, 0.4, 0.1];
-const SPEED_EFFECT = [1.25, 1.15, 0.8, 0.62, 0.48, 0.38, 0.32];
+const HUMAN_SPEED_SLOW = [0.01, 0.05, 0.1, 0.2, 0.28, 0.28, 0.08];
+const DISPERSION = 14;
+const SPEED_EFFECT = [1.2, 1.1, 0.85, 0.7, 0.58, 0.5, 0.45];
 const HANDOFF_WEIGHTS = [0.45, 0.35, 0.2];
 const LOOKBACK_DAYS = 12;
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
@@ -130,9 +128,10 @@ function poisson(mean: number, next: () => number): number {
   return count;
 }
 
-function campaignLift(daysAgo: number): number {
-  if (daysAgo > 18 || daysAgo < 8) return 1;
-  return 1 + 0.9 * Math.exp(-(18 - daysAgo) / 2.5);
+function dispersion(next: () => number): number {
+  let total = 0;
+  for (let i = 0; i < DISPERSION; i++) total -= Math.log(1 - next());
+  return total / DISPERSION;
 }
 
 function emptySegment(platform: PlatformType, categoryId: string | null, withHours: boolean): MetricsSegment {
@@ -205,13 +204,12 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
     if (daysAgo < 0) continue;
     const created = date >= from;
     const weekday = weekdayIndex(date);
-    const growth = 1 - 0.0015 * daysAgo;
-    const improvement = 0.8 + 0.32 * Math.max(0, 1 - daysAgo / 150);
+    const dayOfMonth = Number(date.slice(8));
 
     for (const profile of PROFILES) {
       const next = random(`${date}|${profile.platform}`);
-      const lift = profile.campaign ? campaignLift(daysAgo) : 1;
-      const mean = profile.leadsPerDay * profile.weekdays[weekday] * growth * lift * (0.85 + next() * 0.3);
+      const effects = effectsFor(profile.platform, daysAgo, dayOfMonth);
+      const mean = profile.leadsPerDay * profile.weekdays[weekday] * effects.volume * dispersion(next);
       const leads = poisson(daysAgo === 0 ? mean * 0.55 : mean, next);
 
       for (let index = 0; index < leads; index++) {
@@ -234,7 +232,7 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
         let humanReplies = 0;
         let handoff: HandoffReason | null = null;
         const unanswered = roll() < unansweredChance;
-        if (!unanswered && roll() < (outside ? 0.97 : profile.agentShare)) {
+        if (!unanswered && roll() < (outside ? 0.97 : profile.agentShare * effects.agentShare)) {
           bucket = pick(AGENT_SPEED, roll());
           if (roll() < 0.13) {
             handoff = HANDOFF_REASONS[pick(HANDOFF_WEIGHTS, roll())];
@@ -244,16 +242,16 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
             agentReplies = inbound + Math.floor(roll() * 2);
           }
         } else if (!unanswered) {
-          bucket = pick(outside ? HUMAN_SPEED_CLOSED : HUMAN_SPEED_OPEN, roll());
+          bucket = pick(outside ? HUMAN_SPEED_CLOSED : effects.slowTeam ? HUMAN_SPEED_SLOW : HUMAN_SPEED_OPEN, roll());
           humanReplies = Math.max(1, inbound - Math.floor(roll() * 2));
         }
         const byAgent = bucket !== null && agentReplies > 0;
 
         const speed = bucket === null ? 0.2 : SPEED_EFFECT[bucket];
         const categoryEffect = category ? (CATEGORY_QUALIFY[categoryIndex] ?? 0.9) : 0.6;
-        const qualifies = roll() < Math.min(0.95, profile.qualifyRate * categoryEffect * speed * improvement);
+        const qualifies = roll() < Math.min(0.95, profile.qualifyRate * categoryEffect * speed * effects.qualify);
         const qualifiedOn = addDays(date, Math.floor(roll() * roll() * 3));
-        const closes = qualifies && roll() < profile.closeRate * improvement;
+        const closes = qualifies && roll() < Math.min(0.95, profile.closeRate * effects.close);
         const closedOn = addDays(qualifiedOn, Math.floor(roll() * roll() * 5));
         const loses = !qualifies && roll() < 0.38;
         const lostOn = addDays(date, 1 + Math.floor(roll() * 7));
