@@ -1,12 +1,20 @@
-import type { CategoryResponse, MetricsSegment } from "../../api/types";
-import { UNCATEGORIZED } from "../../util/categories";
-import { qualificationRate, ratio, sumSegments, type Totals } from "./metricsModel";
+import type { MetricsSegment } from "../../api/types";
+import {
+  answeredBuckets,
+  categoryKey,
+  estimateMedianSeconds,
+  qualificationRate,
+  sumSegments,
+  type KnownCategories,
+  type Totals,
+} from "./metricsModel";
 
 export type BreakdownRow = {
   id: string;
   totals: Totals;
   previousLeads: number;
   qualification: number | null;
+  medianResponse: number | null;
 };
 
 function groupBy(segments: MetricsSegment[], keyOf: (segment: MetricsSegment) => string) {
@@ -30,6 +38,7 @@ function breakdown(current: MetricsSegment[], previous: MetricsSegment[], keyOf:
         totals,
         previousLeads: sumSegments(before.get(id) ?? []).leads,
         qualification: qualificationRate(totals),
+        medianResponse: estimateMedianSeconds(answeredBuckets(totals.firstResponse)),
       };
     })
     .filter((row) => row.totals.leads > 0)
@@ -43,41 +52,7 @@ export function channelBreakdown(current: MetricsSegment[], previous: MetricsSeg
 export function categoryBreakdown(
   current: MetricsSegment[],
   previous: MetricsSegment[],
-  categories: CategoryResponse[],
+  known: KnownCategories,
 ): BreakdownRow[] {
-  const known = new Set(categories.map((category) => category.id));
-  return breakdown(current, previous, (segment) =>
-    segment.categoryId && known.has(segment.categoryId) ? segment.categoryId : UNCATEGORIZED,
-  );
-}
-
-export type FunnelStep = {
-  key: "leads" | "contacted" | "qualified";
-  label: string;
-  value: number;
-  previous: number;
-  fromStart: number | null;
-  fromPrevious: number | null;
-};
-
-function stageValues({ leads, statuses }: Totals) {
-  return [leads, leads - statuses.NEW, statuses.QUALIFIED + statuses.CLOSED];
-}
-
-const STAGES: Pick<FunnelStep, "key" | "label">[] = [
-  { key: "leads", label: "Leads" },
-  { key: "contacted", label: "Contactados" },
-  { key: "qualified", label: "Calificados" },
-];
-
-export function funnelSteps(current: Totals, previous: Totals): FunnelStep[] {
-  const values = stageValues(current);
-  const before = stageValues(previous);
-  return STAGES.map((stage, index) => ({
-    ...stage,
-    value: values[index],
-    previous: before[index],
-    fromStart: ratio(values[index], values[0]),
-    fromPrevious: index === 0 ? null : ratio(values[index], values[index - 1]),
-  }));
+  return breakdown(current, previous, (segment) => categoryKey(segment, known));
 }

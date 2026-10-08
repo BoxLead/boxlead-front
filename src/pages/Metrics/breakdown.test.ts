@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { UNCATEGORIZED } from "../../util/categories";
 import { emptyStatuses } from "../../util/metrics";
-import { categoryBreakdown, channelBreakdown, funnelSteps } from "./breakdown";
-import { emptyTotals } from "./metricsModel";
+import { categoryBreakdown, channelBreakdown } from "./breakdown";
+import { funnelSteps } from "./funnel";
+import { emptyTotals, selectSegments, sumSegments } from "./metricsModel";
 import { testDay, testSegment } from "./testSegments";
 
 const current = [
@@ -21,11 +22,23 @@ describe("breakdown", () => {
     expect(rows[1].qualification).toBeCloseTo(0.5);
   });
 
-  it("sends unknown categories to the uncategorized row", () => {
-    const rows = categoryBreakdown(current, [], [
-      { id: "a", name: "A", description: null, color: "BLUE", position: 0, leadCount: 0, createdAt: "", updatedAt: "" },
+  it("sends deleted categories to the uncategorized row and the filter agrees", () => {
+    const known = new Set(["a"]);
+    const rows = categoryBreakdown(current, [], known);
+    expect(rows.map((row) => [row.id, row.totals.leads])).toEqual([
+      ["a", 30],
+      [UNCATEGORIZED, 8],
     ]);
-    expect(rows.map((row) => row.id)).toEqual(["a", UNCATEGORIZED]);
+    const report = { from: "", to: "", timezone: "UTC", segments: current };
+    const filtered = selectSegments(report, { platform: "ALL", category: UNCATEGORIZED }, known);
+    expect(sumSegments(filtered).leads).toBe(8);
+  });
+
+  it("knows each row median first response", () => {
+    const answered = testSegment("META", null, [testDay("2026-10-06", 4)], {
+      firstResponse: { agent: [4, 0, 0, 0, 0, 0, 0], human: [0, 0, 0, 0, 0, 0, 0], converted: [0, 0, 0, 0, 0, 0, 0], unanswered: 0 },
+    });
+    expect(channelBreakdown([answered], [])[0].medianResponse).toBeCloseTo(30);
   });
 
   it("builds the funnel from the current status of the period leads", () => {

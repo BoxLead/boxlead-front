@@ -40,7 +40,6 @@ export type SeriesPoint = {
 };
 
 const ROLLING_DAYS = 7;
-const MIN_LEADING_DAYS = 4;
 const WEEK = 7;
 
 function emptyDay(date: string): DayTotals {
@@ -114,7 +113,7 @@ export function metricSeries(key: MetricKey, days: DayTotals[], from: string, to
   const total = daysBetween(from, to) + 1;
   let size = total % WEEK || WEEK;
   let start = from;
-  if (size < MIN_LEADING_DAYS && total > WEEK) {
+  if (size < WEEK && total > WEEK) {
     start = addDays(start, size);
     size = WEEK;
   }

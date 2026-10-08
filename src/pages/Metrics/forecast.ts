@@ -16,14 +16,17 @@ export type Forecast = {
 
 const Z_80 = 1.2816;
 const MIN_HISTORY_DAYS = 28;
+const MAX_HISTORY_DAYS = 84;
 
 export function forecastDaily(
   history: { date: string; value: number }[],
   horizon: number,
   skip = 0,
 ): Forecast | null {
-  const series = history.slice(-84);
-  if (series.length < MIN_HISTORY_DAYS || horizon <= 0) return null;
+  const firstActive = history.findIndex((point) => point.value > 0);
+  if (firstActive === -1 || horizon <= 0) return null;
+  const series = history.slice(Math.max(firstActive, history.length - MAX_HISTORY_DAYS));
+  if (series.length < MIN_HISTORY_DAYS) return null;
   const mean = series.reduce((sum, point) => sum + point.value, 0) / series.length;
   if (mean === 0) return null;
 

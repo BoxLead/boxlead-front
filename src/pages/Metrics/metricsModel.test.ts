@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { MetricsReport } from "../../api/types";
 import { UNCATEGORIZED } from "../../util/categories";
 import {
+  categoryKey,
   conversionBySpeed,
   estimateMedianSeconds,
   handoffTotal,
@@ -17,7 +18,6 @@ const report: MetricsReport = {
   from: "2026-10-01",
   to: "2026-10-07",
   timezone: "UTC",
-  generatedAt: "",
   segments: [
     testSegment("WHATSAPP", "a", [testDay("2026-10-06", 10, { qualified: 5 })]),
     testSegment("INSTAGRAM", "a", [testDay("2026-10-06", 20, { qualified: 4 })]),
@@ -30,10 +30,18 @@ const report: MetricsReport = {
 
 describe("metrics model", () => {
   it("filters segments by channel and category", () => {
-    expect(selectSegments(report, { platform: "INSTAGRAM", category: null })).toHaveLength(2);
-    expect(selectSegments(report, { platform: "ALL", category: UNCATEGORIZED })).toHaveLength(1);
-    expect(selectSegments(report, { platform: "WHATSAPP", category: "a" })).toHaveLength(1);
-    expect(selectSegments(undefined, { platform: "ALL", category: null })).toEqual([]);
+    expect(selectSegments(report, { platform: "INSTAGRAM", category: null }, null)).toHaveLength(2);
+    expect(selectSegments(report, { platform: "ALL", category: UNCATEGORIZED }, null)).toHaveLength(1);
+    expect(selectSegments(report, { platform: "WHATSAPP", category: "a" }, null)).toHaveLength(1);
+    expect(selectSegments(report, { platform: "ALL", category: UNCATEGORIZED }, new Set())).toHaveLength(3);
+    expect(selectSegments(undefined, { platform: "ALL", category: null }, null)).toEqual([]);
+  });
+
+  it("trusts category ids until the categories are known", () => {
+    const segment = report.segments[0];
+    expect(categoryKey(segment, null)).toBe("a");
+    expect(categoryKey(segment, new Set(["a"]))).toBe("a");
+    expect(categoryKey(segment, new Set(["b"]))).toBe(UNCATEGORIZED);
   });
 
   it("adds every segment", () => {

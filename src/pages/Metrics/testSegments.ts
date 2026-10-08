@@ -5,11 +5,8 @@ export function testDay(date: string, leads: number, patch: Partial<MetricsDay> 
   return {
     date,
     leads,
-    conversations: leads,
-    inboundMessages: leads * 3,
-    agentReplies: leads * 2,
-    humanReplies: 1,
     qualified: 0,
+    agentReplies: leads * 2,
     responseBuckets: RESPONSE_LIMITS.map((_, index) => (index === 0 ? leads : 0)),
     unanswered: 0,
     ...patch,

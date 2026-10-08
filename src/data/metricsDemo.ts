@@ -38,13 +38,10 @@ type Lead = {
   hour: number;
   outside: boolean;
   inbound: number;
-  conversations: number;
   bucket: number | null;
   byAgent: boolean;
   handoff: HandoffReason | null;
   agentReplies: number;
-  humanReplies: number;
-  qualifiedOn: string | null;
   status: LeadStatus;
 };
 
@@ -118,7 +115,6 @@ const HANDOFF_WEIGHTS = [0.45, 0.35, 0.2];
 const HANDOFF_RATE = 0.13;
 const LOST_RATE = 0.38;
 const NOISE_SHAPE = 14;
-const LOOKBACK_DAYS = 12;
 
 type LeadContext = {
   profile: ChannelProfile;
@@ -148,13 +144,10 @@ function commentOnly(hour: number): Lead {
     hour,
     outside: false,
     inbound: 0,
-    conversations: 0,
     bucket: null,
     byAgent: false,
     handoff: null,
     agentReplies: 0,
-    humanReplies: 0,
-    qualifiedOn: null,
     status: "NEW",
   };
 }
@@ -166,13 +159,10 @@ function simulateLead(roll: Random, context: LeadContext): Lead {
   const hours = settings.businessHours;
   const outside = hours ? !isWithinBusinessHours(hours, weekday, hour) : false;
   const inbound = 2 + Math.floor(roll() * 5);
-  const conversations = roll() < 0.14 ? 2 : 1;
   const { bucket, byAgent } = firstResponse(roll, context, outside);
 
   const handoff = byAgent && roll() < HANDOFF_RATE ? HANDOFF_REASONS[pick(HANDOFF_WEIGHTS, roll())] : null;
   const agentReplies = byAgent ? (handoff ? 1 + Math.floor(roll() * 2) : inbound + Math.floor(roll() * 2)) : 0;
-  const humanReplies =
-    bucket === null ? 0 : byAgent ? (handoff ? 1 + Math.floor(roll() * 3) : 0) : Math.max(1, inbound - Math.floor(roll() * 2));
 
   const speed = bucket === null ? 0.2 : SPEED_EFFECT[bucket];
   const qualifies = roll() < Math.min(0.95, profile.qualifyRate * categoryEffect * speed * effects.qualify);
@@ -187,20 +177,7 @@ function simulateLead(roll: Random, context: LeadContext): Lead {
   else if (qualifies && qualifiedOn <= today) status = "QUALIFIED";
   else if (loses && lostOn <= today) status = "LOST";
 
-  return {
-    conversation: true,
-    hour,
-    outside,
-    inbound,
-    conversations,
-    bucket,
-    byAgent,
-    handoff,
-    agentReplies,
-    humanReplies,
-    qualifiedOn: qualifies ? qualifiedOn : null,
-    status,
-  };
+  return { conversation: true, hour, outside, inbound, bucket, byAgent, handoff, agentReplies, status };
 }
 
 function emptySegment(platform: PlatformType, categoryId: string | null, withHours: boolean): MetricsSegment {
@@ -217,27 +194,15 @@ function emptySegment(platform: PlatformType, categoryId: string | null, withHou
 }
 
 function emptyDay(date: string): MetricsDay {
-  return {
-    date,
-    leads: 0,
-    conversations: 0,
-    inboundMessages: 0,
-    agentReplies: 0,
-    humanReplies: 0,
-    qualified: 0,
-    responseBuckets: RESPONSE_LIMITS.map(() => 0),
-    unanswered: 0,
-  };
+  return { date, leads: 0, qualified: 0, agentReplies: 0, responseBuckets: RESPONSE_LIMITS.map(() => 0), unanswered: 0 };
 }
 
 function recordLead(segment: MetricsSegment, day: MetricsDay, lead: Lead, weekday: number) {
   day.leads++;
   segment.leadStatuses[lead.status]++;
+  if (lead.status === "QUALIFIED" || lead.status === "CLOSED") day.qualified++;
   if (!lead.conversation) return;
-  day.conversations += lead.conversations;
-  day.inboundMessages += lead.inbound;
   day.agentReplies += lead.agentReplies;
-  day.humanReplies += lead.humanReplies;
   segment.inboundByHour[weekday * 24 + lead.hour] += Math.ceil(lead.inbound * 0.7);
   segment.inboundByHour[weekday * 24 + ((lead.hour + 1) % 24)] += Math.floor(lead.inbound * 0.3);
 
@@ -282,7 +247,7 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
     return day;
   };
 
-  for (const date of dateRange(addDays(from, -LOOKBACK_DAYS), to)) {
+  for (const date of dateRange(from, to)) {
     const daysAgo = daysBetween(date, today);
     if (daysAgo < 0) continue;
     const weekday = weekdayIndex(date);
@@ -315,10 +280,7 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
           categoryEffect: category ? (CATEGORY_QUALIFY[categoryIndex] ?? 0.9) : 0.6,
           settings,
         });
-        if (lead.qualifiedOn && lead.qualifiedOn >= from && lead.qualifiedOn <= to && lead.qualifiedOn <= today) {
-          dayOf(segment, lead.qualifiedOn).qualified++;
-        }
-        if (date >= from) recordLead(segment, dayOf(segment, date), lead, weekday);
+        recordLead(segment, dayOf(segment, date), lead, weekday);
       }
     }
   }
@@ -327,7 +289,6 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
     from,
     to,
     timezone,
-    generatedAt: new Date().toISOString(),
     segments: [...segments.values()]
       .filter((segment) => segment.days.length > 0)
       .map((segment) => ({ ...segment, days: [...segment.days].sort((a, b) => a.date.localeCompare(b.date)) })),

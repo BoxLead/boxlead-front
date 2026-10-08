@@ -64,6 +64,6 @@ describe("metrics view", () => {
 
     const quarter = buildChartData(buildMetricsView(input(90)), "response");
     expect(quarter).toMatchObject({ weekly: true, partialLast: false, forecastTotal: null });
-    expect(quarter.points[quarter.points.length - 1].title).toBe("1 oct al 7 oct");
+    expect(quarter.points[quarter.points.length - 1].title).toBe("1 oct al 7 oct, hasta ahora");
   });
 });

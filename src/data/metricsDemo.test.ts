@@ -17,7 +17,7 @@ function report(from: string, to: string, settings = DEMO_SETTINGS) {
   return buildDemoReport({ from, to, today: "2026-10-07", timezone: "UTC", categories, settings });
 }
 
-function sum(from: string, to: string, field: "leads" | "qualified" | "unanswered") {
+function sum(from: string, to: string, field: "leads" | "qualified" | "agentReplies" | "unanswered") {
   return report(from, to).segments.reduce(
     (total, segment) => total + segment.days.reduce((acc, day) => acc + day[field], 0),
     0,
@@ -28,11 +28,11 @@ describe("demo metrics", () => {
   it("returns the same numbers for the same range", () => {
     const first = report("2026-09-08", "2026-10-07");
     const second = report("2026-09-08", "2026-10-07");
-    expect({ ...first, generatedAt: "" }).toEqual({ ...second, generatedAt: "" });
+    expect(first).toEqual(second);
   });
 
   it("adds up across ranges", () => {
-    for (const field of ["leads", "qualified", "unanswered"] as const) {
+    for (const field of ["leads", "qualified", "agentReplies", "unanswered"] as const) {
       expect(sum("2026-09-08", "2026-09-22", field) + sum("2026-09-23", "2026-10-07", field)).toBe(
         sum("2026-09-08", "2026-10-07", field),
       );
@@ -63,7 +63,9 @@ describe("demo metrics", () => {
         (total, day) => total + day.unanswered + day.responseBuckets.reduce((a, b) => a + b, 0),
         0,
       );
+      const qualified = segment.days.reduce((total, day) => total + day.qualified, 0);
       expect(statuses).toBe(leads);
+      expect(qualified).toBe(segment.leadStatuses.QUALIFIED + segment.leadStatuses.CLOSED);
       expect(daily).toBe(answered + segment.firstResponse.unanswered);
       expect(daily).toBeLessThanOrEqual(leads);
       expect(segment.inboundByHour).toHaveLength(168);

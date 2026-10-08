@@ -6,7 +6,7 @@ import { categoryBreakdown, channelBreakdown, type BreakdownRow } from "./breakd
 import { forecastDaily, type Forecast } from "./forecast";
 import { buildInsights, type Insight } from "./insights";
 import { selectSegments, sumSegments, type MetricsFilters, type Totals } from "./metricsModel";
-import { dayTotals, METRICS, metricTotal, type DayTotals, type MetricKey } from "./series";
+import { dayTotals, METRICS, metricTotal, metricValue, type DayTotals, type MetricKey } from "./series";
 
 export const FORECAST_DAYS = 14;
 
@@ -25,7 +25,7 @@ export type MetricsInput = {
   previous: MetricsReport;
   history: MetricsReport | undefined;
   settings: MetricsSettings;
-  categories: CategoryResponse[];
+  categories: CategoryResponse[] | undefined;
 };
 
 export type MetricsView = MetricsRange & {
@@ -51,30 +51,36 @@ function totalsByMetric(days: DayTotals[]) {
 }
 
 function forecasts(history: DayTotals[]): Partial<Record<MetricKey, Forecast>> {
-  const leads = forecastDaily(
-    history.map((day) => ({ date: day.date, value: day.leads })),
-    FORECAST_DAYS,
-    1,
-  );
-  return leads ? { leads } : {};
+  const result: Partial<Record<MetricKey, Forecast>> = {};
+  for (const metric of METRICS.filter((definition) => definition.forecast)) {
+    const forecast = forecastDaily(
+      history.map((day) => ({ date: day.date, value: metricValue(metric.key, day) ?? 0 })),
+      FORECAST_DAYS,
+      1,
+    );
+    if (forecast) result[metric.key] = forecast;
+  }
+  return result;
 }
 
 export function buildMetricsView(input: MetricsInput): MetricsView {
-  const { period, filters, range, current, previous, history, settings, categories } = input;
-  const segments = selectSegments(current, filters);
-  const previousSegments = selectSegments(previous, filters);
+  const { period, filters, range, current, previous, history, settings } = input;
+  const categories = input.categories ?? [];
+  const known = input.categories ? new Set(categories.map((category) => category.id)) : null;
+  const segments = selectSegments(current, filters, known);
+  const previousSegments = selectSegments(previous, filters, known);
   const days = dayTotals(segments, range.from, range.to);
   const previousDays = dayTotals(previousSegments, range.previousFrom, range.previousTo);
-  const historyDays = history ? dayTotals(selectSegments(history, filters), history.from, history.to) : [];
+  const historyDays = history ? dayTotals(selectSegments(history, filters, known), history.from, history.to) : [];
   const totals = sumSegments(segments);
 
   const byChannel = { ...filters, platform: "ALL" as const };
   const byCategory = { ...filters, category: null };
-  const channels = channelBreakdown(selectSegments(current, byChannel), selectSegments(previous, byChannel));
+  const channels = channelBreakdown(selectSegments(current, byChannel, known), selectSegments(previous, byChannel, known));
   const categoryRows = categoryBreakdown(
-    selectSegments(current, byCategory),
-    selectSegments(previous, byCategory),
-    categories,
+    selectSegments(current, byCategory, known),
+    selectSegments(previous, byCategory, known),
+    known,
   );
 
   const names = new Map(categories.map((category) => [category.id, category.name]));

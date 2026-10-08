@@ -9,7 +9,7 @@ function totals(patch: Partial<Totals>): Totals {
 
 function row(id: string, leads: number, qualified: number, previousLeads = 0): BreakdownRow {
   const t = totals({ leads, qualified });
-  return { id, totals: t, previousLeads, qualification: qualificationRate(t) };
+  return { id, totals: t, previousLeads, qualification: qualificationRate(t), medianResponse: null };
 }
 
 function input(patch: Partial<InsightInput>): InsightInput {

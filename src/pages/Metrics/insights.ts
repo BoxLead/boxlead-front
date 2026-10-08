@@ -1,6 +1,6 @@
 import type { PlatformType } from "../../api/types";
 import { getPlatform } from "../../platforms";
-import { formatNumber, formatPercent } from "../../util/format";
+import { formatFactor, formatNumber, formatPercent } from "../../util/format";
 import { UNCATEGORIZED } from "../../util/categories";
 import type { BreakdownRow } from "./breakdown";
 import { conversionBySpeed, percentChange, ratio, type Totals } from "./metricsModel";
@@ -25,10 +25,6 @@ export type InsightInput = {
 const MIN_SAMPLE = 20;
 const SLOW_FROM_BUCKET = 4;
 
-function times(value: number): string {
-  return `${value.toLocaleString("es-AR", { maximumFractionDigits: 1, minimumFractionDigits: value < 10 ? 1 : 0 })}×`;
-}
-
 function unanswered({ current }: InsightInput): Insight | null {
   const count = current.firstResponse.unanswered;
   if (count < 3) return null;
@@ -50,7 +46,7 @@ function speed({ current }: InsightInput): Insight | null {
   return {
     id: "speed",
     tone: "info",
-    title: `Responder en menos de 5 min califica ${times(factor)} más`,
+    title: `Responder en menos de 5 min califica ${formatFactor(factor)} más`,
     action: null,
     weight: 80,
   };
@@ -68,7 +64,7 @@ function channelQuality({ channels }: InsightInput): Insight | null {
   return {
     id: "channel-quality",
     tone: "info",
-    title: `${bestName} califica ${times(factor)} más que ${getPlatform(leader.id as PlatformType).name}`,
+    title: `${bestName} califica ${formatFactor(factor)} más que ${getPlatform(leader.id as PlatformType).name}`,
     action: { label: "Ver leads", to: `/app/leads?channel=${best.id}` },
     weight: 70,
   };

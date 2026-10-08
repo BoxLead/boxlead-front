@@ -65,9 +65,9 @@ export function buildChartData(view: MetricsView, metric: MetricKey): ChartData 
     points: current.map((point, index) => ({
       key: point.date,
       axisLabel: formatShortDate(point.date),
-      title: weekly
-        ? `${formatShortDate(point.date)} al ${formatShortDate(point.end)}`
-        : `${formatLongDate(point.date)}${point.date === view.to ? ", hasta ahora" : ""}`,
+      title: `${weekly ? `${formatShortDate(point.date)} al ${formatShortDate(point.end)}` : formatLongDate(point.date)}${
+        point.end === view.to ? ", hasta ahora" : ""
+      }`,
       value: point.value,
       previous: previous[index]?.value ?? null,
     })),

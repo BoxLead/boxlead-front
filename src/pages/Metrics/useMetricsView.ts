@@ -35,7 +35,7 @@ export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters) {
             previous: previous.data,
             history: history.data,
             settings: settings.data,
-            categories: categories.data ?? [],
+            categories: categories.data,
           })
         : null,
     [period, platform, category, range, current.data, previous.data, history.data, settings.data, categories.data],

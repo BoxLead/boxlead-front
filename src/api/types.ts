@@ -186,11 +186,8 @@ export type HandoffReason = "ASKED_FOR_HUMAN" | "AGENT_UNSURE" | "TAKEN_OVER";
 export type MetricsDay = {
   date: string;
   leads: number;
-  conversations: number;
-  inboundMessages: number;
-  agentReplies: number;
-  humanReplies: number;
   qualified: number;
+  agentReplies: number;
   responseBuckets: number[];
   unanswered: number;
 };
@@ -227,7 +224,6 @@ export type MetricsReport = {
   from: string;
   to: string;
   timezone: string;
-  generatedAt: string;
   segments: MetricsSegment[];
 };
 

@@ -28,4 +28,12 @@ describe("forecast", () => {
     expect(forecast?.low).toBeLessThanOrEqual(forecast?.total ?? 0);
     expect(forecast?.high).toBeGreaterThanOrEqual(forecast?.total ?? 0);
   });
+
+  it("ignores the days before the account had any activity", () => {
+    const young = history(84, (index) => (index < 70 ? 0 : 10));
+    expect(forecastDaily(young, 14)).toBeNull();
+    const month = history(84, (index) => (index < 44 ? 0 : 10));
+    const forecast = forecastDaily(month, 14);
+    expect(forecast?.total).toBeCloseTo(140, 0);
+  });
 });

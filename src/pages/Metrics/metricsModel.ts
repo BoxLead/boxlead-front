@@ -27,7 +27,6 @@ export type MetricsFilters = {
 export type Totals = {
   leads: number;
   agentReplies: number;
-  humanReplies: number;
   qualified: number;
   statuses: Record<LeadStatus, number>;
   firstResponse: FirstResponseMetrics;
@@ -36,12 +35,23 @@ export type Totals = {
   agent: AgentMetrics | null;
 };
 
-export function selectSegments(report: MetricsReport | undefined, filters: MetricsFilters): MetricsSegment[] {
-  return (report?.segments ?? []).filter((segment) => {
-    if (filters.platform !== "ALL" && segment.platform !== filters.platform) return false;
-    if (filters.category === UNCATEGORIZED) return segment.categoryId === null;
-    return !filters.category || segment.categoryId === filters.category;
-  });
+export type KnownCategories = ReadonlySet<string> | null;
+
+export function categoryKey(segment: MetricsSegment, known: KnownCategories): string {
+  if (!segment.categoryId) return UNCATEGORIZED;
+  return !known || known.has(segment.categoryId) ? segment.categoryId : UNCATEGORIZED;
+}
+
+export function selectSegments(
+  report: MetricsReport | undefined,
+  filters: MetricsFilters,
+  known: KnownCategories,
+): MetricsSegment[] {
+  return (report?.segments ?? []).filter(
+    (segment) =>
+      (filters.platform === "ALL" || segment.platform === filters.platform) &&
+      (!filters.category || categoryKey(segment, known) === filters.category),
+  );
 }
 
 function addInto(target: number[], source: number[]) {
@@ -54,7 +64,6 @@ export function emptyTotals(): Totals {
   return {
     leads: 0,
     agentReplies: 0,
-    humanReplies: 0,
     qualified: 0,
     statuses: emptyStatuses(),
     firstResponse: emptyFirstResponse(),
@@ -70,7 +79,6 @@ export function sumSegments(segments: MetricsSegment[]): Totals {
     for (const day of segment.days) {
       totals.leads += day.leads;
       totals.agentReplies += day.agentReplies;
-      totals.humanReplies += day.humanReplies;
       totals.qualified += day.qualified;
     }
     for (const status of Object.keys(totals.statuses) as LeadStatus[]) {

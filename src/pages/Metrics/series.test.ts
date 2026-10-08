@@ -37,11 +37,14 @@ describe("metric series", () => {
     expect(rate[2].value).toBeCloseTo(6 / 18);
   });
 
-  it("groups weeks so the last one ends on the last day and skips a short first week", () => {
+  it("groups full weeks that end on the last day", () => {
     const long = dayTotals([testSegment("META", null, [testDay("2026-09-01", 1), testDay("2026-10-07", 5)])], "2026-09-01", "2026-10-07");
     const weeks = metricSeries("leads", long, "2026-09-01", "2026-10-07", true);
     expect(weeks[weeks.length - 1]).toEqual({ date: "2026-10-01", end: "2026-10-07", value: 5 });
     expect(weeks[0]).toMatchObject({ date: "2026-09-03", end: "2026-09-09" });
+    const ninety = metricSeries("leads", long, "2026-07-10", "2026-10-07", true);
+    expect(ninety).toHaveLength(12);
+    expect(ninety[0]).toMatchObject({ date: "2026-07-16", end: "2026-07-22" });
   });
 
   it("compares rates in points, the rest in percent, and formats each kind", () => {
