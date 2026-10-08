@@ -17,6 +17,7 @@ import { ConversationHeader } from "./ConversationHeader";
 import { pairQuestions, type ConversationRow } from "./inboxModel";
 import { OrderSummary } from "./OrderSummary";
 import { QuestionThread } from "./QuestionThread";
+import { useMissingPostRefresh } from "./useMissingPostRefresh";
 import { CONVERSATIONS_KEY, messagesKey, useConversationSender } from "./useConversationSender";
 import "./ConversationView.css";
 
@@ -72,6 +73,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
       ),
     [context.data],
   );
+  useMissingPostRefresh(list, posts, context.data !== undefined, context.reload);
   const orders = (context.data?.items ?? []).filter((i) => i.kind === "ORDER");
   const contextIssue = context.error ? platform.explainError(409, context.error) : null;
   const questions = policy.kind === "questions" ? pairQuestions(list) : null;

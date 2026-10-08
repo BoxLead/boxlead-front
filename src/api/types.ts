@@ -54,10 +54,10 @@ export type MessageResponse = {
   conversationId: string;
   direction: MessageDirection;
   externalMessageId: string | null;
-  kind?: MessageKind;
+  kind: MessageKind;
   content: string | null;
   contextRef?: string | null;
-  replyToExternalId?: string | null;
+  replyToExternalId: string | null;
   createdAt: string;
   updatedAt: string;
 };

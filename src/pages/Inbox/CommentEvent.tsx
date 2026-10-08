@@ -3,6 +3,7 @@ import type { ContextItem, MessageResponse } from "../../api/types";
 import { ExternalLinkIcon } from "../../components/icons/UiIcons";
 import type { CommentReplyPolicy, ReplyPolicy } from "../../platforms/types";
 import { formatTime } from "../../util/format";
+import { safeExternalUrl } from "../../util/links";
 import { Composer } from "./Composer";
 
 const DEFAULT_POST_LABEL = "una publicación";
@@ -22,6 +23,7 @@ export function CommentEvent({ message, contactName, post, policy, answered, onR
   const outbound = message.direction === "OUTBOUND";
   const postLabel = policy?.postLabel(post?.status ?? null) ?? DEFAULT_POST_LABEL;
   const postTitle = post?.title ?? "Ver publicación";
+  const postUrl = safeExternalUrl(post?.url);
   const replyPolicy: ReplyPolicy | null = policy
     ? { kind: "chat", maxLength: policy.maxLength, placeholder: policy.placeholder, hint: REPLY_HINT }
     : null;
@@ -39,7 +41,7 @@ export function CommentEvent({ message, contactName, post, policy, answered, onR
         <span className="visually-hidden">{outbound ? "Vos" : contactName}: </span>
         {outbound ? `Respondiste en público en ${postLabel}` : `Comentó en ${postLabel}`}
       </p>
-      {post && (post.url || post.imageUrl || post.title) ? (
+      {post && (postUrl || post.imageUrl || post.title) ? (
         <p className="comment-event-post">
           {post.imageUrl ? (
             <img
@@ -53,8 +55,8 @@ export function CommentEvent({ message, contactName, post, policy, answered, onR
               referrerPolicy="no-referrer"
             />
           ) : null}
-          {post.url ? (
-            <a className="comment-event-link" href={post.url} target="_blank" rel="noopener noreferrer">
+          {postUrl ? (
+            <a className="comment-event-link" href={postUrl} target="_blank" rel="noopener noreferrer">
               <span className="comment-event-link-text">{postTitle}</span>
               <ExternalLinkIcon width={14} height={14} />
               <span className="visually-hidden"> (pestaña nueva)</span>

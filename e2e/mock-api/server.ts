@@ -147,16 +147,10 @@ function meliReply(
       fail(res, 409, "Cannot send MELI message: MELI only lets you answer open pre-sale questions, and this buyer has none unanswered.");
       return null;
     }
-    return {
-      id: nextId("5e55"),
-      conversationId: conversation.id,
-      direction: "OUTBOUND",
+    return outbound(conversation, content, {
       externalMessageId: `${open.externalMessageId}:answer`,
-      content,
       contextRef: open.contextRef ?? null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
   }
   if (content.length > MELI_MESSAGE_LIMIT) {
     fail(res, 400, `MELI messages are limited to ${MELI_MESSAGE_LIMIT} characters`);
@@ -166,16 +160,7 @@ function meliReply(
     fail(res, 409, "Cannot send MELI message: no order/pack is known for this conversation yet. It is learned from the buyer's next message.");
     return null;
   }
-  return {
-    id: nextId("5e55"),
-    conversationId: conversation.id,
-    direction: "OUTBOUND",
-    externalMessageId: nextId("meli").replace(/-/g, ""),
-    content,
-    contextRef: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  return outbound(conversation, content, { externalMessageId: nextId("meli").replace(/-/g, "") });
 }
 
 function outbound(
@@ -511,8 +496,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
           conversationId: conversation.id,
           direction: body.direction === "INBOUND" ? "INBOUND" : "OUTBOUND",
           externalMessageId: null,
+          kind: "TEXT",
           content,
           contextRef: null,
+          replyToExternalId: null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };

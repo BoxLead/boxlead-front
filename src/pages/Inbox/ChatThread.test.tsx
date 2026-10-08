@@ -76,6 +76,25 @@ describe("ChatThread comments", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 
+  it("does not link a post whose url is not a web link", () => {
+    const unsafe: ContextItem = { ...reel, url: "javascript:alert(1)" };
+    render(
+      <ChatThread
+        messages={[message({ kind: "COMMENT", externalMessageId: "c-1", contextRef: "media-1", content: "¿Precio?" })]}
+        pending={[]}
+        contactName="nico.audio"
+        posts={new Map([[unsafe.externalId, unsafe]])}
+        commentPolicy={getPlatform("INSTAGRAM").commentReply}
+        onRetry={vi.fn()}
+        onDiscard={vi.fn()}
+        onReplyToComment={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByText("Flip 6 en stock")).toBeInTheDocument();
+  });
+
   it("sends a public reply to the comment and closes the form", async () => {
     const onReply = renderThread([
       message({ id: "m-2", kind: "COMMENT", externalMessageId: "c-1", contextRef: "media-1", content: "¿Precio?" }),

@@ -26,7 +26,7 @@ src/
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # company, format, labels, oauth, redirect, facebook-sdk
+└── util/             # company, format, labels, links, oauth, redirect, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -41,7 +41,7 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
-Inbox and leads state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&buyers=1&category<id or none>`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox and leads state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>` and `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>`. Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
 ## Categories
 
