@@ -393,3 +393,10 @@ button {
     transition: none;
   }
 }
+
+@media print {
+  :root {
+    background: #ffffff;
+    color-scheme: light;
+  }
+}
