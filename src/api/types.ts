@@ -198,3 +198,65 @@ export type UpdateCategoryRequest = {
   description?: string;
   color?: CategoryColor;
 };
+
+export type HandoffReason = "ASKED_FOR_HUMAN" | "AGENT_UNSURE" | "TAKEN_OVER";
+
+export type MetricsDay = {
+  date: string;
+  leads: number;
+  conversations: number;
+  inboundMessages: number;
+  agentReplies: number;
+  humanReplies: number;
+  qualified: number;
+  closed: number;
+};
+
+export type FirstResponseMetrics = {
+  agent: number[];
+  human: number[];
+  converted: number[];
+  unanswered: number;
+};
+
+export type OutsideHoursMetrics = {
+  conversations: number;
+  answeredUnder5m: number;
+};
+
+export type AgentMetrics = {
+  resolved: number;
+  handoffs: Record<HandoffReason, number>;
+};
+
+export type MetricsSegment = {
+  platform: PlatformType;
+  categoryId: string | null;
+  days: MetricsDay[];
+  leadStatuses: Record<LeadStatus, number>;
+  firstResponse: FirstResponseMetrics;
+  inboundByHour: number[];
+  outsideHours: OutsideHoursMetrics | null;
+  agent: AgentMetrics | null;
+};
+
+export type MetricsReport = {
+  from: string;
+  to: string;
+  timezone: string;
+  generatedAt: string;
+  segments: MetricsSegment[];
+};
+
+export type BusinessHours = {
+  weekdays: number[];
+  from: number;
+  to: number;
+};
+
+export type MetricsSettings = {
+  averageTicket: number | null;
+  currency: string;
+  manualReplyMinutes: number;
+  businessHours: BusinessHours | null;
+};
