@@ -1,4 +1,4 @@
-import { useId, useState, type KeyboardEvent } from "react";
+import { useId, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { formatNumber } from "../../../util/format";
 import { labelIndexes, niceMax, ticks } from "./scale";
 import { useElementWidth } from "./useElementWidth";
@@ -58,6 +58,12 @@ export function TrendChart({ data, unit, summary }: TrendChartProps) {
   const hasPrevious = previousPath.length > 1;
   const datum = data[current];
 
+  function onPointer(event: PointerEvent<SVGSVGElement>) {
+    const x = event.clientX - event.currentTarget.getBoundingClientRect().left - MARGIN.left;
+    if (x < 0) return;
+    setActive(Math.min(data.length - 1, Math.max(0, Math.floor(x / band))));
+  }
+
   function onKeyDown(event: KeyboardEvent<SVGSVGElement>) {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -109,6 +115,8 @@ export function TrendChart({ data, unit, summary }: TrendChartProps) {
           tabIndex={0}
           className="trend-svg"
           onKeyDown={onKeyDown}
+          onPointerMove={onPointer}
+          onPointerDown={onPointer}
           onPointerLeave={() => setActive(null)}
         >
           {ticks(max).map((tick) => (
@@ -201,18 +209,6 @@ export function TrendChart({ data, unit, summary }: TrendChartProps) {
             ) : null,
           )}
 
-          {data.map((item, index) => (
-            <rect
-              key={item.key}
-              className="trend-hit"
-              x={MARGIN.left + band * index}
-              y={MARGIN.top}
-              width={band}
-              height={innerHeight}
-              onPointerEnter={() => setActive(index)}
-              onPointerDown={() => setActive(index)}
-            />
-          ))}
         </svg>
       </div>
 

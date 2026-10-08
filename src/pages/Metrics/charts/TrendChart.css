@@ -59,6 +59,7 @@
   overflow: visible;
   border-radius: var(--signal-radius-sm);
   touch-action: pan-y;
+  cursor: crosshair;
 }
 
 .trend-grid {
@@ -112,11 +113,6 @@
   font-size: 11px;
 }
 
-.trend-hit {
-  fill: transparent;
-  cursor: crosshair;
-}
-
 .trend-legend {
   display: flex;
   flex-wrap: wrap;
@@ -151,5 +147,12 @@
 @media (prefers-reduced-motion: reduce) {
   .trend-part {
     transition: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .trend-readout {
+    align-content: flex-start;
+    min-height: 92px;
   }
 }

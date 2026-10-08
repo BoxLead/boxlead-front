@@ -73,6 +73,25 @@ test("unknown filters fall back to the defaults", async ({ page }) => {
   await expect(channelRows(page)).toHaveCount(4);
 });
 
+test("pointing at the charts explains each bar and cell", async ({ page }) => {
+  await openMetrics(page);
+  const chart = page.getByRole("img", { name: /Leads por día y por canal/ });
+  const readout = page.locator(".trend-readout");
+  await chart.scrollIntoViewIfNeeded();
+  const box = await chart.boundingBox();
+  if (!box) throw new Error("chart not rendered");
+  await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.5);
+  await expect(readout).not.toContainText("hasta ahora");
+  await expect(readout).toContainText("Período anterior");
+  await page.mouse.move(box.x + box.width - 4, box.y + box.height * 0.5);
+  await expect(readout).toContainText("estimación");
+
+  const heatmap = page.locator(".heatmap-readout");
+  await expect(heatmap).toContainText("Pico");
+  await page.locator(".heatmap-cell").nth(24 + 20).hover();
+  await expect(heatmap).toContainText("Martes de 20 a 21 h");
+});
+
 test("the trend chart can be read with the keyboard", async ({ page }) => {
   await openMetrics(page);
   const chart = page.getByRole("img", { name: /Leads por día y por canal/ });

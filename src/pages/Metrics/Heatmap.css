@@ -112,6 +112,10 @@
 }
 
 @media (max-width: 520px) {
+  .heatmap-readout {
+    min-height: 3em;
+  }
+
   .heatmap-grid {
     grid-template-columns: 28px repeat(24, minmax(0, 1fr));
     gap: 2px;
@@ -121,5 +125,31 @@
     height: auto;
     aspect-ratio: 1;
     border-radius: 2px;
+  }
+}
+
+@media print {
+  .heat-1 {
+    --heat: #dbe8f5;
+  }
+
+  .heat-2 {
+    --heat: #b9d2ec;
+  }
+
+  .heat-3 {
+    --heat: #8db5df;
+  }
+
+  .heat-4 {
+    --heat: #5f94cc;
+  }
+
+  .heat-5 {
+    --heat: #3a72b0;
+  }
+
+  .heat-6 {
+    --heat: #1f4f86;
   }
 }
