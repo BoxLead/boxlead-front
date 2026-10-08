@@ -119,10 +119,12 @@ test("an expired MercadoLibre authorization is explained with a reconnect action
 test("WhatsApp chats send messages and group them by day", async ({ page }, testInfo) => {
   await login(page);
   await openConversation(page, "Martín Herrera");
-  await expect(page.getByRole("region", { name: "Hoy" })).toBeVisible();
   await page.getByLabel("Responder a Martín Herrera").fill("Dale, quedo atento.");
   await page.getByRole("button", { name: "Enviar" }).click();
   await expect(page.locator(".bubble-outbound").last()).toContainText("Dale, quedo atento.");
+  await expect(page.getByRole("region", { name: "Hoy" }).locator(".bubble-outbound").last()).toContainText(
+    "Dale, quedo atento.",
+  );
   await screenshot(page, "inbox-whatsapp");
   if (testInfo.project.name === "mobile") await page.getByRole("link", { name: "Volver a la lista" }).click();
   await expect(list(page).getByRole("link", { name: /Martín Herrera/ })).toContainText("Vos: Dale, quedo atento.");
