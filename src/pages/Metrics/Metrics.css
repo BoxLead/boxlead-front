@@ -13,6 +13,25 @@
   gap: 8px 12px;
 }
 
+.metrics-heading {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.metrics-header-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 20px;
+}
+
+.metrics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .metrics-range {
   display: grid;
   gap: 2px;
@@ -79,7 +98,17 @@
 }
 
 @media (max-width: 760px) {
+  .metrics-heading {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.metrics-header-side {
+    justify-content: flex-start;
+  }
+
   .metrics-range {
+    flex-basis: 100%;
     text-align: left;
   }
 
@@ -120,6 +149,10 @@
 
   .metrics-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .metrics-actions {
+    display: none;
   }
 
   .metrics-body {

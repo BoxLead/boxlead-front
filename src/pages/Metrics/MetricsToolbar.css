@@ -22,12 +22,6 @@
   min-width: 0;
 }
 
-.metrics-toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .metrics-category select {
   min-height: 34px;
   max-width: 220px;

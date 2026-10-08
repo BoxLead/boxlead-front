@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { ChartIcon, SearchIcon } from "../../components/icons/UiIcons";
+import { ChartIcon, PrintIcon, SearchIcon, SlidersIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { Tag } from "../../components/ui/Tag";
 import { useToast } from "../../components/ui/toast";
@@ -64,7 +64,7 @@ export function Metrics() {
   return (
     <div className="page metrics">
       <header className="page-header metrics-header">
-        <div>
+        <div className="metrics-heading">
           <div className="metrics-title-row">
             <h1 className="page-title">Métricas</h1>
             {METRICS_DEMO ? <Tag tone="warning">Datos de ejemplo</Tag> : null}
@@ -73,12 +73,24 @@ export function Metrics() {
             Cómo rinden tus canales, tu equipo y el agente, y qué decisiones conviene tomar.
           </p>
         </div>
-        {view ? (
-          <p className="metrics-range">
-            Del {formatShortDate(view.from)} al {formatShortDate(view.to)}
-            <span>Comparado con {period === 7 ? "la semana anterior" : `los ${period} días anteriores`}</span>
-          </p>
-        ) : null}
+        <div className="metrics-header-side">
+          {view ? (
+            <p className="metrics-range">
+              Del {formatShortDate(view.from)} al {formatShortDate(view.to)}
+              <span>Comparado con {period === 7 ? "la semana anterior" : `los ${period} días anteriores`}</span>
+            </p>
+          ) : null}
+          <div className="metrics-actions">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={openSettings} disabled={!view}>
+              <SlidersIcon width={16} height={16} />
+              Supuestos
+            </button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()} disabled={!view}>
+              <PrintIcon width={16} height={16} />
+              Exportar PDF
+            </button>
+          </div>
+        </div>
       </header>
 
       <MetricsToolbar
@@ -93,7 +105,6 @@ export function Metrics() {
             ...(patch.category !== undefined ? { category: patch.category } : {}),
           })
         }
-        onEditSettings={openSettings}
       />
 
       {error ? (
