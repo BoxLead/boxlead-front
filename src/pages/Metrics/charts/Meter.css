@@ -1,0 +1,11 @@
+.meter {
+  display: block;
+}
+
+.meter-track {
+  fill: rgba(234, 234, 220, 0.07);
+}
+
+.meter-fill {
+  fill: var(--platform-color, var(--category-color, var(--signal-accent)));
+}

@@ -99,7 +99,7 @@
 
   .sidebar-nav {
     flex-direction: row;
-    flex: 4;
+    flex: 5;
     gap: 0;
     padding: 6px 4px;
   }
@@ -136,5 +136,11 @@
   .sidebar-logout {
     font-size: 0.625rem;
     letter-spacing: -0.01em;
+  }
+}
+
+@media print {
+  .sidebar {
+    display: none;
   }
 }

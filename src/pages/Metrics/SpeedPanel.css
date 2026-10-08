@@ -1,0 +1,162 @@
+.speed-compare {
+  display: grid;
+  gap: 14px;
+}
+
+.speed-responder {
+  display: grid;
+  gap: 6px;
+}
+
+.speed-responder-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.speed-responder-name {
+  color: var(--signal-heading);
+  font-weight: 600;
+}
+
+.speed-responder-median {
+  color: var(--signal-text);
+  font-size: 0.875rem;
+}
+
+.speed-responder-median strong {
+  color: var(--signal-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.speed-stack {
+  display: block;
+  border-radius: 7px;
+  background: rgba(234, 234, 220, 0.06);
+}
+
+.speed-responder-foot {
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}
+
+.speed-b0 {
+  fill: #5fd3a0;
+  background: #5fd3a0;
+}
+
+.speed-b1 {
+  fill: #a5dd8c;
+  background: #a5dd8c;
+}
+
+.speed-b2 {
+  fill: #e0d978;
+  background: #e0d978;
+}
+
+.speed-b3 {
+  fill: #f0c070;
+  background: #f0c070;
+}
+
+.speed-b4 {
+  fill: #f3a65a;
+  background: #f3a65a;
+}
+
+.speed-b5 {
+  fill: #f08a8a;
+  background: #f08a8a;
+}
+
+.speed-b6 {
+  fill: #d86f9a;
+  background: #d86f9a;
+}
+
+.speed-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--signal-text);
+  font-size: 0.75rem;
+}
+
+.speed-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.speed-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.speed-unanswered {
+  margin: 0;
+  color: var(--signal-danger);
+  font-size: 0.8125rem;
+}
+
+.speed-bands {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--signal-border);
+}
+
+.speed-bands-title {
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.speed-bands ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.speed-band {
+  display: grid;
+  gap: 4px;
+}
+
+.speed-band-0 {
+  --signal-accent: var(--signal-success);
+}
+
+.speed-band-1 {
+  --signal-accent: var(--signal-warning);
+}
+
+.speed-band-2 {
+  --signal-accent: var(--signal-danger);
+}
+
+.speed-band-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+.speed-band-head strong {
+  color: var(--signal-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.speed-band-sample {
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}

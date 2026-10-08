@@ -1,0 +1,73 @@
+.funnel {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.funnel-step {
+  display: grid;
+  gap: 6px;
+}
+
+.funnel-step-0 {
+  --signal-accent: #8fc1ee;
+}
+
+.funnel-step-1 {
+  --signal-accent: #7fb0e8;
+}
+
+.funnel-step-2 {
+  --signal-accent: #8fd3c1;
+}
+
+.funnel-step-3 {
+  --signal-accent: var(--signal-success);
+}
+
+.funnel-step-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.funnel-step-label {
+  color: var(--signal-heading);
+  font-weight: 600;
+}
+
+.funnel-step-value {
+  color: var(--signal-heading);
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel-step-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}
+
+.funnel-step-pass {
+  color: var(--signal-text);
+}
+
+.funnel-lost {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--signal-border);
+  color: var(--signal-text);
+  font-size: 0.8125rem;
+}
+
+.funnel-lost-value {
+  color: var(--signal-heading);
+  font-weight: 650;
+}

@@ -1,0 +1,130 @@
+.channel-table-scroll {
+  margin: 0 -22px -22px;
+  overflow-x: auto;
+  border-top: 1px solid var(--signal-border);
+}
+
+.channel-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.channel-table th,
+.channel-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--signal-border);
+  text-align: right;
+  vertical-align: top;
+}
+
+.channel-table tbody tr:last-child th,
+.channel-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.channel-table th:first-child {
+  padding-left: 22px;
+  text-align: left;
+}
+
+.channel-table td:last-child,
+.channel-table th:last-child {
+  padding-right: 22px;
+}
+
+.channel-table thead th {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: var(--signal-bg-subtle);
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: bottom;
+}
+
+.channel-sort {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: right;
+  text-transform: inherit;
+}
+
+.channel-sort:hover,
+.channel-sort-active {
+  color: var(--signal-heading);
+}
+
+.channel-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--signal-heading);
+  font-weight: 600;
+}
+
+.channel-logo {
+  display: inline-flex;
+}
+
+.channel-leads {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.channel-figure {
+  display: block;
+  color: var(--signal-heading);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.channel-leads .channel-figure {
+  display: inline;
+}
+
+.channel-sub {
+  display: block;
+  white-space: nowrap;
+  margin-top: 4px;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}
+
+.channel-table td:nth-child(2) {
+  min-width: 170px;
+}
+
+@media (max-width: 760px) {
+  .channel-table-scroll {
+    margin: 0 -16px -16px;
+  }
+
+  .channel-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    padding-left: 16px;
+    background: var(--signal-surface);
+  }
+
+  .channel-table thead th:first-child {
+    background: var(--signal-bg-subtle);
+  }
+}
+
+@media print {
+  .channel-table {
+    min-width: 0;
+  }
+}

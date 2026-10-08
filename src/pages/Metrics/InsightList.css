@@ -1,0 +1,80 @@
+.insights {
+  display: grid;
+  gap: 12px;
+}
+
+.insight-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.insight {
+  --insight-color: var(--signal-accent);
+  --insight-muted: var(--signal-accent-muted);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  overflow: hidden;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background:
+    linear-gradient(160deg, var(--insight-muted), transparent 55%),
+    var(--signal-surface);
+}
+
+.insight::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--insight-color);
+}
+
+.insight-positive {
+  --insight-color: var(--signal-success);
+  --insight-muted: var(--signal-success-muted);
+}
+
+.insight-attention {
+  --insight-color: var(--signal-warning);
+  --insight-muted: var(--signal-warning-muted);
+}
+
+.insight-icon {
+  display: inline-flex;
+  color: var(--insight-color);
+}
+
+.insight-title {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.insight-detail {
+  flex: 1;
+  margin: 0;
+  color: var(--signal-text);
+  font-size: 0.875rem;
+}
+
+.insight-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+@media print {
+  .insight-action {
+    display: none;
+  }
+}

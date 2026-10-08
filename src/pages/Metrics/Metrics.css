@@ -1,0 +1,128 @@
+.metrics {
+  max-width: 1240px;
+}
+
+.metrics-header {
+  margin-bottom: var(--signal-space-md);
+}
+
+.metrics-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.metrics-range {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.metrics-range span {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.metrics-body {
+  display: grid;
+  gap: var(--signal-space-lg);
+  margin-top: var(--signal-space-md);
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--signal-space-lg);
+}
+
+.metrics-empty {
+  margin-top: var(--signal-space-md);
+  padding: var(--signal-space-xl) var(--signal-space-md);
+}
+
+.metrics-skeleton {
+  display: grid;
+  gap: var(--signal-space-lg);
+  margin-top: var(--signal-space-md);
+}
+
+.metrics-skeleton-insights,
+.metrics-skeleton-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+}
+
+.metrics-skeleton-insights .skeleton {
+  height: 150px;
+}
+
+.metrics-skeleton-kpis .skeleton {
+  height: 128px;
+}
+
+.metrics-skeleton-chart {
+  height: 380px;
+  border-radius: var(--signal-radius-md);
+}
+
+@media (max-width: 960px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .metrics-range {
+    text-align: left;
+  }
+
+  .metrics-body {
+    gap: var(--signal-space-md);
+  }
+
+  .metrics-row {
+    gap: var(--signal-space-md);
+  }
+}
+
+@media print {
+  .metrics {
+    --signal-bg: #ffffff;
+    --signal-bg-subtle: #f4f6f8;
+    --signal-surface: #ffffff;
+    --signal-surface-elevated: #eef2f5;
+    --signal-border: #d6dde3;
+    --signal-text: #33424f;
+    --signal-text-muted: #5b6b78;
+    --signal-heading: #0f2236;
+    --signal-accent: #2f6fae;
+    --signal-accent-muted: rgba(47, 111, 174, 0.12);
+    --signal-cream: #0f2236;
+    --signal-success: #1d8a5b;
+    --signal-success-muted: rgba(29, 138, 91, 0.12);
+    --signal-warning: #a86a00;
+    --signal-warning-muted: rgba(168, 106, 0, 0.12);
+    --signal-danger: #b23b3b;
+    --signal-danger-muted: rgba(178, 59, 59, 0.1);
+    max-width: none;
+    padding: 0;
+    color: var(--signal-text);
+    background: #ffffff;
+    animation: none;
+  }
+
+  .metrics-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metrics-body {
+    gap: 16px;
+  }
+}
