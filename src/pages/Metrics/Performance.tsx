@@ -1,5 +1,6 @@
 import { useId, useRef, type KeyboardEvent } from "react";
 import { formatCompactMoney, formatLongDate, formatNumber, formatPercent, formatShortDate } from "../../util/format";
+import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { Change } from "./Change";
 import { MetricChart, type ChartEstimate, type ChartPoint } from "./charts/MetricChart";
 import { formatMetric, metricChange, metricSeries, METRICS, type MetricDefinition, type MetricKey } from "./series";
@@ -36,7 +37,8 @@ function axis(definition: MetricDefinition, value: number, currency: string): st
 export function Performance({ view, metric, onMetricChange, onEditSettings }: PerformanceProps) {
   const panelId = useId();
   const tabsRef = useRef<HTMLDivElement>(null);
-  const definition = METRICS.find((item) => item.key === metric) ?? METRICS[0];
+  const selectedIndex = Math.max(0, METRICS.findIndex((item) => item.key === metric));
+  const definition = METRICS[selectedIndex];
   const { settings } = view;
   const ticket = settings.averageTicket;
   const countKey = metric === "revenue" ? "sales" : metric;
@@ -111,7 +113,11 @@ export function Performance({ view, metric, onMetricChange, onEditSettings }: Pe
               onClick={() => onMetricChange(item.key)}
             >
               <span className="performance-tab-label">{item.label}</span>
-              <span className="performance-tab-value">{formatMetric(item, value, settings.currency)}</span>
+              <AnimatedNumber
+                className="performance-tab-value"
+                value={value}
+                format={(number) => formatMetric(item, number, settings.currency)}
+              />
               <Change
                 value={metricChange(item, value, view.previous[item.key])}
                 kind={item.kind === "rate" ? "points" : "percent"}
@@ -119,6 +125,7 @@ export function Performance({ view, metric, onMetricChange, onEditSettings }: Pe
             </button>
           );
         })}
+        <span className={`performance-indicator performance-indicator-${selectedIndex}`} aria-hidden="true" />
       </div>
 
       <div className="performance-panel" role="tabpanel" id={panelId} aria-label={definition.label}>
@@ -131,7 +138,7 @@ export function Performance({ view, metric, onMetricChange, onEditSettings }: Pe
           </div>
         ) : (
           <MetricChart
-            metricKey={metric}
+            drawKey={`${metric}-${view.period}-${weekly ? "w" : "d"}`}
             points={points}
             estimates={estimates}
             format={(value) => withUnit(definition, value, settings.currency)}

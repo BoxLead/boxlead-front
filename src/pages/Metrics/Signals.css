@@ -36,6 +36,32 @@
 
 .signal-attention .signal-dot {
   background: var(--signal-warning);
+  box-shadow: 0 0 0 0 rgba(240, 200, 120, 0.5);
+  animation: signal-ping 1.6s ease-out 0.6s 2;
+}
+
+.signal-action svg {
+  transition: transform 0.2s var(--signal-ease);
+}
+
+.signal-action:hover svg {
+  transform: translateX(3px);
+}
+
+@keyframes signal-ping {
+  to {
+    box-shadow: 0 0 0 7px rgba(240, 200, 120, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-attention .signal-dot {
+    animation: none;
+  }
+
+  .signal-action svg {
+    transition: none;
+  }
 }
 
 .signal-text {

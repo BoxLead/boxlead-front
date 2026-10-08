@@ -71,15 +71,18 @@ export function formatPercent(value: number | null | undefined, digits = 0): str
   return `${(value * 100).toLocaleString(LOCALE, { maximumFractionDigits: digits, minimumFractionDigits: 0 })}%`;
 }
 
+function sign(value: number): string {
+  return value > 0 ? "+" : value < 0 ? "\u2212" : "";
+}
+
 export function formatPoints(value: number): string {
-  const points = value * 100;
-  const rounded = Math.round(points * 10) / 10;
-  return `${rounded > 0 ? "+" : ""}${rounded.toLocaleString(LOCALE, { maximumFractionDigits: 1 })} pp`;
+  const rounded = Math.round(value * 1000) / 10;
+  return `${sign(rounded)}${Math.abs(rounded).toLocaleString(LOCALE, { maximumFractionDigits: 1 })} pp`;
 }
 
 export function formatSignedPercent(value: number): string {
   const rounded = Math.round(value * 100);
-  return `${rounded > 0 ? "+" : ""}${rounded.toLocaleString(LOCALE)}%`;
+  return `${sign(rounded)}${Math.abs(rounded).toLocaleString(LOCALE)}%`;
 }
 
 export function formatCompactMoney(amount: number, currency: string): string {

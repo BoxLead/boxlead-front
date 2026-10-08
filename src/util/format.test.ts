@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatListTime, formatMoney, formatRelative } from "./format";
+import { formatListTime, formatMoney, formatPoints, formatRelative, formatSignedPercent } from "./format";
 
 const NOW = new Date("2026-10-04T15:00:00-03:00").getTime();
 const minus = (ms: number) => new Date(NOW - ms).toISOString();
@@ -38,5 +38,13 @@ describe("formatMoney", () => {
     expect(formatMoney(10.5, "USD")).toContain("10,50");
     expect(formatMoney(5, "XXXX")).toContain("5");
     expect(formatMoney(null, "ARS")).toBe("");
+  });
+
+  it("signs changes with a real minus sign", () => {
+    expect(formatSignedPercent(0.114)).toBe("+11%");
+    expect(formatSignedPercent(-0.14)).toBe("\u221214%");
+    expect(formatSignedPercent(0.001)).toBe("0%");
+    expect(formatPoints(-0.0436)).toBe("\u22124,4 pp");
+    expect(formatPoints(0.05)).toBe("+5 pp");
   });
 });

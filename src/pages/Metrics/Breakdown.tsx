@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { PlatformType } from "../../api/types";
+import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
 import { getPlatform } from "../../platforms";
 import { colorClass } from "../../util/categories";
@@ -114,7 +115,7 @@ export function Breakdown({ view, metric, filters, onFiltersChange }: BreakdownP
                   </div>
                 </th>
                 <td className={mark("leads")}>
-                  <span className="breakdown-value">{formatNumber(row.totals.leads)}</span>
+                  <AnimatedNumber className="breakdown-value" value={row.totals.leads} format={formatNumber} />
                   <span className="breakdown-sub">{formatPercent(share)}</span>
                 </td>
                 <td className={mark("qualification")}>

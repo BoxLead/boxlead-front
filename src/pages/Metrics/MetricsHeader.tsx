@@ -5,7 +5,7 @@ import { getPlatform } from "../../platforms";
 import { formatShortDate } from "../../util/format";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
 import { UNCATEGORIZED, type MetricsFilters } from "./metricsModel";
-import { useMediaQuery } from "./useMediaQuery";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import "./MetricsHeader.css";
 
 type MetricsHeaderProps = {

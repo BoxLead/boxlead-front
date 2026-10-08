@@ -1,3 +1,4 @@
+import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { formatNumber, formatPercent } from "../../util/format";
 import { Meter } from "./charts/Meter";
 import { funnelSteps } from "./metricsModel";
@@ -17,7 +18,7 @@ export function FunnelCard({ view }: FunnelCardProps) {
         {steps.map((step) => (
           <li key={step.key} className="funnel-row">
             <span className="funnel-label">{step.label}</span>
-            <span className="funnel-value">{formatNumber(step.value)}</span>
+            <AnimatedNumber className="funnel-value" value={step.value} format={formatNumber} />
             <span className="funnel-rate">{step.fromPrevious === null ? "" : formatPercent(step.fromPrevious)}</span>
             <span className="funnel-bar">
               <Meter value={step.fromStart} size="md" />
@@ -28,11 +29,15 @@ export function FunnelCard({ view }: FunnelCardProps) {
       <dl className="funnel-foot">
         <div>
           <dt>Perdidos</dt>
-          <dd>{formatNumber(view.totals.statuses.LOST)}</dd>
+          <dd>
+            <AnimatedNumber value={view.totals.statuses.LOST} format={formatNumber} />
+          </dd>
         </div>
         <div>
           <dt>Sin contactar</dt>
-          <dd>{formatNumber(view.totals.statuses.NEW)}</dd>
+          <dd>
+            <AnimatedNumber value={view.totals.statuses.NEW} format={formatNumber} />
+          </dd>
         </div>
       </dl>
     </MetricsCard>

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { CategoryResponse, MetricsReport, MetricsSettings, PlatformType } from "../../api/types";
 import { CATEGORIES_KEY } from "../../data/categories";
 import { METRICS_SETTINGS_KEY, metricsKey } from "../../data/metrics";
@@ -171,10 +171,15 @@ export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters) {
     range.previousTo,
   ]);
 
+  const [shown, setShown] = useState<MetricsView | null>(null);
+  if (view && view !== shown) setShown(view);
+  const visible = view ?? shown;
+
   const error = current.error ?? previous.error ?? settings.error;
   return {
-    view,
-    loading: !view && !error,
+    view: visible,
+    updating: !view && !error && visible !== null,
+    loading: !visible && !error,
     error: view ? null : error,
     reload: () => Promise.all([current.reload(), previous.reload(), history.reload(), settings.reload()]),
   };

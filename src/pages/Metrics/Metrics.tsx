@@ -47,7 +47,7 @@ export function Metrics() {
     platform: parseChannel(searchParams.get("channel")),
     category: searchParams.get("category") || null,
   };
-  const { view, loading, error, reload } = useMetricsView(period, filters);
+  const { view, updating, loading, error, reload } = useMetricsView(period, filters);
   const filtered = filters.platform !== "ALL" || filters.category !== null;
 
   function setParams(patch: Record<string, string | null>) {
@@ -129,7 +129,8 @@ export function Metrics() {
           )}
         </div>
       ) : (
-        <div className="metrics-body">
+        <div className={`metrics-body${updating ? " metrics-body-updating" : ""}`} aria-busy={updating}>
+          <div className="metrics-progress" aria-hidden="true" />
           <Signals insights={view.insights} />
           <Performance
             view={view}

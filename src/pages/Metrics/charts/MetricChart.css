@@ -1,4 +1,6 @@
 .metric-chart {
+  --chart-move: 0.18s var(--signal-ease);
+  --chart-morph: 0.55s var(--signal-ease);
   display: grid;
   gap: 8px;
 }
@@ -17,6 +19,10 @@
   font-size: 0.8125rem;
 }
 
+.metric-chart-when::first-letter {
+  text-transform: uppercase;
+}
+
 .metric-chart-value {
   color: var(--signal-heading);
   font-size: 1.375rem;
@@ -25,7 +31,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.metric-chart-previous {
+.metric-chart-aside {
   color: var(--signal-text-muted);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
@@ -39,8 +45,13 @@
 .metric-chart-svg {
   display: block;
   overflow: visible;
+  border-radius: var(--signal-radius-sm);
   cursor: crosshair;
   touch-action: pan-y;
+}
+
+.metric-chart-svg:focus-visible {
+  outline-offset: 6px;
 }
 
 .metric-chart-grid {
@@ -63,8 +74,15 @@
   stop-opacity: 0;
 }
 
+.metric-chart-area,
+.metric-chart-line,
+.metric-chart-previous,
+.metric-chart-estimate {
+  transition: d var(--chart-morph);
+}
+
 .metric-chart-area {
-  animation: metric-chart-fade 0.6s var(--signal-ease) both;
+  animation: metric-chart-fade 0.7s var(--signal-ease) both;
 }
 
 .metric-chart-line {
@@ -77,16 +95,9 @@
   animation: metric-chart-draw 0.9s var(--signal-ease) both;
 }
 
-.metric-chart-partial {
-  fill: var(--signal-surface);
-  stroke: var(--signal-accent);
-  stroke-width: 1.5;
-  stroke-dasharray: 2 2;
-}
-
-.metric-chart-previous-line {
+.metric-chart-previous {
   fill: none;
-  stroke: rgba(234, 234, 220, 0.32);
+  stroke: rgba(234, 234, 220, 0.3);
   stroke-width: 1.5;
   stroke-dasharray: 3 4;
 }
@@ -98,15 +109,50 @@
   stroke-dasharray: 2 5;
   stroke-linecap: round;
   opacity: 0.8;
+  animation: metric-chart-fade 0.5s ease 0.55s both;
 }
 
 .metric-chart-band {
   fill: var(--signal-accent);
   opacity: 0.08;
+  animation: metric-chart-band 0.5s ease 0.55s both;
+}
+
+.metric-chart-live-dot {
+  fill: var(--signal-surface);
+  stroke: var(--signal-accent);
+  stroke-width: 1.5;
+}
+
+.metric-chart-live-ring {
+  fill: none;
+  stroke: var(--signal-accent);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: metric-chart-pulse 2.4s ease-out infinite;
+}
+
+.metric-chart-crosshair line {
+  stroke: rgba(234, 234, 220, 0.22);
 }
 
 .metric-chart-crosshair {
-  stroke: rgba(234, 234, 220, 0.25);
+  opacity: 0;
+  transition:
+    transform var(--chart-move),
+    opacity 0.2s ease;
+}
+
+.metric-chart-svg-active .metric-chart-crosshair {
+  opacity: 1;
+}
+
+.metric-chart-dot,
+.metric-chart-dot-previous {
+  transition:
+    cx var(--chart-move),
+    cy var(--chart-move),
+    opacity 0.2s ease;
 }
 
 .metric-chart-dot {
@@ -117,6 +163,17 @@
 
 .metric-chart-dot-estimate {
   stroke-dasharray: 2 2;
+}
+
+.metric-chart-dot-previous {
+  fill: var(--signal-surface);
+  stroke: rgba(234, 234, 220, 0.45);
+  stroke-width: 1.5;
+  opacity: 0;
+}
+
+.metric-chart-svg-active .metric-chart-dot-previous {
+  opacity: 1;
 }
 
 @keyframes metric-chart-draw {
@@ -134,24 +191,66 @@
   }
 }
 
+@keyframes metric-chart-band {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.08;
+  }
+}
+
+@keyframes metric-chart-pulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .metric-chart-area,
   .metric-chart-line,
-  .metric-chart-area {
+  .metric-chart-estimate,
+  .metric-chart-band,
+  .metric-chart-live-ring {
     animation: none;
+  }
+
+  .metric-chart-area,
+  .metric-chart-line,
+  .metric-chart-previous,
+  .metric-chart-estimate,
+  .metric-chart-crosshair,
+  .metric-chart-dot,
+  .metric-chart-dot-previous {
+    transition: none;
   }
 }
 
 @media print {
+  .metric-chart-area,
   .metric-chart-line,
-  .metric-chart-area {
+  .metric-chart-estimate,
+  .metric-chart-band {
     animation: none;
+  }
+
+  .metric-chart-live-ring,
+  .metric-chart-crosshair,
+  .metric-chart-dot-previous {
+    display: none;
   }
 
   .metric-chart-grid {
     stroke: #e3e8ec;
   }
 
-  .metric-chart-previous-line {
+  .metric-chart-previous {
     stroke: #9aa7b2;
   }
 }

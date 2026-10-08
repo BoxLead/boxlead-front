@@ -3,8 +3,91 @@
 }
 
 .metrics-body {
+  position: relative;
   display: grid;
   gap: 16px;
+}
+
+.metrics-body > :not(.metrics-progress),
+.metrics-grid > * {
+  animation: metrics-rise 0.6s var(--signal-ease) both;
+  transition: opacity 0.25s ease;
+}
+
+.metrics-body > :nth-child(3) {
+  animation-delay: 60ms;
+}
+
+.metrics-body > :nth-child(4) > :first-child {
+  animation-delay: 120ms;
+}
+
+.metrics-body > :nth-child(4) > :last-child {
+  animation-delay: 170ms;
+}
+
+.metrics-body > :nth-child(5) > :first-child {
+  animation-delay: 220ms;
+}
+
+.metrics-body > :nth-child(5) > :last-child {
+  animation-delay: 270ms;
+}
+
+.metrics-body > .metrics-grid {
+  animation: none;
+}
+
+.metrics-body-updating > :not(.metrics-progress),
+.metrics-body-updating .metrics-grid > * {
+  opacity: 0.55;
+}
+
+.metrics-progress {
+  position: absolute;
+  inset: -10px 0 auto;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.metrics-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, var(--signal-accent), transparent);
+  animation: metrics-progress 1s ease-in-out infinite;
+}
+
+.metrics-body-updating .metrics-progress {
+  opacity: 1;
+}
+
+@keyframes metrics-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes metrics-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metrics-body > :not(.metrics-progress),
+  .metrics-grid > *,
+  .metrics-progress::after {
+    animation: none;
+  }
 }
 
 .metrics-grid {

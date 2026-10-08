@@ -1,3 +1,4 @@
+import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { formatDuration, formatNumber, formatPercent } from "../../util/format";
 import { estimateMedianSeconds, handoffTotal, ratio } from "./metricsModel";
 import { MetricsCard } from "./MetricsCard";
@@ -28,12 +29,12 @@ export function AttentionCard({ view }: AttentionCardProps) {
     <MetricsCard title="Atención">
       <div className="attention-headline">
         <div>
-          <span className="attention-big">{formatDuration(view.rates.medianSeconds)}</span>
+          <AnimatedNumber className="attention-big" value={view.rates.medianSeconds} format={formatDuration} />
           <span className="attention-caption">Primera respuesta</span>
         </div>
         {agent ? (
           <div>
-            <span className="attention-big">{formatPercent(ratio(agent.resolved, handled))}</span>
+            <AnimatedNumber className="attention-big" value={ratio(agent.resolved, handled)} format={formatPercent} />
             <span className="attention-caption">Resueltas por el agente</span>
           </div>
         ) : null}

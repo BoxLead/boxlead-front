@@ -56,3 +56,15 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+
+.funnel-row:nth-child(2) .meter-fill {
+  animation-delay: 80ms;
+}
+
+.funnel-row:nth-child(3) .meter-fill {
+  animation-delay: 160ms;
+}
+
+.funnel-row:nth-child(4) .meter-fill {
+  animation-delay: 240ms;
+}
