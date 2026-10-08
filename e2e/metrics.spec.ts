@@ -3,110 +3,114 @@ import { expectAccessible, login, resetApi, screenshot } from "./support.ts";
 
 const NOW = new Date("2026-10-07T15:00:00");
 
-const kpis = (page: Page) => page.getByRole("list", { name: "Indicadores principales" }).locator(":scope > li");
-const kpi = (page: Page, label: string) => kpis(page).filter({ hasText: label });
-const channelRows = (page: Page) => page.getByRole("region", { name: "Tabla de rendimiento por canal" }).locator("tbody tr");
+const tabs = (page: Page) => page.getByRole("tablist", { name: "Indicadores" }).getByRole("tab");
+const tab = (page: Page, name: string) => page.getByRole("tablist", { name: "Indicadores" }).getByRole("tab", { name: new RegExp(`^${name}`) });
+const breakdown = (page: Page) => page.getByRole("region", { name: "Desglose" });
+const rows = (page: Page) => breakdown(page).locator("tbody tr");
+const readout = (page: Page) => page.locator(".metric-chart-readout");
 
 async function openMetrics(page: Page, path = "/app/metrics") {
   await page.clock.setFixedTime(NOW);
   await login(page, path);
-  await expect(kpis(page)).toHaveCount(5);
+  await expect(tabs(page)).toHaveCount(5);
 }
 
 test.beforeEach(async () => {
   await resetApi();
 });
 
-test("shows what matters for the last 30 days", async ({ page }) => {
+test("shows the period at a glance", async ({ page }) => {
   await openMetrics(page);
   await expect(page.getByRole("heading", { level: 1, name: "Métricas" })).toBeVisible();
   await expect(page.getByText("Datos de ejemplo", { exact: true })).toBeVisible();
-  await expect(page.getByText("Del 8 sept al 7 oct")).toBeVisible();
-  await expect(page.getByRole("region", { name: "Lo que tenés que saber" }).locator("li")).toHaveCount(3);
-  await expect(kpi(page, "Leads nuevos")).toContainText(/\d/);
-  await expect(kpi(page, "Ingresos estimados")).toContainText("Con un ticket de");
-  for (const title of [
-    "Evolución de leads",
-    "Embudo de conversión",
-    "Leads por categoría",
-    "Rendimiento por canal",
-    "Velocidad de respuesta",
-    "Agente de ventas",
-    "¿Cuándo te escriben?",
-  ]) {
+  await expect(page.getByText("8 sept al 7 oct")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Señales" }).locator("li")).toHaveCount(3);
+  await expect(tab(page, "Leads")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("img", { name: /Leads por día/ })).toBeVisible();
+  await expect(page.getByText("Próximos 14 días")).toBeVisible();
+  await expect(rows(page)).toHaveCount(4);
+  for (const title of ["Embudo", "Cuándo te escriben", "Atención"]) {
     await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
   }
-  await expect(page.getByRole("group", { name: "Estimación de los próximos 14 días" })).toContainText("Leads esperados");
-  await expect(channelRows(page)).toHaveCount(4);
-  await expect(page.getByRole("region", { name: "Leads por categoría" }).getByRole("link", { name: "Presupuesto" })).toBeVisible();
   await expectAccessible(page);
   await screenshot(page, "metrics");
 });
 
-test("filters by period, channel and category from the URL", async ({ page }) => {
+test("each indicator drives the chart", async ({ page }) => {
+  await openMetrics(page);
+  await tab(page, "Ventas").click();
+  await expect(page).toHaveURL(/metric=sales/);
+  await expect(tab(page, "Ventas")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("img", { name: /Ventas por día/ })).toBeVisible();
+  await expect(breakdown(page).locator("thead th.breakdown-focus")).toHaveText("Ventas");
+
+  await page.keyboard.press("ArrowRight");
+  await expect(tab(page, "Ingresos")).toBeFocused();
+  await expect(page).toHaveURL(/metric=revenue/);
+  await page.keyboard.press("Home");
+  await expect(page).not.toHaveURL(/metric=/);
+
+  await tab(page, "Calificación").click();
+  await expect(page.getByText("Próximos 14 días")).toHaveCount(0);
+  await page.reload();
+  await expect(tab(page, "Calificación")).toHaveAttribute("aria-selected", "true");
+});
+
+test("filters from the header and from the breakdown", async ({ page }) => {
   await openMetrics(page);
   await page.getByRole("group", { name: "Período" }).getByRole("button", { name: "7 días" }).click();
   await expect(page).toHaveURL(/period=7/);
-  await expect(page.getByText("Del 1 oct al 7 oct")).toBeVisible();
-  await expect(page.getByText("Comparado con la semana anterior")).toBeVisible();
+  await expect(page.getByText("1 oct al 7 oct")).toBeVisible();
 
-  await page.getByRole("group", { name: "Canal" }).getByRole("button", { name: "WhatsApp" }).click();
+  const whatsapp = breakdown(page).getByRole("button", { name: "WhatsApp" });
+  await whatsapp.click();
   await expect(page).toHaveURL(/channel=WHATSAPP/);
-  await expect(channelRows(page)).toHaveCount(1);
-  await expect(channelRows(page)).toContainText("WhatsApp");
+  await expect(whatsapp).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("Canal")).toHaveValue("WHATSAPP");
+  await expect(rows(page)).toHaveCount(4);
+  await whatsapp.click();
+  await expect(page).not.toHaveURL(/channel=/);
 
-  await page.getByLabel("Filtrar por categoría").selectOption({ label: "Presupuesto" });
+  await breakdown(page).getByRole("group", { name: "Agrupar por" }).getByRole("button", { name: "Categoría" }).click();
+  await breakdown(page).getByRole("button", { name: "Presupuesto" }).click();
   await expect(page).toHaveURL(/category=/);
-  const categories = page.getByRole("region", { name: "Leads por categoría" }).locator("li");
-  await expect(categories).toHaveCount(1);
-  await expect(categories).toContainText("Presupuesto");
-
-  await page.reload();
-  await expect(page.getByRole("group", { name: "Canal" }).getByRole("button", { name: "WhatsApp" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByLabel("Filtrar por categoría")).toHaveValue(/.+/);
-  await expect(categories).toHaveCount(1);
+  await expect(page.getByLabel("Categoría")).not.toHaveValue("");
+  await page.getByRole("button", { name: "Limpiar" }).click();
+  await expect(page).not.toHaveURL(/category=/);
 });
 
-test("unknown filters fall back to the defaults", async ({ page }) => {
-  await openMetrics(page, "/app/metrics?period=12&channel=FAX");
+test("unknown parameters fall back to the defaults", async ({ page }) => {
+  await openMetrics(page, "/app/metrics?period=12&channel=FAX&metric=nada");
   await expect(page.getByRole("group", { name: "Período" }).getByRole("button", { name: "30 días" })).toHaveAttribute("aria-pressed", "true");
-  await expect(channelRows(page)).toHaveCount(4);
+  await expect(tab(page, "Leads")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Canal")).toHaveValue("ALL");
 });
 
-test("pointing at the charts explains each bar and cell", async ({ page }) => {
+test("the chart and the hours map read under the pointer and the keyboard", async ({ page }) => {
   await openMetrics(page);
-  const chart = page.getByRole("img", { name: /Leads por día y por canal/ });
-  const readout = page.locator(".trend-readout");
+  await expect(readout(page)).toContainText("martes, 6 de octubre");
+  const chart = page.getByRole("img", { name: /Leads por día/ });
   await chart.scrollIntoViewIfNeeded();
   const box = await chart.boundingBox();
   if (!box) throw new Error("chart not rendered");
   await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.5);
-  await expect(readout).not.toContainText("hasta ahora");
-  await expect(readout).toContainText("Período anterior");
-  await page.mouse.move(box.x + box.width - 4, box.y + box.height * 0.5);
-  await expect(readout).toContainText("estimación");
+  await expect(readout(page)).not.toContainText("6 de octubre");
+  await expect(readout(page)).toContainText("Anterior");
 
-  const heatmap = page.locator(".heatmap-readout");
-  await expect(heatmap).toContainText("Pico");
-  await page.locator(".heatmap-cell").nth(24 + 20).hover();
-  await expect(heatmap).toContainText("Martes de 20 a 21 h");
-});
-
-test("the trend chart can be read with the keyboard", async ({ page }) => {
-  await openMetrics(page);
-  const chart = page.getByRole("img", { name: /Leads por día y por canal/ });
-  const readout = page.locator(".trend-readout");
-  await expect(readout).toContainText("miércoles, 7 de octubre · hasta ahora");
   await chart.focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect(readout).toContainText("martes, 6 de octubre");
-  await expect(readout).toContainText("Período anterior");
   await page.keyboard.press("End");
-  await expect(readout).toContainText("estimación");
+  await expect(readout(page)).toContainText("estimado");
+  await expect(readout(page)).toContainText("Entre");
+
+  const hours = page.locator(".hours-readout");
+  await expect(hours).toContainText("Pico");
+  await page.locator(".hours-cell").nth(24 + 20).hover();
+  await expect(hours).toContainText("Martes 20 h");
 });
 
-test("the assumptions change the estimates", async ({ page }) => {
+test("the assumptions change the revenue", async ({ page }) => {
   await openMetrics(page);
+  const before = await tab(page, "Ingresos").locator(".performance-tab-value").innerText();
   await page.getByRole("button", { name: "Supuestos" }).click();
   const dialog = page.getByRole("dialog", { name: "Supuestos de las estimaciones" });
   await dialog.getByLabel(/Ticket promedio/).fill("100000");
@@ -117,19 +121,19 @@ test("the assumptions change the estimates", async ({ page }) => {
   await screenshot(page, "metrics-settings");
   await dialog.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Guardamos los supuestos" })).toBeVisible();
-  await expect(kpi(page, "Ingresos estimados")).toContainText("Con un ticket de $ 100.000");
-  await expect(page.getByText("Con 6 min por respuesta.")).toBeVisible();
+  await expect(tab(page, "Ingresos").locator(".performance-tab-value")).not.toHaveText(before);
 
   await page.getByRole("button", { name: "Supuestos" }).click();
   await dialog.getByLabel(/Ticket promedio/).fill("");
   await dialog.getByRole("button", { name: "Guardar" }).click();
-  await expect(kpi(page, "Ingresos estimados")).toContainText("Cargá tu ticket promedio");
-  await expect(page.getByRole("region", { name: "Tabla de rendimiento por canal" })).not.toContainText("Ingresos estimados");
+  await tab(page, "Ingresos").click();
+  await expect(tab(page, "Ingresos").locator(".performance-tab-value")).toHaveText("—");
+  await expect(page.getByRole("button", { name: "Cargar ticket" })).toBeVisible();
 });
 
-test("insights link to the leads behind them", async ({ page }) => {
+test("signals link to the leads behind them", async ({ page }) => {
   await openMetrics(page);
-  const link = page.getByRole("region", { name: "Lo que tenés que saber" }).getByRole("link").first();
+  const link = page.getByRole("region", { name: "Señales" }).getByRole("link").first();
   const href = await link.getAttribute("href");
   await link.click();
   await expect(page).toHaveURL(new RegExp(`${(href ?? "").replace(/[?]/g, "\\?")}$`));
