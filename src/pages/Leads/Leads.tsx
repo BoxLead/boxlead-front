@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import type { CategoryResponse, LeadResponse, LeadStatus, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
-import { ChevronDownIcon, SearchIcon, UsersIcon } from "../../components/icons/UiIcons";
+import { SearchIcon, UsersIcon } from "../../components/icons/UiIcons";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
@@ -113,6 +113,7 @@ export function Leads() {
           <label className="leads-category-filter">
             <span className="visually-hidden">Filtrar por categoría</span>
             <select
+              className="select"
               value={filters.category ?? ""}
               onChange={(event) => setParam("category", event.target.value || null)}
             >
@@ -124,7 +125,6 @@ export function Leads() {
               ))}
               <option value={UNCATEGORIZED}>Sin categoría</option>
             </select>
-            <ChevronDownIcon width={14} height={14} />
           </label>
         ) : null}
         {buyers > 0 ? (

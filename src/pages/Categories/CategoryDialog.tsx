@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/client";
 import type { CategoryColor, CategoryResponse } from "../../api/types";
 import { CharCounter } from "../../components/ui/CharCounter";
+import { Dialog } from "../../components/ui/Dialog";
 import { createCategory, updateCategory } from "../../data/categories";
 import {
   CATEGORY_DESCRIPTION_MAX,
@@ -19,8 +20,6 @@ type CategoryDialogProps = {
 };
 
 export function CategoryDialog({ open, category, defaultColor, onClose, onSaved }: CategoryDialogProps) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
   const nameCounterId = useId();
   const descriptionCounterId = useId();
   const [name, setName] = useState(category?.name ?? "");
@@ -28,13 +27,6 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
   const [color, setColor] = useState<CategoryColor>(category?.color ?? defaultColor);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal?.();
-    if (!open && dialog.open) dialog.close?.();
-  }, [open]);
 
   const trimmed = name.trim();
   const invalid =
@@ -56,64 +48,56 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
   }
 
   return (
-    <dialog
-      ref={ref}
-      className="category-dialog"
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!saving) onClose();
-      }}
+    <Dialog
+      open={open}
+      title={category ? "Editar categoría" : "Nueva categoría"}
+      busy={saving}
+      onClose={onClose}
     >
-      {open ? (
-        <form className="category-dialog-body" onSubmit={(event) => void submit(event)} noValidate>
-          <h2 id={titleId} className="category-dialog-title">
-            {category ? "Editar categoría" : "Nueva categoría"}
-          </h2>
-          {error ? (
-            <p className="category-dialog-error" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <label className="category-field">
-            <span className="category-field-label">Nombre</span>
-            <input
-              className="category-input"
-              name="name"
-              value={name}
-              autoComplete="off"
-              required
-              aria-invalid={name.length > CATEGORY_NAME_MAX || undefined}
-              aria-describedby={nameCounterId}
-              onChange={(event) => setName(event.target.value)}
-            />
-            <CharCounter id={nameCounterId} length={name.length} max={CATEGORY_NAME_MAX} />
-          </label>
-          <label className="category-field">
-            <span className="category-field-label">Descripción</span>
-            <textarea
-              className="category-input category-textarea"
-              name="description"
-              rows={3}
-              value={description}
-              placeholder="Qué tipo de leads entran en esta categoría"
-              aria-invalid={description.length > CATEGORY_DESCRIPTION_MAX || undefined}
-              aria-describedby={descriptionCounterId}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-            <CharCounter id={descriptionCounterId} length={description.length} max={CATEGORY_DESCRIPTION_MAX} />
-          </label>
-          <ColorPicker value={color} onChange={setColor} />
-          <div className="category-dialog-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={invalid || saving}>
-              {saving ? "Guardando…" : category ? "Guardar cambios" : "Crear categoría"}
-            </button>
-          </div>
-        </form>
-      ) : null}
-    </dialog>
+      <form className="dialog-form" onSubmit={(event) => void submit(event)} noValidate>
+        {error ? (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <label className="field">
+          <span className="field-label">Nombre</span>
+          <input
+            className="input"
+            name="name"
+            value={name}
+            autoComplete="off"
+            required
+            aria-invalid={name.length > CATEGORY_NAME_MAX || undefined}
+            aria-describedby={nameCounterId}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <CharCounter id={nameCounterId} length={name.length} max={CATEGORY_NAME_MAX} />
+        </label>
+        <label className="field">
+          <span className="field-label">Descripción</span>
+          <textarea
+            className="input category-textarea"
+            name="description"
+            rows={3}
+            value={description}
+            placeholder="Qué tipo de leads entran en esta categoría"
+            aria-invalid={description.length > CATEGORY_DESCRIPTION_MAX || undefined}
+            aria-describedby={descriptionCounterId}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+          <CharCounter id={descriptionCounterId} length={description.length} max={CATEGORY_DESCRIPTION_MAX} />
+        </label>
+        <ColorPicker value={color} onChange={setColor} />
+        <div className="dialog-actions">
+          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={invalid || saving}>
+            {saving ? "Guardando…" : category ? "Guardar cambios" : "Crear categoría"}
+          </button>
+        </div>
+      </form>
+    </Dialog>
   );
 }

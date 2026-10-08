@@ -8,6 +8,7 @@ import {
   isStale,
   setQueryData,
   setQueryFetcher,
+  setQueryResolver,
   STALE_MS,
   subscribe,
 } from "./queryCache";
@@ -81,5 +82,17 @@ describe("query cache", () => {
     expect(listener).toHaveBeenCalled();
     expect(getQueryState("/x").data).toEqual(["nuevo"]);
     unsubscribe();
+  });
+
+  it("answers keys under a prefix with a local resolver instead of the API", async () => {
+    const resolver = vi.fn((key: string) => Promise.resolve({ key }));
+    setQueryResolver("/metrics", resolver);
+    fetcher.mockResolvedValue("api");
+    await Promise.all([fetchQuery("/metrics?from=a"), fetchQuery("/metrics/settings"), fetchQuery("/metricsx")]);
+    setQueryResolver("/metrics", null);
+    await fetchQuery("/metrics");
+    expect(resolver.mock.calls.map(([key]) => key)).toEqual(["/metrics?from=a", "/metrics/settings"]);
+    expect(getQueryState("/metrics?from=a").data).toEqual({ key: "/metrics?from=a" });
+    expect(fetcher.mock.calls.map(([key]) => key)).toEqual(["/metricsx", "/metrics"]);
   });
 });

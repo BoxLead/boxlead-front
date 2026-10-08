@@ -252,3 +252,24 @@ export function TagIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function ChartIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 20h16" />
+      <path d="M7 16v-5" />
+      <path d="M12 16V6" />
+      <path d="M17 16v-8" />
+    </Icon>
+  );
+}
+
+export function PrintIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M7 9V4h10v5" />
+      <rect x="4" y="9" width="16" height="7" rx="1.5" />
+      <path d="M7 14h10v6H7z" />
+    </Icon>
+  );
+}

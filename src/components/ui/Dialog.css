@@ -1,0 +1,92 @@
+.dialog {
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-lg);
+  background: var(--signal-surface);
+  color: var(--signal-text);
+  box-shadow: var(--signal-shadow);
+}
+
+.dialog-sm {
+  width: min(440px, calc(100vw - 32px));
+}
+
+.dialog-md {
+  width: min(480px, calc(100vw - 32px));
+}
+
+.dialog::backdrop {
+  background: var(--signal-backdrop);
+}
+
+.dialog[open] {
+  animation: dialog-in 0.22s var(--signal-ease);
+}
+
+.dialog[open]::backdrop {
+  animation: dialog-backdrop-in 0.22s ease;
+}
+
+.dialog-body {
+  display: grid;
+  gap: var(--signal-space-md);
+  padding: var(--signal-space-lg);
+}
+
+.dialog-head {
+  display: grid;
+  gap: 6px;
+}
+
+.dialog-title {
+  font-size: 1.125rem;
+}
+
+.dialog-description {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.dialog-form {
+  display: grid;
+  gap: 18px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--signal-space-sm);
+  margin-top: var(--signal-space-sm);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes dialog-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .dialog-body {
+    padding: var(--signal-space-md);
+  }
+
+  .dialog-actions .btn {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open],
+  .dialog[open]::backdrop {
+    animation: none;
+  }
+}

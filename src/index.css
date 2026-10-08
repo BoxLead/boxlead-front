@@ -6,6 +6,10 @@
   --signal-surface: #112233;
   --signal-surface-elevated: #172d43;
   --signal-border: rgba(234, 234, 220, 0.12);
+  --signal-border-strong: rgba(234, 234, 220, 0.24);
+  --signal-hairline: rgba(234, 234, 220, 0.07);
+  --signal-hover: rgba(234, 234, 220, 0.03);
+  --signal-backdrop: rgba(2, 8, 15, 0.7);
   --signal-text: #b7c4d0;
   --signal-text-muted: #7c8c9b;
   --signal-heading: #f1f1e6;
@@ -230,6 +234,115 @@ button {
   color: var(--signal-text-muted);
 }
 
+.btn-icon {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-color: var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: transparent;
+  color: var(--signal-text);
+}
+
+.btn-icon:hover:not(:disabled) {
+  border-color: var(--signal-border-strong);
+  color: var(--signal-heading);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field-label {
+  padding: 0;
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.field-help {
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--signal-danger);
+  font-size: 0.8125rem;
+}
+
+.form-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--signal-danger) 30%, transparent);
+  border-radius: var(--signal-radius-sm);
+  background: var(--signal-danger-muted);
+  color: var(--signal-danger);
+  font-size: 0.875rem;
+}
+
+.input,
+.select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-sm);
+  background-color: var(--signal-bg-subtle);
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input {
+  padding-block: 10px;
+  font-size: 0.9375rem;
+}
+
+.input::placeholder {
+  color: var(--signal-text-muted);
+}
+
+.select {
+  padding-right: 32px;
+  overflow: hidden;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c8c9b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--signal-border-strong);
+}
+
+.select option {
+  background: var(--signal-surface);
+  color: var(--signal-heading);
+}
+
+.input:focus,
+.select:focus-visible {
+  border-color: var(--signal-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--signal-accent-muted);
+}
+
+.input[aria-invalid="true"],
+.select[aria-invalid="true"] {
+  border-color: var(--signal-danger);
+}
+
 .page {
   width: 100%;
   max-width: 1120px;
@@ -368,7 +481,32 @@ button {
     animation-duration: 2.4s;
   }
 
-  .btn {
+  .btn,
+  .input,
+  .select {
     transition: none;
+  }
+}
+
+@media print {
+  :root {
+    --signal-bg: #ffffff;
+    --signal-bg-subtle: #f4f6f8;
+    --signal-surface: #ffffff;
+    --signal-surface-elevated: #eef2f5;
+    --signal-border: #dde3e8;
+    --signal-border-strong: #b7c2cc;
+    --signal-hairline: #e3e8ec;
+    --signal-hover: transparent;
+    --signal-text: #33424f;
+    --signal-text-muted: #5b6b78;
+    --signal-heading: #0f2236;
+    --signal-accent: #2f6fae;
+    --signal-accent-muted: rgba(47, 111, 174, 0.12);
+    --signal-success: #1d8a5b;
+    --signal-danger: #b23b3b;
+    --signal-warning: #a86a00;
+    background: var(--signal-bg);
+    color-scheme: light;
   }
 }

@@ -91,85 +91,6 @@
   gap: 8px;
 }
 
-.category-dialog {
-  width: min(480px, calc(100vw - 32px));
-  padding: 0;
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-lg);
-  background: var(--signal-surface);
-  color: var(--signal-text);
-  box-shadow: var(--signal-shadow);
-}
-
-.category-dialog::backdrop {
-  background: rgba(2, 8, 15, 0.7);
-}
-
-.category-dialog[open] {
-  animation: category-dialog-in 0.2s var(--signal-ease);
-}
-
-.category-dialog-body {
-  display: grid;
-  gap: var(--signal-space-md);
-  padding: var(--signal-space-lg);
-}
-
-.category-dialog-title {
-  font-size: 1.125rem;
-}
-
-.category-dialog-error {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(240, 138, 138, 0.3);
-  border-radius: var(--signal-radius-sm);
-  background: var(--signal-danger-muted);
-  color: var(--signal-danger);
-  font-size: 0.875rem;
-}
-
-.category-field {
-  display: grid;
-  gap: 6px;
-}
-
-.category-field .char-counter {
-  justify-self: end;
-}
-
-.category-field-label {
-  padding: 0;
-  color: var(--signal-heading);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.category-input {
-  width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-sm);
-  background: var(--signal-bg-subtle);
-  color: var(--signal-heading);
-  font-size: 0.9375rem;
-}
-
-.category-input:focus {
-  border-color: var(--signal-accent);
-  outline: none;
-  box-shadow: 0 0 0 3px var(--signal-accent-muted);
-}
-
-.category-input[aria-invalid="true"] {
-  border-color: var(--signal-danger);
-}
-
-.category-input::placeholder {
-  color: var(--signal-text-muted);
-}
-
 .category-textarea {
   min-height: 84px;
   resize: vertical;
@@ -181,7 +102,7 @@
   border: none;
 }
 
-.color-picker .category-field-label {
+.color-picker .field-label {
   margin-bottom: 8px;
 }
 
@@ -224,35 +145,7 @@
   outline-offset: 2px;
 }
 
-.category-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: var(--signal-space-sm);
-}
-
-@keyframes category-dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.98);
-  }
-}
-
-@media (max-width: 480px) {
-  .category-dialog-body {
-    padding: var(--signal-space-md);
-  }
-
-  .category-dialog-actions .btn {
-    flex: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .category-dialog[open] {
-    animation: none;
-  }
-
   .color-picker-swatch {
     transition: none;
   }

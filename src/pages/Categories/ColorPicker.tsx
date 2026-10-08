@@ -9,7 +9,7 @@ type ColorPickerProps = {
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
   return (
     <fieldset className="color-picker">
-      <legend className="category-field-label">Color</legend>
+      <legend className="field-label">Color</legend>
       <div className="color-picker-options">
         {CATEGORY_COLORS.map((color) => (
           <label key={color} className={`color-picker-option ${colorClass(color)}`} title={colorLabel(color)}>

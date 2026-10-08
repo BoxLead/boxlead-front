@@ -180,3 +180,60 @@ export type UpdateCategoryRequest = {
   description?: string;
   color?: CategoryColor;
 };
+
+export type HandoffReason = "ASKED_FOR_HUMAN" | "AGENT_UNSURE" | "TAKEN_OVER";
+
+export type MetricsDay = {
+  date: string;
+  leads: number;
+  qualified: number;
+  agentReplies: number;
+  responseBuckets: number[];
+  unanswered: number;
+};
+
+export type FirstResponseMetrics = {
+  agent: number[];
+  human: number[];
+  converted: number[];
+  unanswered: number;
+};
+
+export type OutsideHoursMetrics = {
+  conversations: number;
+  answeredUnder5m: number;
+};
+
+export type AgentMetrics = {
+  resolved: number;
+  handoffs: Record<HandoffReason, number>;
+};
+
+export type MetricsSegment = {
+  platform: PlatformType;
+  categoryId: string | null;
+  days: MetricsDay[];
+  leadStatuses: Record<LeadStatus, number>;
+  firstResponse: FirstResponseMetrics;
+  inboundByHour: number[];
+  outsideHours: OutsideHoursMetrics | null;
+  agent: AgentMetrics | null;
+};
+
+export type MetricsReport = {
+  from: string;
+  to: string;
+  timezone: string;
+  segments: MetricsSegment[];
+};
+
+export type BusinessHours = {
+  weekdays: number[];
+  from: number;
+  to: number;
+};
+
+export type MetricsSettings = {
+  manualReplyMinutes: number;
+  businessHours: BusinessHours | null;
+};

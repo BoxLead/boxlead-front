@@ -1,0 +1,197 @@
+.funnel-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.funnel-chart-readout {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--signal-text);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel-chart-stages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.funnel-chart-stage {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: var(--signal-radius-sm);
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.25s ease;
+}
+
+.funnel-chart-stage:hover,
+.funnel-chart-stage-active {
+  background: var(--signal-hover);
+}
+
+.funnel-chart-label {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
+
+.funnel-chart-value {
+  color: var(--signal-heading);
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel-chart-share {
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel-chart-canvas {
+  width: 100%;
+  min-width: 0;
+}
+
+.funnel-chart-svg {
+  display: block;
+  overflow: visible;
+}
+
+.funnel-chart-bar,
+.funnel-chart-ghost,
+.funnel-chart-band,
+.funnel-chart-flow {
+  transition:
+    opacity 0.25s ease,
+    y 0.5s var(--signal-ease),
+    height 0.5s var(--signal-ease),
+    d 0.5s var(--signal-ease);
+}
+
+.funnel-chart-bar {
+  fill: var(--signal-accent);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: funnel-chart-grow 0.7s var(--signal-ease) both;
+}
+
+.funnel-chart-shapes > :nth-child(n + 2) .funnel-chart-bar {
+  animation-delay: 90ms;
+}
+
+.funnel-chart-shapes > :nth-child(n + 3) .funnel-chart-bar {
+  animation-delay: 180ms;
+}
+
+.funnel-chart-ghost {
+  fill: none;
+  stroke: var(--signal-border-strong);
+  stroke-dasharray: 3 3;
+}
+
+.funnel-chart-band {
+  fill: color-mix(in srgb, var(--signal-accent) 16%, transparent);
+  animation: funnel-chart-fade 0.6s ease 0.35s both;
+}
+
+.funnel-chart-rate {
+  fill: var(--signal-heading);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  animation: funnel-chart-fade 0.6s ease 0.45s both;
+}
+
+.funnel-chart-flow-active .funnel-chart-band {
+  fill: color-mix(in srgb, var(--signal-accent) 30%, transparent);
+}
+
+.funnel-chart-focused .funnel-chart-stage:not(.funnel-chart-stage-active) {
+  opacity: 0.45;
+}
+
+.funnel-chart-focused .funnel-chart-bar:not(.funnel-chart-bar-active),
+.funnel-chart-focused .funnel-chart-flow:not(.funnel-chart-flow-active) {
+  opacity: 0.35;
+}
+
+.funnel-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}
+
+.funnel-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.funnel-chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--signal-accent);
+}
+
+.funnel-chart-swatch-previous {
+  border: 1px dashed var(--signal-border-strong);
+  background: transparent;
+}
+
+@keyframes funnel-chart-grow {
+  from {
+    transform: scaleY(0.05);
+    opacity: 0;
+  }
+}
+
+@keyframes funnel-chart-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .funnel-chart-value {
+    font-size: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .funnel-chart-bar,
+  .funnel-chart-band,
+  .funnel-chart-rate {
+    animation: none;
+  }
+
+  .funnel-chart-stage,
+  .funnel-chart-bar,
+  .funnel-chart-ghost,
+  .funnel-chart-band,
+  .funnel-chart-flow {
+    transition: none;
+  }
+}
+
+@media print {
+  .funnel-chart-bar,
+  .funnel-chart-band,
+  .funnel-chart-rate {
+    animation: none;
+  }
+}

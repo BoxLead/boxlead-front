@@ -1,0 +1,49 @@
+.attention-headline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.attention-big {
+  display: block;
+  color: var(--signal-heading);
+  font-size: 1.625rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.attention-caption {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
+
+.attention-rows {
+  display: grid;
+  margin: 0;
+}
+
+.attention-rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--signal-border);
+  font-size: 0.875rem;
+}
+
+.attention-rows div:last-child {
+  padding-bottom: 0;
+}
+
+.attention-rows dt {
+  color: var(--signal-text);
+}
+
+.attention-rows dd {
+  margin: 0;
+  color: var(--signal-heading);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
