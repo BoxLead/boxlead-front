@@ -1,9 +1,9 @@
 import { useId } from "react";
-import { formatDuration, formatNumber, formatPercent, formatShortDate } from "../../util/format";
+import { formatShortDate } from "../../util/format";
 import { buildChartData } from "./chartData";
 import { MetricChart } from "./charts/MetricChart";
 import { MetricTabs } from "./MetricTabs";
-import type { MetricsView } from "./metricsView";
+import { FORECAST_DAYS, type MetricsView } from "./metricsView";
 import { formatMetric, type MetricDefinition, type MetricKey } from "./series";
 import "./Performance.css";
 
@@ -17,12 +17,6 @@ function readout(definition: MetricDefinition, value: number): string {
   const text = formatMetric(definition, value);
   if (definition.kind !== "count") return text;
   return `${text} ${Math.round(value) === 1 ? "lead" : "leads"}`;
-}
-
-function axisLabel(definition: MetricDefinition, value: number): string {
-  if (definition.kind === "rate") return formatPercent(value);
-  if (definition.kind === "duration") return formatDuration(value);
-  return formatNumber(value);
 }
 
 export function Performance({ view, metric, onMetricChange }: PerformanceProps) {
@@ -46,7 +40,7 @@ export function Performance({ view, metric, onMetricChange }: PerformanceProps) 
           estimates={chart.estimates}
           partialLast={chart.partialLast}
           format={(value) => readout(definition, value)}
-          formatAxis={(value) => axisLabel(definition, value)}
+          formatAxis={(value) => formatMetric(definition, value)}
           summary={`${definition.label} por ${chart.weekly ? "semana" : "día"} del ${formatShortDate(view.from)} al ${formatShortDate(view.to)}, comparado con el período anterior.`}
         />
         <ul className="performance-legend" aria-label="Referencias">
@@ -61,7 +55,7 @@ export function Performance({ view, metric, onMetricChange }: PerformanceProps) 
           {chart.forecastTotal !== null ? (
             <li>
               <span className="performance-swatch performance-swatch-estimate" aria-hidden="true" />
-              Próximos 14 días
+              Próximos {FORECAST_DAYS} días
               <strong>≈ {readout(definition, chart.forecastTotal)}</strong>
             </li>
           ) : null}

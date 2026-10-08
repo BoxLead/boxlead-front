@@ -63,7 +63,6 @@ export function MetricTabs({ panelId, selected, current, previous, onSelect }: M
           </button>
         );
       })}
-      <span className={`metric-tabs-indicator metric-tabs-indicator-${selectedIndex}`} aria-hidden="true" />
     </div>
   );
 }

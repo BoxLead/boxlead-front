@@ -20,6 +20,7 @@ export function MetricChart({ drawKey, points, estimates, format, formatAxis, su
   const gradientId = `metric-fill-${useId().replace(/:/g, "")}`;
   const readoutId = useId();
   const [active, setActive] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState("");
   const height = width < 560 ? 220 : 300;
   const chart = layoutChart({ points, estimates, width, height, partialLast });
   const current = Math.min(active ?? chart.defaultIndex, chart.total - 1);
@@ -32,16 +33,30 @@ export function MetricChart({ drawKey, points, estimates, format, formatAxis, su
     setActive(chart.indexAt(event.clientX - event.currentTarget.getBoundingClientRect().left));
   }
 
+  function describe(index: number): string {
+    const item = index < points.length ? points[index] : null;
+    const guess = item ? null : estimates[index - points.length];
+    const amount = item ? item.value : (guess?.value ?? null);
+    const text = amount === null ? "sin datos" : `${guess ? "aproximadamente " : ""}${format(amount)}`;
+    const previous = item?.previous != null ? `, anterior ${format(item.previous)}` : "";
+    return `${item?.title ?? guess?.title}: ${text}${previous}`;
+  }
+
   function onKeyDown(event: KeyboardEvent<SVGSVGElement>) {
     const moves: Record<string, number> = { ArrowRight: current + 1, ArrowLeft: current - 1, Home: 0, End: chart.total - 1 };
     if (!(event.key in moves)) return;
     event.preventDefault();
-    setActive(Math.min(chart.total - 1, Math.max(0, moves[event.key])));
+    const next = Math.min(chart.total - 1, Math.max(0, moves[event.key]));
+    setActive(next);
+    setAnnouncement(describe(next));
   }
 
   return (
     <div className="metric-chart">
-      <div className="metric-chart-readout" id={readoutId} aria-live="polite">
+      <span className="visually-hidden" aria-live="polite">
+        {announcement}
+      </span>
+      <div className="metric-chart-readout" id={readoutId}>
         <span className="metric-chart-when">{point?.title ?? estimate?.title}</span>
         <span className="metric-chart-value">
           {value === null ? "—" : `${estimate ? "≈ " : ""}${format(value)}`}
@@ -59,8 +74,9 @@ export function MetricChart({ drawKey, points, estimates, format, formatAxis, su
         <svg
           width={width}
           height={height}
-          role="img"
-          aria-label={summary}
+          role="group"
+          aria-roledescription="gráfico"
+          aria-label={`${summary} Usá las flechas para recorrerlo.`}
           aria-describedby={readoutId}
           tabIndex={0}
           className={`metric-chart-svg${active === null ? "" : " metric-chart-svg-active"}`}

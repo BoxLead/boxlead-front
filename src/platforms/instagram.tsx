@@ -66,6 +66,5 @@ export const instagram: PlatformDefinition = {
   contextStatus: () => null,
   externalIdIsContact: false,
   canStartConversation: true,
-  colorClass: "platform-color-instagram",
   logo: (size) => <InstagramIcon width={size} height={size} aria-hidden="true" />,
 };

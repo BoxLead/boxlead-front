@@ -44,6 +44,5 @@ export const whatsapp: PlatformDefinition = {
   contextStatus: () => null,
   externalIdIsContact: true,
   canStartConversation: true,
-  colorClass: "platform-color-whatsapp",
   logo: (size) => <WhatsAppIcon width={size} height={size} aria-hidden="true" />,
 };

@@ -36,7 +36,6 @@
   --platform-whatsapp: #25d366;
   --platform-instagram: #e1306c;
   --platform-messenger: #0a7cff;
-  --platform-other: #a7b4c0;
   --signal-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --signal-radius-sm: 8px;
   --signal-radius-md: 12px;
@@ -280,7 +279,7 @@ button {
 .form-error {
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid rgba(240, 138, 138, 0.3);
+  border: 1px solid color-mix(in srgb, var(--signal-danger) 30%, transparent);
   border-radius: var(--signal-radius-sm);
   background: var(--signal-danger-muted);
   color: var(--signal-danger);
@@ -406,26 +405,6 @@ button {
   --category-color: var(--category-gray);
 }
 
-.platform-color-meli {
-  --platform-color: var(--platform-meli);
-}
-
-.platform-color-whatsapp {
-  --platform-color: var(--platform-whatsapp);
-}
-
-.platform-color-instagram {
-  --platform-color: var(--platform-instagram);
-}
-
-.platform-color-messenger {
-  --platform-color: #3b95ff;
-}
-
-.platform-color-other {
-  --platform-color: var(--platform-other);
-}
-
 .skeleton {
   border-radius: var(--signal-radius-sm);
   background: linear-gradient(
@@ -511,7 +490,23 @@ button {
 
 @media print {
   :root {
-    background: #ffffff;
+    --signal-bg: #ffffff;
+    --signal-bg-subtle: #f4f6f8;
+    --signal-surface: #ffffff;
+    --signal-surface-elevated: #eef2f5;
+    --signal-border: #dde3e8;
+    --signal-border-strong: #b7c2cc;
+    --signal-hairline: #e3e8ec;
+    --signal-hover: transparent;
+    --signal-text: #33424f;
+    --signal-text-muted: #5b6b78;
+    --signal-heading: #0f2236;
+    --signal-accent: #2f6fae;
+    --signal-accent-muted: rgba(47, 111, 174, 0.12);
+    --signal-success: #1d8a5b;
+    --signal-danger: #b23b3b;
+    --signal-warning: #a86a00;
+    background: var(--signal-bg);
     color-scheme: light;
   }
 }

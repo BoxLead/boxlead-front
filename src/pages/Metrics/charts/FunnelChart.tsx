@@ -2,10 +2,13 @@ import { useState } from "react";
 import { AnimatedNumber } from "../../../components/ui/AnimatedNumber";
 import { cx } from "../../../util/classNames";
 import { formatNumber, formatPercent } from "../../../util/format";
-import type { FunnelStep } from "../breakdown";
+import type { FunnelStep } from "../funnel";
 import { layoutFunnel } from "./funnelLayout";
 import { useElementWidth } from "./useElementWidth";
 import "./FunnelChart.css";
+
+const RADIUS = 6;
+const GHOST_MARGIN = 5;
 
 type FunnelChartProps = {
   steps: FunnelStep[];
@@ -26,6 +29,7 @@ function describe(steps: FunnelStep[], index: number | null): string {
 export function FunnelChart({ steps }: FunnelChartProps) {
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState("");
   const height = width < 520 ? 130 : 160;
   const layout = layoutFunnel(
     steps.map((step) => step.value),
@@ -36,9 +40,10 @@ export function FunnelChart({ steps }: FunnelChartProps) {
 
   return (
     <div className={cx("funnel-chart", active !== null && "funnel-chart-focused")} onPointerLeave={() => setActive(null)}>
-      <p className="funnel-chart-readout" aria-live="polite">
-        {describe(steps, active)}
-      </p>
+      <p className="funnel-chart-readout">{describe(steps, active)}</p>
+      <span className="visually-hidden" aria-live="polite">
+        {announcement}
+      </span>
       <div className="funnel-chart-stages">
         {steps.map((step, index) => (
           <button
@@ -46,7 +51,10 @@ export function FunnelChart({ steps }: FunnelChartProps) {
             type="button"
             className={cx("funnel-chart-stage", active === index && "funnel-chart-stage-active")}
             onPointerEnter={() => setActive(index)}
-            onFocus={() => setActive(index)}
+            onFocus={() => {
+              setActive(index);
+              setAnnouncement(`${step.label}, ${formatNumber(step.value)}. ${describe(steps, index)}`);
+            }}
             onBlur={() => setActive(null)}
             onClick={() => setActive(index)}
           >
@@ -70,29 +78,31 @@ export function FunnelChart({ steps }: FunnelChartProps) {
               </text>
             </g>
           ))}
-          {layout.ghosts.map((ghost, index) => (
-            <rect
-              key={`ghost-${steps[index].key}`}
-              className="funnel-chart-ghost"
-              x={ghost.x - 5}
-              y={ghost.y}
-              width={ghost.width + 10}
-              height={ghost.height}
-              rx={6}
-            />
-          ))}
-          {layout.bars.map((bar, index) => (
-            <rect
-              key={steps[index].key}
-              className={cx("funnel-chart-bar", active === index && "funnel-chart-bar-active")}
-              x={bar.x}
-              y={bar.y}
-              width={bar.width}
-              height={bar.height}
-              rx={6}
-              onPointerEnter={() => setActive(index)}
-            />
-          ))}
+          <g className="funnel-chart-shapes">
+            {layout.bars.map((bar, index) => {
+              const ghost = layout.ghosts[index];
+              return (
+                <g key={steps[index].key} className="funnel-chart-shape" onPointerEnter={() => setActive(index)}>
+                  <rect
+                    className="funnel-chart-ghost"
+                    x={ghost.x - GHOST_MARGIN}
+                    y={ghost.y}
+                    width={ghost.width + GHOST_MARGIN * 2}
+                    height={ghost.height}
+                    rx={RADIUS}
+                  />
+                  <rect
+                    className={cx("funnel-chart-bar", active === index && "funnel-chart-bar-active")}
+                    x={bar.x}
+                    y={bar.y}
+                    width={bar.width}
+                    height={bar.height}
+                    rx={RADIUS}
+                  />
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
       <ul className="funnel-chart-legend" aria-hidden="true">

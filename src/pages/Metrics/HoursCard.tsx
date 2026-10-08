@@ -32,7 +32,7 @@ export function HoursCard({ view }: HoursCardProps) {
     <MetricsCard
       title="Cuándo te escriben"
       meta={
-        <span className="hours-readout" aria-live="polite">
+        <span className="hours-readout" aria-hidden="true">
           {readout}
         </span>
       }

@@ -30,7 +30,7 @@ test("shows the period at a glance", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Señales" }).locator("li")).toHaveCount(3);
   await expect(tabs(page)).toHaveText([/^Leads/, /^Respuesta en 5 min/, /^Primera respuesta/, /^Calificación/]);
   await expect(tab(page, "Leads")).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("img", { name: /Leads por día/ })).toBeVisible();
+  await expect(page.getByRole("group", { name: /Leads por día/ })).toBeVisible();
   await expect(page.getByText("Próximos 14 días")).toBeVisible();
   await expect(funnel(page).getByRole("button")).toHaveText([/^Leads/, /^Contactados/, /^Calificados/]);
   await expect(rows(page)).toHaveCount(4);
@@ -44,7 +44,7 @@ test("each indicator drives the chart", async ({ page }) => {
   await openMetrics(page);
   await tab(page, "Primera respuesta").click();
   await expect(page).toHaveURL(/metric=response/);
-  await expect(page.getByRole("img", { name: /Primera respuesta por día/ })).toBeVisible();
+  await expect(page.getByRole("group", { name: /Primera respuesta por día/ })).toBeVisible();
   await expect(breakdown(page).locator("thead th.breakdown-focus")).toHaveText("Respuesta");
   await expect(page.getByText("Próximos 14 días")).toHaveCount(0);
 
@@ -95,7 +95,7 @@ test("unknown parameters fall back to the defaults", async ({ page }) => {
 test("the chart and the hours map read under the pointer and the keyboard", async ({ page }) => {
   await openMetrics(page);
   await expect(readout(page)).toContainText("martes, 6 de octubre");
-  const chart = page.getByRole("img", { name: /Leads por día/ });
+  const chart = page.getByRole("group", { name: /Leads por día/ });
   await chart.scrollIntoViewIfNeeded();
   const box = await chart.boundingBox();
   if (!box) throw new Error("chart not rendered");

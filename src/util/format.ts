@@ -1,3 +1,5 @@
+import { parseIsoDate } from "./dates";
+
 const LOCALE = "es-AR";
 
 const MINUTE = 60_000;
@@ -85,19 +87,6 @@ export function formatSignedPercent(value: number): string {
   return `${sign(rounded)}${Math.abs(rounded).toLocaleString(LOCALE)}%`;
 }
 
-export function formatCompactMoney(amount: number, currency: string): string {
-  try {
-    return new Intl.NumberFormat(LOCALE, {
-      style: "currency",
-      currency,
-      notation: amount >= 1_000_000 ? "compact" : "standard",
-      maximumFractionDigits: amount >= 1_000_000 ? 1 : 0,
-    }).format(amount);
-  } catch {
-    return `${currency} ${formatNumber(amount)}`;
-  }
-}
-
 export function formatDuration(seconds: number | null): string {
   if (seconds === null) return "—";
   if (seconds < 60) return `${Math.max(1, Math.round(seconds))} s`;
@@ -107,11 +96,13 @@ export function formatDuration(seconds: number | null): string {
 }
 
 export function formatShortDate(iso: string): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString(LOCALE, { day: "numeric", month: "short" }).replace(".", "");
+  return parseIsoDate(iso).toLocaleDateString(LOCALE, { day: "numeric", month: "short" }).replace(".", "");
 }
 
 export function formatLongDate(iso: string): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" });
+  return parseIsoDate(iso).toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" });
+}
+
+export function formatFactor(value: number): string {
+  return `${value.toLocaleString(LOCALE, { maximumFractionDigits: 1, minimumFractionDigits: value < 10 ? 1 : 0 })}×`;
 }

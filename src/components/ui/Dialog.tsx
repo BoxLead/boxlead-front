@@ -14,6 +14,7 @@ type DialogProps = {
 
 export function Dialog({ open, title, description, size = "md", busy = false, onClose, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const pressedOutside = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -34,8 +35,11 @@ export function Dialog({ open, title, description, size = "md", busy = false, on
         event.preventDefault();
         if (!busy) onClose();
       }}
+      onPointerDown={(event) => {
+        pressedOutside.current = event.target === event.currentTarget;
+      }}
       onClick={(event) => {
-        if (event.target === event.currentTarget && !busy) onClose();
+        if (event.target === event.currentTarget && pressedOutside.current && !busy) onClose();
       }}
     >
       {open ? (

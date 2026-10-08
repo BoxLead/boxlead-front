@@ -13,20 +13,16 @@
   transition: opacity 0.25s ease;
 }
 
-.metrics-body > :nth-child(2) {
+.metrics-body > :nth-child(n + 2) {
   animation-delay: 60ms;
 }
 
-.metrics-body > :nth-child(3) {
+.metrics-body > :nth-child(n + 3) {
   animation-delay: 120ms;
 }
 
-.metrics-body > :nth-child(4) {
+.metrics-body > :nth-child(n + 4) {
   animation-delay: 180ms;
-}
-
-.metrics-body > :nth-child(5) {
-  animation-delay: 240ms;
 }
 
 .metrics-body-updating > * {
@@ -114,29 +110,17 @@
   .metrics-progress::after {
     animation: none;
   }
+
+  .metrics-body > *,
+  .metrics-progress {
+    transition: none;
+  }
 }
 
 @media print {
   .metrics {
-    --signal-bg: #ffffff;
-    --signal-bg-subtle: #f4f6f8;
-    --signal-surface: #ffffff;
-    --signal-surface-elevated: #eef2f5;
-    --signal-border: #dde3e8;
-    --signal-border-strong: #b7c2cc;
-    --signal-hairline: #e3e8ec;
-    --signal-hover: transparent;
-    --signal-text: #33424f;
-    --signal-text-muted: #5b6b78;
-    --signal-heading: #0f2236;
-    --signal-accent: #2f6fae;
-    --signal-accent-muted: rgba(47, 111, 174, 0.12);
-    --signal-success: #1d8a5b;
-    --signal-danger: #b23b3b;
-    --signal-warning: #a86a00;
     max-width: none;
     padding: 0;
-    color: var(--signal-text);
     animation: none;
   }
 

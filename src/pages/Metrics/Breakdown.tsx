@@ -9,7 +9,7 @@ import { formatDuration, formatNumber, formatPercent } from "../../util/format";
 import type { BreakdownRow } from "./breakdown";
 import { Change } from "./Change";
 import { Meter } from "./charts/Meter";
-import { answeredBuckets, estimateMedianSeconds, percentChange, ratio, type MetricsFilters } from "./metricsModel";
+import { percentChange, ratio, type MetricsFilters } from "./metricsModel";
 import type { MetricsView } from "./metricsView";
 import { MetricsCard } from "./MetricsCard";
 import type { MetricKey } from "./series";
@@ -126,9 +126,7 @@ export function Breakdown({ view, metric, filters, onFiltersChange }: BreakdownP
                   <span className="breakdown-value">{formatPercent(row.qualification)}</span>
                 </td>
                 <td className={cx("breakdown-optional", focus("response"))}>
-                  <span className="breakdown-value">
-                    {formatDuration(estimateMedianSeconds(answeredBuckets(row.totals.firstResponse)))}
-                  </span>
+                  <span className="breakdown-value">{formatDuration(row.medianResponse)}</span>
                 </td>
               </tr>
             );

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "./useMediaQuery";
 
-export const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 export function useAnimatedNumber(target: number, duration = 450): number {
   const reduced = useMediaQuery(REDUCED_MOTION);

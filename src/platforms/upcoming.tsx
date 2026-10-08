@@ -15,7 +15,6 @@ const readOnly = {
   contextStatus: () => null,
   canStartConversation: false,
   externalIdIsContact: false,
-  colorClass: "platform-color-other",
 };
 
 export const tiktok: PlatformDefinition = {

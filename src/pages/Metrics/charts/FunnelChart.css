@@ -84,11 +84,11 @@
   animation: funnel-chart-grow 0.7s var(--signal-ease) both;
 }
 
-.funnel-chart-bar:nth-of-type(2) {
+.funnel-chart-shapes > :nth-child(n + 2) .funnel-chart-bar {
   animation-delay: 90ms;
 }
 
-.funnel-chart-bar:nth-of-type(3) {
+.funnel-chart-shapes > :nth-child(n + 3) .funnel-chart-bar {
   animation-delay: 180ms;
 }
 

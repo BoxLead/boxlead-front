@@ -35,6 +35,10 @@ export function MetricsHeader({
 }: MetricsHeaderProps) {
   const filtered = filters.platform !== "ALL" || filters.category !== null;
   const compact = useMediaQuery("(max-width: 520px)");
+  const { platform, category } = filters;
+  const channelOptions = platform === "ALL" || platforms.includes(platform) ? platforms : [...platforms, platform];
+  const missingCategory =
+    category && category !== UNCATEGORIZED && !categories.some((item) => item.id === category) ? category : null;
   return (
     <header className="m-header">
       <div className="m-header-title">
@@ -92,7 +96,7 @@ export function MetricsHeader({
             onChange={(event) => onFiltersChange({ platform: event.target.value as PlatformType | "ALL" })}
           >
             <option value="ALL">{compact ? "Canales" : "Todos los canales"}</option>
-            {platforms.map((id) => (
+            {channelOptions.map((id) => (
               <option key={id} value={id}>
                 {getPlatform(id).name}
               </option>
@@ -113,6 +117,7 @@ export function MetricsHeader({
               </option>
             ))}
             <option value={UNCATEGORIZED}>Sin categoría</option>
+            {missingCategory ? <option value={missingCategory}>Categoría eliminada</option> : null}
           </select>
         </label>
         {filtered ? (

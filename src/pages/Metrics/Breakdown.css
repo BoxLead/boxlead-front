@@ -60,6 +60,7 @@
   gap: 10px;
   width: fit-content;
   max-width: 100%;
+  overflow-wrap: anywhere;
   padding: 0;
   border: 0;
   background: none;

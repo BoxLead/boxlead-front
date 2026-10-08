@@ -1,6 +1,6 @@
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { formatNumber } from "../../util/format";
-import { funnelSteps } from "./breakdown";
+import { funnelSteps } from "./funnel";
 import { FunnelChart } from "./charts/FunnelChart";
 import { MetricsCard } from "./MetricsCard";
 import type { MetricsView } from "./metricsView";
