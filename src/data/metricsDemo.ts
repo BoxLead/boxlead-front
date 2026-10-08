@@ -30,9 +30,11 @@ type ChannelProfile = {
   weekdays: number[];
   hours: number[];
   agentShare: number;
+  commentShare: number;
 };
 
 type Lead = {
+  conversation: boolean;
   hour: number;
   outside: boolean;
   inbound: number;
@@ -64,11 +66,12 @@ const PROFILES: ChannelProfile[] = [
   {
     platform: "INSTAGRAM",
     leadsPerDay: 9,
-    qualifyRate: 0.26,
+    qualifyRate: 0.4,
     closeRate: 0.34,
     weekdays: [0.85, 1.25, 1.0, 1.05, 0.9, 1.15, 1.1],
     hours: [3, 2, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 5, 5, 6, 7, 8, 11, 13, 13, 10, 6],
     agentShare: 0.76,
+    commentShare: 0.42,
   },
   {
     platform: "WHATSAPP",
@@ -78,15 +81,17 @@ const PROFILES: ChannelProfile[] = [
     weekdays: [1.2, 1.15, 1.05, 1.05, 1.0, 0.6, 0.35],
     hours: [1, 1, 0, 0, 0, 1, 1, 3, 6, 9, 11, 12, 10, 8, 7, 8, 9, 10, 9, 7, 5, 4, 3, 2],
     agentShare: 0.68,
+    commentShare: 0,
   },
   {
     platform: "META",
     leadsPerDay: 2.5,
-    qualifyRate: 0.2,
+    qualifyRate: 0.28,
     closeRate: 0.28,
     weekdays: [1, 1, 1, 1, 1, 0.9, 0.8],
     hours: [2, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 7, 7, 8, 8, 7, 5, 3],
     agentShare: 0.8,
+    commentShare: 0.35,
   },
   {
     platform: "MELI",
@@ -96,6 +101,7 @@ const PROFILES: ChannelProfile[] = [
     weekdays: [0.9, 0.95, 0.95, 1.0, 1.05, 1.2, 1.25],
     hours: [5, 3, 2, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 6, 6, 7, 8, 10, 12, 12, 9],
     agentShare: 0.8,
+    commentShare: 0,
   },
 ];
 
@@ -136,9 +142,27 @@ function firstResponse(roll: Random, context: LeadContext, outside: boolean) {
   return { bucket: pick(speed, roll()), byAgent: false };
 }
 
+function commentOnly(hour: number): Lead {
+  return {
+    conversation: false,
+    hour,
+    outside: false,
+    inbound: 0,
+    conversations: 0,
+    bucket: null,
+    byAgent: false,
+    handoff: null,
+    agentReplies: 0,
+    humanReplies: 0,
+    qualifiedOn: null,
+    status: "NEW",
+  };
+}
+
 function simulateLead(roll: Random, context: LeadContext): Lead {
   const { profile, effects, date, weekday, today, categoryEffect, settings } = context;
   const hour = pick(profile.hours, roll());
+  if (roll() < profile.commentShare) return commentOnly(hour);
   const hours = settings.businessHours;
   const outside = hours ? !isWithinBusinessHours(hours, weekday, hour) : false;
   const inbound = 2 + Math.floor(roll() * 5);
@@ -164,6 +188,7 @@ function simulateLead(roll: Random, context: LeadContext): Lead {
   else if (loses && lostOn <= today) status = "LOST";
 
   return {
+    conversation: true,
     hour,
     outside,
     inbound,
@@ -207,13 +232,14 @@ function emptyDay(date: string): MetricsDay {
 
 function recordLead(segment: MetricsSegment, day: MetricsDay, lead: Lead, weekday: number) {
   day.leads++;
+  segment.leadStatuses[lead.status]++;
+  if (!lead.conversation) return;
   day.conversations += lead.conversations;
   day.inboundMessages += lead.inbound;
   day.agentReplies += lead.agentReplies;
   day.humanReplies += lead.humanReplies;
   segment.inboundByHour[weekday * 24 + lead.hour] += Math.ceil(lead.inbound * 0.7);
   segment.inboundByHour[weekday * 24 + ((lead.hour + 1) % 24)] += Math.floor(lead.inbound * 0.3);
-  segment.leadStatuses[lead.status]++;
 
   const fast = lead.bucket !== null && lead.bucket < FAST_RESPONSE_BUCKETS;
   if (lead.bucket === null) {

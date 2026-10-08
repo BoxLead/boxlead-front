@@ -54,22 +54,29 @@ describe("demo metrics", () => {
     expect(segments.every((segment) => segment.outsideHours === null)).toBe(true);
   });
 
-  it("keeps every lead in exactly one status and one first response bucket", () => {
+  it("gives every lead one status and every conversation one first response", () => {
     for (const segment of report("2026-09-08", "2026-10-07").segments) {
       const leads = segment.days.reduce((total, day) => total + day.leads, 0);
       const statuses = Object.values(segment.leadStatuses).reduce((total, value) => total + value, 0);
-      const responses =
-        segment.firstResponse.agent.reduce((a, b) => a + b, 0) +
-        segment.firstResponse.human.reduce((a, b) => a + b, 0) +
-        segment.firstResponse.unanswered;
+      const answered = [...segment.firstResponse.agent, ...segment.firstResponse.human].reduce((a, b) => a + b, 0);
       const daily = segment.days.reduce(
         (total, day) => total + day.unanswered + day.responseBuckets.reduce((a, b) => a + b, 0),
         0,
       );
       expect(statuses).toBe(leads);
-      expect(responses).toBe(leads);
-      expect(daily).toBe(leads);
+      expect(daily).toBe(answered + segment.firstResponse.unanswered);
+      expect(daily).toBeLessThanOrEqual(leads);
       expect(segment.inboundByHour).toHaveLength(168);
     }
+  });
+
+  it("leaves leads that only commented without a conversation", () => {
+    const segments = report("2026-09-08", "2026-10-07").segments;
+    const instagram = segments.filter((segment) => segment.platform === "INSTAGRAM");
+    const leads = instagram.reduce((total, segment) => total + segment.days.reduce((sum, day) => sum + day.leads, 0), 0);
+    const uncontacted = instagram.reduce((total, segment) => total + segment.leadStatuses.NEW, 0);
+    expect(uncontacted / leads).toBeGreaterThan(0.3);
+    const whatsapp = segments.filter((segment) => segment.platform === "WHATSAPP");
+    expect(whatsapp.reduce((total, segment) => total + segment.leadStatuses.NEW, 0)).toBeLessThan(10);
   });
 });
