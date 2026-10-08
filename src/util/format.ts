@@ -82,10 +82,6 @@ export function formatSignedPercent(value: number): string {
   return `${rounded > 0 ? "+" : ""}${rounded.toLocaleString(LOCALE)}%`;
 }
 
-export function formatTimes(value: number): string {
-  return `${value.toLocaleString(LOCALE, { maximumFractionDigits: 1, minimumFractionDigits: value < 10 ? 1 : 0 })} veces`;
-}
-
 export function formatCompactMoney(amount: number, currency: string): string {
   try {
     return new Intl.NumberFormat(LOCALE, {

@@ -9,7 +9,7 @@ import type {
   OutsideHoursMetrics,
   PlatformType,
 } from "../../api/types";
-import { addDays, dateRange, weekdayIndex } from "../../util/dates";
+import { addDays } from "../../util/dates";
 import { FAST_RESPONSE_BUCKETS, HANDOFF_REASONS, HOURS_PER_WEEK, RESPONSE_BUCKETS } from "../../util/metrics";
 
 export const UNCATEGORIZED = "none";
@@ -41,12 +41,6 @@ export type Rates = {
   fastShare: number | null;
   medianSeconds: number | null;
   answered: number;
-};
-
-export type SeriesPoint = {
-  date: string;
-  total: number;
-  byPlatform: Partial<Record<PlatformType, number>>;
 };
 
 export function matchesFilters(segment: MetricsSegment, filters: MetricsFilters): boolean {
@@ -167,39 +161,6 @@ export function rates(totals: Totals): Rates {
 export function percentChange(current: number, previous: number): number | null {
   if (previous === 0) return null;
   return (current - previous) / previous;
-}
-
-export function dailySeries(segments: MetricsSegment[], from: string, to: string): SeriesPoint[] {
-  const points = new Map<string, SeriesPoint>(
-    dateRange(from, to).map((date) => [date, { date, total: 0, byPlatform: {} }]),
-  );
-  for (const segment of segments) {
-    for (const day of segment.days) {
-      const point = points.get(day.date);
-      if (!point) continue;
-      point.total += day.leads;
-      point.byPlatform[segment.platform] = (point.byPlatform[segment.platform] ?? 0) + day.leads;
-    }
-  }
-  return [...points.values()];
-}
-
-export function weeklySeries(daily: SeriesPoint[]): SeriesPoint[] {
-  const weeks: SeriesPoint[] = [];
-  const offset = daily.length % 7;
-  for (let start = 0; start < daily.length; start += start === 0 && offset ? offset : 7) {
-    const size = start === 0 && offset ? offset : 7;
-    const chunk = daily.slice(start, start + size);
-    const week: SeriesPoint = { date: chunk[0].date, total: 0, byPlatform: {} };
-    for (const day of chunk) {
-      week.total += day.total;
-      for (const [platform, value] of Object.entries(day.byPlatform) as [PlatformType, number][]) {
-        week.byPlatform[platform] = (week.byPlatform[platform] ?? 0) + value;
-      }
-    }
-    weeks.push(week);
-  }
-  return weeks;
 }
 
 export type FunnelStep = {
@@ -348,22 +309,6 @@ export function heatLevels(hourly: number[], levels = 6): number[] {
   return hourly.map((value) => (value === 0 ? 0 : Math.max(1, Math.ceil((value / max) * levels))));
 }
 
-export function busiestWeekday(daily: SeriesPoint[]): { weekday: number; average: number } | null {
-  const sums = Array.from({ length: 7 }, () => ({ total: 0, days: 0 }));
-  for (const point of daily) {
-    const index = weekdayIndex(point.date);
-    sums[index].total += point.total;
-    sums[index].days += 1;
-  }
-  let best: { weekday: number; average: number } | null = null;
-  sums.forEach((entry, weekday) => {
-    if (entry.days === 0) return;
-    const average = entry.total / entry.days;
-    if (!best || average > best.average) best = { weekday, average };
-  });
-  return best;
-}
-
 export function handoffTotal(agent: AgentMetrics | null): number {
   if (!agent) return 0;
   return HANDOFF_REASONS.reduce((sum, reason: HandoffReason) => sum + agent.handoffs[reason], 0);
@@ -373,30 +318,4 @@ export function periodRange(days: number, today: string) {
   const to = today;
   const from = addDays(today, -(days - 1));
   return { from, to, previousFrom: addDays(from, -days), previousTo: addDays(from, -1) };
-}
-
-export type SpeedBand = {
-  label: string;
-  answered: number;
-  converted: number;
-  rate: number | null;
-};
-
-const SPEED_BANDS: { label: string; from: number; to: number }[] = [
-  { label: "Menos de 5 minutos", from: 0, to: FAST_RESPONSE_BUCKETS },
-  { label: "De 5 a 60 minutos", from: FAST_RESPONSE_BUCKETS, to: 4 },
-  { label: "Más de 1 hora", from: 4, to: RESPONSE_BUCKETS.length },
-];
-
-export function speedBands(firstResponse: FirstResponseMetrics): SpeedBand[] {
-  const answered = answeredBuckets(firstResponse);
-  return SPEED_BANDS.map((band) => {
-    let total = 0;
-    let converted = 0;
-    for (let index = band.from; index < band.to; index++) {
-      total += answered[index] ?? 0;
-      converted += firstResponse.converted[index] ?? 0;
-    }
-    return { label: band.label, answered: total, converted, rate: ratio(converted, total) };
-  });
 }

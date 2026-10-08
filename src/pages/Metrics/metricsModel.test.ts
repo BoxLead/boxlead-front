@@ -3,7 +3,6 @@ import type { MetricsReport, MetricsSegment, PlatformType } from "../../api/type
 import {
   categoryBreakdown,
   channelBreakdown,
-  dailySeries,
   estimateMedianSeconds,
   funnelSteps,
   heatLevels,
@@ -11,10 +10,8 @@ import {
   periodRange,
   rates,
   selectSegments,
-  speedBands,
   sumSegments,
   UNCATEGORIZED,
-  weeklySeries,
 } from "./metricsModel";
 
 function segment(platform: PlatformType, categoryId: string | null, leads: number, overrides: Partial<MetricsSegment> = {}): MetricsSegment {
@@ -22,7 +19,7 @@ function segment(platform: PlatformType, categoryId: string | null, leads: numbe
     platform,
     categoryId,
     days: [
-      { date: "2026-10-06", leads, conversations: leads, inboundMessages: leads * 3, agentReplies: leads * 2, humanReplies: 1, qualified: Math.floor(leads / 2), closed: Math.floor(leads / 4) },
+      { date: "2026-10-06", leads, conversations: leads, inboundMessages: leads * 3, agentReplies: leads * 2, humanReplies: 1, qualified: Math.floor(leads / 2), closed: Math.floor(leads / 4), firstResponses: leads, fastResponses: leads - 1 },
     ],
     leadStatuses: { NEW: 1, CONTACTED: leads - 1 - 3, QUALIFIED: 2, LOST: 0, CLOSED: 1 },
     firstResponse: { agent: [leads - 2, 1, 0, 0, 0, 0, 0], human: [0, 0, 0, 0, 1, 0, 0], converted: [3, 0, 0, 0, 0, 0, 0], unanswered: 0 },
@@ -85,15 +82,6 @@ describe("metrics model", () => {
     expect(categories.map((row) => row.id)).toEqual(["a", UNCATEGORIZED]);
   });
 
-  it("fills every day of the range and groups weeks ending on the last day", () => {
-    const daily = dailySeries(report.segments, "2026-09-28", "2026-10-07");
-    expect(daily).toHaveLength(10);
-    expect(daily.find((point) => point.date === "2026-10-06")?.byPlatform.INSTAGRAM).toBe(28);
-    const weeks = weeklySeries(daily);
-    expect(weeks.map((week) => week.date)).toEqual(["2026-09-28", "2026-10-01"]);
-    expect(weeks.reduce((sum, week) => sum + week.total, 0)).toBe(38);
-  });
-
   it("finds the busiest window and scales the heatmap", () => {
     const hourly = Array.from({ length: 168 }, () => 0);
     hourly[24 + 19] = 10;
@@ -102,15 +90,6 @@ describe("metrics model", () => {
     expect(peakWindow(hourly)).toMatchObject({ weekday: 1, from: 18, to: 21 });
     expect(heatLevels(hourly).slice(43, 45)).toEqual([6, 4]);
     expect(peakWindow(Array.from({ length: 168 }, () => 0))).toBeNull();
-  });
-
-  it("groups speed into three bands", () => {
-    const bands = speedBands({ agent: [8, 2, 0, 0, 0, 0, 0], human: [0, 0, 3, 1, 2, 1, 0], converted: [4, 1, 1, 0, 0, 0, 0], unanswered: 0 });
-    expect(bands.map((band) => [band.answered, band.converted])).toEqual([
-      [10, 5],
-      [4, 1],
-      [3, 0],
-    ]);
   });
 
   it("compares with the period right before", () => {

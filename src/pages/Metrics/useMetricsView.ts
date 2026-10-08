@@ -11,7 +11,6 @@ import { buildInsights, type Insight } from "./insights";
 import {
   categoryBreakdown,
   channelBreakdown,
-  dailySeries,
   periodRange,
   rates,
   selectSegments,
@@ -20,9 +19,9 @@ import {
   type BreakdownRow,
   type MetricsFilters,
   type Rates,
-  type SeriesPoint,
   type Totals,
 } from "./metricsModel";
+import { dayTotals, METRICS, metricTotal, type DayTotals, type MetricKey } from "./series";
 
 export const HISTORY_DAYS = 84;
 export const FORECAST_DAYS = 14;
@@ -31,22 +30,31 @@ export type MetricsView = {
   period: MetricsPeriod;
   from: string;
   to: string;
+  previousFrom: string;
+  previousTo: string;
   settings: MetricsSettings;
   categories: CategoryResponse[];
   platforms: PlatformType[];
   totals: Totals;
   previousTotals: Totals;
   rates: Rates;
-  previousRates: Rates;
-  daily: SeriesPoint[];
-  previousDaily: SeriesPoint[];
+  days: DayTotals[];
+  previousDays: DayTotals[];
+  current: Record<MetricKey, number | null>;
+  previous: Record<MetricKey, number | null>;
+  forecasts: Partial<Record<MetricKey, Forecast>>;
   channels: BreakdownRow[];
   categoryRows: BreakdownRow[];
-  forecast: Forecast | null;
-  forecastCloseRate: number | null;
   insights: Insight[];
   categoryName: (id: string) => string;
 };
+
+function totalsByMetric(days: DayTotals[], ticket: number | null): Record<MetricKey, number | null> {
+  return Object.fromEntries(METRICS.map((metric) => [metric.key, metricTotal(metric.key, days, ticket)])) as Record<
+    MetricKey,
+    number | null
+  >;
+}
 
 export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters) {
   const today = isoDate(new Date());
@@ -65,42 +73,87 @@ export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters) {
   const view = useMemo<MetricsView | null>(() => {
     if (!current.data || !previous.data || !settings.data) return null;
     const scope: MetricsFilters = { platform, category };
+    const ticket = settings.data.averageTicket;
     const segments = selectSegments(current.data, scope);
     const previousSegments = selectSegments(previous.data, scope);
     const totals = sumSegments(segments);
     const previousTotals = sumSegments(previousSegments);
     const categoryList = categories.data ?? [];
     const names = new Map(categoryList.map((item) => [item.id, item.name]));
-    const categoryName = (id: string) => (id === UNCATEGORIZED ? "Sin categoría" : (names.get(id) ?? "Categoría eliminada"));
-    const channels = channelBreakdown(segments, previousSegments);
-    const categoryRows = categoryBreakdown(segments, previousSegments, categoryList);
-    const historySegments = history.data ? selectSegments(history.data, scope) : [];
-    const historySeries = history.data
-      ? dailySeries(historySegments, history.data.from, history.data.to).map((point) => ({
-          date: point.date,
-          value: point.total,
-        }))
+    const categoryName = (id: string) =>
+      id === UNCATEGORIZED ? "Sin categoría" : (names.get(id) ?? "Categoría eliminada");
+    const days = dayTotals(segments, range.from, range.to);
+    const previousDays = dayTotals(previousSegments, range.previousFrom, range.previousTo);
+    const channelScope: MetricsFilters = { platform: "ALL", category };
+    const categoryScope: MetricsFilters = { platform, category: null };
+    const channels = channelBreakdown(
+      selectSegments(current.data, channelScope),
+      selectSegments(previous.data, channelScope),
+    );
+    const categoryRows = categoryBreakdown(
+      selectSegments(current.data, categoryScope),
+      selectSegments(previous.data, categoryScope),
+      categoryList,
+    );
+    const historyDays = history.data
+      ? dayTotals(selectSegments(history.data, scope), history.data.from, history.data.to)
       : [];
-    const forecast = forecastDaily(historySeries, FORECAST_DAYS, 1);
+    const leadsForecast = forecastDaily(
+      historyDays.map((day) => ({ date: day.date, value: day.leads })),
+      FORECAST_DAYS,
+      1,
+    );
+    const salesForecast = forecastDaily(
+      historyDays.map((day) => ({ date: day.date, value: day.closed })),
+      FORECAST_DAYS,
+      1,
+    );
+    const revenueForecast =
+      salesForecast && ticket !== null
+        ? {
+            points: salesForecast.points.map((point) => ({
+              ...point,
+              value: point.value * ticket,
+              low: point.low * ticket,
+              high: point.high * ticket,
+            })),
+            total: salesForecast.total * ticket,
+            low: salesForecast.low * ticket,
+            high: salesForecast.high * ticket,
+          }
+        : null;
     const present = new Set(current.data.segments.map((segment) => segment.platform));
     return {
       period,
       from: range.from,
       to: range.to,
+      previousFrom: range.previousFrom,
+      previousTo: range.previousTo,
       settings: settings.data,
       categories: categoryList,
       platforms: CONNECTABLE_PLATFORMS.map((p) => p.id).filter((id) => present.has(id)),
       totals,
       previousTotals,
       rates: rates(totals),
-      previousRates: rates(previousTotals),
-      daily: dailySeries(segments, range.from, range.to),
-      previousDaily: dailySeries(previousSegments, range.previousFrom, range.previousTo),
+      days,
+      previousDays,
+      current: totalsByMetric(days, ticket),
+      previous: totalsByMetric(previousDays, ticket),
+      forecasts: {
+        ...(leadsForecast ? { leads: leadsForecast } : {}),
+        ...(salesForecast ? { sales: salesForecast } : {}),
+        ...(revenueForecast ? { revenue: revenueForecast } : {}),
+      },
       channels,
       categoryRows,
-      forecast,
-      forecastCloseRate: rates(sumSegments(historySegments)).close,
-      insights: buildInsights({ days: period, current: totals, previous: previousTotals, channels, categories: categoryRows, categoryName }),
+      insights: buildInsights({
+        days: period,
+        current: totals,
+        previous: previousTotals,
+        channels,
+        categories: categoryRows,
+        categoryName,
+      }),
       categoryName,
     };
   }, [

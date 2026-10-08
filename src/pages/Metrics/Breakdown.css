@@ -1,0 +1,116 @@
+.breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-table th,
+.breakdown-table td {
+  padding: 12px 0 12px 16px;
+  border-top: 1px solid var(--signal-border);
+  text-align: right;
+  vertical-align: middle;
+}
+
+.breakdown-table th:first-child {
+  width: 42%;
+  padding-left: 0;
+  text-align: left;
+}
+
+.breakdown-table thead th {
+  padding-top: 0;
+  padding-bottom: 10px;
+  border-top: 0;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.breakdown-table tbody th {
+  font-weight: 400;
+}
+
+.breakdown-cell {
+  display: grid;
+  gap: 8px;
+}
+
+.breakdown-table .meter {
+  max-width: 220px;
+}
+
+.breakdown-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.breakdown-name:hover {
+  color: var(--signal-accent-hover);
+}
+
+.breakdown-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.breakdown-dot {
+  width: 8px;
+  height: 8px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: var(--category-color);
+}
+
+.breakdown-value {
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.breakdown-sub {
+  display: block;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+}
+
+.breakdown-table thead th.breakdown-focus {
+  color: var(--signal-heading);
+}
+
+.breakdown-table td.breakdown-focus .breakdown-value {
+  color: var(--signal-accent);
+  font-weight: 600;
+}
+
+.breakdown-dim {
+  opacity: 0.45;
+}
+
+.breakdown-active .breakdown-name {
+  color: var(--signal-accent);
+}
+
+.breakdown-table tbody tr {
+  transition: opacity 0.2s ease;
+}
+
+@media (max-width: 520px) {
+  .breakdown-optional {
+    display: none;
+  }
+
+  .breakdown-table th:first-child {
+    width: auto;
+  }
+}

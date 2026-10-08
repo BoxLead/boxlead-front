@@ -2,28 +2,23 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { ChartIcon, PrintIcon, SearchIcon, SlidersIcon } from "../../components/icons/UiIcons";
+import { ChartIcon, SearchIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
-import { Tag } from "../../components/ui/Tag";
 import { useToast } from "../../components/ui/toast";
 import { METRICS_DEMO } from "../../data/metrics";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
-import { formatShortDate } from "../../util/format";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
-import { AgentPanel } from "./AgentPanel";
-import { CategoryBreakdown } from "./CategoryBreakdown";
-import { ChannelTable } from "./ChannelTable";
-import { Funnel } from "./Funnel";
-import { Heatmap } from "./Heatmap";
-import { InsightList } from "./InsightList";
-import { KpiGrid } from "./KpiGrid";
-import { LeadTrend } from "./LeadTrend";
-import { MethodNotes } from "./MethodNotes";
+import { AttentionCard } from "./AttentionCard";
+import { Breakdown } from "./Breakdown";
+import { FunnelCard } from "./FunnelCard";
+import { HoursCard } from "./HoursCard";
+import { MetricsHeader } from "./MetricsHeader";
 import type { MetricsFilters } from "./metricsModel";
-import { MetricsToolbar } from "./MetricsToolbar";
+import { Performance } from "./Performance";
+import { METRICS, type MetricKey } from "./series";
 import { SettingsDialog } from "./SettingsDialog";
-import { SpeedPanel } from "./SpeedPanel";
+import { Signals } from "./Signals";
 import { useMetricsView } from "./useMetricsView";
 import "./Metrics.css";
 
@@ -37,12 +32,17 @@ function parseChannel(value: string | null): PlatformType | "ALL" {
   return CONNECTABLE_PLATFORMS.some((p) => p.id === value) ? (value as PlatformType) : "ALL";
 }
 
+function parseMetric(value: string | null): MetricKey {
+  return METRICS.find((metric) => metric.key === value)?.key ?? "leads";
+}
+
 export function Metrics() {
   useDocumentTitle("Métricas");
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const period = parsePeriod(searchParams.get("period"));
+  const metric = parseMetric(searchParams.get("metric"));
   const filters: MetricsFilters = {
     platform: parseChannel(searchParams.get("channel")),
     category: searchParams.get("category") || null,
@@ -59,52 +59,28 @@ export function Metrics() {
     setSearchParams(next, { replace: true });
   }
 
+  function changeFilters(patch: Partial<MetricsFilters>) {
+    setParams({
+      ...(patch.platform !== undefined ? { channel: patch.platform === "ALL" ? null : patch.platform } : {}),
+      ...(patch.category !== undefined ? { category: patch.category } : {}),
+    });
+  }
+
   const openSettings = () => setSettingsOpen(true);
 
   return (
     <div className="page metrics">
-      <header className="page-header metrics-header">
-        <div className="metrics-heading">
-          <div className="metrics-title-row">
-            <h1 className="page-title">Métricas</h1>
-            {METRICS_DEMO ? <Tag tone="warning">Datos de ejemplo</Tag> : null}
-          </div>
-          <p className="page-header-desc">
-            Cómo rinden tus canales, tu equipo y el agente, y qué decisiones conviene tomar.
-          </p>
-        </div>
-        <div className="metrics-header-side">
-          {view ? (
-            <p className="metrics-range">
-              Del {formatShortDate(view.from)} al {formatShortDate(view.to)}
-              <span>Comparado con {period === 7 ? "la semana anterior" : `los ${period} días anteriores`}</span>
-            </p>
-          ) : null}
-          <div className="metrics-actions">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={openSettings} disabled={!view}>
-              <SlidersIcon width={16} height={16} />
-              Supuestos
-            </button>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()} disabled={!view}>
-              <PrintIcon width={16} height={16} />
-              Exportar PDF
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <MetricsToolbar
+      <MetricsHeader
+        demo={METRICS_DEMO}
         period={period}
         filters={filters}
         platforms={view?.platforms ?? []}
         categories={view?.categories ?? []}
+        range={view}
+        ready={view !== null}
         onPeriodChange={(next) => setParams({ period: next === DEFAULT_PERIOD ? null : String(next) })}
-        onFiltersChange={(patch) =>
-          setParams({
-            ...(patch.platform !== undefined ? { channel: patch.platform === "ALL" ? null : patch.platform } : {}),
-            ...(patch.category !== undefined ? { category: patch.category } : {}),
-          })
-        }
+        onFiltersChange={changeFilters}
+        onEditSettings={openSettings}
       />
 
       {error ? (
@@ -121,17 +97,11 @@ export function Metrics() {
         </Banner>
       ) : loading || !view ? (
         <div className="metrics-skeleton" aria-hidden="true">
-          <div className="metrics-skeleton-insights">
-            {[0, 1, 2].map((item) => (
-              <div key={item} className="skeleton" />
-            ))}
+          <div className="skeleton metrics-skeleton-main" />
+          <div className="metrics-skeleton-row">
+            <div className="skeleton" />
+            <div className="skeleton" />
           </div>
-          <div className="metrics-skeleton-kpis">
-            {[0, 1, 2, 3, 4].map((item) => (
-              <div key={item} className="skeleton" />
-            ))}
-          </div>
-          <div className="skeleton metrics-skeleton-chart" />
         </div>
       ) : view.totals.leads === 0 ? (
         <div className="panel metrics-empty">
@@ -139,13 +109,8 @@ export function Metrics() {
             <EmptyState
               icon={<SearchIcon />}
               title="No hay datos con estos filtros"
-              hint="Probá con otro canal, otra categoría o un período más largo."
               action={
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setParams({ channel: null, category: null })}
-                >
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => changeFilters({ platform: "ALL", category: null })}>
                   Limpiar filtros
                 </button>
               }
@@ -154,7 +119,7 @@ export function Metrics() {
             <EmptyState
               icon={<ChartIcon />}
               title="Todavía no hay datos en este período"
-              hint="Las métricas se arman solas con los leads y las conversaciones que llegan por tus canales."
+              hint="Se completan solas con los leads que llegan por tus canales."
               action={
                 <Link to="/app/connections" className="btn btn-secondary btn-sm">
                   Conectar un canal
@@ -165,20 +130,21 @@ export function Metrics() {
         </div>
       ) : (
         <div className="metrics-body">
-          <InsightList insights={view.insights} />
-          <KpiGrid view={view} onEditSettings={openSettings} />
-          <LeadTrend view={view} />
-          <div className="metrics-row">
-            <Funnel view={view} />
-            <CategoryBreakdown view={view} />
+          <Signals insights={view.insights} />
+          <Performance
+            view={view}
+            metric={metric}
+            onMetricChange={(next) => setParams({ metric: next === "leads" ? null : next })}
+            onEditSettings={openSettings}
+          />
+          <div className="metrics-grid">
+            <Breakdown view={view} metric={metric} filters={filters} onFiltersChange={changeFilters} />
+            <FunnelCard view={view} />
           </div>
-          <ChannelTable view={view} />
-          <div className="metrics-row">
-            <SpeedPanel view={view} />
-            <AgentPanel view={view} onEditSettings={openSettings} />
+          <div className="metrics-grid">
+            <HoursCard view={view} />
+            <AttentionCard view={view} />
           </div>
-          <Heatmap view={view} />
-          <MethodNotes demo={METRICS_DEMO} />
         </div>
       )}
 
@@ -190,7 +156,7 @@ export function Metrics() {
           onClose={() => setSettingsOpen(false)}
           onSaved={() => {
             setSettingsOpen(false);
-            toast({ message: "Guardamos los supuestos y recalculamos las métricas." });
+            toast({ message: "Guardamos los supuestos." });
           }}
         />
       ) : null}

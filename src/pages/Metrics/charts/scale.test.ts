@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { labelIndexes, niceMax, ticks } from "./scale";
+import { labelIndexes, niceScale } from "./scale";
 
 describe("chart scale", () => {
-  it("rounds the axis up to a readable number", () => {
-    expect(niceMax(37)).toBe(40);
-    expect(niceMax(112)).toBe(150);
-    expect(niceMax(0)).toBe(4);
-    expect(ticks(40)).toEqual([0, 10, 20, 30, 40]);
+  it("splits the axis into round steps", () => {
+    expect(niceScale(37)).toEqual({ max: 40, ticks: [0, 10, 20, 30, 40] });
+    expect(niceScale(0.43)).toEqual({ max: 0.6, ticks: [0, 0.15, 0.3, 0.45, 0.6] });
+    expect(niceScale(6_200_000).max).toBe(8_000_000);
   });
 
   it("always labels the latest point", () => {

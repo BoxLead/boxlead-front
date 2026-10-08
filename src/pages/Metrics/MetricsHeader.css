@@ -1,0 +1,158 @@
+.m-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "title controls actions";
+  align-items: end;
+  gap: 16px 8px;
+  margin-bottom: var(--signal-space-lg);
+}
+
+.m-header-title {
+  grid-area: title;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.m-header-controls {
+  grid-area: controls;
+}
+
+.m-header-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.m-header-demo {
+  padding: 2px 8px;
+  border: 1px solid var(--signal-border);
+  border-radius: 999px;
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.m-header-range {
+  margin: 0;
+  color: var(--signal-text);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.m-header-range span:last-child {
+  color: var(--signal-text-muted);
+}
+
+.m-header-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.m-select select {
+  min-height: 40px;
+  max-width: 200px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c8c9b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  color: var(--signal-heading);
+  font-size: 0.875rem;
+  appearance: none;
+  cursor: pointer;
+}
+
+.m-select select:hover {
+  border-color: rgba(234, 234, 220, 0.24);
+}
+
+.m-clear {
+  min-height: 40px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--signal-accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.m-header-actions {
+  grid-area: actions;
+  display: flex;
+  gap: 4px;
+}
+
+.m-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: transparent;
+  color: var(--signal-text);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.m-icon-button:hover:not(:disabled) {
+  border-color: rgba(234, 234, 220, 0.24);
+  color: var(--signal-heading);
+}
+
+@media (max-width: 1080px) {
+  .m-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title actions"
+      "controls controls";
+  }
+}
+
+@media (max-width: 760px) {
+  .m-header {
+    align-items: start;
+  }
+
+  .m-header-range span:last-child {
+    display: block;
+  }
+
+  .m-header-range span[aria-hidden="true"] {
+    display: none;
+  }
+
+  .m-header-controls > .choice-group {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .m-header-controls > .choice-group .choice {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .m-select {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .m-select select {
+    width: 100%;
+    max-width: none;
+  }
+
+}
+
+@media print {
+  .m-header-controls,
+  .m-header-actions {
+    display: none;
+  }
+}

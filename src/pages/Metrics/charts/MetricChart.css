@@ -1,0 +1,157 @@
+.metric-chart {
+  display: grid;
+  gap: 8px;
+}
+
+.metric-chart-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  min-height: 48px;
+}
+
+.metric-chart-when {
+  flex-basis: 100%;
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
+
+.metric-chart-value {
+  color: var(--signal-heading);
+  font-size: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-chart-previous {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-chart-canvas {
+  width: 100%;
+  min-width: 0;
+}
+
+.metric-chart-svg {
+  display: block;
+  overflow: visible;
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.metric-chart-grid {
+  stroke: rgba(234, 234, 220, 0.07);
+}
+
+.metric-chart-axis {
+  fill: var(--signal-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-chart-fill-top {
+  stop-color: var(--signal-accent);
+  stop-opacity: 0.22;
+}
+
+.metric-chart-fill-bottom {
+  stop-color: var(--signal-accent);
+  stop-opacity: 0;
+}
+
+.metric-chart-area {
+  animation: metric-chart-fade 0.6s var(--signal-ease) both;
+}
+
+.metric-chart-line {
+  fill: none;
+  stroke: var(--signal-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  animation: metric-chart-draw 0.9s var(--signal-ease) both;
+}
+
+.metric-chart-partial {
+  fill: var(--signal-surface);
+  stroke: var(--signal-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2;
+}
+
+.metric-chart-previous-line {
+  fill: none;
+  stroke: rgba(234, 234, 220, 0.32);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+
+.metric-chart-estimate {
+  fill: none;
+  stroke: var(--signal-accent);
+  stroke-width: 2;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.metric-chart-band {
+  fill: var(--signal-accent);
+  opacity: 0.08;
+}
+
+.metric-chart-crosshair {
+  stroke: rgba(234, 234, 220, 0.25);
+}
+
+.metric-chart-dot {
+  fill: var(--signal-bg);
+  stroke: var(--signal-accent);
+  stroke-width: 2;
+}
+
+.metric-chart-dot-estimate {
+  stroke-dasharray: 2 2;
+}
+
+@keyframes metric-chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes metric-chart-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-chart-line,
+  .metric-chart-area {
+    animation: none;
+  }
+}
+
+@media print {
+  .metric-chart-line,
+  .metric-chart-area {
+    animation: none;
+  }
+
+  .metric-chart-grid {
+    stroke: #e3e8ec;
+  }
+
+  .metric-chart-previous-line {
+    stroke: #9aa7b2;
+  }
+}
