@@ -11,7 +11,7 @@ type SpeedPanelProps = {
   view: MetricsView;
 };
 
-const MIN_BAND_SAMPLE = 20;
+const MIN_BAND_SAMPLE = 30;
 
 function stack(buckets: number[]) {
   const total = buckets.reduce((sum, value) => sum + value, 0);
@@ -108,7 +108,7 @@ export function SpeedPanel({ view }: SpeedPanelProps) {
             <li key={band.label} className={`speed-band speed-band-${index}`}>
               <div className="speed-band-head">
                 <span>{band.label}</span>
-                <strong>{band.answered >= MIN_BAND_SAMPLE ? formatPercent(band.rate) : "—"}</strong>
+                <strong>{band.answered >= MIN_BAND_SAMPLE ? formatPercent(band.rate) : "Pocos datos"}</strong>
               </div>
               <Meter value={band.answered >= MIN_BAND_SAMPLE ? band.rate : 0} />
               <span className="speed-band-sample">{formatNumber(band.answered)} conversaciones</span>
