@@ -41,7 +41,7 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
-Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` `/app/leads?status=NEW&channel=MELI&category=<id or none>&buyers=1` and `/app/metrics?period=7&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` `/app/leads?status=NEW&channel=MELI&category=<id or none>&buyers=1` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
 ## Categories
 
@@ -53,7 +53,9 @@ The page reads `GET /metrics?from&to&timezone` for the current period, the previ
 
 Until the backend ships those endpoints `METRICS_DEMO` in `data/metrics.ts` answers both keys locally with `metricsDemo.ts` through `setQueryResolver`. The demo data is deterministic, uses the account categories and assumptions, and the page shows a "Datos de ejemplo" tag. To switch to the API set `METRICS_DEMO` to false, add the routes to `e2e/mock-api` and delete the demo files.
 
-Rates, funnel, breakdowns, insights and the forecast are pure functions in `pages/Metrics/` with unit tests. Charts are plain SVG with no chart library, and every chart has a "Ver datos" table. Qualification and sales count what happened in the period, the funnel follows the leads that arrived in it.
+The page is built around one chart. The indicator tabs (leads, answered in 5 minutes, qualification, sales, revenue) switch it, and it compares with the previous period and shows the 14 day estimate for counts. The breakdown by channel or category filters the whole page when a row is clicked, and ignores its own filter so the other rows stay visible. Signals are at most three short lines, each rule needs a minimum sample and repeats nothing the page already shows.
+
+Series, totals, rates, funnel, breakdowns, signals and the forecast are pure functions in `pages/Metrics/` with unit tests. Charts are plain SVG with no chart library and read with pointer, touch and keyboard. Rates use a 7 day rolling window, the 90 day view is weekly, and the current day is drawn apart because it is not over. Qualification and sales count what happened in the period, the funnel follows the leads that arrived in it. Keep the page sober, one accent color for data and green or red only for changes.
 
 ## Channels
 
