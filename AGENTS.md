@@ -26,7 +26,7 @@ src/
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, CharCounter, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # company, dates, format, labels, metrics, oauth, redirect, facebook-sdk
+└── util/             # company, dates, format, labels, links, metrics, oauth, redirect, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -41,7 +41,7 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
-Inbox and leads state lives in the URL: `/app/inbox?view=comments&channel=MELI&stage=PRE_SALE&unread=1&id=<id>` `/app/leads?status=NEW&channel=MELI&category=<id or none>&buyers=1` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
 ## Categories
 
@@ -59,7 +59,7 @@ Series, totals, rates, funnel, breakdowns, signals and the forecast are pure fun
 
 ## Channels
 
-Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, chart color, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
+Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, chart color, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. Instagram comments are `COMMENT` messages inside the chat of the person who wrote them, shown as events with a link to the post (`/conversations/{id}/context` returns `POST` items) and answered in public through `commentReply`. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
 
 ## Conventions
 

@@ -114,6 +114,16 @@ export function pairQuestions(messages: MessageResponse[]): QuestionThread {
   return { entries, pending, nextToAnswer: pending[0] ?? null };
 }
 
+export function answeredCommentIds(messages: MessageResponse[]): Set<string> {
+  const answered = new Set<string>();
+  for (const message of messages) {
+    if (message.kind === "COMMENT" && message.direction === "OUTBOUND" && message.replyToExternalId) {
+      answered.add(message.replyToExternalId);
+    }
+  }
+  return answered;
+}
+
 export type DayGroup<T> = { day: string; label: string; items: T[] };
 
 export function dayLabel(iso: string, now = Date.now()): string {

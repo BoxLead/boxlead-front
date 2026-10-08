@@ -3,6 +3,7 @@ import { ExternalLinkIcon } from "../../components/icons/UiIcons";
 import { Tag } from "../../components/ui/Tag";
 import type { ContextStatus } from "../../platforms/types";
 import { formatMoney } from "../../util/format";
+import { safeExternalUrl } from "../../util/links";
 
 type ListingSummaryProps = {
   item: ContextItem;
@@ -12,6 +13,7 @@ type ListingSummaryProps = {
 
 export function ListingSummary({ item, status, compact = false }: ListingSummaryProps) {
   const title = item.title ?? `Publicación ${item.externalId}`;
+  const itemUrl = safeExternalUrl(item.url);
   return (
     <div className={`listing${compact ? " listing-compact" : ""}`}>
       {item.imageUrl ? (
@@ -35,8 +37,8 @@ export function ListingSummary({ item, status, compact = false }: ListingSummary
           {status && status.tone !== "success" ? <Tag tone={status.tone}>{status.label}</Tag> : null}
         </span>
       </span>
-      {item.url ? (
-        <a className="listing-link" href={item.url} target="_blank" rel="noopener noreferrer">
+      {itemUrl ? (
+        <a className="listing-link" href={itemUrl} target="_blank" rel="noopener noreferrer">
           <ExternalLinkIcon width={16} height={16} />
           <span className="visually-hidden">Ver {title} en una pestaña nueva</span>
         </a>

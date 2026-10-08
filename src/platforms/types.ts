@@ -10,6 +10,12 @@ export type ReplyPolicy = {
   hint: string | null;
 };
 
+export type CommentReplyPolicy = {
+  maxLength: number;
+  placeholder: string;
+  postLabel: (productType: string | null) => string;
+};
+
 export type ErrorAction = "reconnect" | "retry" | null;
 
 export type PlatformErrorView = {
@@ -42,6 +48,7 @@ export type PlatformDefinition = {
   connect: ConnectMethod | null;
   stageLabels: Partial<Record<SalesStage, string>>;
   reply: (stage: SalesStage) => ReplyPolicy;
+  commentReply?: CommentReplyPolicy;
   explainError: (status: number, message: string) => PlatformErrorView | null;
   contactFields: (lead: LeadResponse) => ContactField[];
   hasContext: boolean;

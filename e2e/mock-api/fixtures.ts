@@ -1,8 +1,6 @@
 import type {
   AccountConnectionResponse,
   CategoryResponse,
-  CommentResponse,
-  CommentThreadResponse,
   ContextItem,
   ConversationResponse,
   LeadResponse,
@@ -28,16 +26,16 @@ export type MockState = {
   leads: LeadResponse[];
   conversations: StoredConversation[];
   messages: MessageResponse[];
-  threads: CommentThreadResponse[];
-  comments: CommentResponse[];
   connections: AccountConnectionResponse[];
   listings: Record<string, ContextItem>;
   orders: Record<string, ContextItem[]>;
+  posts: Record<string, ContextItem>;
 };
 
 export const MELI_SELLER_ID = "241550991";
 export const WABA_ID = "104882915577";
 export const IG_ACCOUNT_ID = "17841400008460056";
+export const IG_REEL_ID = "18034412345678901";
 export const PAGE_ID = "112233445566778";
 
 const MINUTE = 60_000;
@@ -65,7 +63,6 @@ function lead(
   return {
     id: nextId("1ead"),
     platform,
-    campaignId: null,
     externalLeadId,
     name,
     email: null,
@@ -113,7 +110,9 @@ function message(
     direction,
     externalMessageId: null,
     content,
+    kind: "TEXT",
     contextRef: null,
+    replyToExternalId: null,
     createdAt: ago(minutes),
     updatedAt: ago(minutes),
     ...extra,
@@ -164,11 +163,10 @@ export function emptyState(): MockState {
     leads: [],
     conversations: [],
     messages: [],
-    threads: [],
-    comments: [],
     connections: [],
     listings: {},
     orders: {},
+    posts: {},
   };
 }
 
@@ -336,42 +334,44 @@ export function buildState(scenario: Scenario): MockState {
   );
   messenger.lastReadAt = ago(60 * 49);
 
-  const commenter = lead("INSTAGRAM", "nico.audio", "17841409876543", 240);
+  const reel: ContextItem = {
+    kind: "POST",
+    externalId: IG_REEL_ID,
+    title: "Flip 6 en stock, envíos a todo el país",
+    imageUrl: "/__img/parlante.svg",
+    url: "https://www.instagram.com/reel/C9mockReel1/",
+    price: null,
+    currency: null,
+    status: "REELS",
+    quantity: null,
+    createdAt: null,
+    lines: [],
+  };
+  state.posts[reel.externalId] = reel;
+
+  const commenter = lead("INSTAGRAM", "nico.audio", "17841409876543", 60 * 24 * 8);
+  const commenterChat = conversation(commenter, `${IG_ACCOUNT_ID}_17841409876543`, 60 * 24 * 8);
+  commenterChat.lastReadAt = ago(15);
   state.leads.push(commenter);
-  const thread: CommentThreadResponse = {
-    id: nextId("7h4e"),
-    leadId: commenter.id,
-    platform: "INSTAGRAM",
-    externalMediaId: "18034412345678901",
-    mediaProductType: "REELS",
-    createdAt: ago(240),
-    updatedAt: ago(230),
-  };
-  state.threads.push(thread);
-  const rootComment: CommentResponse = {
-    id: nextId("c0aa"),
-    commentThreadId: thread.id,
-    parentCommentId: null,
-    platform: "INSTAGRAM",
-    externalCommentId: "17900000000000001",
-    authorExternalId: commenter.externalLeadId,
-    authorUsername: "nico.audio",
-    text: "¿Precio del Flip 6?",
-    createdAt: ago(240),
-    updatedAt: ago(240),
-  };
-  state.comments.push(rootComment, {
-    id: nextId("c0aa"),
-    commentThreadId: thread.id,
-    parentCommentId: rootComment.id,
-    platform: "INSTAGRAM",
-    externalCommentId: "17900000000000002",
-    authorExternalId: IG_ACCOUNT_ID,
-    authorUsername: "tiendanorte",
-    text: "¡Te escribimos por privado!",
-    createdAt: ago(230),
-    updatedAt: ago(230),
-  });
+  state.conversations.push(commenterChat);
+  state.messages.push(
+    message(commenterChat, "INBOUND", "¿Precio del Flip 6?", 60 * 24 * 8, {
+      kind: "COMMENT",
+      externalMessageId: "17900000000000001",
+      contextRef: IG_REEL_ID,
+    }),
+    message(commenterChat, "OUTBOUND", "¡Te escribimos por privado!", 60 * 24 * 8 - 10, {
+      kind: "COMMENT",
+      externalMessageId: "17900000000000002",
+      contextRef: IG_REEL_ID,
+      replyToExternalId: "17900000000000001",
+    }),
+    message(commenterChat, "INBOUND", "¿Y lo tienen en azul?", 20, {
+      kind: "COMMENT",
+      externalMessageId: "17900000000000003",
+      contextRef: IG_REEL_ID,
+    }),
+  );
 
   return state;
 }

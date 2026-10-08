@@ -5,7 +5,6 @@ import { CONNECTABLE_PLATFORMS, getPlatform, hasStages, stageLabel } from ".";
 const lead = (patch: Partial<LeadResponse>): LeadResponse => ({
   id: "1",
   platform: "INSTAGRAM",
-  campaignId: null,
   externalLeadId: null,
   name: null,
   email: null,
@@ -48,6 +47,37 @@ describe("MercadoLibre", () => {
 
   it("leaves unknown errors to the generic handler", () => {
     expect(meli.explainError(500, "Internal server error")).toBeNull();
+  });
+});
+
+describe("Instagram", () => {
+  const instagram = getPlatform("INSTAGRAM");
+
+  it("can answer comments in public and loads the posts they were made on", () => {
+    expect(instagram.hasContext).toBe(true);
+    expect(instagram.commentReply).toMatchObject({ maxLength: 2200 });
+    expect(instagram.commentReply?.postLabel("REELS")).toBe("un reel");
+    expect(instagram.commentReply?.postLabel("STORY")).toBe("una historia");
+    expect(instagram.commentReply?.postLabel(null)).toBe("una publicación");
+    expect(getPlatform("MELI").commentReply).toBeUndefined();
+  });
+
+  it("warns that a private reply to a comment can only be sent once", () => {
+    expect(instagram.reply("PRE_SALE")).toMatchObject({ kind: "chat", maxLength: 1000 });
+    expect(instagram.reply("PRE_SALE").hint).toMatch(/una sola vez/);
+  });
+
+  it.each([
+    [409, "Cannot send Instagram message: the reply window is closed and there is no recent comment left to answer privately.", null, "Ya no podés escribirle por privado"],
+    [400, "Instagram messages are limited to 1000 bytes", null, "El mensaje es demasiado largo"],
+    [400, "Instagram comments are limited to 2200 characters", null, "El mensaje es demasiado largo"],
+    [409, "Instagram account 3 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar Instagram"],
+  ])("explains %i %s", (status, message, action, title) => {
+    expect(instagram.explainError(status, message)).toMatchObject({ action, title });
+  });
+
+  it("states the comment limit in the length error of a public reply", () => {
+    expect(instagram.explainError(400, "Instagram comments are limited to 2200 characters")?.detail).toContain("2.200");
   });
 });
 
