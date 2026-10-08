@@ -4,7 +4,9 @@ import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
 import { getPlatform } from "../../platforms";
 import { formatShortDate } from "../../util/format";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
-import { UNCATEGORIZED, type MetricsFilters } from "./metricsModel";
+import { UNCATEGORIZED } from "../../util/categories";
+import type { MetricsFilters } from "./metricsModel";
+import type { MetricsRange } from "./metricsView";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import "./MetricsHeader.css";
 
@@ -14,8 +16,7 @@ type MetricsHeaderProps = {
   filters: MetricsFilters;
   platforms: PlatformType[];
   categories: CategoryResponse[];
-  range: { from: string; to: string; previousFrom: string; previousTo: string } | null;
-  ready: boolean;
+  range: MetricsRange | null;
   onPeriodChange: (period: MetricsPeriod) => void;
   onFiltersChange: (patch: Partial<MetricsFilters>) => void;
   onEditSettings: () => void;
@@ -28,7 +29,6 @@ export function MetricsHeader({
   platforms,
   categories,
   range,
-  ready,
   onPeriodChange,
   onFiltersChange,
   onEditSettings,
@@ -56,20 +56,20 @@ export function MetricsHeader({
       <div className="m-header-actions">
         <button
           type="button"
-          className="m-icon-button"
+          className="btn btn-icon"
           aria-label="Supuestos"
           title="Supuestos"
-          disabled={!ready}
+          disabled={!range}
           onClick={onEditSettings}
         >
           <SlidersIcon width={18} height={18} />
         </button>
         <button
           type="button"
-          className="m-icon-button"
+          className="btn btn-icon"
           aria-label="Exportar PDF"
           title="Exportar PDF"
-          disabled={!ready}
+          disabled={!range}
           onClick={() => window.print()}
         >
           <PrintIcon width={18} height={18} />
@@ -84,9 +84,10 @@ export function MetricsHeader({
           onChange={(value) => onPeriodChange(Number(value) as MetricsPeriod)}
           choices={PERIODS.map((days) => ({ value: String(days), label: `${days} días` }))}
         />
-        <label className="m-select">
+        <label className="m-filter">
           <span className="visually-hidden">Canal</span>
           <select
+            className="select"
             value={filters.platform}
             onChange={(event) => onFiltersChange({ platform: event.target.value as PlatformType | "ALL" })}
           >
@@ -98,9 +99,10 @@ export function MetricsHeader({
             ))}
           </select>
         </label>
-        <label className="m-select">
+        <label className="m-filter">
           <span className="visually-hidden">Categoría</span>
           <select
+            className="select"
             value={filters.category ?? ""}
             onChange={(event) => onFiltersChange({ category: event.target.value || null })}
           >
@@ -116,7 +118,7 @@ export function MetricsHeader({
         {filtered ? (
           <button
             type="button"
-            className="m-clear"
+            className="m-header-clear"
             onClick={() => onFiltersChange({ platform: "ALL", category: null })}
           >
             Limpiar

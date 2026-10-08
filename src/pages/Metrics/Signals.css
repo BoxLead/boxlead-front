@@ -36,7 +36,7 @@
 
 .signal-attention .signal-dot {
   background: var(--signal-warning);
-  box-shadow: 0 0 0 0 rgba(240, 200, 120, 0.5);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal-warning) 50%, transparent);
   animation: signal-ping 1.6s ease-out 0.6s 2;
 }
 
@@ -50,7 +50,7 @@
 
 @keyframes signal-ping {
   to {
-    box-shadow: 0 0 0 7px rgba(240, 200, 120, 0);
+    box-shadow: 0 0 0 7px transparent;
   }
 }
 

@@ -4,15 +4,18 @@ import { expectAccessible, login, resetApi, screenshot } from "./support.ts";
 const NOW = new Date("2026-10-07T15:00:00");
 
 const tabs = (page: Page) => page.getByRole("tablist", { name: "Indicadores" }).getByRole("tab");
-const tab = (page: Page, name: string) => page.getByRole("tablist", { name: "Indicadores" }).getByRole("tab", { name: new RegExp(`^${name}`) });
+const tab = (page: Page, name: string) =>
+  page.getByRole("tablist", { name: "Indicadores" }).getByRole("tab", { name: new RegExp(`^${name}`) });
 const breakdown = (page: Page) => page.getByRole("region", { name: "Desglose" });
+const funnel = (page: Page) => page.getByRole("region", { name: "Embudo" });
+const attention = (page: Page) => page.getByRole("region", { name: "Atención" });
 const rows = (page: Page) => breakdown(page).locator("tbody tr");
 const readout = (page: Page) => page.locator(".metric-chart-readout");
 
 async function openMetrics(page: Page, path = "/app/metrics") {
   await page.clock.setFixedTime(NOW);
   await login(page, path);
-  await expect(tabs(page)).toHaveCount(5);
+  await expect(tabs(page)).toHaveCount(4);
 }
 
 test.beforeEach(async () => {
@@ -25,35 +28,35 @@ test("shows the period at a glance", async ({ page }) => {
   await expect(page.getByText("Datos de ejemplo", { exact: true })).toBeVisible();
   await expect(page.getByText("8 sept al 7 oct")).toBeVisible();
   await expect(page.getByRole("region", { name: "Señales" }).locator("li")).toHaveCount(3);
+  await expect(tabs(page)).toHaveText([/^Leads/, /^Respuesta en 5 min/, /^Primera respuesta/, /^Calificación/]);
   await expect(tab(page, "Leads")).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("img", { name: /Leads por día/ })).toBeVisible();
   await expect(page.getByText("Próximos 14 días")).toBeVisible();
+  await expect(funnel(page).getByRole("button")).toHaveText([/^Leads/, /^Contactados/, /^Calificados/]);
   await expect(rows(page)).toHaveCount(4);
-  for (const title of ["Embudo", "Cuándo te escriben", "Atención"]) {
-    await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
-  }
+  await expect(page.getByRole("heading", { level: 2, name: "Cuándo te escriben" })).toBeVisible();
+  await expect(page.getByText(/ventas|ingresos/i)).toHaveCount(0);
   await expectAccessible(page);
   await screenshot(page, "metrics");
 });
 
 test("each indicator drives the chart", async ({ page }) => {
   await openMetrics(page);
-  await tab(page, "Ventas").click();
-  await expect(page).toHaveURL(/metric=sales/);
-  await expect(tab(page, "Ventas")).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("img", { name: /Ventas por día/ })).toBeVisible();
-  await expect(breakdown(page).locator("thead th.breakdown-focus")).toHaveText("Ventas");
+  await tab(page, "Primera respuesta").click();
+  await expect(page).toHaveURL(/metric=response/);
+  await expect(page.getByRole("img", { name: /Primera respuesta por día/ })).toBeVisible();
+  await expect(breakdown(page).locator("thead th.breakdown-focus")).toHaveText("Respuesta");
+  await expect(page.getByText("Próximos 14 días")).toHaveCount(0);
 
   await page.keyboard.press("ArrowRight");
-  await expect(tab(page, "Ingresos")).toBeFocused();
-  await expect(page).toHaveURL(/metric=revenue/);
+  await expect(tab(page, "Calificación")).toBeFocused();
+  await expect(page).toHaveURL(/metric=qualification/);
   await page.keyboard.press("Home");
   await expect(page).not.toHaveURL(/metric=/);
 
-  await tab(page, "Calificación").click();
-  await expect(page.getByText("Próximos 14 días")).toHaveCount(0);
+  await tab(page, "Respuesta en 5 min").click();
   await page.reload();
-  await expect(tab(page, "Calificación")).toHaveAttribute("aria-selected", "true");
+  await expect(tab(page, "Respuesta en 5 min")).toHaveAttribute("aria-selected", "true");
 });
 
 test("filters from the header and from the breakdown", async ({ page }) => {
@@ -80,8 +83,11 @@ test("filters from the header and from the breakdown", async ({ page }) => {
 });
 
 test("unknown parameters fall back to the defaults", async ({ page }) => {
-  await openMetrics(page, "/app/metrics?period=12&channel=FAX&metric=nada");
-  await expect(page.getByRole("group", { name: "Período" }).getByRole("button", { name: "30 días" })).toHaveAttribute("aria-pressed", "true");
+  await openMetrics(page, "/app/metrics?period=12&channel=FAX&metric=sales");
+  await expect(page.getByRole("group", { name: "Período" }).getByRole("button", { name: "30 días" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(tab(page, "Leads")).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Canal")).toHaveValue("ALL");
 });
@@ -108,27 +114,36 @@ test("the chart and the hours map read under the pointer and the keyboard", asyn
   await expect(hours).toContainText("Martes 20 h");
 });
 
-test("the assumptions change the revenue", async ({ page }) => {
+test("the funnel explains each step", async ({ page }) => {
   await openMetrics(page);
-  const before = await tab(page, "Ingresos").locator(".performance-tab-value").innerText();
+  const stages = funnel(page).getByRole("button");
+  const summary = funnel(page).locator(".funnel-chart-readout");
+  await expect(summary).toContainText(/De \d[\d.]* leads, \d[\d.]* llegaron a calificados/);
+  await stages.nth(2).hover();
+  await expect(summary).toContainText("de los contactados avanzó");
+  await expect(summary).toContainText("quedaron en el camino");
+  await stages.nth(0).focus();
+  await expect(summary).toContainText("en el anterior");
+  await page.keyboard.press("Tab");
+  await expect(summary).toContainText("de los leads avanzó");
+});
+
+test("the assumptions change the hours saved", async ({ page }) => {
+  await openMetrics(page);
+  const saved = attention(page).locator("dl div").filter({ hasText: "Horas ahorradas" }).locator("dd");
+  const before = await saved.innerText();
   await page.getByRole("button", { name: "Supuestos" }).click();
-  const dialog = page.getByRole("dialog", { name: "Supuestos de las estimaciones" });
-  await dialog.getByLabel(/Ticket promedio/).fill("100000");
+  const dialog = page.getByRole("dialog", { name: "Supuestos" });
+  await expect(dialog.getByLabel(/Ticket/)).toHaveCount(0);
   await dialog.getByLabel("Minutos por respuesta manual").fill("0");
   await expect(dialog.getByRole("button", { name: "Guardar" })).toBeDisabled();
-  await dialog.getByLabel("Minutos por respuesta manual").fill("6");
+  await dialog.getByLabel("Minutos por respuesta manual").fill("8");
   await expectAccessible(page);
   await screenshot(page, "metrics-settings");
   await dialog.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Guardamos los supuestos" })).toBeVisible();
-  await expect(tab(page, "Ingresos").locator(".performance-tab-value")).not.toHaveText(before);
-
-  await page.getByRole("button", { name: "Supuestos" }).click();
-  await dialog.getByLabel(/Ticket promedio/).fill("");
-  await dialog.getByRole("button", { name: "Guardar" }).click();
-  await tab(page, "Ingresos").click();
-  await expect(tab(page, "Ingresos").locator(".performance-tab-value")).toHaveText("—");
-  await expect(page.getByRole("button", { name: "Cargar ticket" })).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(saved).not.toHaveText(before);
 });
 
 test("signals link to the leads behind them", async ({ page }) => {

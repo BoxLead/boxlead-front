@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import { cx } from "../../util/classNames";
 import "./MetricsCard.css";
 
 type MetricsCardProps = {
@@ -11,7 +12,7 @@ type MetricsCardProps = {
 export function MetricsCard({ title, meta, className, children }: MetricsCardProps) {
   const titleId = useId();
   return (
-    <section className={`m-card${className ? ` ${className}` : ""}`} aria-labelledby={titleId}>
+    <section className={cx("panel", "m-card", className)} aria-labelledby={titleId}>
       <header className="m-card-head">
         <h2 id={titleId} className="m-card-title">
           {title}

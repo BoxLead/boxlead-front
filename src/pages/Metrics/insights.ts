@@ -1,7 +1,9 @@
 import type { PlatformType } from "../../api/types";
 import { getPlatform } from "../../platforms";
 import { formatNumber, formatPercent } from "../../util/format";
-import { conversionBySpeed, percentChange, ratio, UNCATEGORIZED, type BreakdownRow, type Totals } from "./metricsModel";
+import { UNCATEGORIZED } from "../../util/categories";
+import type { BreakdownRow } from "./breakdown";
+import { conversionBySpeed, percentChange, ratio, type Totals } from "./metricsModel";
 
 export type InsightTone = "positive" | "attention" | "info";
 
@@ -14,9 +16,7 @@ export type Insight = {
 };
 
 export type InsightInput = {
-  days: number;
   current: Totals;
-  previous: Totals;
   channels: BreakdownRow[];
   categories: BreakdownRow[];
   categoryName: (id: string) => string;
@@ -57,12 +57,12 @@ function speed({ current }: InsightInput): Insight | null {
 }
 
 function channelQuality({ channels }: InsightInput): Insight | null {
-  const eligible = channels.filter((row) => row.totals.leads >= MIN_SAMPLE && row.rates.qualification !== null);
+  const eligible = channels.filter((row) => row.totals.leads >= MIN_SAMPLE && row.qualification !== null);
   if (eligible.length < 2) return null;
   const leader = eligible[0];
-  const best = [...eligible].sort((a, b) => (b.rates.qualification ?? 0) - (a.rates.qualification ?? 0))[0];
+  const best = [...eligible].sort((a, b) => (b.qualification ?? 0) - (a.qualification ?? 0))[0];
   if (best.id === leader.id) return null;
-  const factor = (best.rates.qualification ?? 0) / (leader.rates.qualification ?? 1);
+  const factor = (best.qualification ?? 0) / (leader.qualification ?? 1);
   if (factor < 1.3) return null;
   const bestName = getPlatform(best.id as PlatformType).name;
   return {

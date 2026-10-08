@@ -17,7 +17,7 @@ function report(from: string, to: string, settings = DEMO_SETTINGS) {
   return buildDemoReport({ from, to, today: "2026-10-07", timezone: "UTC", categories, settings });
 }
 
-function sum(from: string, to: string, field: "leads" | "qualified" | "closed") {
+function sum(from: string, to: string, field: "leads" | "qualified" | "unanswered") {
   return report(from, to).segments.reduce(
     (total, segment) => total + segment.days.reduce((acc, day) => acc + day[field], 0),
     0,
@@ -32,7 +32,7 @@ describe("demo metrics", () => {
   });
 
   it("adds up across ranges", () => {
-    for (const field of ["leads", "qualified", "closed"] as const) {
+    for (const field of ["leads", "qualified", "unanswered"] as const) {
       expect(sum("2026-09-08", "2026-09-22", field) + sum("2026-09-23", "2026-10-07", field)).toBe(
         sum("2026-09-08", "2026-10-07", field),
       );
@@ -62,8 +62,13 @@ describe("demo metrics", () => {
         segment.firstResponse.agent.reduce((a, b) => a + b, 0) +
         segment.firstResponse.human.reduce((a, b) => a + b, 0) +
         segment.firstResponse.unanswered;
+      const daily = segment.days.reduce(
+        (total, day) => total + day.unanswered + day.responseBuckets.reduce((a, b) => a + b, 0),
+        0,
+      );
       expect(statuses).toBe(leads);
       expect(responses).toBe(leads);
+      expect(daily).toBe(leads);
       expect(segment.inboundByHour).toHaveLength(168);
     }
   });

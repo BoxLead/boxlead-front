@@ -4,15 +4,18 @@ import "./Change.css";
 type ChangeProps = {
   value: number | null;
   kind: "percent" | "points";
+  better?: "up" | "down";
 };
 
-export function Change({ value, kind }: ChangeProps) {
+const FLAT = 0.005;
+
+export function Change({ value, kind, better = "up" }: ChangeProps) {
   if (value === null || !Number.isFinite(value)) return <span className="change change-flat">—</span>;
-  const flat = Math.abs(value) < (kind === "points" ? 0.005 : 0.005);
-  const text = kind === "points" ? formatPoints(value) : formatSignedPercent(value);
+  if (Math.abs(value) < FLAT) return <span className="change change-flat">Sin cambio</span>;
+  const improved = better === "up" ? value > 0 : value < 0;
   return (
-    <span className={`change ${flat ? "change-flat" : value > 0 ? "change-up" : "change-down"}`}>
-      {flat ? "Sin cambio" : text}
+    <span className={improved ? "change change-good" : "change change-bad"}>
+      {kind === "points" ? formatPoints(value) : formatSignedPercent(value)}
       <span className="visually-hidden"> contra el período anterior</span>
     </span>
   );

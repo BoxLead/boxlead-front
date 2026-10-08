@@ -1,166 +1,68 @@
-import { useId, useRef, type KeyboardEvent } from "react";
-import { formatCompactMoney, formatLongDate, formatNumber, formatPercent, formatShortDate } from "../../util/format";
-import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
-import { Change } from "./Change";
-import { MetricChart, type ChartEstimate, type ChartPoint } from "./charts/MetricChart";
-import { formatMetric, metricChange, metricSeries, METRICS, type MetricDefinition, type MetricKey } from "./series";
-import type { MetricsView } from "./useMetricsView";
+import { useId } from "react";
+import { formatDuration, formatNumber, formatPercent, formatShortDate } from "../../util/format";
+import { buildChartData } from "./chartData";
+import { MetricChart } from "./charts/MetricChart";
+import { MetricTabs } from "./MetricTabs";
+import type { MetricsView } from "./metricsView";
+import { formatMetric, type MetricDefinition, type MetricKey } from "./series";
 import "./Performance.css";
 
 type PerformanceProps = {
   view: MetricsView;
   metric: MetricKey;
   onMetricChange: (metric: MetricKey) => void;
-  onEditSettings: () => void;
 };
 
-const SPARSE_PER_DAY = 3;
-
-function weekEstimate(days: { value: number; low: number; high: number }[]) {
-  const value = days.reduce((sum, day) => sum + day.value, 0);
-  const spread = Math.sqrt(days.reduce((sum, day) => sum + ((day.high - day.low) / 2) ** 2, 0));
-  return { value, low: Math.max(0, value - spread), high: value + spread };
-}
-
-function withUnit(definition: MetricDefinition, value: number, currency: string): string {
-  const text = formatMetric(definition, value, currency);
+function readout(definition: MetricDefinition, value: number): string {
+  const text = formatMetric(definition, value);
   if (definition.kind !== "count") return text;
-  return `${text} ${Math.round(value) === 1 ? definition.unit[0] : definition.unit[1]}`;
+  return `${text} ${Math.round(value) === 1 ? "lead" : "leads"}`;
 }
 
-function axis(definition: MetricDefinition, value: number, currency: string): string {
+function axisLabel(definition: MetricDefinition, value: number): string {
   if (definition.kind === "rate") return formatPercent(value);
-  if (definition.kind === "money") return formatCompactMoney(value, currency).replace(/\s/g, "");
+  if (definition.kind === "duration") return formatDuration(value);
   return formatNumber(value);
 }
 
-export function Performance({ view, metric, onMetricChange, onEditSettings }: PerformanceProps) {
+export function Performance({ view, metric, onMetricChange }: PerformanceProps) {
   const panelId = useId();
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const selectedIndex = Math.max(0, METRICS.findIndex((item) => item.key === metric));
-  const definition = METRICS[selectedIndex];
-  const { settings } = view;
-  const ticket = settings.averageTicket;
-  const countKey = metric === "revenue" ? "sales" : metric;
-  const sparse = definition.kind !== "rate" && (view.current[countKey] ?? 0) / view.days.length < SPARSE_PER_DAY;
-  const weekly = view.period === 90 || (view.period === 30 && sparse);
-  const lookback = [...view.previousDays, ...view.days];
-  const current = metricSeries(metric, lookback, view.from, view.to, weekly, ticket);
-  const previous = metricSeries(metric, view.previousDays, view.previousFrom, view.previousTo, weekly, ticket);
-  const forecast = definition.forecast ? view.forecasts[metric] : undefined;
-  const missingTicket = metric === "revenue" && ticket === null;
-
-  const points: ChartPoint[] = current.map((point, index) => ({
-    key: point.date,
-    axisLabel: formatShortDate(point.date),
-    title: weekly
-      ? `${formatShortDate(point.date)} al ${formatShortDate(point.end)}`
-      : `${formatLongDate(point.date)}${point.date === view.to ? ", hasta ahora" : ""}`,
-    value: point.value,
-    previous: previous[index]?.value ?? null,
-  }));
-
-  const forecastPoints = forecast?.points ?? [];
-  const estimates: ChartEstimate[] = weekly
-    ? [forecastPoints.slice(0, 7), forecastPoints.slice(7, 14)]
-        .filter((chunk) => chunk.length > 0)
-        .map((chunk) => ({
-          key: `estimate-${chunk[0].date}`,
-          axisLabel: formatShortDate(chunk[0].date),
-          title: `${formatShortDate(chunk[0].date)} al ${formatShortDate(chunk[chunk.length - 1].date)}, estimado`,
-          ...weekEstimate(chunk),
-        }))
-    : forecastPoints.map((point) => ({
-        key: `estimate-${point.date}`,
-        axisLabel: formatShortDate(point.date),
-        title: `${formatLongDate(point.date)}, estimado`,
-        value: point.value,
-        low: point.low,
-        high: point.high,
-      }));
-
-  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const index = METRICS.findIndex((item) => item.key === metric);
-    const moves: Record<string, number> = {
-      ArrowRight: (index + 1) % METRICS.length,
-      ArrowLeft: (index - 1 + METRICS.length) % METRICS.length,
-      Home: 0,
-      End: METRICS.length - 1,
-    };
-    if (!(event.key in moves)) return;
-    event.preventDefault();
-    const next = METRICS[moves[event.key]];
-    onMetricChange(next.key);
-    tabsRef.current?.querySelector<HTMLButtonElement>(`[data-metric="${next.key}"]`)?.focus();
-  }
+  const chart = buildChartData(view, metric);
+  const { definition } = chart;
 
   return (
-    <section className="performance" aria-label="Rendimiento del período">
-      <div className="performance-tabs" role="tablist" aria-label="Indicadores" ref={tabsRef} onKeyDown={onKeyDown}>
-        {METRICS.map((item) => {
-          const selected = item.key === metric;
-          const value = view.current[item.key];
-          return (
-            <button
-              key={item.key}
-              type="button"
-              role="tab"
-              data-metric={item.key}
-              aria-selected={selected}
-              aria-controls={panelId}
-              tabIndex={selected ? 0 : -1}
-              className={`performance-tab${selected ? " performance-tab-selected" : ""}`}
-              onClick={() => onMetricChange(item.key)}
-            >
-              <span className="performance-tab-label">{item.label}</span>
-              <AnimatedNumber
-                className="performance-tab-value"
-                value={value}
-                format={(number) => formatMetric(item, number, settings.currency)}
-              />
-              <Change
-                value={metricChange(item, value, view.previous[item.key])}
-                kind={item.kind === "rate" ? "points" : "percent"}
-              />
-            </button>
-          );
-        })}
-        <span className={`performance-indicator performance-indicator-${selectedIndex}`} aria-hidden="true" />
-      </div>
-
+    <section className="panel performance" aria-label="Rendimiento del período">
+      <MetricTabs
+        panelId={panelId}
+        selected={metric}
+        current={view.current}
+        previous={view.previous}
+        onSelect={onMetricChange}
+      />
       <div className="performance-panel" role="tabpanel" id={panelId} aria-label={definition.label}>
-        {missingTicket ? (
-          <div className="performance-empty">
-            <p>Cargá tu ticket promedio para estimar los ingresos.</p>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={onEditSettings}>
-              Cargar ticket
-            </button>
-          </div>
-        ) : (
-          <MetricChart
-            drawKey={`${metric}-${view.period}-${weekly ? "w" : "d"}`}
-            points={points}
-            estimates={estimates}
-            format={(value) => withUnit(definition, value, settings.currency)}
-            formatAxis={(value) => axis(definition, value, settings.currency)}
-            summary={`${definition.label} por ${weekly ? "semana" : "día"} del ${formatShortDate(view.from)} al ${formatShortDate(view.to)}, comparado con el período anterior.`}
-            partialLast={!weekly && definition.kind !== "rate"}
-          />
-        )}
+        <MetricChart
+          drawKey={chart.drawKey}
+          points={chart.points}
+          estimates={chart.estimates}
+          partialLast={chart.partialLast}
+          format={(value) => readout(definition, value)}
+          formatAxis={(value) => axisLabel(definition, value)}
+          summary={`${definition.label} por ${chart.weekly ? "semana" : "día"} del ${formatShortDate(view.from)} al ${formatShortDate(view.to)}, comparado con el período anterior.`}
+        />
         <ul className="performance-legend" aria-label="Referencias">
           <li>
-            <span className="performance-swatch performance-swatch-current" aria-hidden="true" />
+            <span className="performance-swatch" aria-hidden="true" />
             Este período
           </li>
           <li>
             <span className="performance-swatch performance-swatch-previous" aria-hidden="true" />
             Anterior
           </li>
-          {forecast && !missingTicket ? (
+          {chart.forecastTotal !== null ? (
             <li>
               <span className="performance-swatch performance-swatch-estimate" aria-hidden="true" />
               Próximos 14 días
-              <strong>≈ {withUnit(definition, forecast.total, settings.currency)}</strong>
+              <strong>≈ {readout(definition, chart.forecastTotal)}</strong>
             </li>
           ) : null}
         </ul>

@@ -14,10 +14,6 @@
   min-width: 0;
 }
 
-.m-header-controls {
-  grid-area: controls;
-}
-
 .m-header-name {
   display: flex;
   flex-wrap: wrap;
@@ -46,32 +42,20 @@
 }
 
 .m-header-controls {
+  grid-area: controls;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
-.m-select select {
-  min-height: 40px;
+.m-filter .select {
+  width: auto;
   max-width: 200px;
-  padding: 0 32px 0 12px;
-  border: 1px solid var(--signal-border);
   border-radius: var(--signal-radius-md);
-  background: var(--signal-bg-subtle)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c8c9b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
-    no-repeat right 12px center;
-  color: var(--signal-heading);
-  font-size: 0.875rem;
-  appearance: none;
-  cursor: pointer;
 }
 
-.m-select select:hover {
-  border-color: rgba(234, 234, 220, 0.24);
-}
-
-.m-clear {
+.m-header-clear {
   min-height: 40px;
   padding: 0 6px;
   border: 0;
@@ -85,25 +69,6 @@
   grid-area: actions;
   display: flex;
   gap: 4px;
-}
-
-.m-icon-button {
-  display: inline-grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--signal-border);
-  border-radius: var(--signal-radius-md);
-  background: transparent;
-  color: var(--signal-text);
-  transition:
-    color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.m-icon-button:hover:not(:disabled) {
-  border-color: rgba(234, 234, 220, 0.24);
-  color: var(--signal-heading);
 }
 
 @media (max-width: 1080px) {
@@ -138,12 +103,12 @@
     justify-content: center;
   }
 
-  .m-select {
+  .m-filter {
     flex: 1 1 0;
     min-width: 0;
   }
 
-  .m-select select {
+  .m-filter .select {
     width: 100%;
     max-width: none;
   }

@@ -191,9 +191,8 @@ export type MetricsDay = {
   agentReplies: number;
   humanReplies: number;
   qualified: number;
-  closed: number;
-  firstResponses: number;
-  fastResponses: number;
+  responseBuckets: number[];
+  unanswered: number;
 };
 
 export type FirstResponseMetrics = {
@@ -239,8 +238,6 @@ export type BusinessHours = {
 };
 
 export type MetricsSettings = {
-  averageTicket: number | null;
-  currency: string;
   manualReplyMinutes: number;
   businessHours: BusinessHours | null;
 };

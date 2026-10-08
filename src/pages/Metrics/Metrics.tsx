@@ -5,6 +5,7 @@ import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { ChartIcon, SearchIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { useToast } from "../../components/ui/toast";
+import { cx } from "../../util/classNames";
 import { METRICS_DEMO } from "../../data/metrics";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
@@ -77,11 +78,12 @@ export function Metrics() {
         platforms={view?.platforms ?? []}
         categories={view?.categories ?? []}
         range={view}
-        ready={view !== null}
         onPeriodChange={(next) => setParams({ period: next === DEFAULT_PERIOD ? null : String(next) })}
         onFiltersChange={changeFilters}
         onEditSettings={openSettings}
       />
+
+      <div className={cx("metrics-progress", updating && "metrics-progress-active")} aria-hidden="true" />
 
       {error ? (
         <Banner
@@ -129,23 +131,19 @@ export function Metrics() {
           )}
         </div>
       ) : (
-        <div className={`metrics-body${updating ? " metrics-body-updating" : ""}`} aria-busy={updating}>
-          <div className="metrics-progress" aria-hidden="true" />
+        <div className={cx("metrics-body", updating && "metrics-body-updating")} aria-busy={updating}>
           <Signals insights={view.insights} />
           <Performance
             view={view}
             metric={metric}
             onMetricChange={(next) => setParams({ metric: next === "leads" ? null : next })}
-            onEditSettings={openSettings}
           />
+          <FunnelCard view={view} />
           <div className="metrics-grid">
             <Breakdown view={view} metric={metric} filters={filters} onFiltersChange={changeFilters} />
-            <FunnelCard view={view} />
-          </div>
-          <div className="metrics-grid">
-            <HoursCard view={view} />
             <AttentionCard view={view} />
           </div>
+          <HoursCard view={view} />
         </div>
       )}
 

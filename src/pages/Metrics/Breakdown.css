@@ -10,26 +10,39 @@
   border-top: 1px solid var(--signal-border);
   text-align: right;
   vertical-align: middle;
+  transition: background-color 0.2s ease;
 }
 
 .breakdown-table th:first-child {
-  width: 42%;
+  width: 38%;
   padding-left: 0;
   text-align: left;
 }
 
 .breakdown-table thead th {
-  transition: color 0.2s ease;
   padding-top: 0;
   padding-bottom: 10px;
   border-top: 0;
   color: var(--signal-text-muted);
   font-size: 0.75rem;
   font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .breakdown-table tbody th {
   font-weight: 400;
+}
+
+.breakdown-table tbody tr {
+  transition: opacity 0.25s ease;
+}
+
+.breakdown-table tbody tr:hover {
+  opacity: 1;
+}
+
+.breakdown-table tbody tr:hover > * {
+  background: var(--signal-hover);
 }
 
 .breakdown-cell {
@@ -37,8 +50,8 @@
   gap: 8px;
 }
 
-.breakdown-table .meter {
-  max-width: 220px;
+.breakdown-cell .meter {
+  max-width: 200px;
 }
 
 .breakdown-name {
@@ -54,10 +67,12 @@
   font-size: 0.875rem;
   font-weight: 500;
   text-align: left;
+  transition: color 0.2s ease;
 }
 
-.breakdown-name:hover {
-  color: var(--signal-accent-hover);
+.breakdown-name:hover,
+.breakdown-active .breakdown-name {
+  color: var(--signal-accent);
 }
 
 .breakdown-mark {
@@ -76,9 +91,9 @@
 .breakdown-value {
   display: inline-block;
   color: var(--signal-heading);
-  transition: color 0.2s ease;
   font-size: 0.875rem;
   font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .breakdown-sub {
@@ -100,32 +115,6 @@
   opacity: 0.45;
 }
 
-.breakdown-active .breakdown-name {
-  color: var(--signal-accent);
-}
-
-.breakdown-table tbody tr {
-  transition: opacity 0.25s ease;
-}
-
-.breakdown-table tbody tr:hover {
-  opacity: 1;
-}
-
-.breakdown-table tbody th,
-.breakdown-table tbody td {
-  transition: background-color 0.2s ease;
-}
-
-.breakdown-table tbody tr:hover th,
-.breakdown-table tbody tr:hover td {
-  background: rgba(234, 234, 220, 0.02);
-}
-
-.breakdown-name {
-  transition: color 0.2s ease;
-}
-
 @media (max-width: 520px) {
   .breakdown-optional {
     display: none;
@@ -133,5 +122,15 @@
 
   .breakdown-table th:first-child {
     width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breakdown-table th,
+  .breakdown-table td,
+  .breakdown-table tbody tr,
+  .breakdown-name,
+  .breakdown-value {
+    transition: none;
   }
 }

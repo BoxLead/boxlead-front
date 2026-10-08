@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { cx } from "../../util/classNames";
 import { formatNumber } from "../../util/format";
 import { isWithinBusinessHours, WEEKDAYS, WEEKDAYS_SHORT } from "../../util/metrics";
-import { heatLevels, peakWindow } from "./metricsModel";
+import { heatLevels, peakWindow } from "./hours";
 import { MetricsCard } from "./MetricsCard";
-import type { MetricsView } from "./useMetricsView";
+import type { MetricsView } from "./metricsView";
 import "./HoursCard.css";
 
 type HoursCardProps = {
@@ -51,7 +52,7 @@ export function HoursCard({ view }: HoursCardProps) {
               return (
                 <span
                   key={hour}
-                  className={`hours-cell hours-${levels[index]}${open ? " hours-open" : ""}${hovered === index ? " hours-active" : ""}`}
+                  className={cx("hours-cell", `hours-${levels[index]}`, open && "hours-open", hovered === index && "hours-active")}
                   onPointerEnter={() => setHovered(index)}
                   onPointerDown={() => setHovered(index)}
                 />

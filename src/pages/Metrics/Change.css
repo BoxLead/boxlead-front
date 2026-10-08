@@ -5,11 +5,11 @@
   white-space: nowrap;
 }
 
-.change-up {
+.change-good {
   color: var(--signal-success);
 }
 
-.change-down {
+.change-bad {
   color: var(--signal-danger);
 }
 

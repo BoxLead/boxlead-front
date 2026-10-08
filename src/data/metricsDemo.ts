@@ -10,13 +10,17 @@ import type {
 } from "../api/types";
 import { addDays, dateRange, daysBetween, weekdayIndex } from "../util/dates";
 import {
+  emptyAgent,
+  emptyFirstResponse,
+  emptyStatuses,
+  emptyWeek,
   FAST_RESPONSE_BUCKETS,
   HANDOFF_REASONS,
-  HOURS_PER_WEEK,
   isWithinBusinessHours,
-  RESPONSE_BUCKETS,
+  RESPONSE_LIMITS,
 } from "../util/metrics";
-import { effectsFor } from "./metricsDemoScenario";
+import { gammaNoise, pick, poisson, seeded, type Random } from "./demoRandom";
+import { effectsFor, type DayEffects } from "./metricsDemoScenario";
 
 type ChannelProfile = {
   platform: PlatformType;
@@ -28,9 +32,30 @@ type ChannelProfile = {
   agentShare: number;
 };
 
+type Lead = {
+  hour: number;
+  outside: boolean;
+  inbound: number;
+  conversations: number;
+  bucket: number | null;
+  byAgent: boolean;
+  handoff: HandoffReason | null;
+  agentReplies: number;
+  humanReplies: number;
+  qualifiedOn: string | null;
+  status: LeadStatus;
+};
+
+type DemoInput = {
+  from: string;
+  to: string;
+  today: string;
+  timezone: string;
+  categories: CategoryResponse[];
+  settings: MetricsSettings;
+};
+
 export const DEMO_SETTINGS: MetricsSettings = {
-  averageTicket: 60_000,
-  currency: "ARS",
   manualReplyMinutes: 4,
   businessHours: { weekdays: [0, 1, 2, 3, 4, 5], from: 9, to: 19 },
 };
@@ -76,62 +101,81 @@ const PROFILES: ChannelProfile[] = [
 
 const CATEGORY_WEIGHTS = [0.38, 0.27, 0.16, 0.09];
 const CATEGORY_QUALIFY = [1.0, 1.5, 0.85, 0.35];
+const GROWING_CATEGORY = 3;
 const UNCATEGORIZED_WEIGHT = 0.12;
 const AGENT_SPEED = [0.93, 0.06, 0.01, 0, 0, 0, 0];
-const HUMAN_SPEED_OPEN = [0.06, 0.2, 0.22, 0.22, 0.16, 0.11, 0.03];
-const HUMAN_SPEED_CLOSED = [0.02, 0.04, 0.07, 0.12, 0.25, 0.4, 0.1];
-const HUMAN_SPEED_SLOW = [0.01, 0.05, 0.1, 0.2, 0.28, 0.28, 0.08];
-const DISPERSION = 14;
+const TEAM_SPEED = [0.06, 0.2, 0.22, 0.22, 0.16, 0.11, 0.03];
+const TEAM_SPEED_CLOSED = [0.02, 0.04, 0.07, 0.12, 0.25, 0.4, 0.1];
+const TEAM_SPEED_SHORT_STAFFED = [0.01, 0.05, 0.1, 0.2, 0.28, 0.28, 0.08];
 const SPEED_EFFECT = [1.2, 1.1, 0.85, 0.7, 0.58, 0.5, 0.45];
 const HANDOFF_WEIGHTS = [0.45, 0.35, 0.2];
+const HANDOFF_RATE = 0.13;
+const LOST_RATE = 0.38;
+const NOISE_SHAPE = 14;
 const LOOKBACK_DAYS = 12;
-const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 
-function hash(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+type LeadContext = {
+  profile: ChannelProfile;
+  effects: DayEffects;
+  date: string;
+  daysAgo: number;
+  weekday: number;
+  today: string;
+  categoryEffect: number;
+  settings: MetricsSettings;
+};
+
+function firstResponse(roll: Random, context: LeadContext, outside: boolean) {
+  const { profile, effects, daysAgo } = context;
+  const unanswered = roll() < (daysAgo === 0 ? 0.08 : daysAgo <= 2 ? 0.03 : 0);
+  if (unanswered) return { bucket: null, byAgent: false };
+  if (roll() < (outside ? 0.97 : profile.agentShare * effects.agentShare)) {
+    return { bucket: pick(AGENT_SPEED, roll()), byAgent: true };
   }
-  return h >>> 0;
+  const speed = outside ? TEAM_SPEED_CLOSED : effects.slowTeam ? TEAM_SPEED_SHORT_STAFFED : TEAM_SPEED;
+  return { bucket: pick(speed, roll()), byAgent: false };
 }
 
-function random(seed: string): () => number {
-  let state = hash(seed);
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+function simulateLead(roll: Random, context: LeadContext): Lead {
+  const { profile, effects, date, weekday, today, categoryEffect, settings } = context;
+  const hour = pick(profile.hours, roll());
+  const hours = settings.businessHours;
+  const outside = hours ? !isWithinBusinessHours(hours, weekday, hour) : false;
+  const inbound = 2 + Math.floor(roll() * 5);
+  const conversations = roll() < 0.14 ? 2 : 1;
+  const { bucket, byAgent } = firstResponse(roll, context, outside);
+
+  const handoff = byAgent && roll() < HANDOFF_RATE ? HANDOFF_REASONS[pick(HANDOFF_WEIGHTS, roll())] : null;
+  const agentReplies = byAgent ? (handoff ? 1 + Math.floor(roll() * 2) : inbound + Math.floor(roll() * 2)) : 0;
+  const humanReplies =
+    bucket === null ? 0 : byAgent ? (handoff ? 1 + Math.floor(roll() * 3) : 0) : Math.max(1, inbound - Math.floor(roll() * 2));
+
+  const speed = bucket === null ? 0.2 : SPEED_EFFECT[bucket];
+  const qualifies = roll() < Math.min(0.95, profile.qualifyRate * categoryEffect * speed * effects.qualify);
+  const qualifiedOn = addDays(date, Math.floor(roll() * roll() * 3));
+  const closes = qualifies && roll() < Math.min(0.95, profile.closeRate * effects.close);
+  const closedOn = addDays(qualifiedOn, Math.floor(roll() * roll() * 5));
+  const loses = !qualifies && roll() < LOST_RATE;
+  const lostOn = addDays(date, 1 + Math.floor(roll() * 7));
+
+  let status: LeadStatus = bucket === null ? "NEW" : "CONTACTED";
+  if (closes && closedOn <= today) status = "CLOSED";
+  else if (qualifies && qualifiedOn <= today) status = "QUALIFIED";
+  else if (loses && lostOn <= today) status = "LOST";
+
+  return {
+    hour,
+    outside,
+    inbound,
+    conversations,
+    bucket,
+    byAgent,
+    handoff,
+    agentReplies,
+    humanReplies,
+    qualifiedOn: qualifies ? qualifiedOn : null,
+    status,
   };
-}
-
-function pick(weights: number[], roll: number): number {
-  const total = weights.reduce((sum, weight) => sum + weight, 0);
-  let threshold = roll * total;
-  for (let i = 0; i < weights.length; i++) {
-    threshold -= weights[i];
-    if (threshold < 0) return i;
-  }
-  return weights.length - 1;
-}
-
-function poisson(mean: number, next: () => number): number {
-  const limit = Math.exp(-mean);
-  let count = 0;
-  let product = next();
-  while (product > limit) {
-    count++;
-    product *= next();
-  }
-  return count;
-}
-
-function dispersion(next: () => number): number {
-  let total = 0;
-  for (let i = 0; i < DISPERSION; i++) total -= Math.log(1 - next());
-  return total / DISPERSION;
 }
 
 function emptySegment(platform: PlatformType, categoryId: string | null, withHours: boolean): MetricsSegment {
@@ -139,171 +183,127 @@ function emptySegment(platform: PlatformType, categoryId: string | null, withHou
     platform,
     categoryId,
     days: [],
-    leadStatuses: { NEW: 0, CONTACTED: 0, QUALIFIED: 0, LOST: 0, CLOSED: 0 },
-    firstResponse: {
-      agent: RESPONSE_BUCKETS.map(() => 0),
-      human: RESPONSE_BUCKETS.map(() => 0),
-      converted: RESPONSE_BUCKETS.map(() => 0),
-      unanswered: 0,
-    },
-    inboundByHour: Array.from({ length: HOURS_PER_WEEK }, () => 0),
+    leadStatuses: emptyStatuses(),
+    firstResponse: emptyFirstResponse(),
+    inboundByHour: emptyWeek(),
     outsideHours: withHours ? { conversations: 0, answeredUnder5m: 0 } : null,
-    agent: { resolved: 0, handoffs: { ASKED_FOR_HUMAN: 0, AGENT_UNSURE: 0, TAKEN_OVER: 0 } },
+    agent: emptyAgent(),
   };
 }
 
-type DemoInput = {
-  from: string;
-  to: string;
-  today: string;
-  timezone: string;
-  categories: CategoryResponse[];
-  settings: MetricsSettings;
-};
+function emptyDay(date: string): MetricsDay {
+  return {
+    date,
+    leads: 0,
+    conversations: 0,
+    inboundMessages: 0,
+    agentReplies: 0,
+    humanReplies: 0,
+    qualified: 0,
+    responseBuckets: RESPONSE_LIMITS.map(() => 0),
+    unanswered: 0,
+  };
+}
+
+function recordLead(segment: MetricsSegment, day: MetricsDay, lead: Lead, weekday: number) {
+  day.leads++;
+  day.conversations += lead.conversations;
+  day.inboundMessages += lead.inbound;
+  day.agentReplies += lead.agentReplies;
+  day.humanReplies += lead.humanReplies;
+  segment.inboundByHour[weekday * 24 + lead.hour] += Math.ceil(lead.inbound * 0.7);
+  segment.inboundByHour[weekday * 24 + ((lead.hour + 1) % 24)] += Math.floor(lead.inbound * 0.3);
+  segment.leadStatuses[lead.status]++;
+
+  const fast = lead.bucket !== null && lead.bucket < FAST_RESPONSE_BUCKETS;
+  if (lead.bucket === null) {
+    day.unanswered++;
+    segment.firstResponse.unanswered++;
+  } else {
+    day.responseBuckets[lead.bucket]++;
+    (lead.byAgent ? segment.firstResponse.agent : segment.firstResponse.human)[lead.bucket]++;
+    if (lead.status === "QUALIFIED" || lead.status === "CLOSED") segment.firstResponse.converted[lead.bucket]++;
+  }
+  if (segment.agent && lead.byAgent) {
+    if (lead.handoff) segment.agent.handoffs[lead.handoff]++;
+    else segment.agent.resolved++;
+  }
+  if (segment.outsideHours && lead.outside) {
+    segment.outsideHours.conversations++;
+    if (fast) segment.outsideHours.answeredUnder5m++;
+  }
+}
 
 export function buildDemoReport({ from, to, today, timezone, categories, settings }: DemoInput): MetricsReport {
   const ordered = [...categories].sort((a, b) => a.position - b.position);
-  const hours = settings.businessHours;
   const segments = new Map<string, MetricsSegment>();
+  const days = new Map<string, MetricsDay>();
+
   const segmentFor = (platform: PlatformType, categoryId: string | null) => {
     const key = `${platform}|${categoryId ?? ""}`;
-    let segment = segments.get(key);
-    if (!segment) {
-      segment = emptySegment(platform, categoryId, hours !== null);
-      segments.set(key, segment);
-    }
+    const segment = segments.get(key) ?? emptySegment(platform, categoryId, settings.businessHours !== null);
+    segments.set(key, segment);
     return segment;
   };
-
-  const rows = new Map<string, MetricsDay>();
-  const dayRow = (segment: MetricsSegment, date: string) => {
+  const dayOf = (segment: MetricsSegment, date: string) => {
     const key = `${segment.platform}|${segment.categoryId ?? ""}|${date}`;
-    let row = rows.get(key);
-    if (!row) {
-      row = {
-        date,
-        leads: 0,
-        conversations: 0,
-        inboundMessages: 0,
-        agentReplies: 0,
-        humanReplies: 0,
-        qualified: 0,
-        closed: 0,
-        firstResponses: 0,
-        fastResponses: 0,
-      };
-      rows.set(key, row);
-      segment.days.push(row);
+    let day = days.get(key);
+    if (!day) {
+      day = emptyDay(date);
+      days.set(key, day);
+      segment.days.push(day);
     }
-    return row;
+    return day;
   };
-  const inRange = (date: string) => date >= from && date <= to && date <= today;
 
   for (const date of dateRange(addDays(from, -LOOKBACK_DAYS), to)) {
     const daysAgo = daysBetween(date, today);
     if (daysAgo < 0) continue;
-    const created = date >= from;
     const weekday = weekdayIndex(date);
-    const dayOfMonth = Number(date.slice(8));
+    const categoryWeights = [
+      ...ordered.map((_, position) => {
+        const weight = CATEGORY_WEIGHTS[position] ?? 0.04;
+        return position === GROWING_CATEGORY ? weight * (0.8 + 0.45 * Math.max(0, 1 - daysAgo / 90)) : weight;
+      }),
+      UNCATEGORIZED_WEIGHT,
+    ];
 
     for (const profile of PROFILES) {
-      const next = random(`${date}|${profile.platform}`);
-      const effects = effectsFor(profile.platform, daysAgo, dayOfMonth);
-      const mean = profile.leadsPerDay * profile.weekdays[weekday] * effects.volume * dispersion(next);
-      const leads = poisson(daysAgo === 0 ? mean * 0.55 : mean, next);
+      const next = seeded(`${date}|${profile.platform}`);
+      const effects = effectsFor(profile.platform, daysAgo, Number(date.slice(8)));
+      const mean = profile.leadsPerDay * profile.weekdays[weekday] * effects.volume * gammaNoise(NOISE_SHAPE, next);
+      const count = poisson(daysAgo === 0 ? mean * 0.55 : mean, next);
 
-      for (let index = 0; index < leads; index++) {
-        const roll = random(`${date}|${profile.platform}|${index}`);
-        const categoryWeights = ordered.map((_, position) => {
-          const base = CATEGORY_WEIGHTS[position] ?? 0.04;
-          return position === 3 ? base * (0.8 + 0.45 * Math.max(0, 1 - daysAgo / 90)) : base;
-        });
-        const categoryIndex = pick([...categoryWeights, UNCATEGORIZED_WEIGHT], roll());
+      for (let index = 0; index < count; index++) {
+        const roll = seeded(`${date}|${profile.platform}|${index}`);
+        const categoryIndex = pick(categoryWeights, roll());
         const category = ordered[categoryIndex] ?? null;
         const segment = segmentFor(profile.platform, category?.id ?? null);
-        const hour = pick(profile.hours, roll());
-        const outside = hours ? !isWithinBusinessHours(hours, weekday, hour) : false;
-        const inbound = 2 + Math.floor(roll() * 5);
-        const conversations = roll() < 0.14 ? 2 : 1;
-
-        const unansweredChance = daysAgo === 0 ? 0.08 : daysAgo <= 2 ? 0.03 : 0;
-        let bucket: number | null = null;
-        let agentReplies = 0;
-        let humanReplies = 0;
-        let handoff: HandoffReason | null = null;
-        const unanswered = roll() < unansweredChance;
-        if (!unanswered && roll() < (outside ? 0.97 : profile.agentShare * effects.agentShare)) {
-          bucket = pick(AGENT_SPEED, roll());
-          if (roll() < 0.13) {
-            handoff = HANDOFF_REASONS[pick(HANDOFF_WEIGHTS, roll())];
-            agentReplies = 1 + Math.floor(roll() * 2);
-            humanReplies = 1 + Math.floor(roll() * 3);
-          } else {
-            agentReplies = inbound + Math.floor(roll() * 2);
-          }
-        } else if (!unanswered) {
-          bucket = pick(outside ? HUMAN_SPEED_CLOSED : effects.slowTeam ? HUMAN_SPEED_SLOW : HUMAN_SPEED_OPEN, roll());
-          humanReplies = Math.max(1, inbound - Math.floor(roll() * 2));
+        const lead = simulateLead(roll, {
+          profile,
+          effects,
+          date,
+          daysAgo,
+          weekday,
+          today,
+          categoryEffect: category ? (CATEGORY_QUALIFY[categoryIndex] ?? 0.9) : 0.6,
+          settings,
+        });
+        if (lead.qualifiedOn && lead.qualifiedOn >= from && lead.qualifiedOn <= to && lead.qualifiedOn <= today) {
+          dayOf(segment, lead.qualifiedOn).qualified++;
         }
-        const byAgent = bucket !== null && agentReplies > 0;
-
-        const speed = bucket === null ? 0.2 : SPEED_EFFECT[bucket];
-        const categoryEffect = category ? (CATEGORY_QUALIFY[categoryIndex] ?? 0.9) : 0.6;
-        const qualifies = roll() < Math.min(0.95, profile.qualifyRate * categoryEffect * speed * effects.qualify);
-        const qualifiedOn = addDays(date, Math.floor(roll() * roll() * 3));
-        const closes = qualifies && roll() < Math.min(0.95, profile.closeRate * effects.close);
-        const closedOn = addDays(qualifiedOn, Math.floor(roll() * roll() * 5));
-        const loses = !qualifies && roll() < 0.38;
-        const lostOn = addDays(date, 1 + Math.floor(roll() * 7));
-
-        if (qualifies && inRange(qualifiedOn)) dayRow(segment, qualifiedOn).qualified++;
-        if (closes && inRange(closedOn)) dayRow(segment, closedOn).closed++;
-        if (!created) continue;
-
-        const day = dayRow(segment, date);
-        day.leads++;
-        day.conversations += conversations;
-        day.inboundMessages += inbound;
-        day.agentReplies += agentReplies;
-        day.humanReplies += humanReplies;
-        day.firstResponses++;
-        if (bucket !== null && bucket < FAST_RESPONSE_BUCKETS) day.fastResponses++;
-        segment.inboundByHour[weekday * 24 + hour] += Math.ceil(inbound * 0.7);
-        segment.inboundByHour[weekday * 24 + ((hour + 1) % 24)] += Math.floor(inbound * 0.3);
-
-        if (bucket === null) segment.firstResponse.unanswered++;
-        else if (byAgent) segment.firstResponse.agent[bucket]++;
-        else segment.firstResponse.human[bucket]++;
-        if (segment.agent && byAgent) {
-          if (handoff) segment.agent.handoffs[handoff]++;
-          else segment.agent.resolved++;
-        }
-        if (segment.outsideHours && outside) {
-          segment.outsideHours.conversations++;
-          if (bucket !== null && bucket < FAST_RESPONSE_BUCKETS) segment.outsideHours.answeredUnder5m++;
-        }
-
-        let status: LeadStatus = bucket === null ? "NEW" : "CONTACTED";
-        if (closes && closedOn <= today) status = "CLOSED";
-        else if (qualifies && qualifiedOn <= today) status = "QUALIFIED";
-        else if (loses && lostOn <= today) status = "LOST";
-        segment.leadStatuses[status]++;
-        if (bucket !== null && (status === "QUALIFIED" || status === "CLOSED")) {
-          segment.firstResponse.converted[bucket]++;
-        }
+        if (date >= from) recordLead(segment, dayOf(segment, date), lead, weekday);
       }
     }
   }
-
-  segments.forEach((segment) => segment.days.sort((a, b) => a.date.localeCompare(b.date)));
 
   return {
     from,
     to,
     timezone,
     generatedAt: new Date().toISOString(),
-    segments: [...segments.values()].filter(
-      (segment) => segment.days.length > 0 || LEAD_STATUSES.some((status) => segment.leadStatuses[status] > 0),
-    ),
+    segments: [...segments.values()]
+      .filter((segment) => segment.days.length > 0)
+      .map((segment) => ({ ...segment, days: [...segment.days].sort((a, b) => a.date.localeCompare(b.date)) })),
   };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildInsights, type InsightInput } from "./insights";
-import { emptyTotals, rates, type BreakdownRow, type Totals } from "./metricsModel";
+import type { BreakdownRow } from "./breakdown";
+import { emptyTotals, qualificationRate, type Totals } from "./metricsModel";
 
 function totals(patch: Partial<Totals>): Totals {
   return { ...emptyTotals(), ...patch };
@@ -8,14 +9,12 @@ function totals(patch: Partial<Totals>): Totals {
 
 function row(id: string, leads: number, qualified: number, previousLeads = 0): BreakdownRow {
   const t = totals({ leads, qualified });
-  return { id, totals: t, previousLeads, rates: rates(t) };
+  return { id, totals: t, previousLeads, qualification: qualificationRate(t) };
 }
 
 function input(patch: Partial<InsightInput>): InsightInput {
   return {
-    days: 30,
     current: totals({ leads: 100 }),
-    previous: totals({ leads: 100 }),
     channels: [],
     categories: [],
     categoryName: (id) => `Categoría ${id}`,

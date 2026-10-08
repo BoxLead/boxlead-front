@@ -1,0 +1,125 @@
+.metric-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--signal-border);
+}
+
+.metric-tab {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px 20px 18px;
+  border: 0;
+  border-right: 1px solid var(--signal-border);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.metric-tab:last-of-type {
+  border-right: 0;
+}
+
+.metric-tab:hover {
+  background: var(--signal-hover);
+}
+
+.metric-tab-selected,
+.metric-tab-selected:hover {
+  background: color-mix(in srgb, var(--signal-accent) 5%, transparent);
+}
+
+.metric-tab:focus-visible {
+  outline-offset: -2px;
+}
+
+.metric-tab-label {
+  overflow: hidden;
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.metric-tab-selected .metric-tab-label {
+  color: var(--signal-heading);
+}
+
+.metric-tab-value {
+  color: var(--signal-heading);
+  font-size: 1.625rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-tabs-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 25%;
+  height: 2px;
+  background: var(--signal-accent);
+  transition: transform 0.45s var(--signal-ease);
+}
+
+.metric-tabs-indicator-1 {
+  transform: translateX(100%);
+}
+
+.metric-tabs-indicator-2 {
+  transform: translateX(200%);
+}
+
+.metric-tabs-indicator-3 {
+  transform: translateX(300%);
+}
+
+@media (max-width: 1100px) {
+  .metric-tab {
+    padding: 14px 14px 16px;
+  }
+
+  .metric-tab-value {
+    font-size: 1.375rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .metric-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-tab {
+    border-bottom: 1px solid var(--signal-border);
+  }
+
+  .metric-tab:nth-of-type(2n) {
+    border-right: 0;
+  }
+
+  .metric-tab:nth-last-of-type(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .metric-tab-selected {
+    box-shadow: inset 0 -2px 0 var(--signal-accent);
+  }
+
+  .metric-tabs-indicator {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-tab,
+  .metric-tab-label,
+  .metric-tabs-indicator {
+    transition: none;
+  }
+}

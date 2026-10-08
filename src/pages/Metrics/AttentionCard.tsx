@@ -1,35 +1,47 @@
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { formatDuration, formatNumber, formatPercent } from "../../util/format";
-import { estimateMedianSeconds, handoffTotal, ratio } from "./metricsModel";
+import { answeredBuckets, estimateMedianSeconds, handoffTotal, ratio } from "./metricsModel";
 import { MetricsCard } from "./MetricsCard";
-import type { MetricsView } from "./useMetricsView";
+import type { MetricsView } from "./metricsView";
 import "./AttentionCard.css";
 
 type AttentionCardProps = {
   view: MetricsView;
 };
 
+type Row = {
+  label: string;
+  value: string;
+};
+
 export function AttentionCard({ view }: AttentionCardProps) {
   const { firstResponse, agent, outsideHours, agentReplies } = view.totals;
-  const handed = handoffTotal(agent);
-  const handled = agent ? agent.resolved + handed : 0;
-  const hours = (agentReplies * view.settings.manualReplyMinutes) / 60;
-  const rows: [string, string][] = [
-    ...(agent ? ([["Agente", formatDuration(estimateMedianSeconds(firstResponse.agent))]] as [string, string][]) : []),
-    ["Tu equipo", formatDuration(estimateMedianSeconds(firstResponse.human))],
-    ...(outsideHours
-      ? ([
-          ["Fuera de horario", `${formatPercent(ratio(outsideHours.answeredUnder5m, outsideHours.conversations))} en 5 min`],
-        ] as [string, string][])
-      : []),
-    ...(agent ? ([["Horas ahorradas", `≈ ${formatNumber(hours)} h`]] as [string, string][]) : []),
-  ];
+  const handled = agent ? agent.resolved + handoffTotal(agent) : 0;
+  const rows: Row[] = [];
+  if (agent) rows.push({ label: "Agente", value: formatDuration(estimateMedianSeconds(firstResponse.agent)) });
+  rows.push({ label: "Tu equipo", value: formatDuration(estimateMedianSeconds(firstResponse.human)) });
+  if (outsideHours) {
+    rows.push({
+      label: "Fuera de horario",
+      value: `${formatPercent(ratio(outsideHours.answeredUnder5m, outsideHours.conversations))} en 5 min`,
+    });
+  }
+  if (agent) {
+    rows.push({
+      label: "Horas ahorradas",
+      value: `≈ ${formatNumber((agentReplies * view.settings.manualReplyMinutes) / 60)} h`,
+    });
+  }
 
   return (
     <MetricsCard title="Atención">
       <div className="attention-headline">
         <div>
-          <AnimatedNumber className="attention-big" value={view.rates.medianSeconds} format={formatDuration} />
+          <AnimatedNumber
+            className="attention-big"
+            value={estimateMedianSeconds(answeredBuckets(firstResponse))}
+            format={formatDuration}
+          />
           <span className="attention-caption">Primera respuesta</span>
         </div>
         {agent ? (
@@ -40,10 +52,10 @@ export function AttentionCard({ view }: AttentionCardProps) {
         ) : null}
       </div>
       <dl className="attention-rows">
-        {rows.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
+        {rows.map((row) => (
+          <div key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
           </div>
         ))}
       </dl>

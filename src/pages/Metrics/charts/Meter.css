@@ -3,11 +3,11 @@
 }
 
 .meter-track {
-  fill: rgba(234, 234, 220, 0.07);
+  fill: var(--signal-hairline);
 }
 
 .meter-fill {
-  fill: var(--platform-color, var(--category-color, var(--signal-accent)));
+  fill: var(--signal-accent);
   transform-box: fill-box;
   transform-origin: left center;
   transition: width 0.5s var(--signal-ease);
