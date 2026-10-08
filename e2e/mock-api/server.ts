@@ -30,6 +30,10 @@ const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "G
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 const MELI_ANSWER_LIMIT = 2000;
 const MELI_MESSAGE_LIMIT = 350;
+const INSTAGRAM_COMMENT_LIMIT = 2200;
+const HOUR = 3_600_000;
+const MESSAGING_WINDOW = 24 * HOUR;
+const PRIVATE_REPLY_WINDOW = 7 * 24 * HOUR;
 const CATEGORY_COLORS: CategoryColor[] = ["BLUE", "GREEN", "YELLOW", "ORANGE", "RED", "PURPLE", "PINK", "GRAY"];
 const MAX_CATEGORIES = 30;
 const NAME_IN_USE = "Category name already in use";
@@ -143,16 +147,10 @@ function meliReply(
       fail(res, 409, "Cannot send MELI message: MELI only lets you answer open pre-sale questions, and this buyer has none unanswered.");
       return null;
     }
-    return {
-      id: nextId("5e55"),
-      conversationId: conversation.id,
-      direction: "OUTBOUND",
+    return outbound(conversation, content, {
       externalMessageId: `${open.externalMessageId}:answer`,
-      content,
       contextRef: open.contextRef ?? null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
   }
   if (content.length > MELI_MESSAGE_LIMIT) {
     fail(res, 400, `MELI messages are limited to ${MELI_MESSAGE_LIMIT} characters`);
@@ -162,16 +160,78 @@ function meliReply(
     fail(res, 409, "Cannot send MELI message: no order/pack is known for this conversation yet. It is learned from the buyer's next message.");
     return null;
   }
+  return outbound(conversation, content, { externalMessageId: nextId("meli").replace(/-/g, "") });
+}
+
+function outbound(
+  conversation: StoredConversation,
+  content: string,
+  extra: Partial<MessageResponse> = {},
+): MessageResponse {
+  const now = new Date().toISOString();
   return {
     id: nextId("5e55"),
     conversationId: conversation.id,
     direction: "OUTBOUND",
-    externalMessageId: nextId("meli").replace(/-/g, ""),
+    externalMessageId: nextId("igmsg").replace(/-/g, ""),
+    kind: "TEXT",
     content,
     contextRef: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    replyToExternalId: null,
+    createdAt: now,
+    updatedAt: now,
+    ...extra,
   };
+}
+
+function instagramPublicReply(
+  res: ServerResponse,
+  conversation: StoredConversation,
+  content: string,
+  replyToMessageId: unknown,
+): MessageResponse | null {
+  const comment = messagesOf(conversation.id).find((m) => m.id === replyToMessageId && m.kind === "COMMENT");
+  if (!comment || comment.direction !== "INBOUND") {
+    fail(res, 400, "The comment to reply to does not belong to this conversation");
+    return null;
+  }
+  if (content.length > INSTAGRAM_COMMENT_LIMIT) {
+    fail(res, 400, `Instagram comments are limited to ${INSTAGRAM_COMMENT_LIMIT} characters`);
+    return null;
+  }
+  return outbound(conversation, content, {
+    kind: "COMMENT",
+    contextRef: comment.contextRef ?? null,
+    replyToExternalId: comment.externalMessageId,
+  });
+}
+
+function instagramDirectReply(
+  res: ServerResponse,
+  conversation: StoredConversation,
+  content: string,
+): MessageResponse | null {
+  const all = messagesOf(conversation.id);
+  const now = Date.now();
+  const lastText = all.filter((m) => m.direction === "INBOUND" && m.kind !== "COMMENT").at(-1);
+  if (lastText && now - Date.parse(lastText.createdAt) < MESSAGING_WINDOW) return outbound(conversation, content);
+  const privatelyAnswered = new Set(
+    all.filter((m) => m.direction === "OUTBOUND" && m.kind !== "COMMENT").map((m) => m.replyToExternalId),
+  );
+  const comment = all
+    .filter((m) => m.direction === "INBOUND" && m.kind === "COMMENT")
+    .filter((m) => now - Date.parse(m.createdAt) < PRIVATE_REPLY_WINDOW)
+    .filter((m) => !privatelyAnswered.has(m.externalMessageId))
+    .at(-1);
+  if (!comment) {
+    fail(
+      res,
+      409,
+      "Cannot send Instagram message: the reply window is closed and there is no recent comment left to answer privately.",
+    );
+    return null;
+  }
+  return outbound(conversation, content, { replyToExternalId: comment.externalMessageId });
 }
 
 function withLeadCount(category: Omit<CategoryResponse, "leadCount">): CategoryResponse {
@@ -393,6 +453,11 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 204);
     }
     if (parts[2] === "context" && method === "GET") {
+      if (conversation.platform === "INSTAGRAM") {
+        const refs = [...new Set(messagesOf(conversation.id).map((m) => m.contextRef).filter(Boolean))];
+        const items = refs.map((ref) => state.posts[ref as string]).filter(Boolean).map(absoluteImage);
+        return send(res, 200, { items });
+      }
       if (conversation.platform !== "MELI") return send(res, 200, { items: [] });
       const account = connectionFor(conversation);
       if (account?.needsReconnection) {
@@ -419,14 +484,22 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       if (body.direction === "OUTBOUND" && conversation.platform === "MELI") {
         created = meliReply(res, conversation, content);
         if (!created) return;
+      } else if (body.direction === "OUTBOUND" && conversation.platform === "INSTAGRAM") {
+        created =
+          body.kind === "COMMENT"
+            ? instagramPublicReply(res, conversation, content, body.replyToMessageId)
+            : instagramDirectReply(res, conversation, content);
+        if (!created) return;
       } else {
         created = {
           id: nextId("5e55"),
           conversationId: conversation.id,
           direction: body.direction === "INBOUND" ? "INBOUND" : "OUTBOUND",
           externalMessageId: null,
+          kind: "TEXT",
           content,
           contextRef: null,
+          replyToExternalId: null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -435,19 +508,6 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       conversation.updatedAt = created.createdAt;
       return send(res, 201, created);
     }
-  }
-
-  if (parts[0] === "comments" && parts[1] === "threads") {
-    if (parts.length === 2) {
-      const leadId = url.searchParams.get("leadId");
-      return send(res, 200, state.threads.filter((t) => !leadId || t.leadId === leadId));
-    }
-    const thread = state.threads.find((t) => t.id === parts[2]);
-    if (!thread) return fail(res, 404, "Comment thread not found");
-    if (parts[3] === "comments") {
-      return send(res, 200, state.comments.filter((c) => c.commentThreadId === thread.id));
-    }
-    return send(res, 200, thread);
   }
 
   if (parts[0] === "oauth") {

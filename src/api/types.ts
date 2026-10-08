@@ -47,13 +47,17 @@ export type ConversationResponse = {
   updatedAt: string;
 };
 
+export type MessageKind = "TEXT" | "COMMENT";
+
 export type MessageResponse = {
   id: string;
   conversationId: string;
   direction: MessageDirection;
   externalMessageId: string | null;
+  kind: MessageKind;
   content: string | null;
   contextRef?: string | null;
+  replyToExternalId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -62,12 +66,13 @@ export type CreateMessageRequest = {
   direction: MessageDirection;
   content?: string;
   externalMessageId?: string;
+  kind?: MessageKind;
+  replyToMessageId?: string;
 };
 
 export type LeadResponse = {
   id: string;
   platform: PlatformType;
-  campaignId: string | null;
   externalLeadId: string | null;
   name: string | null;
   email: string | null;
@@ -110,30 +115,7 @@ export type WhatsAppConfig = {
   configId: string;
 };
 
-export type CommentThreadResponse = {
-  id: string;
-  leadId: string;
-  platform: PlatformType;
-  externalMediaId: string;
-  mediaProductType: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CommentResponse = {
-  id: string;
-  commentThreadId: string;
-  parentCommentId: string | null;
-  platform: PlatformType;
-  externalCommentId: string;
-  authorExternalId: string | null;
-  authorUsername: string | null;
-  text: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type ContextItemKind = "LISTING" | "ORDER";
+export type ContextItemKind = "LISTING" | "ORDER" | "POST";
 
 export type ContextLine = {
   externalItemId: string | null;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ConversationResponse, LeadResponse, MessageResponse } from "../../api/types";
-import { filterRows, groupByDay, pairQuestions, toRows, unreadBy } from "./inboxModel";
+import { answeredCommentIds, filterRows, groupByDay, pairQuestions, toRows, unreadBy } from "./inboxModel";
 
 const conversation = (patch: Partial<ConversationResponse>): ConversationResponse => ({
   id: "c",
@@ -19,7 +19,9 @@ const message = (patch: Partial<MessageResponse>): MessageResponse => ({
   conversationId: "c",
   direction: "INBOUND",
   externalMessageId: null,
+  kind: "TEXT",
   content: "",
+  replyToExternalId: null,
   createdAt: "2026-10-01T10:00:00Z",
   updatedAt: "2026-10-01T10:00:00Z",
   ...patch,
@@ -28,7 +30,7 @@ const message = (patch: Partial<MessageResponse>): MessageResponse => ({
 describe("toRows", () => {
   it("prefers the summary name, falls back to the lead and sorts by last activity", () => {
     const leads = new Map<string, LeadResponse>([
-      ["l2", { id: "l2", platform: "WHATSAPP", campaignId: null, externalLeadId: "549", name: null, email: null, phone: "+549", status: "NEW", postSaleOnly: false, createdAt: "", updatedAt: "" }],
+      ["l2", { id: "l2", platform: "WHATSAPP", externalLeadId: "549", name: null, email: null, phone: "+549", status: "NEW", postSaleOnly: false, createdAt: "", updatedAt: "" }],
     ]);
     const rows = toRows(
       [
@@ -115,5 +117,18 @@ describe("groupByDay", () => {
       ["Ayer", 1],
       ["Hoy", 2],
     ]);
+  });
+});
+
+describe("answeredCommentIds", () => {
+  it("lists the comments that have a public reply and ignores direct messages", () => {
+    const answered = answeredCommentIds([
+      message({ kind: "COMMENT", direction: "INBOUND", externalMessageId: "c-1" }),
+      message({ kind: "COMMENT", direction: "OUTBOUND", externalMessageId: "c-2", replyToExternalId: "c-1" }),
+      message({ kind: "TEXT", direction: "OUTBOUND", externalMessageId: "m-1", replyToExternalId: "c-3" }),
+      message({ kind: "COMMENT", direction: "INBOUND", externalMessageId: "c-4", replyToExternalId: "c-1" }),
+    ]);
+
+    expect([...answered]).toEqual(["c-1"]);
   });
 });

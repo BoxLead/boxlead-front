@@ -24,7 +24,19 @@ export async function login(page: Page, path = "/app/inbox") {
   if (path !== "/app/inbox") await page.goto(path);
 }
 
+async function waitForEnterAnimations(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+        .map((animation) => animation.finished),
+    ),
+  );
+}
+
 export async function expectAccessible(page: Page) {
+  await waitForEnterAnimations(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
