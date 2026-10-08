@@ -181,7 +181,18 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
     const key = `${segment.platform}|${segment.categoryId ?? ""}|${date}`;
     let row = rows.get(key);
     if (!row) {
-      row = { date, leads: 0, conversations: 0, inboundMessages: 0, agentReplies: 0, humanReplies: 0, qualified: 0, closed: 0 };
+      row = {
+        date,
+        leads: 0,
+        conversations: 0,
+        inboundMessages: 0,
+        agentReplies: 0,
+        humanReplies: 0,
+        qualified: 0,
+        closed: 0,
+        firstResponses: 0,
+        fastResponses: 0,
+      };
       rows.set(key, row);
       segment.days.push(row);
     }
@@ -257,6 +268,8 @@ export function buildDemoReport({ from, to, today, timezone, categories, setting
         day.inboundMessages += inbound;
         day.agentReplies += agentReplies;
         day.humanReplies += humanReplies;
+        day.firstResponses++;
+        if (bucket !== null && bucket < FAST_RESPONSE_BUCKETS) day.fastResponses++;
         segment.inboundByHour[weekday * 24 + hour] += Math.ceil(inbound * 0.7);
         segment.inboundByHour[weekday * 24 + ((hour + 1) % 24)] += Math.floor(inbound * 0.3);
 

@@ -210,6 +210,8 @@ export type MetricsDay = {
   humanReplies: number;
   qualified: number;
   closed: number;
+  firstResponses: number;
+  fastResponses: number;
 };
 
 export type FirstResponseMetrics = {
