@@ -37,6 +37,7 @@ export type SeriesPoint = {
 };
 
 const ROLLING_DAYS = 7;
+const MIN_LEADING_DAYS = 4;
 
 function emptyDay(date: string): DayTotals {
   return { date, leads: 0, qualified: 0, closed: 0, firstResponses: 0, fastResponses: 0 };
@@ -109,6 +110,10 @@ export function metricSeries(
     const total = daysBetween(from, to) + 1;
     let start = from;
     let size = total % 7 || 7;
+    if (size < MIN_LEADING_DAYS && total > 7) {
+      start = addDays(start, size);
+      size = 7;
+    }
     while (start <= to) {
       const end = addDays(start, size - 1);
       points.push({ date: start, end, value: metricValue(key, sum(pick(start, end)), ticket) });

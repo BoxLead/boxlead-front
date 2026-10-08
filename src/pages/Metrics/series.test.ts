@@ -73,7 +73,9 @@ describe("metric series", () => {
     const long = dayTotals([segment([day("2026-09-01", 1), day("2026-10-07", 5)])], "2026-09-01", "2026-10-07");
     const weeks = metricSeries("leads", long, "2026-09-01", "2026-10-07", true, null);
     expect(weeks[weeks.length - 1]).toEqual({ date: "2026-10-01", end: "2026-10-07", value: 5 });
-    expect(weeks[0]).toMatchObject({ date: "2026-09-01", end: "2026-09-02", value: 1 });
+    expect(weeks[0]).toMatchObject({ date: "2026-09-03", end: "2026-09-09", value: 0 });
+    const ninety = metricSeries("leads", long, "2026-07-10", "2026-10-07", true, null);
+    expect(ninety[0]).toMatchObject({ date: "2026-07-10", end: "2026-07-15" });
   });
 
   it("compares rates in points and the rest in percent", () => {

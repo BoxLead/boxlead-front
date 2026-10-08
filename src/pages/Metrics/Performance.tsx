@@ -13,6 +13,14 @@ type PerformanceProps = {
   onEditSettings: () => void;
 };
 
+const SPARSE_PER_DAY = 3;
+
+function weekEstimate(days: { value: number; low: number; high: number }[]) {
+  const value = days.reduce((sum, day) => sum + day.value, 0);
+  const spread = Math.sqrt(days.reduce((sum, day) => sum + ((day.high - day.low) / 2) ** 2, 0));
+  return { value, low: Math.max(0, value - spread), high: value + spread };
+}
+
 function withUnit(definition: MetricDefinition, value: number, currency: string): string {
   const text = formatMetric(definition, value, currency);
   if (definition.kind !== "count") return text;
@@ -31,7 +39,9 @@ export function Performance({ view, metric, onMetricChange, onEditSettings }: Pe
   const definition = METRICS.find((item) => item.key === metric) ?? METRICS[0];
   const { settings } = view;
   const ticket = settings.averageTicket;
-  const weekly = view.period === 90;
+  const countKey = metric === "revenue" ? "sales" : metric;
+  const sparse = definition.kind !== "rate" && (view.current[countKey] ?? 0) / view.days.length < SPARSE_PER_DAY;
+  const weekly = view.period === 90 || (view.period === 30 && sparse);
   const lookback = [...view.previousDays, ...view.days];
   const current = metricSeries(metric, lookback, view.from, view.to, weekly, ticket);
   const previous = metricSeries(metric, view.previousDays, view.previousFrom, view.previousTo, weekly, ticket);
@@ -56,9 +66,7 @@ export function Performance({ view, metric, onMetricChange, onEditSettings }: Pe
           key: `estimate-${chunk[0].date}`,
           axisLabel: formatShortDate(chunk[0].date),
           title: `${formatShortDate(chunk[0].date)} al ${formatShortDate(chunk[chunk.length - 1].date)}, estimado`,
-          value: chunk.reduce((sum, p) => sum + p.value, 0),
-          low: chunk.reduce((sum, p) => sum + p.low, 0),
-          high: chunk.reduce((sum, p) => sum + p.high, 0),
+          ...weekEstimate(chunk),
         }))
     : forecastPoints.map((point) => ({
         key: `estimate-${point.date}`,
