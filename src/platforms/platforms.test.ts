@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LeadResponse } from "../api/types";
-import { CONNECTABLE_PLATFORMS, getPlatform, hasStages, stageLabel } from ".";
+import { CONNECTABLE_PLATFORMS, getPlatform, hasStages, stageChoices, stageLabel } from ".";
 
 const lead = (patch: Partial<LeadResponse>): LeadResponse => ({
   id: "1",
@@ -102,5 +102,18 @@ describe("contact fields", () => {
 describe("registry", () => {
   it("offers the four live channels for connection, MercadoLibre first", () => {
     expect(CONNECTABLE_PLATFORMS.map((p) => p.id)).toEqual(["MELI", "WHATSAPP", "INSTAGRAM", "META"]);
+  });
+});
+
+describe("stageChoices", () => {
+  it("lists only the stages of the chosen channel", () => {
+    expect(stageChoices("MELI").map((choice) => choice.label)).toEqual(["Preguntas", "Postventa"]);
+    expect(stageChoices("WHATSAPP").map((choice) => ({ value: choice.value, label: choice.label }))).toEqual([
+      { value: "PRE_SALE", label: "Chats" },
+    ]);
+  });
+
+  it("uses generic names when no channel is chosen", () => {
+    expect(stageChoices(null).map((choice) => choice.label)).toEqual(["Preventa", "Postventa"]);
   });
 });

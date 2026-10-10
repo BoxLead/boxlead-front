@@ -1,14 +1,19 @@
 import type {
   AccountConnectionResponse,
+  AgentResponse,
+  BusinessProfile,
   CategoryResponse,
   ContextItem,
   ConversationResponse,
   LeadResponse,
   MessageResponse,
   PlatformType,
+  ReplyDraft,
+  ReplyMode,
+  SalesStage,
 } from "../../src/api/types.ts";
 
-export type Scenario = "default" | "empty" | "meli-reconnect";
+export type Scenario = "default" | "empty" | "meli-reconnect" | "agents" | "agents-limited";
 
 export type StoredConversation = Omit<
   ConversationResponse,
@@ -30,6 +35,11 @@ export type MockState = {
   listings: Record<string, ContextItem>;
   orders: Record<string, ContextItem[]>;
   posts: Record<string, ContextItem>;
+  agents: AgentResponse[];
+  businessProfile: BusinessProfile;
+  drafts: ReplyDraft[];
+  playgroundRuns: number;
+  playgroundLimit: number;
 };
 
 export const MELI_SELLER_ID = "241550991";
@@ -167,11 +177,17 @@ export function emptyState(): MockState {
     listings: {},
     orders: {},
     posts: {},
+    agents: [],
+    businessProfile: { description: "", tone: null, autoCategorize: true },
+    drafts: [],
+    playgroundRuns: 0,
+    playgroundLimit: 30,
   };
 }
 
 export function buildState(scenario: Scenario): MockState {
   if (scenario === "empty") return emptyState();
+  if (scenario === "agents" || scenario === "agents-limited") return withAgents(buildState("default"), scenario);
 
   const state = emptyState();
 
@@ -373,5 +389,74 @@ export function buildState(scenario: Scenario): MockState {
     }),
   );
 
+  return state;
+}
+
+function scope(
+  platform: PlatformType | null,
+  categoryId: string | null,
+  salesStage: SalesStage | null,
+  replyMode: ReplyMode,
+): AgentResponse["scopes"][number] {
+  return { id: nextId("5c0e"), platform, categoryId, salesStage, replyMode };
+}
+
+function withAgents(state: MockState, scenario: Scenario): MockState {
+  const presupuesto = state.categories.find((c) => c.name === "Presupuesto");
+  if (!presupuesto) throw new Error("fixture: missing Presupuesto category");
+  const at = ago(60 * 24 * 3);
+
+  state.businessProfile = {
+    description: "Vendemos audio y accesorios. Envíos a todo el país en 48 horas. Aceptamos todos los medios de pago.",
+    tone: "cercano y directo",
+    autoCategorize: true,
+  };
+  state.agents.push(
+    {
+      id: nextId("a9e1"),
+      name: "Ventas",
+      instructions: "Respondé con entusiasmo, ofrecé el producto y cerrá la venta.",
+      enabled: true,
+      position: 0,
+      scopes: [scope(null, null, null, "AUTO"), scope(null, presupuesto.id, null, "DRAFT")],
+      createdAt: at,
+      updatedAt: at,
+    },
+    {
+      id: nextId("a9e1"),
+      name: "Postventa",
+      instructions: "",
+      enabled: false,
+      position: 1,
+      scopes: [scope("MELI", null, "POST_SALE", "AUTO")],
+      createdAt: at,
+      updatedAt: at,
+    },
+  );
+
+  const whatsappChat = state.conversations.find((c) => c.platform === "WHATSAPP");
+  const instagramChat = state.conversations.find(
+    (c) => c.platform === "INSTAGRAM" && state.messages.some((m) => m.conversationId === c.id && m.kind === "TEXT"),
+  );
+  if (!whatsappChat || !instagramChat) throw new Error("fixture: missing conversations");
+
+  const answered = state.messages.find(
+    (m) => m.conversationId === whatsappChat.id && m.direction === "OUTBOUND",
+  );
+  if (answered) answered.agentName = "Ventas";
+  const trigger = state.messages.filter((m) => m.conversationId === whatsappChat.id).at(-1);
+  state.drafts.push({
+    id: nextId("d4af"),
+    conversationId: whatsappChat.id,
+    content: "¡Perfecto Martín! Pasame el CUIT y te mandamos la factura A hoy mismo.",
+    agentName: "Ventas",
+    basedOnMessageId: trigger?.id ?? null,
+    createdAt: ago(4),
+    updatedAt: ago(4),
+  });
+  instagramChat.needsAttention = true;
+  instagramChat.attentionReason = "El cliente pidió hablar con una persona.";
+
+  state.playgroundLimit = scenario === "agents-limited" ? 0 : 30;
   return state;
 }

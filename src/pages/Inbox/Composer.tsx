@@ -6,11 +6,12 @@ import type { ReplyPolicy } from "../../platforms/types";
 type ComposerProps = {
   policy: ReplyPolicy;
   label: string;
+  initialValue?: string;
   onSend: (content: string) => Promise<boolean>;
 };
 
-export function Composer({ policy, label, onSend }: ComposerProps) {
-  const [draft, setDraft] = useState("");
+export function Composer({ policy, label, initialValue = "", onSend }: ComposerProps) {
+  const [draft, setDraft] = useState(initialValue);
   const [sending, setSending] = useState(false);
   const hintId = useId();
   const counterId = useId();

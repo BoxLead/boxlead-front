@@ -6,7 +6,7 @@ type DialogProps = {
   open: boolean;
   title: string;
   description?: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   busy?: boolean;
   onClose: () => void;
   children: ReactNode;

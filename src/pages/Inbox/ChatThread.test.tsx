@@ -140,6 +140,25 @@ describe("ChatThread comments", () => {
     expect(within(items[1]).getByText(/Respondiste en público/)).toBeInTheDocument();
   });
 
+  it("attributes a public reply to the agent that wrote it", () => {
+    renderThread([
+      message({ id: "m-2", kind: "COMMENT", externalMessageId: "c-1", content: "¿Precio?" }),
+      message({
+        id: "m-3",
+        direction: "OUTBOUND",
+        kind: "COMMENT",
+        externalMessageId: "c-2",
+        replyToExternalId: "c-1",
+        content: "Te escribimos",
+        agentName: "Ventas",
+      }),
+    ]);
+
+    const reply = screen.getAllByRole("listitem")[1];
+    expect(within(reply).getByText(/Respondido por Ventas en público/)).toBeInTheDocument();
+    expect(within(reply).queryByText(/Respondiste en público/)).toBeNull();
+  });
+
   it("does not offer public replies on channels that cannot do them", () => {
     render(
       <ChatThread

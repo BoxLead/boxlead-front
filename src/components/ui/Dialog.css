@@ -16,6 +16,10 @@
   width: min(480px, calc(100vw - 32px));
 }
 
+.dialog-lg {
+  width: min(680px, calc(100vw - 32px));
+}
+
 .dialog::backdrop {
   background: var(--signal-backdrop);
 }
@@ -31,6 +35,7 @@
 .dialog-body {
   display: grid;
   gap: var(--signal-space-md);
+  min-width: 0;
   padding: var(--signal-space-lg);
 }
 

@@ -2,6 +2,7 @@ import type { ContextItem } from "../../api/types";
 import { QuestionIcon } from "../../components/icons/UiIcons";
 import { Tag } from "../../components/ui/Tag";
 import type { ContextStatus } from "../../platforms/types";
+import { answeredByLabel } from "../../util/agents";
 import { formatRelative } from "../../util/format";
 import type { QuestionEntry, QuestionThread as Thread } from "./inboxModel";
 import { ListingSummary } from "./ListingSummary";
@@ -65,7 +66,8 @@ export function QuestionThread({ thread, listings, statusOf, pending, onRetry, o
                     {entry.answer ? (
                       <div className="question-answer">
                         <span className="question-answer-label">
-                          Tu respuesta · <time dateTime={entry.answer.createdAt}>{formatRelative(entry.answer.createdAt)}</time>
+                          {entry.answer.agentName ? answeredByLabel(entry.answer.agentName) : "Tu respuesta"} ·{" "}
+                          <time dateTime={entry.answer.createdAt}>{formatRelative(entry.answer.createdAt)}</time>
                         </span>
                         <p>{entry.answer.content}</p>
                       </div>

@@ -3,6 +3,8 @@ import { expectAccessible, login, resetApi, screenshot } from "./support.ts";
 
 const list = (page: Page) => page.getByRole("list", { name: "Conversaciones" });
 const openConversation = async (page: Page, name: string) => {
+  const back = page.getByRole("link", { name: "Volver a la lista" });
+  if (await back.isVisible()) await back.click();
   await list(page).getByRole("link", { name: new RegExp(name) }).click();
   await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
 };
@@ -192,4 +194,90 @@ test("on small screens the list and the conversation take turns", async ({ page 
   await expect(page.getByRole("list", { name: "Conversaciones" })).toBeHidden();
   await page.getByRole("link", { name: "Volver a la lista" }).click();
   await expect(page.getByRole("list", { name: "Conversaciones" })).toBeVisible();
+});
+
+test.describe("agents in the inbox", () => {
+  test.beforeEach(async () => {
+    await resetApi("agents");
+  });
+
+  test("a draft from an agent can be sent as it is", async ({ page }) => {
+    await login(page);
+    await openConversation(page, "Martín Herrera");
+    const draft = page.getByRole("region", { name: "Borrador de Ventas" });
+    await expect(draft).toContainText("Pasame el CUIT y te mandamos la factura A hoy mismo.");
+    await expectAccessible(page);
+    await screenshot(page, "inbox-draft");
+
+    await draft.getByRole("button", { name: "Enviar borrador" }).click();
+    await expect(page.locator(".bubble-list").getByText("Pasame el CUIT y te mandamos la factura A hoy mismo.")).toBeVisible();
+    await expect(draft).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+  });
+
+  test("a draft can be edited before sending", async ({ page }) => {
+    await login(page);
+    await openConversation(page, "Martín Herrera");
+    await page.getByRole("button", { name: "Editar borrador" }).click();
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Descartar borrador" })).toBeVisible();
+
+    const composer = page.getByLabel("Responder a Martín Herrera");
+    await expect(composer).toHaveValue("¡Perfecto Martín! Pasame el CUIT y te mandamos la factura A hoy mismo.");
+    await composer.fill("¡Perfecto Martín! Te mandamos la factura A mañana.");
+    await composer.press("Enter");
+    await expect(page.getByText("Te mandamos la factura A mañana.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+  });
+
+  test("a draft being edited can still be discarded", async ({ page }) => {
+    await login(page);
+    await openConversation(page, "Martín Herrera");
+    await page.getByRole("button", { name: "Editar borrador" }).click();
+    const composer = page.getByLabel("Responder a Martín Herrera");
+    await expect(composer).not.toHaveValue("");
+    await page.getByRole("button", { name: "Descartar borrador" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Descartaste el borrador." })).toBeVisible();
+    await expect(composer).toHaveValue("");
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+  });
+
+  test("a draft can be discarded", async ({ page }) => {
+    await login(page);
+    await openConversation(page, "Martín Herrera");
+    await page.getByRole("button", { name: "Descartar borrador" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Descartaste el borrador." })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+    await expect(page.getByLabel("Responder a Martín Herrera")).toHaveValue("");
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
+  });
+
+  test("replies written by an agent say who answered", async ({ page }) => {
+    await login(page);
+    await openConversation(page, "Martín Herrera");
+    await expect(page.getByText("Respondido por Ventas")).toHaveCount(1);
+    await openConversation(page, "sofi.decoraciones");
+    await expect(page.getByText("Respondido por")).toHaveCount(0);
+  });
+
+  test("a handoff shows its reason until a person answers", async ({ page }) => {
+    await login(page);
+    await openConversation(page, "sofi.decoraciones");
+    const banner = page.getByRole("status").filter({ hasText: "Un agente pidió tu atención" });
+    await expect(banner).toContainText("El cliente pidió hablar con una persona.");
+    await expectAccessible(page);
+    await screenshot(page, "inbox-handoff");
+
+    await page.getByLabel("Responder a sofi.decoraciones").fill("Hola Sofi, te escribo yo.");
+    await page.getByRole("button", { name: "Enviar" }).click();
+    await expect(page.getByText("Hola Sofi, te escribo yo.")).toBeVisible();
+    await expect(banner).toBeHidden();
+    await openConversation(page, "Martín Herrera");
+    await expect(page.getByRole("status").filter({ hasText: "Un agente pidió tu atención" })).toHaveCount(0);
+  });
 });

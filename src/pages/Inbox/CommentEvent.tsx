@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ContextItem, MessageResponse } from "../../api/types";
 import { ExternalLinkIcon } from "../../components/icons/UiIcons";
 import type { CommentReplyPolicy, ReplyPolicy } from "../../platforms/types";
+import { answeredByLabel } from "../../util/agents";
 import { formatTime } from "../../util/format";
 import { safeExternalUrl } from "../../util/links";
 import { Composer } from "./Composer";
@@ -38,8 +39,14 @@ export function CommentEvent({ message, contactName, post, policy, answered, onR
   return (
     <li className={`comment-event${outbound ? " comment-event-outbound" : ""}`}>
       <p className="comment-event-title">
-        <span className="visually-hidden">{outbound ? "Vos" : contactName}: </span>
-        {outbound ? `Respondiste en público en ${postLabel}` : `Comentó en ${postLabel}`}
+        <span className="visually-hidden">
+          {outbound ? (message.agentName ? answeredByLabel(message.agentName) : "Vos") : contactName}:{" "}
+        </span>
+        {outbound
+          ? message.agentName
+            ? `${answeredByLabel(message.agentName)} en público en ${postLabel}`
+            : `Respondiste en público en ${postLabel}`
+          : `Comentó en ${postLabel}`}
       </p>
       {post && (postUrl || post.imageUrl || post.title) ? (
         <p className="comment-event-post">

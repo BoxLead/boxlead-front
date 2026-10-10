@@ -11,7 +11,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
 import { AttentionCard } from "./AttentionCard";
-import { Breakdown } from "./Breakdown";
+import { Breakdown } from "./Breakdown.tsx";
 import { FunnelCard } from "./FunnelCard";
 import { HoursCard } from "./HoursCard";
 import { MetricsHeader } from "./MetricsHeader";
