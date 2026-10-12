@@ -17,6 +17,7 @@ import {
   type MockState,
   type Scenario,
   type StoredConversation,
+  WHATSAPP_TEMPLATES,
 } from "./fixtures.ts";
 import {
   encodeEvents,
@@ -141,6 +142,40 @@ function connectionFor(conversation: StoredConversation): AccountConnectionRespo
 
 function absoluteImage<T extends { imageUrl: string | null }>(item: T): T {
   return item.imageUrl?.startsWith("/__img/") ? { ...item, imageUrl: `${SELF}${item.imageUrl}` } : item;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function templateReply(
+  res: ServerResponse,
+  conversation: StoredConversation,
+  request: Record<string, unknown>,
+): MessageResponse | null {
+  const template = conversation.platform === "WHATSAPP" ? WHATSAPP_TEMPLATES.find((t) => t.id === request.id) : undefined;
+  if (!template) {
+    fail(res, 404, "Template not found");
+    return null;
+  }
+  const values = Array.isArray(request.parameters) ? request.parameters.map(String) : [];
+  if (values.length !== template.parameterCount) {
+    fail(res, 400, `The template needs ${template.parameterCount} values`);
+    return null;
+  }
+  const now = new Date().toISOString();
+  return {
+    id: nextId("5e55"),
+    conversationId: conversation.id,
+    direction: "OUTBOUND",
+    externalMessageId: nextId("wamid"),
+    kind: "TEXT",
+    content: template.body.replace(/\{\{(\d+)\}\}/g, (placeholder, index: string) => values[Number(index) - 1] ?? placeholder),
+    contextRef: null,
+    replyToExternalId: null,
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 function meliReply(
@@ -567,6 +602,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         return send(res, 204);
       }
     }
+    if (parts[2] === "templates" && method === "GET") {
+      return send(res, 200, conversation.platform === "WHATSAPP" ? WHATSAPP_TEMPLATES : []);
+    }
     if (parts[2] === "messages" && method === "GET") {
       return send(res, 200, messagesOf(conversation.id));
     }
@@ -577,7 +615,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         return fail(res, 400, "MELI message cannot be empty");
       }
       let created: MessageResponse | null;
-      if (body.direction === "OUTBOUND" && conversation.platform === "MELI") {
+      if (body.direction === "OUTBOUND" && isRecord(body.template)) {
+        created = templateReply(res, conversation, body.template);
+        if (!created) return;
+      } else if (body.direction === "OUTBOUND" && conversation.platform === "MELI") {
         created = meliReply(res, conversation, content);
         if (!created) return;
       } else if (body.direction === "OUTBOUND" && conversation.platform === "INSTAGRAM") {

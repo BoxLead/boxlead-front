@@ -132,6 +132,62 @@ test("WhatsApp chats send messages and group them by day", async ({ page }, test
   await expect(list(page).getByRole("link", { name: /Martín Herrera/ })).toContainText("Vos: Dale, quedo atento.");
 });
 
+test("WhatsApp templates are filled in, previewed and sent", async ({ page }) => {
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByRole("button", { name: "Plantilla" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Responder con una plantilla" });
+  await dialog.getByRole("button", { name: /order update/i }).click();
+  const send = dialog.getByRole("button", { name: "Enviar plantilla" });
+  await expect(send).toBeDisabled();
+
+  await dialog.getByLabel("Valor 1").fill("Martín");
+  await dialog.getByLabel("Valor 2").fill("#4821");
+  await expect(dialog.getByText("Hola Martín, tu pedido #4821 ya salió. Te avisamos cuando llegue.")).toBeVisible();
+  await expectAccessible(page);
+  await screenshot(page, "inbox-templates");
+
+  await send.click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator(".bubble-outbound").last()).toContainText("Hola Martín, tu pedido #4821 ya salió.");
+});
+
+test("a closed WhatsApp window offers a template instead of a dead end", async ({ page }) => {
+  await page.route("**/conversations/*/messages", async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST" || request.postDataJSON().template) return route.fallback();
+    const message = "Cannot send WhatsApp message: the reply window is closed, the customer has to write first";
+    return route.fulfill({
+      status: 409,
+      contentType: "application/json",
+      body: JSON.stringify({ error: message, message }),
+    });
+  });
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByLabel("Responder a Martín Herrera").fill("¿Seguís interesado?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "Pasaron más de 24 horas" });
+  await expect(banner).toContainText("plantilla aprobada");
+  await banner.getByRole("button", { name: "Usar una plantilla" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Responder con una plantilla" });
+  await dialog.getByRole("button", { name: /we are open/i }).click();
+  await dialog.getByRole("button", { name: "Enviar plantilla" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator(".bubble-outbound", { hasText: "Seguimos atendiendo de lunes a viernes" })).toBeVisible();
+});
+
+test("only WhatsApp offers templates", async ({ page }) => {
+  await login(page);
+  await openConversation(page, "nico.audio");
+
+  await expect(page.getByLabel("Responder a nico.audio")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Plantilla" })).toHaveCount(0);
+});
+
 test("Instagram comments are events of the chat, link to the post and are answered in public", async ({ page }) => {
   await login(page);
   await openConversation(page, "nico.audio");
