@@ -85,11 +85,16 @@ describe("whatsapp", () => {
   const whatsapp = getPlatform("WHATSAPP");
 
   it.each([
-    [409, "Cannot send WhatsApp message: the reply window is closed, the customer has to write first", null, "Pasaron más de 24 horas"],
+    [409, "Cannot send WhatsApp message: the reply window is closed, the customer has to write first", "template", "Pasaron más de 24 horas"],
     [400, "WhatsApp messages are limited to 4096 characters", null, "El mensaje es demasiado largo"],
     [409, "WhatsApp account 3 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar WhatsApp"],
   ])("explains %i %s", (status, message, action, title) => {
     expect(whatsapp.explainError(status, message)).toMatchObject({ action, title });
+  });
+
+  it("is the only channel that offers templates", () => {
+    expect(whatsapp.supportsTemplates).toBe(true);
+    expect(["META", "INSTAGRAM", "MELI"].some((id) => getPlatform(id as never).supportsTemplates)).toBe(false);
   });
 
   it("leaves other failures to the generic message", () => {

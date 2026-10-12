@@ -16,7 +16,7 @@ export type CommentReplyPolicy = {
   postLabel: (productType: string | null) => string;
 };
 
-export type ErrorAction = "reconnect" | "retry" | null;
+export type ErrorAction = "reconnect" | "retry" | "template" | null;
 
 export type PlatformErrorView = {
   title: string;
@@ -49,6 +49,7 @@ export type PlatformDefinition = {
   stageLabels: Partial<Record<SalesStage, string>>;
   reply: (stage: SalesStage) => ReplyPolicy;
   commentReply?: CommentReplyPolicy;
+  supportsTemplates?: boolean;
   explainError: (status: number, message: string) => PlatformErrorView | null;
   contactFields: (lead: LeadResponse) => ContactField[];
   hasContext: boolean;
