@@ -1,179 +1,166 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import type {
-  CommentThreadResponse,
-  ConversationResponse,
-  LeadResponse,
-} from "../../api/types";
+import type { ConversationResponse, LeadResponse, PlatformType, SalesStage } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { InboxIcon, MessageIcon } from "../../components/icons/UiIcons";
+import { InboxIcon } from "../../components/icons/UiIcons";
+import { Banner } from "../../components/ui/Banner";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { truncate } from "../../util/format";
-import { leadDisplayName } from "../../util/labels";
-import { CommentThreadDetail } from "./CommentThreadDetail";
-import { MessageThread } from "./MessageThread";
+import { CONNECTABLE_PLATFORMS } from "../../platforms";
+import { ConversationList } from "./ConversationList";
+import { ConversationView } from "./ConversationView";
 import {
-  ThreadList,
-  ThreadListSkeleton,
-  type ThreadListItem,
-} from "./ThreadList";
+  channelsIn,
+  filterRows,
+  toRows,
+  type ChannelFilter,
+  type InboxFilters,
+} from "./inboxModel";
+import { CONVERSATIONS_KEY } from "./useConversationSender";
 import "./Inbox.css";
 
-type InboxTab = "messages" | "comments";
+const LIST_REFRESH_MS = 15_000;
+const STAGES: SalesStage[] = ["PRE_SALE", "POST_SALE"];
 
-const TABS: { id: InboxTab; label: string }[] = [
-  { id: "messages", label: "Mensajes" },
-  { id: "comments", label: "Comentarios" },
-];
+function parseChannel(value: string | null): ChannelFilter {
+  return CONNECTABLE_PLATFORMS.some((p) => p.id === value) ? (value as PlatformType) : "ALL";
+}
 
-function byMostRecent<T extends { updatedAt: string }>(items: T[]): T[] {
-  return [...items].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+function parseStage(value: string | null): SalesStage | null {
+  return STAGES.includes(value as SalesStage) ? (value as SalesStage) : null;
 }
 
 export function Inbox() {
   useDocumentTitle("Bandeja");
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab: InboxTab =
-    searchParams.get("tab") === "comments" ? "comments" : "messages";
+  const [query, setQuery] = useState("");
   const selectedId = searchParams.get("id");
+  const filters: InboxFilters = {
+    channel: parseChannel(searchParams.get("channel")),
+    stage: parseStage(searchParams.get("stage")),
+    unreadOnly: searchParams.get("unread") === "1",
+    query,
+  };
 
-  const conversations = useApiQuery<ConversationResponse[]>("/conversations");
-  const threads = useApiQuery<CommentThreadResponse[]>("/comments/threads");
-  const leads = useApiQuery<LeadResponse[]>("/leads");
+  const conversations = useApiQuery<ConversationResponse[]>(CONVERSATIONS_KEY, {
+    refreshInterval: LIST_REFRESH_MS,
+  });
+  const needsLeads = (conversations.data ?? []).some((c) => !c.leadName);
+  const leads = useApiQuery<LeadResponse[]>(needsLeads ? "/leads?includePostSale=true" : null);
 
-  const leadsById = useMemo(() => {
-    const map = new Map<string, LeadResponse>();
-    for (const lead of leads.data ?? []) map.set(lead.id, lead);
-    return map;
-  }, [leads.data]);
+  const leadsById = useMemo(
+    () => new Map((leads.data ?? []).map((lead) => [lead.id, lead])),
+    [leads.data],
+  );
+  const rows = useMemo(() => toRows(conversations.data ?? [], leadsById), [conversations.data, leadsById]);
+  const visible = filterRows(rows, filters);
+  const channels = channelsIn(rows, CONNECTABLE_PLATFORMS.map((p) => p.id));
+  const selectedRow = rows.find((row) => row.id === selectedId);
 
-  const items = useMemo<ThreadListItem[]>(() => {
-    if (tab === "messages") {
-      return byMostRecent(conversations.data ?? []).map((c) => ({
-        id: c.id,
-        platform: c.platform,
-        title: leadDisplayName(leadsById.get(c.leadId)),
-        subtitle: c.status === "OPEN" ? "Conversación abierta" : "Cerrada",
-        updatedAt: c.updatedAt,
-      }));
+  const linkWith = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams);
+      for (const [key, value] of Object.entries(patch)) {
+        if (value === null) params.delete(key);
+        else params.set(key, value);
+      }
+      const search = params.toString();
+      return `/app/inbox${search ? `?${search}` : ""}`;
+    },
+    [searchParams],
+  );
+
+  function updateFilters(patch: Partial<InboxFilters>) {
+    if (patch.query !== undefined) setQuery(patch.query);
+    const next = new URLSearchParams(searchParams);
+    if (patch.channel !== undefined) {
+      if (patch.channel === "ALL") next.delete("channel");
+      else next.set("channel", patch.channel);
     }
-    return byMostRecent(threads.data ?? []).map((t) => ({
-      id: t.id,
-      platform: t.platform,
-      title: leadDisplayName(leadsById.get(t.leadId)),
-      subtitle: `${t.mediaProductType ?? "Publicación"} · ${truncate(t.externalMediaId, 18)}`,
-      updatedAt: t.updatedAt,
-    }));
-  }, [tab, conversations.data, threads.data, leadsById]);
-
-  const active = tab === "messages" ? conversations : threads;
-  const error = active.error ?? leads.error;
-  const selectedConversation =
-    tab === "messages"
-      ? conversations.data?.find((c) => c.id === selectedId)
-      : undefined;
-  const selectedThread =
-    tab === "comments"
-      ? threads.data?.find((t) => t.id === selectedId)
-      : undefined;
-  const hasSelection = Boolean(selectedConversation ?? selectedThread);
-
-  function selectTab(next: InboxTab) {
-    setSearchParams(next === "messages" ? {} : { tab: next });
+    if (patch.stage !== undefined) {
+      if (patch.stage) next.set("stage", patch.stage);
+      else next.delete("stage");
+    }
+    if (patch.unreadOnly !== undefined) {
+      if (patch.unreadOnly) next.set("unread", "1");
+      else next.delete("unread");
+    }
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
   }
 
-  function select(id: string | null) {
-    const next: Record<string, string> = {};
-    if (tab === "comments") next.tab = tab;
-    if (id) next.id = id;
-    setSearchParams(next);
-  }
+  const isOpen = Boolean(selectedId);
+  const backTo = linkWith({ id: null });
 
   return (
-    <div className="page-inbox">
+    <div className={`inbox${isOpen ? " inbox-open" : ""}`}>
       <header className="inbox-header">
         <h1 className="page-title">Bandeja</h1>
-        <nav className="inbox-tabs" aria-label="Secciones de la bandeja">
-          {TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              className={`inbox-tab${tab === id ? " inbox-tab-active" : ""}`}
-              aria-pressed={tab === id}
-              onClick={() => selectTab(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
       </header>
 
-      {error ? (
-        <div className="page-banner inbox-banner" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      <div
-        className={`inbox-panels${hasSelection ? " inbox-panels-open" : ""}`}
-      >
-        <aside className="inbox-list">
-          {active.loading ? (
-            <ThreadListSkeleton />
-          ) : items.length === 0 ? (
+      <div className={`inbox-panels${isOpen ? " inbox-panels-open" : ""}`}>
+        <aside className="inbox-list" aria-label="Lista de conversaciones">
+          {conversations.error && !conversations.data ? (
+            <div className="inbox-list-message">
+              <Banner tone="danger" title="No pudimos cargar la bandeja">
+                {conversations.error}
+              </Banner>
+            </div>
+          ) : conversations.loading ? (
+            <ul className="conversation-items" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <li key={i} className="conversation-item-skeleton">
+                  <span className="skeleton skeleton-circle" />
+                  <span className="skeleton skeleton-lines" />
+                </li>
+              ))}
+            </ul>
+          ) : rows.length === 0 ? (
             <EmptyState
               icon={<InboxIcon />}
-              title={
-                tab === "messages"
-                  ? "Todavía no hay conversaciones"
-                  : "Todavía no hay comentarios"
-              }
-              hint="Cuando tus clientes escriban por un canal conectado, van a aparecer acá."
+              title="Tu bandeja está vacía"
+              hint="Cuando alguien te escriba o comente en un canal conectado, la conversación aparece acá."
               action={
-                <Link
-                  to="/app/connections"
-                  className="btn btn-secondary btn-sm"
-                >
+                <Link to="/app/connections" className="btn btn-secondary btn-sm">
                   Conectar un canal
                 </Link>
               }
             />
           ) : (
-            <ThreadList
-              items={items}
+            <ConversationList
+              rows={rows}
+              visible={visible}
+              channels={channels}
+              filters={filters}
               selectedId={selectedId}
-              onSelect={select}
-              label={tab === "messages" ? "Conversaciones" : "Comentarios"}
+              linkFor={(id) => linkWith({ id })}
+              onFiltersChange={updateFilters}
             />
           )}
         </aside>
 
-        <section className="inbox-main">
-          {selectedConversation ? (
-            <MessageThread
-              key={selectedConversation.id}
-              conversation={selectedConversation}
-              lead={leadsById.get(selectedConversation.leadId)}
-              onBack={() => select(null)}
-              onSent={conversations.reload}
-            />
-          ) : selectedThread ? (
-            <CommentThreadDetail
-              key={selectedThread.id}
-              thread={selectedThread}
-              lead={leadsById.get(selectedThread.leadId)}
-              onBack={() => select(null)}
+        <div className="inbox-main">
+          {selectedRow ? (
+            <ConversationView key={selectedRow.id} row={selectedRow} backTo={backTo} />
+          ) : selectedId && !conversations.loading ? (
+            <EmptyState
+              icon={<InboxIcon />}
+              title="No encontramos esta conversación"
+              hint="Puede que se haya eliminado o que el enlace sea de otra cuenta."
+              action={
+                <Link to={backTo} className="btn btn-secondary btn-sm">
+                  Volver a la bandeja
+                </Link>
+              }
             />
           ) : (
             <EmptyState
-              icon={<MessageIcon />}
+              icon={<InboxIcon />}
               title="Elegí una conversación"
-              hint="Seleccioná un elemento de la lista para leerlo y responder."
+              hint="Respondé desde acá y el mensaje sale por el canal de origen."
             />
           )}
-        </section>
+        </div>
       </div>
     </div>
   );

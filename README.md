@@ -15,12 +15,18 @@ npm run dev
 
 The dev server runs on `http://localhost:5173` and proxies `/api` to the API.
 
-| Command           | Description                  |
-| ----------------- | ---------------------------- |
-| `npm run dev`     | Dev server                   |
-| `npm run build`   | Typecheck + production build |
-| `npm run lint`    | ESLint                       |
-| `npm run preview` | Serve `dist/` locally        |
+| Command              | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| `npm run dev`        | Dev server                                       |
+| `npm run build`      | Typecheck + production build                     |
+| `npm run lint`       | ESLint                                           |
+| `npm test`           | Unit tests (Vitest)                              |
+| `npm run test:e2e`   | End-to-end tests (Playwright, desktop and 320px) |
+| `npm run mock-api`   | Mock API on port 8090 with demo data             |
+| `npm run dev:mock`   | Dev server against the mock API                  |
+| `npm run preview`    | Serve `dist/` locally                            |
+
+The first run of the end-to-end suite needs a browser: `npx playwright install chromium`. The mock API signs in with any email and the password `demo1234`, and `POST /__reset` with `{"scenario":"empty"}` or `{"scenario":"meli-reconnect"}` switches its data.
 
 ## Docker
 
@@ -35,9 +41,10 @@ The app is served on `http://localhost:3000`. Two variables can be set in the en
 | Variable            | Default                 | Description                              |
 | ------------------- | ----------------------- | ---------------------------------------- |
 | `VITE_API_BASE_URL` | `http://localhost:8080` | API origin, baked into the bundle        |
+| `VITE_AGENT_API_BASE_URL` | `http://localhost:8000` | Agent API origin (agents page), baked into the bundle |
 | `WEB_PORT`          | `3000`                  | Host port                                |
 
-`VITE_API_BASE_URL` is a build argument: changing it requires a rebuild, and the API must allow the app origin in CORS. Its origin is also added to the Content Security Policy that production builds inject into `index.html`.
+`VITE_API_BASE_URL` is a build argument: changing it requires a rebuild, and the API must allow the app origin in CORS. `VITE_AGENT_API_BASE_URL` works the same way for the agent service, which must also allow the app origin with credentials. Both origins are also added to the Content Security Policy that production builds inject into `index.html`.
 
 Without Compose:
 
@@ -59,7 +66,7 @@ Dockerfile targets:
 Pushing to `master` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 
 1. Lints inside Docker (`lint` target).
-2. Builds the image with `VITE_API_BASE_URL` read from SSM and smoke-tests it.
+2. Builds the image with `VITE_API_BASE_URL` and `VITE_AGENT_API_BASE_URL` read from SSM and smoke-tests it.
 3. Exports the static files from the same build and syncs them to S3, then invalidates CloudFront.
 
 Infrastructure lives in [terraform/](terraform/README.md).

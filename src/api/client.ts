@@ -1,7 +1,6 @@
+import { loginPathFor } from "../util/redirect";
 import type { AuthUser, LoginRequest, RegisterRequest } from "./types";
 
-const USER_KEY = "signal_user";
-const LEGACY_TOKEN_KEY = "signal_token";
 const CSRF_HEADER = "X-Requested-With";
 const CSRF_HEADER_VALUE = "boxlead-web";
 
@@ -17,13 +16,26 @@ export class ApiError extends Error {
   }
 }
 
-export function apiUrl(path: string): string {
-  const configured = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
-  if (configured) {
-    return `${configured}${path.startsWith("/") ? path : `/${path}`}`;
-  }
-  return `/api${path.startsWith("/") ? path : `/${path}`}`;
+const CORE_PROXY_PREFIX = "/api";
+const AGENT_PROXY_PREFIX = "/agent-api";
+
+function buildUrl(configured: string | undefined, proxyPrefix: string, path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const base = configured?.replace(/\/$/, "");
+  return base ? `${base}${normalized}` : `${proxyPrefix}${normalized}`;
 }
+
+export function apiUrl(path: string): string {
+  return buildUrl(import.meta.env.VITE_API_BASE_URL, CORE_PROXY_PREFIX, path);
+}
+
+export function agentApiUrl(path: string): string {
+  return buildUrl(import.meta.env.VITE_AGENT_API_BASE_URL, AGENT_PROXY_PREFIX, path);
+}
+
+export const REQUEST_HEADERS = {
+  [CSRF_HEADER]: CSRF_HEADER_VALUE,
+} as const;
 
 function toAuthUser(value: unknown): AuthUser | null {
   if (
@@ -39,32 +51,15 @@ function toAuthUser(value: unknown): AuthUser | null {
   return null;
 }
 
-export function getStoredUser(): AuthUser | null {
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
-  const raw = localStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try {
-    return toAuthUser(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
-
-export function persistUser(user: AuthUser): void {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
 export function clearAuth(): void {
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
   sessionStorage.clear();
 }
 
 function clearAuthAndGoLogin(): void {
   clearAuth();
-  const p = window.location.pathname;
-  if (p.startsWith("/app")) {
-    window.location.assign("/login");
+  const { pathname, search } = window.location;
+  if (pathname.startsWith("/app")) {
+    window.location.assign(loginPathFor(`${pathname}${search}`));
   }
 }
 
@@ -78,7 +73,10 @@ async function parseBody(res: Response): Promise<unknown> {
   }
 }
 
+const TOO_MANY_REQUESTS_MESSAGE = "Hiciste demasiados intentos seguidos. Probá de nuevo en un rato.";
+
 function errorMessage(status: number, data: unknown): string {
+  if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
   if (data && typeof data === "object" && "message" in data) {
     const m = (data as { message: unknown }).message;
     if (typeof m === "string") return m;
@@ -86,20 +84,27 @@ function errorMessage(status: number, data: unknown): string {
   return `Request failed (${status})`;
 }
 
-async function request<T>(
+type UrlBuilder = (path: string) => string;
+
+export function handleUnauthorized(): void {
+  clearAuthAndGoLogin();
+}
+
+async function send<T>(
+  url: UrlBuilder,
   method: string,
   path: string,
   options?: { body?: unknown; skipAuth?: boolean },
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
-    [CSRF_HEADER]: CSRF_HEADER_VALUE,
+    ...REQUEST_HEADERS,
   };
   if (options?.body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(apiUrl(path), {
+  const res = await fetch(url(path), {
     method,
     headers,
     credentials: "include",
@@ -108,7 +113,7 @@ async function request<T>(
   });
 
   if (res.status === 401 && !options?.skipAuth) {
-    clearAuthAndGoLogin();
+    handleUnauthorized();
   }
 
   const data = await parseBody(res);
@@ -122,6 +127,14 @@ async function request<T>(
   }
 
   return data as T;
+}
+
+function request<T>(
+  method: string,
+  path: string,
+  options?: { body?: unknown; skipAuth?: boolean },
+): Promise<T> {
+  return send<T>(apiUrl, method, path, options);
 }
 
 async function requestUser(
@@ -145,6 +158,8 @@ export const api = {
   patch: <T>(path: string, body: unknown) =>
     request<T>("PATCH", path, { body }),
 
+  put: <T>(path: string, body: unknown) => request<T>("PUT", path, { body }),
+
   delete: (path: string) => request<void>("DELETE", path),
 
   login: (body: LoginRequest) => requestUser("POST", "/auth/login", body),
@@ -155,4 +170,14 @@ export const api = {
   me: () => requestUser("GET", "/auth/me"),
 
   logout: () => request<void>("POST", "/auth/logout", { skipAuth: true }),
+};
+
+export const agentApi = {
+  get: <T>(path: string) => send<T>(agentApiUrl, "GET", path),
+
+  post: <T>(path: string, body?: unknown) => send<T>(agentApiUrl, "POST", path, { body }),
+
+  put: <T>(path: string, body: unknown) => send<T>(agentApiUrl, "PUT", path, { body }),
+
+  delete: (path: string) => send<void>(agentApiUrl, "DELETE", path),
 };

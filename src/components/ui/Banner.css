@@ -1,0 +1,76 @@
+.banner {
+  --banner-color: var(--signal-accent);
+  --banner-bg: var(--signal-accent-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--banner-color) 30%, transparent);
+  border-radius: var(--signal-radius-md);
+  background: var(--banner-bg);
+  color: var(--signal-text);
+  font-size: 0.875rem;
+}
+
+.banner-warning {
+  --banner-color: var(--signal-warning);
+  --banner-bg: var(--signal-warning-muted);
+}
+
+.banner-danger {
+  --banner-color: var(--signal-danger);
+  --banner-bg: var(--signal-danger-muted);
+}
+
+.banner-success {
+  --banner-color: var(--signal-success);
+  --banner-bg: var(--signal-success-muted);
+}
+
+.banner-icon {
+  display: flex;
+  flex-shrink: 0;
+  padding-top: 1px;
+  color: var(--banner-color);
+}
+
+.banner-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--signal-heading);
+}
+
+.banner-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.banner-title + .banner-text {
+  margin-top: 2px;
+}
+
+.banner-action {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+@media (max-width: 480px) {
+  .banner {
+    flex-wrap: wrap;
+  }
+
+  .banner-action {
+    width: 100%;
+    padding-left: 30px;
+  }
+}

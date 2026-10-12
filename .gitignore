@@ -41,3 +41,8 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Tests
+coverage
+playwright-report
+test-results

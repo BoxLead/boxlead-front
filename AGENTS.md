@@ -1,6 +1,6 @@
 # BoxLead Frontend
 
-SPA for BoxLead: a public landing page plus the app (inbox, leads, connections). Deployed as static assets to S3 + CloudFront.
+SPA for BoxLead: a public landing page plus the app (inbox, leads, metrics, categories, connections). Deployed as static assets to S3 + CloudFront.
 
 **Stack:** Node 24, Vite 8, React 19, TypeScript 6 (strict), react-router-dom 7, vanilla CSS, ESLint 10, Docker + nginx.
 
@@ -8,21 +8,25 @@ SPA for BoxLead: a public landing page plus the app (inbox, leads, connections).
 
 ```
 index.html            # Entry HTML, SEO metadata
-Dockerfile            # Multi-stage build: lint, build, export (static files), runtime (nginx)
+Dockerfile            # Multi-stage build: lint, test, build, export (static files), runtime (nginx)
 docker/nginx.conf     # SPA fallback, caching, security headers, /healthz
 docker-compose.yml    # Runs the production image locally
 public/               # favicon, og-image, robots.txt, sitemap.xml
+e2e/                  # Playwright specs and mock-api/ (stateful mock of the backend contract)
 src/
-├── main.tsx          # BrowserRouter > AuthProvider > App
+├── main.tsx          # BrowserRouter > AuthProvider > ToastProvider > App
 ├── App.tsx           # Routes (everything but the landing is lazy-loaded)
 ├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
 ├── api/              # HTTP client and API types
 ├── context/          # AuthProvider (AuthContext.tsx) and useAuth (auth.ts)
-├── hooks/            # useApiQuery, useDocumentTitle
-├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, badges, EmptyState, Loading, ScrollToTop
-├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Connections, OAuthCallback, Legal
+├── data/             # queryCache (shared request cache behind useApiQuery), lead and category mutations, metrics source and demo data
+├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
+├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
+├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
+│   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
+├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # company, format, labels, oauth, facebook-sdk
+└── util/             # classNames, company, dates, format, labels, links, metrics, oauth, redirect, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -32,12 +36,32 @@ terraform/            # Infrastructure (do not modify without approval)
 /                                   Landing (public)
 /login, /register                   Auth (public)
 /privacy-policy, /terms-of-service, /data-deletion   Legal (public)
-/app/inbox, /app/leads, /app/leads/:leadId, /app/connections   Protected
+/app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
 /app/oauth/callback/:platform       Protected
 *                                   Redirects to /
 ```
 
-The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
+Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+
+## Categories
+
+Each lead belongs to at most one category (`categoryId`). Categories come from `GET /categories` (`data/categories.ts`), every account starts with four defaults, and colors are a fixed palette mapped to `category-color-*` classes in `index.css`. Assigning goes through `PUT /leads/{id}/category` with an optimistic update. Deleting a category leaves its leads without one.
+
+## Metrics
+
+The page reads `GET /metrics?from&to&timezone` for the current period, the previous one and the last 12 weeks, plus `GET /metrics/settings` for the assumptions (minutes per reply and business hours). The contract lives in `api/types.ts` and the backend brief in `boxlead-core/METRICS.md`. Every segment is one channel and one category, so filters are applied in the browser without new requests.
+
+Until the backend ships those endpoints `METRICS_DEMO` in `data/metrics.ts` answers both keys locally through `setQueryResolver`, loading `metricsDemoResolver.ts` on demand so the generator never ships with the page. The demo data is deterministic, uses the account categories and assumptions, and the page shows a "Datos de ejemplo" tag. To switch to the API set `METRICS_DEMO` to false, add the routes to `e2e/mock-api` and delete the demo files.
+
+The page only shows what BoxLead can measure. Sales and revenue are left out on purpose because they are hard to attribute, and ad spend for a cost per lead is the next step (see `METRICS.md`).
+
+The page is built around one chart. The indicator tabs (leads, answered in 5 minutes, first response and qualification) switch it, compare with the previous period and show the 14 day estimate for leads. The funnel (leads, contacted, qualified) explains each step on hover, touch or focus and draws the previous period as an outline. The breakdown by channel or category filters the whole page when a row is clicked, and ignores its own filter so the other rows stay visible. Signals are at most three short lines, each rule needs a minimum sample and repeats nothing the page already shows.
+
+`useMetricsView` only loads data. `buildMetricsView` and `buildChartData` turn the reports into what the page draws, and they, the model (`metricsModel`, `breakdown`, `hours`, `series`), the signals, the forecast and the chart layouts are pure functions with unit tests. Charts are plain SVG with no chart library, read with pointer, touch and keyboard, and only announce what the keyboard reaches. Qualification counts the leads of the period that are qualified today, the same as the funnel. Rates and response times use a 7 day rolling window, the 90 day view and sparse counts are drawn in full weeks, and the current day is drawn apart because it is not over. The forecast ignores the days before the first activity and waits for four weeks of data. Keep the page sober, one accent color for data and green or red only for changes.
+
+## Channels
+
+Everything that differs between channels lives in `src/platforms/<channel>.tsx`: name, logo, what it syncs, how it connects, sales stages, reply rules (thread kind, character limit, hint), error explanations, contact links and context status labels. Pages read the registry (`getPlatform`, `CONNECTABLE_PLATFORMS`) and never branch on a platform id. Instagram comments are `COMMENT` messages inside the chat of the person who wrote them, shown as events with a link to the post (`/conversations/{id}/context` returns `POST` items) and answered in public through `commentReply`. MercadoLibre pre-sale threads are questions paired with their answers (`{questionId}:answer`), post-sale threads are chats with the order from `/conversations/{id}/context`.
 
 ## Conventions
 
@@ -45,14 +69,15 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 - `type` aliases and `import type` for type-only imports.
 - Named exports, except `App`.
 - Components use the `function` keyword, one per file, with a co-located `.css` file.
-- No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing.
+- No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing. Derive tints from a token with `color-mix` instead of writing a new color.
+- Shared primitives live in `index.css` (`.btn`, `.btn-icon`, `.panel`, `.field`, `.input`, `.select`, `.form-error`) and in `components/ui` (`Dialog` for every modal). Compose conditional classes with `cx` from `util/classNames`.
 - No comments in code.
 - UI copy is in Spanish; the legal pages stay in English.
-- Load data with `useApiQuery`; mutations call `api` from `src/api/client.ts` directly.
+- Load data with `useApiQuery` (shared cache, `refreshInterval` polls only while the tab is visible); mutations call `api` and then `invalidateQueries` or `setQueryData`.
 - Every page sets its tab title with `useDocumentTitle`.
 - Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
 - Every screen needs loading, empty and error states, and must work from 320px wide.
-- Animations are CSS only and respect `prefers-reduced-motion`.
+- Animations are CSS, except number tweens with `useAnimatedNumber`, and all of them respect `prefers-reduced-motion`.
 
 ## Landing
 
@@ -69,7 +94,8 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 
 ## Security
 
-- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token; `localStorage` holds only `signal_user` (id and email) as a display hint.
+- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage`; the user lives in memory and comes from `GET /auth/me`.
+- `AuthProvider` asks `GET /auth/me` only on `/app`, `/login` and `/register`, and shows a loader there until it answers, so the landing never calls the API.
 - Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
 - Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked.
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
@@ -81,4 +107,4 @@ The inbox selection lives in the URL: `/app/inbox?tab=comments&id=<id>`.
 
 Do not modify without explicit approval: `terraform/`, `.github/workflows/`, `.env.example`, or the behavior of `ProtectedRoute.tsx`.
 
-Run `npm run lint` and `npm run build` before considering work complete.
+Run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before considering work complete. New behaviour gets unit tests next to the code (`*.test.ts(x)`) and an end-to-end spec in `e2e/`, with the mock API extended to match the backend contract.

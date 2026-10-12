@@ -1,0 +1,19 @@
+.change {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.change-good {
+  color: var(--signal-success);
+}
+
+.change-bad {
+  color: var(--signal-danger);
+}
+
+.change-flat {
+  color: var(--signal-text-muted);
+  font-weight: 500;
+}

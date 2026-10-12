@@ -22,6 +22,7 @@ export function isFacebookOrigin(origin: string): boolean {
 export function beginOAuthRedirect(
   authUrl: string,
   codeVerifier?: string,
+  navigate: (url: string) => void = (url) => window.location.assign(url),
 ): void {
   const url = new URL(authUrl);
   if (url.protocol !== "https:") {
@@ -40,7 +41,7 @@ export function beginOAuthRedirect(
   } else {
     sessionStorage.removeItem(VERIFIER_KEY);
   }
-  window.location.assign(url.toString());
+  navigate(url.toString());
 }
 
 export function consumeOAuthSession(returnedState: string | null): {

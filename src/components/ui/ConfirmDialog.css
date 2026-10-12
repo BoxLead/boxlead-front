@@ -1,0 +1,11 @@
+.confirm-dialog-text {
+  font-size: 0.9375rem;
+}
+
+.confirm-dialog-text p {
+  margin: 0 0 var(--signal-space-sm);
+}
+
+.confirm-dialog-text p:last-child {
+  margin-bottom: 0;
+}

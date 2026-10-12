@@ -1,0 +1,134 @@
+.metrics {
+  position: relative;
+  max-width: 1200px;
+}
+
+.metrics-body {
+  display: grid;
+  gap: 16px;
+}
+
+.metrics-body > * {
+  animation: metrics-rise 0.6s var(--signal-ease) both;
+  transition: opacity 0.25s ease;
+}
+
+.metrics-body > :nth-child(n + 2) {
+  animation-delay: 60ms;
+}
+
+.metrics-body > :nth-child(n + 3) {
+  animation-delay: 120ms;
+}
+
+.metrics-body > :nth-child(n + 4) {
+  animation-delay: 180ms;
+}
+
+.metrics-body-updating > * {
+  opacity: 0.55;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.metrics-progress {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.metrics-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, var(--signal-accent), transparent);
+  animation: metrics-progress 1s ease-in-out infinite;
+}
+
+.metrics-progress-active {
+  opacity: 1;
+}
+
+.metrics-empty {
+  padding: var(--signal-space-xl) var(--signal-space-md);
+}
+
+.metrics-skeleton {
+  display: grid;
+  gap: 16px;
+}
+
+.metrics-skeleton-main {
+  height: 480px;
+  border-radius: var(--signal-radius-md);
+}
+
+.metrics-skeleton-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.metrics-skeleton-row .skeleton {
+  height: 280px;
+  border-radius: var(--signal-radius-md);
+}
+
+@keyframes metrics-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes metrics-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@media (max-width: 960px) {
+  .metrics-grid,
+  .metrics-skeleton-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metrics-body > *,
+  .metrics-progress::after {
+    animation: none;
+  }
+
+  .metrics-body > *,
+  .metrics-progress {
+    transition: none;
+  }
+}
+
+@media print {
+  .metrics {
+    max-width: none;
+    padding: 0;
+    animation: none;
+  }
+
+  .metrics-body > * {
+    animation: none;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}

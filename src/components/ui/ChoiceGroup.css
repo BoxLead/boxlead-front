@@ -1,0 +1,89 @@
+.choice-group {
+  display: flex;
+  gap: 6px;
+}
+
+.choice-group-chips {
+  flex-wrap: wrap;
+}
+
+.choice-group-segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle);
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--signal-text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.choice:hover {
+  border-color: rgba(234, 234, 220, 0.3);
+  color: var(--signal-heading);
+}
+
+.choice-selected,
+.choice-selected:hover {
+  border-color: var(--signal-cream);
+  background: var(--signal-cream);
+  color: var(--signal-navy);
+}
+
+.choice-group-segmented .choice {
+  min-height: 32px;
+  border: none;
+  border-radius: var(--signal-radius-sm);
+  color: var(--signal-text-muted);
+  font-size: 0.875rem;
+}
+
+.choice-group-segmented .choice-selected {
+  background: var(--signal-surface-elevated);
+  color: var(--signal-heading);
+}
+
+.choice-icon {
+  display: flex;
+}
+
+.choice-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.choice-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--signal-accent);
+  color: var(--signal-accent-contrast);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice {
+    transition: none;
+  }
+}

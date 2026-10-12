@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type {
   AccountConnectionResponse,
@@ -12,143 +7,124 @@ import type {
   PlatformType,
 } from "../../api/types";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
+import { useToast } from "../../components/ui/toast";
+import { invalidateQueries } from "../../data/queryCache";
+import { CONNECTIONS_KEY } from "../../hooks/useConnectPlatform";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { platformLabel } from "../../util/labels";
+import { CONNECTABLE_PLATFORMS, getPlatform } from "../../platforms";
 import { consumeOAuthSession, redirectUriFor } from "../../util/oauth";
 import "./OAuthCallback.css";
 
-const ALLOWED: PlatformType[] = ["META", "INSTAGRAM", "WHATSAPP", "MELI"];
 const CONNECTIONS_PATH = "/app/connections";
-const REDIRECT_DELAY_MS = 2000;
 
-function isPlatform(p: string | undefined): p is PlatformType {
-  return p !== undefined && (ALLOWED as string[]).includes(p);
+function asPlatform(value: string | undefined): PlatformType | null {
+  const match = CONNECTABLE_PLATFORMS.find((p) => p.id === value?.toUpperCase());
+  return match ? match.id : null;
 }
 
-type Outcome =
-  | { status: "ok"; accounts: AccountConnectionResponse[] }
-  | { status: "error"; message: string };
+function providerError(code: string, description: string | null, platformName: string): string {
+  if (code === "access_denied") {
+    return `Cancelaste la autorización en ${platformName}. Podés intentarlo de nuevo cuando quieras.`;
+  }
+  return description?.replace(/\+/g, " ") || `${platformName} no autorizó la conexión (${code}).`;
+}
 
 export function OAuthCallback() {
-  useDocumentTitle("Conectando cuenta");
-
   const { platform: platformParam } = useParams<{ platform: string }>();
+  const platform = asPlatform(platformParam);
+  const definition = platform ? getPlatform(platform) : null;
+  useDocumentTitle(definition ? `Conectando ${definition.name}` : "Conectando cuenta");
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const [session] = useState(() =>
-    consumeOAuthSession(searchParams.get("state")),
-  );
+  const toast = useToast();
+  const [failure, setFailure] = useState<string | null>(null);
+  const [emptyResult, setEmptyResult] = useState(false);
+  const [session] = useState(() => consumeOAuthSession(searchParams.get("state")));
 
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
   const oauthDesc = searchParams.get("error_description");
 
   const blockingError = useMemo(() => {
-    if (!isPlatform(platformParam)) {
-      return "La plataforma de este enlace no es válida.";
-    }
-    if (oauthError) {
-      return oauthDesc?.replace(/\+/g, " ") || oauthError;
-    }
-    if (!code) {
-      return "Falta el código de autorización. Probá conectar de nuevo.";
-    }
+    if (!definition) return "El enlace de conexión no es válido.";
+    if (oauthError) return providerError(oauthError, oauthDesc, definition.name);
+    if (!code) return "Falta el código de autorización. Probá conectar de nuevo.";
     if (!session.valid) {
       return "No pudimos verificar que esta conexión se inició desde tu cuenta. Probá conectar de nuevo.";
     }
     return null;
-  }, [platformParam, oauthError, oauthDesc, code, session.valid]);
-
-  const platform = platformParam as PlatformType;
+  }, [definition, oauthError, oauthDesc, code, session.valid]);
 
   useEffect(() => {
-    if (blockingError || !code) return;
-
+    if (blockingError || !code || !platform) return;
     let cancelled = false;
-    let redirectTimer: ReturnType<typeof setTimeout> | undefined;
-
     const body: OAuthCallbackRequest = {
       code,
       redirectUri: redirectUriFor(platform),
       codeVerifier: session.codeVerifier,
     };
-
-    api
-      .post<AccountConnectionResponse[]>(`/oauth/${platform}/callback`, body)
-      .then(
-        (accounts) => {
-          if (cancelled) return;
-          setOutcome({ status: "ok", accounts });
-          redirectTimer = setTimeout(() => {
-            navigate(CONNECTIONS_PATH, { replace: true });
-          }, REDIRECT_DELAY_MS);
-        },
-        (e: unknown) => {
-          if (cancelled) return;
-          setOutcome({
-            status: "error",
-            message:
-              e instanceof ApiError
-                ? e.message
-                : "No pudimos completar la conexión.",
-          });
-        },
-      );
-
+    api.post<AccountConnectionResponse[]>(`/oauth/${platform}/callback`, body).then(
+      async (accounts) => {
+        if (cancelled) return;
+        if (accounts.length === 0) {
+          setEmptyResult(true);
+          return;
+        }
+        await invalidateQueries(CONNECTIONS_KEY);
+        const names = accounts.map((a) => a.displayName ?? a.externalAccountId).join(", ");
+        toast({ message: `Conectaste ${getPlatform(platform).name}: ${names}.` });
+        navigate(CONNECTIONS_PATH, { replace: true, state: { connected: platform } });
+      },
+      (e: unknown) => {
+        if (cancelled) return;
+        setFailure(e instanceof ApiError ? e.message : "No pudimos completar la conexión.");
+      },
+    );
     return () => {
       cancelled = true;
-      if (redirectTimer !== undefined) clearTimeout(redirectTimer);
     };
-  }, [blockingError, code, platform, navigate, session.codeVerifier]);
+  }, [blockingError, code, platform, navigate, session.codeVerifier, toast]);
 
-  const errorMessage =
-    blockingError ?? (outcome?.status === "error" ? outcome.message : null);
+  const errorMessage = blockingError ?? failure;
+  const logo = definition ? <span className="oauth-callback-logo">{definition.logo(40)}</span> : null;
 
   if (errorMessage) {
     return (
       <AuthLayout>
-        <h1 className="auth-title">No pudimos conectar</h1>
+        {logo}
+        <h1 className="auth-title">No pudimos conectar {definition?.name ?? "la cuenta"}</h1>
         <p className="auth-error oauth-callback-msg" role="alert">
           {errorMessage}
         </p>
-        <Link
-          to={CONNECTIONS_PATH}
-          className="btn btn-primary oauth-callback-btn"
-        >
+        <Link to={CONNECTIONS_PATH} className="btn btn-primary oauth-callback-btn">
           Volver a conexiones
         </Link>
       </AuthLayout>
     );
   }
 
-  if (outcome?.status === "ok") {
+  if (emptyResult) {
     return (
       <AuthLayout>
-        <h1 className="auth-title">Cuenta conectada</h1>
+        {logo}
+        <h1 className="auth-title">No encontramos cuentas</h1>
         <p className="auth-subtitle">
-          {outcome.accounts.length === 0
-            ? "La conexión se completó, pero no recibimos cuentas. Revisá los permisos de la app."
-            : "Te llevamos a tus conexiones…"}
+          La autorización se completó pero {definition?.name} no compartió ninguna {definition?.accountNoun}. Revisá
+          los permisos y probá de nuevo.
         </p>
-        {outcome.accounts.length > 0 ? (
-          <ul className="oauth-callback-list">
-            {outcome.accounts.map((account) => (
-              <li key={account.id}>
-                <strong>{platformLabel(account.platform)}</strong> ·{" "}
-                {account.displayName ?? account.externalAccountId}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <Link to={CONNECTIONS_PATH} className="btn btn-primary oauth-callback-btn">
+          Volver a conexiones
+        </Link>
       </AuthLayout>
     );
   }
 
   return (
     <AuthLayout>
-      <h1 className="auth-title">Conectando tu cuenta</h1>
-      <p className="auth-subtitle">Esto tarda unos segundos.</p>
+      {logo}
+      <h1 className="auth-title">Conectando {definition?.name}</h1>
+      <p className="auth-subtitle">Estamos guardando la autorización. Tarda unos segundos.</p>
       <div className="oauth-callback-spinner" role="status">
         <span className="spinner" />
         <span className="visually-hidden">Conectando…</span>

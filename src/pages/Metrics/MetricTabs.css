@@ -1,0 +1,100 @@
+.metric-tabs {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 1px;
+  border-bottom: 1px solid var(--signal-border);
+  background: var(--signal-border);
+}
+
+.metric-tab {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px 20px 18px;
+  border: 0;
+  background: var(--signal-surface);
+  color: inherit;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.metric-tab::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--signal-accent);
+  transform: scaleX(0);
+  transition: transform 0.35s var(--signal-ease);
+}
+
+.metric-tab:hover {
+  background: color-mix(in srgb, var(--signal-surface) 97%, var(--signal-cream));
+}
+
+.metric-tab-selected,
+.metric-tab-selected:hover {
+  background: color-mix(in srgb, var(--signal-surface) 94%, var(--signal-accent));
+}
+
+.metric-tab-selected::after {
+  transform: scaleX(1);
+}
+
+.metric-tab:focus-visible {
+  outline-offset: -2px;
+}
+
+.metric-tab-label {
+  overflow: hidden;
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.metric-tab-selected .metric-tab-label {
+  color: var(--signal-heading);
+}
+
+.metric-tab-value {
+  color: var(--signal-heading);
+  font-size: 1.625rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .metric-tab {
+    padding: 14px 14px 16px;
+  }
+
+  .metric-tab-value {
+    font-size: 1.375rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .metric-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: row;
+  }
+
+  .metric-tab:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-tab,
+  .metric-tab::after,
+  .metric-tab-label {
+    transition: none;
+  }
+}

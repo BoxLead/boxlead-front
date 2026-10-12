@@ -1,13 +1,5 @@
 import type { LeadResponse, LeadStatus, PlatformType } from "../api/types";
-
-const PLATFORM_LABELS: Record<PlatformType, string> = {
-  META: "Messenger",
-  INSTAGRAM: "Instagram",
-  WHATSAPP: "WhatsApp",
-  MELI: "MercadoLibre",
-  TIKTOK: "TikTok",
-  GOOGLE_ADS: "Google Ads",
-};
+import { getPlatform } from "../platforms";
 
 const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "Nuevo",
@@ -20,7 +12,7 @@ const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as LeadStatus[];
 
 export function platformLabel(platform: PlatformType): string {
-  return PLATFORM_LABELS[platform];
+  return getPlatform(platform).name;
 }
 
 export function leadStatusLabel(status: LeadStatus): string {
@@ -33,7 +25,7 @@ export function leadDisplayName(lead: LeadResponse | undefined): string {
     lead.name?.trim() ||
     lead.email?.trim() ||
     lead.phone?.trim() ||
-    lead.externalLeadId ||
-    "Lead sin nombre"
+    (getPlatform(lead.platform).externalIdIsContact ? lead.externalLeadId : null) ||
+    `Contacto de ${getPlatform(lead.platform).name}`
   );
 }

@@ -1,0 +1,75 @@
+.status-select {
+  --status-color: var(--signal-text);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--status-color);
+}
+
+.status-select::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+}
+
+.status-select select {
+  height: 30px;
+  padding: 0 28px 0 24px;
+  border: 1px solid color-mix(in srgb, var(--status-color) 35%, transparent);
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--status-color) 10%, transparent);
+  color: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+}
+
+.status-select select:hover:not(:disabled) {
+  border-color: var(--status-color);
+}
+
+.status-select select:disabled {
+  opacity: 0.6;
+}
+
+.status-select select option {
+  background: var(--signal-surface);
+  color: var(--signal-heading);
+}
+
+.status-select svg {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+}
+
+.status-select-md select {
+  height: 36px;
+  font-size: 0.875rem;
+}
+
+.status-select-new {
+  --status-color: var(--signal-accent);
+}
+
+.status-select-contacted {
+  --status-color: var(--signal-warning);
+}
+
+.status-select-qualified {
+  --status-color: var(--signal-success);
+}
+
+.status-select-lost {
+  --status-color: var(--signal-danger);
+}
+
+.status-select-closed {
+  --status-color: var(--signal-text-muted);
+}

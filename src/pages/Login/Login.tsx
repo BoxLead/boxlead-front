@@ -1,9 +1,10 @@
 import { type FormEvent, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { useAuth } from "../../context/auth";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { DEFAULT_APP_PATH, NEXT_PARAM, safeAppPath } from "../../util/redirect";
 
 export function Login() {
   useDocumentTitle("Iniciar sesión");
@@ -11,15 +12,17 @@ export function Login() {
   const { user, login, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [searchParams] = useSearchParams();
+  const next = safeAppPath(searchParams.get(NEXT_PARAM)) ?? DEFAULT_APP_PATH;
 
   if (user) {
-    return <Navigate to="/app/inbox" replace />;
+    return <Navigate to={next} replace />;
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     clearError();
-    await login({ email: email.trim(), password });
+    await login({ email: email.trim(), password }, next);
   }
 
   return (
@@ -55,7 +58,10 @@ export function Login() {
         </button>
       </form>
       <p className="auth-footer">
-        ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
+        ¿No tenés cuenta?{" "}
+        <Link to={next === DEFAULT_APP_PATH ? "/register" : `/register?${NEXT_PARAM}=${encodeURIComponent(next)}`}>
+          Crear cuenta
+        </Link>
       </p>
     </AuthLayout>
   );

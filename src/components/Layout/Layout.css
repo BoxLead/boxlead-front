@@ -1,4 +1,5 @@
 .layout {
+  --signal-text-muted: #91a0ae;
   display: flex;
   height: 100vh;
   height: 100dvh;
@@ -21,5 +22,15 @@
 
   .layout-content {
     min-height: 0;
+  }
+}
+
+@media print {
+  .layout,
+  .layout-content {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: #ffffff;
   }
 }

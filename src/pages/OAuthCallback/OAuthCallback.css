@@ -7,22 +7,20 @@
   min-height: 48px;
 }
 
-.oauth-callback-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--signal-space-sm);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  color: var(--signal-text);
-}
-
-.oauth-callback-list strong {
-  color: var(--signal-heading);
-}
-
 .oauth-callback-spinner {
   display: flex;
   justify-content: center;
   padding: var(--signal-space-md) 0;
+}
+
+.oauth-callback-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--signal-space-md);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-lg);
+  background: var(--signal-bg);
 }

@@ -3,8 +3,8 @@ import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
 
 export type AuthContextValue = {
   user: AuthUser | null;
-  login: (body: LoginRequest) => Promise<void>;
-  register: (body: RegisterRequest) => Promise<void>;
+  login: (body: LoginRequest, redirectTo?: string) => Promise<void>;
+  register: (body: RegisterRequest, redirectTo?: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   error: string | null;

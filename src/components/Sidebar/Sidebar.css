@@ -99,13 +99,15 @@
 
   .sidebar-nav {
     flex-direction: row;
-    flex: 3;
+    flex: 5;
+    min-width: 0;
     gap: 0;
     padding: 6px 4px;
   }
 
   .sidebar-footer {
     flex: 1;
+    min-width: 0;
     padding: 6px 4px;
     border-top: none;
   }
@@ -117,14 +119,30 @@
     justify-content: center;
     gap: 3px;
     min-height: 50px;
-    padding: 0 4px;
+    min-width: 0;
+    padding: 0 2px;
     font-size: 0.6875rem;
   }
 
+  .sidebar-link span,
   .sidebar-logout span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .sidebar-link,
+  .sidebar-logout {
+    font-size: 0.625rem;
+    letter-spacing: -0.01em;
+  }
+}
+
+@media print {
+  .sidebar {
+    display: none;
   }
 }
