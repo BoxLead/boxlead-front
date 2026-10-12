@@ -30,6 +30,11 @@ variable "api_base_url" {
   description = "Backend API base URL for Vite (stored in SSM as VITE_API_BASE_URL; e.g. https://api.boxlead.app)."
 }
 
+variable "agent_api_base_url" {
+  type        = string
+  description = "Agent API origin baked into the SPA (stored in SSM as VITE_AGENT_API_BASE_URL; e.g. https://agent.boxlead.app)."
+}
+
 variable "project_name" {
   type        = string
   description = "Prefix for resource Name tags."

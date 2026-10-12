@@ -49,13 +49,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
 
-      - name: Read VITE_API_BASE_URL from SSM
+      - name: Read Vite origins from SSM
         id: config
         run: |
           set -euo pipefail
-          PARAM="${SIGNAL_FRONT_SSM_PREFIX}VITE_API_BASE_URL"
-          VALUE=$(aws ssm get-parameter --name "$PARAM" --query Parameter.Value --output text)
-          echo "api_base_url=$VALUE" >> "$GITHUB_OUTPUT"
+          api=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_API_BASE_URL" --query Parameter.Value --output text)
+          agent=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_AGENT_API_BASE_URL" --query Parameter.Value --output text)
+          echo "api_base_url=$api" >> "$GITHUB_OUTPUT"
+          echo "agent_api_base_url=$agent" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -69,6 +70,7 @@ jobs:
           tags: boxlead-front:${{ github.sha }}
           build-args: |
             VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
+            VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -93,6 +95,7 @@ jobs:
           outputs: type=local,dest=dist
           build-args: |
             VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
+            VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url }}
           cache-from: type=gha
 
       - name: Upload dist

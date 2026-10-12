@@ -66,7 +66,7 @@ Dockerfile targets:
 Pushing to `master` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 
 1. Lints inside Docker (`lint` target).
-2. Builds the image with `VITE_API_BASE_URL` read from SSM and smoke-tests it.
+2. Builds the image with `VITE_API_BASE_URL` and `VITE_AGENT_API_BASE_URL` read from SSM and smoke-tests it.
 3. Exports the static files from the same build and syncs them to S3, then invalidates CloudFront.
 
 Infrastructure lives in [terraform/](terraform/README.md).
