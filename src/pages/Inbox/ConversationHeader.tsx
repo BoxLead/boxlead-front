@@ -9,9 +9,10 @@ import type { ConversationRow } from "./inboxModel";
 type ConversationHeaderProps = {
   row: ConversationRow;
   backTo: string;
+  onDelete: () => void;
 };
 
-export function ConversationHeader({ row, backTo }: ConversationHeaderProps) {
+export function ConversationHeader({ row, backTo, onDelete }: ConversationHeaderProps) {
   const platform = getPlatform(row.platform);
   return (
     <>
@@ -29,9 +30,19 @@ export function ConversationHeader({ row, backTo }: ConversationHeaderProps) {
             ) : null}
           </p>
         </div>
-        <Link to={`/app/leads/${row.leadId}`} className="btn btn-secondary btn-sm conversation-lead-link">
-          Ver lead
-        </Link>
+        <div className="conversation-header-actions">
+          <button
+            type="button"
+            className="btn btn-danger btn-sm"
+            onClick={onDelete}
+            aria-label={`Eliminar conversación con ${row.displayName}`}
+          >
+            Eliminar
+          </button>
+          <Link to={`/app/leads/${row.leadId}`} className="btn btn-secondary btn-sm conversation-lead-link">
+            Ver lead
+          </Link>
+        </div>
       </header>
       {row.needsAttention ? (
         <div className="conversation-handoff">

@@ -98,3 +98,26 @@ test("the category can be cleared from the lead detail", async ({ page }) => {
   await page.reload();
   await expect(page.getByLabel("Categoría de Martín Herrera")).toHaveValue("");
 });
+
+test("deleting a lead removes the person and their conversations", async ({ page }) => {
+  await login(page, "/app/leads");
+  await page.getByRole("link", { name: "Martín Herrera" }).click();
+  await page.getByRole("button", { name: "Eliminar Martín Herrera" }).click();
+  const dialog = page.getByRole("dialog", { name: "¿Eliminar Martín Herrera?" });
+  await expect(dialog).toContainText("Se eliminan también sus conversaciones y mensajes.");
+  await dialog.getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Martín Herrera" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Eliminar Martín Herrera" }).click();
+  await page.getByRole("dialog", { name: "¿Eliminar Martín Herrera?" }).getByRole("button", { name: "Eliminar" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Eliminaste Martín Herrera." })).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/leads$/);
+  await expect(rows(page)).toHaveCount(4);
+  await expect(rows(page).filter({ hasText: "Martín Herrera" })).toHaveCount(0);
+  await page.reload();
+  await expect(rows(page).filter({ hasText: "Martín Herrera" })).toHaveCount(0);
+
+  await page.getByRole("link", { name: "Bandeja" }).click();
+  await expect(page.getByRole("list", { name: "Conversaciones" }).getByRole("link")).toHaveCount(5);
+  await expect(page.getByRole("list", { name: "Conversaciones" }).getByText("Martín Herrera")).toHaveCount(0);
+});

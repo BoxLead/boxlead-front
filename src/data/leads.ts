@@ -15,6 +15,13 @@ function replaceLead(lead: LeadResponse) {
   setQueryData<LeadResponse>(leadKey(lead.id), () => lead);
 }
 
+export async function deleteLead(id: string): Promise<void> {
+  await api.delete(leadKey(id));
+  setQueryData<LeadResponse[]>(ALL_LEADS_KEY, (current) => (current ?? []).filter((lead) => lead.id !== id));
+  void invalidateQueries("/leads");
+  void invalidateQueries("/conversations");
+}
+
 export async function updateLeadStatus(lead: LeadResponse, status: LeadStatus): Promise<LeadResponse> {
   const previous = getQueryState<LeadResponse>(leadKey(lead.id)).data ?? lead;
   replaceLead({ ...lead, status });

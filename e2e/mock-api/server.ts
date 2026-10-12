@@ -95,6 +95,19 @@ function messagesOf(conversationId: string): MessageResponse[] {
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+function removeConversation(conversationId: string) {
+  state.conversations = state.conversations.filter((c) => c.id !== conversationId);
+  state.messages = state.messages.filter((m) => m.conversationId !== conversationId);
+  state.drafts = state.drafts.filter((d) => d.conversationId !== conversationId);
+}
+
+function removeLead(leadId: string) {
+  for (const conversation of state.conversations.filter((c) => c.leadId === leadId)) {
+    removeConversation(conversation.id);
+  }
+  state.leads = state.leads.filter((l) => l.id !== leadId);
+}
+
 function lastMessage(conversationId: string): MessageResponse | undefined {
   return messagesOf(conversationId).at(-1);
 }
@@ -473,6 +486,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       Object.assign(leadRef, patch, { updatedAt: new Date().toISOString() });
       return send(res, 200, leadRef);
     }
+    if (parts.length === 2 && method === "DELETE") {
+      removeLead(leadRef.id);
+      return send(res, 204);
+    }
   }
 
   if (parts[0] === "conversations") {
@@ -515,6 +532,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const conversation = state.conversations.find((c) => c.id === parts[1]);
     if (!conversation) return fail(res, 404, "Conversation not found");
     if (parts.length === 2 && method === "GET") return send(res, 200, summary(conversation));
+    if (parts.length === 2 && method === "DELETE") {
+      removeConversation(conversation.id);
+      return send(res, 204);
+    }
     if (parts[2] === "read" && method === "POST") {
       conversation.lastReadAt = new Date().toISOString();
       return send(res, 204);

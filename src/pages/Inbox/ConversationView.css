@@ -50,6 +50,13 @@
   font-size: 0.8125rem;
 }
 
+.conversation-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
 .conversation-context {
   display: flex;
   gap: var(--signal-space-sm);

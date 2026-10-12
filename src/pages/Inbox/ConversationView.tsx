@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import type {
   ContextItem,
@@ -8,7 +9,9 @@ import type {
   ReplyDraft,
 } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/toast";
+import { deleteConversation } from "../../data/conversations";
 import { discardDraft, draftKey } from "../../data/drafts";
 import { setQueryData } from "../../data/queryCache";
 import { useApiQuery } from "../../hooks/useApiQuery";
@@ -33,6 +36,7 @@ type ConversationViewProps = {
 };
 
 export function ConversationView({ row, backTo }: ConversationViewProps) {
+  const navigate = useNavigate();
   const platform = getPlatform(row.platform);
   const policy = platform.reply(row.salesStage);
   const messages = useApiQuery<MessageResponse[]>(messagesKey(row.id), {
@@ -43,6 +47,8 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   );
   const draftQuery = useApiQuery<ReplyDraft | undefined>(draftKey(row.id), { refreshInterval: MESSAGES_REFRESH_MS });
   const toast = useToast();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<{ conversationId: string; draftId: string } | null>(null);
   const [busyConversationId, setBusyConversationId] = useState<string | null>(null);
   const editingDraftId = editing?.conversationId === row.id ? editing.draftId : null;
@@ -135,9 +141,22 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
     }
   }
 
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await deleteConversation(row.id);
+      toast({ tone: "info", message: `Eliminaste la conversación con ${row.displayName}.` });
+      navigate(backTo);
+    } catch {
+      toast({ tone: "danger", message: "No pudimos eliminar la conversación." });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <section className="conversation-view" aria-label={`Conversación con ${row.displayName}`}>
-      <ConversationHeader row={row} backTo={backTo} />
+      <ConversationHeader row={row} backTo={backTo} onDelete={() => setConfirmingDelete(true)} />
 
       {contextIssue?.action === "reconnect" && !sender.failure ? (
         <div className="conversation-context">
@@ -277,6 +296,17 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
           </>
         )}
       </footer>
+      <ConfirmDialog
+        open={confirmingDelete}
+        title={`¿Eliminar la conversación con ${row.displayName}?`}
+        confirmLabel={deleting ? "Eliminando…" : "Eliminar"}
+        tone="danger"
+        busy={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setConfirmingDelete(false)}
+      >
+        <p>Se eliminan sus mensajes. El lead se conserva. Esto no se puede deshacer.</p>
+      </ConfirmDialog>
     </section>
   );
 }

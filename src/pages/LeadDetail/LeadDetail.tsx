@@ -11,10 +11,12 @@ import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { Tag } from "../../components/ui/Tag";
+import { useToast } from "../../components/ui/toast";
 import { CATEGORIES_KEY } from "../../data/categories";
 import { invalidateQueries } from "../../data/queryCache";
-import { leadKey } from "../../data/leads";
+import { deleteLead, leadKey } from "../../data/leads";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { getPlatform, hasStages, stageLabel } from "../../platforms";
@@ -32,6 +34,9 @@ export function LeadDetail() {
   );
   const [starting, setStarting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
 
   useDocumentTitle(lead.data ? leadDisplayName(lead.data) : "Lead");
 
@@ -90,6 +95,19 @@ export function LeadDetail() {
     }
   }
 
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await deleteLead(current.id);
+      toast({ tone: "info", message: `Eliminaste ${name}.` });
+      navigate("/app/leads");
+    } catch {
+      toast({ tone: "danger", message: "No pudimos eliminar el lead." });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="page lead-detail">
       {backLink}
@@ -112,6 +130,14 @@ export function LeadDetail() {
         <div className="lead-detail-controls">
           <StatusSelect lead={current} size="md" />
           {categories.data ? <CategorySelect lead={current} categories={categories.data} size="md" /> : null}
+          <button
+            type="button"
+            className="btn btn-danger btn-sm"
+            onClick={() => setConfirmingDelete(true)}
+            aria-label={`Eliminar ${name}`}
+          >
+            Eliminar
+          </button>
         </div>
       </header>
 
@@ -210,6 +236,17 @@ export function LeadDetail() {
           )}
         </section>
       </div>
+      <ConfirmDialog
+        open={confirmingDelete}
+        title={`¿Eliminar ${name}?`}
+        confirmLabel={deleting ? "Eliminando…" : "Eliminar"}
+        tone="danger"
+        busy={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setConfirmingDelete(false)}
+      >
+        <p>Se eliminan también sus conversaciones y mensajes. Esto no se puede deshacer.</p>
+      </ConfirmDialog>
     </div>
   );
 }

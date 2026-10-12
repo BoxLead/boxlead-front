@@ -281,3 +281,23 @@ test.describe("agents in the inbox", () => {
     await expect(page.getByRole("status").filter({ hasText: "Un agente pidió tu atención" })).toHaveCount(0);
   });
 });
+
+test("deleting a conversation keeps the lead", async ({ page }) => {
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByRole("button", { name: "Eliminar conversación con Martín Herrera" }).click();
+  const dialog = page.getByRole("dialog", { name: "¿Eliminar la conversación con Martín Herrera?" });
+  await expect(dialog).toContainText("El lead se conserva.");
+  await dialog.getByRole("button", { name: "Eliminar" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Eliminaste la conversación con Martín Herrera." })).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/inbox$/);
+  await expect(list(page).getByRole("link")).toHaveCount(5);
+  await expect(list(page).getByText("Martín Herrera")).toHaveCount(0);
+  await page.reload();
+  await expect(list(page).getByRole("link")).toHaveCount(5);
+
+  await page.getByRole("link", { name: "Leads" }).click();
+  await page.getByRole("link", { name: "Martín Herrera" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Martín Herrera" })).toBeVisible();
+  await expect(page.getByText("Todavía no hay conversaciones con esta persona.")).toBeVisible();
+});

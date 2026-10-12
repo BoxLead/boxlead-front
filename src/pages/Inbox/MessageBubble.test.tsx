@@ -59,6 +59,7 @@ describe("ConversationHeader", () => {
         <ConversationHeader
           row={row({ needsAttention: true, attentionReason: "El cliente pidió hablar con una persona." })}
           backTo="/app/inbox"
+          onDelete={() => undefined}
         />
       </MemoryRouter>,
     );
@@ -69,7 +70,7 @@ describe("ConversationHeader", () => {
   it("stays silent when nobody asked for attention", () => {
     render(
       <MemoryRouter>
-        <ConversationHeader row={row()} backTo="/app/inbox" />
+        <ConversationHeader row={row()} backTo="/app/inbox" onDelete={() => undefined} />
       </MemoryRouter>,
     );
     expect(screen.queryByText("Un agente pidió tu atención")).toBeNull();

@@ -6,6 +6,7 @@ import type {
   MessageResponse,
   PlatformType,
 } from "../../api/types";
+import { CONVERSATIONS_KEY } from "../../data/conversations";
 import { clearDraft } from "../../data/drafts";
 import { invalidateQueries, setQueryData } from "../../data/queryCache";
 import { getPlatform } from "../../platforms";
@@ -18,7 +19,7 @@ export type PendingMessage = {
   status: "sending" | "failed";
 };
 
-export const CONVERSATIONS_KEY = "/conversations";
+export { CONVERSATIONS_KEY };
 
 export function messagesKey(conversationId: string): string {
   return `/conversations/${conversationId}/messages`;
