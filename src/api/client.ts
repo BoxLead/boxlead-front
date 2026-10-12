@@ -16,13 +16,26 @@ export class ApiError extends Error {
   }
 }
 
-export function apiUrl(path: string): string {
-  const configured = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
-  if (configured) {
-    return `${configured}${path.startsWith("/") ? path : `/${path}`}`;
-  }
-  return `/api${path.startsWith("/") ? path : `/${path}`}`;
+const CORE_PROXY_PREFIX = "/api";
+const AGENT_PROXY_PREFIX = "/agent-api";
+
+function buildUrl(configured: string | undefined, proxyPrefix: string, path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const base = configured?.replace(/\/$/, "");
+  return base ? `${base}${normalized}` : `${proxyPrefix}${normalized}`;
 }
+
+export function apiUrl(path: string): string {
+  return buildUrl(import.meta.env.VITE_API_BASE_URL, CORE_PROXY_PREFIX, path);
+}
+
+export function agentApiUrl(path: string): string {
+  return buildUrl(import.meta.env.VITE_AGENT_API_BASE_URL, AGENT_PROXY_PREFIX, path);
+}
+
+export const REQUEST_HEADERS = {
+  [CSRF_HEADER]: CSRF_HEADER_VALUE,
+} as const;
 
 function toAuthUser(value: unknown): AuthUser | null {
   if (
@@ -68,20 +81,27 @@ function errorMessage(status: number, data: unknown): string {
   return `Request failed (${status})`;
 }
 
-async function request<T>(
+type UrlBuilder = (path: string) => string;
+
+export function handleUnauthorized(): void {
+  clearAuthAndGoLogin();
+}
+
+async function send<T>(
+  url: UrlBuilder,
   method: string,
   path: string,
   options?: { body?: unknown; skipAuth?: boolean },
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
-    [CSRF_HEADER]: CSRF_HEADER_VALUE,
+    ...REQUEST_HEADERS,
   };
   if (options?.body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(apiUrl(path), {
+  const res = await fetch(url(path), {
     method,
     headers,
     credentials: "include",
@@ -90,7 +110,7 @@ async function request<T>(
   });
 
   if (res.status === 401 && !options?.skipAuth) {
-    clearAuthAndGoLogin();
+    handleUnauthorized();
   }
 
   const data = await parseBody(res);
@@ -104,6 +124,14 @@ async function request<T>(
   }
 
   return data as T;
+}
+
+function request<T>(
+  method: string,
+  path: string,
+  options?: { body?: unknown; skipAuth?: boolean },
+): Promise<T> {
+  return send<T>(apiUrl, method, path, options);
 }
 
 async function requestUser(
@@ -139,4 +167,14 @@ export const api = {
   me: () => requestUser("GET", "/auth/me"),
 
   logout: () => request<void>("POST", "/auth/logout", { skipAuth: true }),
+};
+
+export const agentApi = {
+  get: <T>(path: string) => send<T>(agentApiUrl, "GET", path),
+
+  post: <T>(path: string, body?: unknown) => send<T>(agentApiUrl, "POST", path, { body }),
+
+  put: <T>(path: string, body: unknown) => send<T>(agentApiUrl, "PUT", path, { body }),
+
+  delete: (path: string) => send<void>(agentApiUrl, "DELETE", path),
 };

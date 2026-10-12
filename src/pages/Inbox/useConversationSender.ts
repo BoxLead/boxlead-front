@@ -6,6 +6,7 @@ import type {
   MessageResponse,
   PlatformType,
 } from "../../api/types";
+import { clearDraft } from "../../data/drafts";
 import { invalidateQueries, setQueryData } from "../../data/queryCache";
 import { getPlatform } from "../../platforms";
 import type { PlatformErrorView } from "../../platforms/types";
@@ -59,6 +60,7 @@ export function useConversationSender(conversationId: string, platform: Platform
             : c,
         ),
       );
+      clearDraft(conversationId);
       void invalidateQueries(CONVERSATIONS_KEY);
     },
     [conversationId],

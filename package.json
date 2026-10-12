@@ -13,9 +13,10 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "mock-api": "node e2e/mock-api/server.ts",
-    "dev:mock": "VITE_API_BASE_URL=http://localhost:8090 vite"
+    "dev:mock": "VITE_API_BASE_URL=http://localhost:8090 VITE_AGENT_API_BASE_URL=http://localhost:8090 vite"
   },
   "dependencies": {
+    "@ag-ui/client": "^1.0.2",
     "@fontsource-variable/inter": "^5.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

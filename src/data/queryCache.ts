@@ -1,4 +1,4 @@
-import { api, ApiError } from "../api/client";
+import { agentApi, api, ApiError } from "../api/client";
 
 export type QueryState<T> = {
   data: T | undefined;
@@ -13,6 +13,7 @@ type Entry = {
   listeners: Set<() => void>;
   inflight: Promise<void> | null;
   gcTimer: ReturnType<typeof setTimeout> | null;
+  generation: number;
 };
 
 export const FALLBACK_ERROR = "No pudimos cargar los datos. Probá de nuevo.";
@@ -28,7 +29,15 @@ const IDLE: QueryState<unknown> = {
 };
 
 const entries = new Map<string, Entry>();
-let fetcher: (key: string) => Promise<unknown> = (key) => api.get<unknown>(key);
+export const AGENT_KEY_PREFIX = "agent:";
+
+function defaultFetcher(key: string): Promise<unknown> {
+  return key.startsWith(AGENT_KEY_PREFIX)
+    ? agentApi.get<unknown>(key.slice(AGENT_KEY_PREFIX.length))
+    : api.get<unknown>(key);
+}
+
+let fetcher: (key: string) => Promise<unknown> = defaultFetcher;
 const resolvers = new Map<string, (key: string) => Promise<unknown>>();
 
 function resolve(key: string): Promise<unknown> {
@@ -41,7 +50,7 @@ function resolve(key: string): Promise<unknown> {
 function entryFor(key: string): Entry {
   let entry = entries.get(key);
   if (!entry) {
-    entry = { state: IDLE, listeners: new Set(), inflight: null, gcTimer: null };
+    entry = { state: IDLE, listeners: new Set(), inflight: null, gcTimer: null, generation: 0 };
     entries.set(key, entry);
   }
   return entry;
@@ -67,8 +76,13 @@ export function fetchQuery(key: string): Promise<void> {
     fetching: true,
     status: entry.state.status === "idle" ? "loading" : entry.state.status,
   });
+  const generation = entry.generation;
   const run = resolve(key).then(
     (data) => {
+      if (entry.generation !== generation) {
+        update(entry, { fetching: false });
+        return;
+      }
       update(entry, {
         data,
         error: null,
@@ -78,6 +92,10 @@ export function fetchQuery(key: string): Promise<void> {
       });
     },
     (error: unknown) => {
+      if (entry.generation !== generation) {
+        update(entry, { fetching: false });
+        return;
+      }
       const hasData = entry.state.data !== undefined;
       update(entry, {
         error: messageOf(error),
@@ -117,6 +135,7 @@ export function subscribe(key: string, listener: () => void): () => void {
 
 export function setQueryData<T>(key: string, updater: (current: T | undefined) => T) {
   const entry = entryFor(key);
+  entry.generation += 1;
   update(entry, {
     data: updater(entry.state.data as T | undefined),
     status: "success",
@@ -150,8 +169,8 @@ export function clearQueryCache() {
   entries.clear();
 }
 
-export function setQueryFetcher(next: (key: string) => Promise<unknown>) {
-  fetcher = next;
+export function setQueryFetcher(next: ((key: string) => Promise<unknown>) | null) {
+  fetcher = next ?? defaultFetcher;
 }
 
 export function setQueryResolver(prefix: string, resolver: ((key: string) => Promise<unknown>) | null) {

@@ -15,6 +15,16 @@ resource "aws_ssm_parameter" "vite_api_base_url" {
   }
 }
 
+resource "aws_ssm_parameter" "vite_agent_api_base_url" {
+  name  = "${local.ssm_dir}VITE_AGENT_API_BASE_URL"
+  type  = "String"
+  value = var.agent_api_base_url
+
+  tags = {
+    Name = "${var.project_name}-vite-agent-api-base-url"
+  }
+}
+
 resource "aws_ssm_parameter" "s3_bucket_name" {
   name  = "${local.ssm_dir}S3_BUCKET_NAME"
   type  = "String"

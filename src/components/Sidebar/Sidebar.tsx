@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../../context/auth";
-import { ChartIcon, InboxIcon, LogoutIcon, PlugIcon, TagIcon, UsersIcon } from "../icons/UiIcons";
+import { BotIcon, ChartIcon, InboxIcon, LogoutIcon, PlugIcon, TagIcon, UsersIcon } from "../icons/UiIcons";
 import { Logo } from "../Logo/Logo";
 import "./Sidebar.css";
 
@@ -16,6 +16,7 @@ const links: NavItem[] = [
   { to: "/app/leads", label: "Leads", icon: <UsersIcon /> },
   { to: "/app/metrics", label: "Métricas", icon: <ChartIcon /> },
   { to: "/app/categories", label: "Categorías", icon: <TagIcon /> },
+  { to: "/app/agents", label: "Agentes", icon: <BotIcon /> },
   { to: "/app/connections", label: "Conexiones", icon: <PlugIcon /> },
 ];
 

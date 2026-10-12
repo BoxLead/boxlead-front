@@ -14,6 +14,7 @@ Provisions an S3 bucket + CloudFront distribution to host the Signal SPA, **SSM 
 - A globally unique S3 `bucket_name`
 - A DNS-controlled **`domain_name`** (e.g. `boxlead.app`) for the SPA — ACM validates via CNAME at your registrar
 - Backend **`api_base_url`** (HTTPS, e.g. `https://api.boxlead.app`)
+- Agent **`agent_api_base_url`** (HTTPS, e.g. `https://agent.boxlead.app`)
 
 ## Usage
 
@@ -42,6 +43,7 @@ Terraform variable **`ssm_prefix`** (default `/signal-front/`) must match workfl
 SSM parameters created:
 
 - `{ssm_prefix}VITE_API_BASE_URL`
+- `{ssm_prefix}VITE_AGENT_API_BASE_URL`
 - `{ssm_prefix}S3_BUCKET_NAME`
 - `{ssm_prefix}CLOUDFRONT_DISTRIBUTION_ID`
 

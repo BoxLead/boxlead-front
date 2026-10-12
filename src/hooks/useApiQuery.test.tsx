@@ -13,6 +13,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  setQueryFetcher(null);
 });
 
 describe("useApiQuery", () => {
@@ -22,6 +23,14 @@ describe("useApiQuery", () => {
     expect(result.current.loading).toBe(true);
     await waitFor(() => expect(result.current.data).toEqual({ id: 1 }));
     expect(result.current.loading).toBe(false);
+  });
+
+  it("treats an empty success as loaded", async () => {
+    fetcher.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useApiQuery<undefined>("/conversations/1/draft"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.error).toBeNull();
   });
 
   it("does nothing without a key", () => {

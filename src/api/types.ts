@@ -43,6 +43,8 @@ export type ConversationResponse = {
   lastMessageAt?: string | null;
   lastReadAt?: string | null;
   unreadCount?: number;
+  needsAttention?: boolean;
+  attentionReason?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -58,6 +60,17 @@ export type MessageResponse = {
   content: string | null;
   contextRef?: string | null;
   replyToExternalId: string | null;
+  agentName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReplyDraft = {
+  id: string;
+  conversationId: string;
+  content: string;
+  agentName: string | null;
+  basedOnMessageId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -236,4 +249,60 @@ export type BusinessHours = {
 export type MetricsSettings = {
   manualReplyMinutes: number;
   businessHours: BusinessHours | null;
+};
+
+export type ReplyMode = "AUTO" | "DRAFT";
+
+export type AgentScope = {
+  platform: PlatformType | null;
+  categoryId: string | null;
+  salesStage: SalesStage | null;
+  replyMode: ReplyMode;
+};
+
+export type AgentScopeResponse = AgentScope & { id: string };
+
+export type AgentRequest = {
+  name: string;
+  instructions: string;
+  enabled: boolean;
+  scopes: AgentScope[];
+};
+
+export type AgentResponse = {
+  id: string;
+  name: string;
+  instructions: string;
+  enabled: boolean;
+  position: number;
+  scopes: AgentScopeResponse[];
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type BusinessProfile = {
+  description: string;
+  tone: string | null;
+  autoCategorize: boolean;
+};
+
+export type ReplyAudience = "PUBLIC" | "PRIVATE";
+
+export type ChannelRules = {
+  channelName: string;
+  maxLength: number | null;
+  audience: ReplyAudience;
+  singleReply: boolean;
+  contactDetailsAllowed: boolean;
+  guidelines: string[];
+};
+
+export type PlaygroundDecision = "REPLY" | "HANDOFF";
+
+export type PlaygroundResult = {
+  decision: PlaygroundDecision;
+  reason: string | null;
+  replyMode: ReplyMode | null;
+  channelRules: ChannelRules;
+  violations: string[];
 };

@@ -18,6 +18,17 @@ import {
   type Scenario,
   type StoredConversation,
 } from "./fixtures.ts";
+import {
+  encodeEvents,
+  parseAgentBody,
+  parsePlaygroundRequest,
+  parseProfileBody,
+  playgroundEvents,
+  resolveReplyMode,
+  toAgentResponse,
+  unknownCategories,
+  PLAYGROUND_RUNS_PER_HOUR,
+} from "./agents.ts";
 import { PRODUCT_IMAGES } from "./images.ts";
 
 const PORT = Number(process.env.MOCK_API_PORT ?? 8090);
@@ -269,6 +280,21 @@ function oauthUrl(platform: PlatformType, redirectUri: string) {
   return url.toString();
 }
 
+async function playground(req: IncomingMessage, res: ServerResponse) {
+  const parsed = parsePlaygroundRequest(await readBody(req));
+  if ("status" in parsed) return fail(res, parsed.status, parsed.message);
+  const saved = parsed.agentId ? state.agents.find((a) => a.id === parsed.agentId) : undefined;
+  if (parsed.agentId && !saved) return fail(res, 404, "Agent not found");
+  if (state.playgroundRuns >= Math.min(state.playgroundLimit, PLAYGROUND_RUNS_PER_HOUR)) {
+    return fail(res, 429, "Too many test runs, try again in a while");
+  }
+  state.playgroundRuns += 1;
+  const name = saved?.name ?? parsed.unsavedName ?? "Agente";
+  const replyMode = saved ? resolveReplyMode(saved, parsed.platform, parsed.stage, parsed.categoryId) : null;
+  res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
+  res.end(encodeEvents(playgroundEvents(parsed, name, replyMode)));
+}
+
 async function handle(req: IncomingMessage, res: ServerResponse) {
   res.setHeader("Access-Control-Allow-Origin", APP_ORIGIN);
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -315,6 +341,47 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   }
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, USER);
+
+  if (parts[0] === "business-profile" && parts.length === 1) {
+    if (method === "GET") return send(res, 200, state.businessProfile);
+    if (method === "PUT") {
+      const profile = parseProfileBody(await readBody(req));
+      if (!profile) return fail(res, 422, "Validation failed");
+      state.businessProfile = profile;
+      return send(res, 200, profile);
+    }
+  }
+
+  if (parts[0] === "agents") {
+    if (parts[1] === "playground" && method === "POST") return playground(req, res);
+    if (parts.length === 1 && method === "GET") {
+      return send(res, 200, [...state.agents].sort((a, b) => a.position - b.position));
+    }
+    if (parts.length === 1 && method === "POST") {
+      const input = parseAgentBody(await readBody(req));
+      if (!input) return fail(res, 422, "Validation failed");
+      const unknown = unknownCategories(input.scopes, state.categories.map((c) => c.id));
+      if (unknown.length > 0) return fail(res, 422, `Unknown categories: ${unknown.join(", ")}`);
+      const created = toAgentResponse(input, state.agents.length);
+      state.agents.push(created);
+      return send(res, 201, created);
+    }
+    const agent = state.agents.find((a) => a.id === parts[1]);
+    if (!agent) return fail(res, 404, "Agent not found");
+    if (method === "PUT") {
+      const input = parseAgentBody(await readBody(req));
+      if (!input) return fail(res, 422, "Validation failed");
+      const unknown = unknownCategories(input.scopes, state.categories.map((c) => c.id));
+      if (unknown.length > 0) return fail(res, 422, `Unknown categories: ${unknown.join(", ")}`);
+      const saved = toAgentResponse(input, agent.position, agent);
+      state.agents = state.agents.map((a) => (a.id === agent.id ? saved : a));
+      return send(res, 200, saved);
+    }
+    if (method === "DELETE") {
+      state.agents = state.agents.filter((a) => a.id !== agent.id);
+      return send(res, 204);
+    }
+  }
 
   if (parts[0] === "categories") {
     if (parts.length === 1 && method === "GET") {
@@ -471,6 +538,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const items = refs.map((ref) => state.listings[ref as string]).filter(Boolean).map(absoluteImage);
       return send(res, 200, { items });
     }
+    if (parts[2] === "draft") {
+      const draft = state.drafts.find((d) => d.conversationId === conversation.id);
+      if (method === "GET") return draft ? send(res, 200, draft) : send(res, 204);
+      if (method === "DELETE") {
+        state.drafts = state.drafts.filter((d) => d.conversationId !== conversation.id);
+        return send(res, 204);
+      }
+    }
     if (parts[2] === "messages" && method === "GET") {
       return send(res, 200, messagesOf(conversation.id));
     }
@@ -506,6 +581,11 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       state.messages.push(created);
       conversation.updatedAt = created.createdAt;
+      if (created.direction === "OUTBOUND") {
+        state.drafts = state.drafts.filter((d) => d.conversationId !== conversation.id);
+        conversation.needsAttention = false;
+        conversation.attentionReason = null;
+      }
       return send(res, 201, created);
     }
   }

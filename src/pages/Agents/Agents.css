@@ -1,0 +1,358 @@
+.agents-page {
+  display: grid;
+  gap: var(--signal-space-lg);
+  min-width: 0;
+}
+
+.profile-panel {
+  display: grid;
+  gap: var(--signal-space-md);
+  min-width: 0;
+  padding: var(--signal-space-lg);
+}
+
+.profile-head {
+  display: grid;
+  gap: 4px;
+}
+
+.profile-form {
+  display: grid;
+  gap: var(--signal-space-md);
+}
+
+.profile-skeleton {
+  height: 220px;
+  border-radius: var(--signal-radius-md);
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.agent-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.agents-section {
+  display: grid;
+  gap: var(--signal-space-md);
+  min-width: 0;
+}
+
+.agents-section-title {
+  font-size: 1.125rem;
+}
+
+.agents-empty {
+  padding: var(--signal-space-xl) var(--signal-space-md);
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--signal-space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-skeleton {
+  height: 200px;
+  border-radius: var(--signal-radius-md);
+}
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+
+.agent-card-paused {
+  opacity: 0.8;
+}
+
+.agent-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.agent-card-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 1.0625rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-card-instructions {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.agent-card-instructions-empty {
+  color: var(--signal-text-muted);
+  font-style: italic;
+}
+
+.agent-scope-list {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-scope {
+  padding: 6px 10px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-sm);
+  background: var(--signal-bg-subtle);
+  color: var(--signal-heading);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.agent-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scopes-editor {
+  display: grid;
+  gap: var(--signal-space-sm);
+}
+
+.scopes-editor-head {
+  display: grid;
+  gap: 4px;
+}
+
+.scopes-editor-title {
+  font-size: 0.9375rem;
+}
+
+.scope-list {
+  display: grid;
+  gap: var(--signal-space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scope-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle);
+}
+
+.scope-remove {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+.scope-row-error {
+  grid-column: 1 / -1;
+}
+
+.scope-add {
+  justify-self: start;
+}
+
+@media (min-width: 640px) {
+  .scope-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    align-items: end;
+  }
+
+  .scope-remove {
+    grid-column: auto;
+  }
+}
+
+.playground {
+  display: grid;
+  gap: var(--signal-space-md);
+  min-width: 0;
+}
+
+.playground-scenario {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .playground-scenario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.playground-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  max-height: 260px;
+  margin: 0;
+  padding: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle);
+  list-style: none;
+}
+
+.playground-chat-empty {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle);
+  color: var(--signal-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.playground-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: min(85%, 480px);
+  align-self: flex-start;
+  padding: 8px 12px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--signal-bubble-inbound);
+  color: var(--signal-heading);
+}
+
+.playground-turn-agent {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--signal-bubble-outbound);
+  color: var(--signal-bubble-outbound-text);
+}
+
+.playground-turn-pending {
+  opacity: 0.7;
+}
+
+.playground-turn-who {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.playground-turn-text {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.playground-result {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+}
+
+.playground-result-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.playground-result-mode,
+.playground-result-reason {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.playground-result-title {
+  margin: 0 0 4px;
+  color: var(--signal-warning);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.playground-violations ul,
+.playground-guidelines {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8125rem;
+}
+
+.playground-rules summary {
+  color: var(--signal-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.playground-rules dl {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.playground-rule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.8125rem;
+}
+
+.playground-rule dt {
+  min-width: min(140px, 100%);
+  color: var(--signal-text-muted);
+}
+
+.playground-rule dd {
+  margin: 0;
+  color: var(--signal-heading);
+}
+
+.playground-form {
+  display: grid;
+  gap: 8px;
+}
+
+.playground-input {
+  min-height: 56px;
+  resize: vertical;
+}
+
+.playground-form-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.playground-form-bar .char-counter {
+  margin-right: auto;
+}

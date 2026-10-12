@@ -23,6 +23,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  setQueryFetcher(null);
 });
 
 describe("query cache", () => {
@@ -73,6 +74,20 @@ describe("query cache", () => {
     expect(isStale("/conversations/1/messages")).toBe(true);
     expect(isStale("/leads")).toBe(false);
     unsubscribe();
+  });
+
+  it("drops a response that arrives after a newer write", async () => {
+    let resolveFetch: (value: unknown) => void = () => undefined;
+    fetcher.mockReturnValue(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    const pending = fetchQuery("/conversations/1/draft");
+    setQueryData<string | undefined>("/conversations/1/draft", () => undefined);
+    resolveFetch({ id: "draft-1", content: "hola" });
+    await pending;
+    expect(getQueryState("/conversations/1/draft")).toMatchObject({ data: undefined, fetching: false });
   });
 
   it("notifies subscribers of optimistic updates", () => {

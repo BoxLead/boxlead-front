@@ -30,7 +30,7 @@ async function waitForEnterAnimations(page: Page) {
       document
         .getAnimations()
         .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
-        .map((animation) => animation.finished),
+        .map((animation) => animation.finished.catch(() => undefined)),
     ),
   );
 }

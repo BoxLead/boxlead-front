@@ -1,4 +1,5 @@
 import type { MessageResponse } from "../../api/types";
+import { answeredByLabel } from "../../util/agents";
 import { formatTime } from "../../util/format";
 
 type MessageBubbleProps = {
@@ -11,6 +12,7 @@ export function MessageBubble({ message, contactName }: MessageBubbleProps) {
   return (
     <li className={`bubble${outbound ? " bubble-outbound" : ""}`}>
       <span className="visually-hidden">{outbound ? "Vos" : contactName}: </span>
+      {outbound && message.agentName ? <span className="bubble-agent">{answeredByLabel(message.agentName)}</span> : null}
       <span className={`bubble-content${message.content ? "" : " bubble-empty"}`}>
         {message.content || "Mensaje sin texto (adjunto o tipo no soportado)"}
       </span>

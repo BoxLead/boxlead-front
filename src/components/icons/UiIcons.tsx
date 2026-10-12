@@ -273,3 +273,16 @@ export function PrintIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function BotIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="8" width="16" height="12" rx="3" />
+      <path d="M12 4v4" />
+      <circle cx="12" cy="3.5" r="1" />
+      <circle cx="9" cy="14" r="1" />
+      <circle cx="15" cy="14" r="1" />
+      <path d="M2 13v2M22 13v2" />
+    </Icon>
+  );
+}

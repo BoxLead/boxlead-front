@@ -65,7 +65,7 @@ export function useApiQuery<T>(key: string | null, options: Options = {}) {
   return {
     data: state.data,
     error: state.error,
-    loading: key !== null && state.data === undefined && state.status !== "error",
+    loading: key !== null && state.data === undefined && state.status !== "error" && state.status !== "success",
     refreshing: state.fetching && state.data !== undefined,
     reload,
   };

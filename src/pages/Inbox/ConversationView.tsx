@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api/client";
 import type {
   ContextItem,
   ConversationContextResponse,
   ConversationResponse,
   MessageResponse,
+  ReplyDraft,
 } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
+import { useToast } from "../../components/ui/toast";
+import { discardDraft, draftKey } from "../../data/drafts";
 import { setQueryData } from "../../data/queryCache";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useConnectPlatform } from "../../hooks/useConnectPlatform";
@@ -14,6 +17,7 @@ import { getPlatform } from "../../platforms";
 import { ChatThread } from "./ChatThread";
 import { Composer } from "./Composer";
 import { ConversationHeader } from "./ConversationHeader";
+import { DraftBanner } from "./DraftBanner";
 import { pairQuestions, type ConversationRow } from "./inboxModel";
 import { OrderSummary } from "./OrderSummary";
 import { QuestionThread } from "./QuestionThread";
@@ -37,6 +41,12 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const context = useApiQuery<ConversationContextResponse>(
     platform.hasContext ? `/conversations/${row.id}/context` : null,
   );
+  const draftQuery = useApiQuery<ReplyDraft | undefined>(draftKey(row.id), { refreshInterval: MESSAGES_REFRESH_MS });
+  const toast = useToast();
+  const [editing, setEditing] = useState<{ conversationId: string; draftId: string } | null>(null);
+  const [busyConversationId, setBusyConversationId] = useState<string | null>(null);
+  const editingDraftId = editing?.conversationId === row.id ? editing.draftId : null;
+  const draftBusy = busyConversationId === row.id;
   const sender = useConversationSender(row.id, row.platform);
   const { connect, connecting } = useConnectPlatform();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -77,7 +87,40 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const orders = (context.data?.items ?? []).filter((i) => i.kind === "ORDER");
   const contextIssue = context.error ? platform.explainError(409, context.error) : null;
   const questions = policy.kind === "questions" ? pairQuestions(list) : null;
+  const draft = draftQuery.data ?? null;
+  const showDraft = draft !== null && draft.id !== editingDraftId;
+  const draftTooLong = draft !== null && policy.maxLength !== null && draft.content.length > policy.maxLength;
   const nothingToAnswer = questions !== null && questions.nextToAnswer === null && list.length > 0;
+
+  function stopEditing() {
+    setEditing((current) => (current?.conversationId === row.id ? null : current));
+  }
+
+  async function sendDraft(current: ReplyDraft) {
+    setBusyConversationId(row.id);
+    const sent = await sender.send(current.content);
+    if (sent) stopEditing();
+    setBusyConversationId((currentId) => (currentId === row.id ? null : currentId));
+  }
+
+  async function sendFromComposer(content: string) {
+    const sent = await sender.send(content);
+    if (sent) stopEditing();
+    return sent;
+  }
+
+  async function dropDraft() {
+    setBusyConversationId(row.id);
+    try {
+      await discardDraft(row.id);
+      stopEditing();
+      toast({ tone: "info", message: "Descartaste el borrador." });
+    } catch {
+      toast({ tone: "danger", message: "No pudimos descartar el borrador. Probá de nuevo." });
+    } finally {
+      setBusyConversationId((currentId) => (currentId === row.id ? null : currentId));
+    }
+  }
 
   return (
     <section className="conversation-view" aria-label={`Conversación con ${row.displayName}`}>
@@ -112,7 +155,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
         </div>
       ) : null}
 
-      <div className="conversation-scroll" ref={scrollRef}>
+      <div className="conversation-scroll" ref={scrollRef} tabIndex={0} role="region" aria-label="Mensajes">
         {messages.loading ? (
           <div className="conversation-skeleton" aria-hidden="true">
             <div className="skeleton" />
@@ -187,12 +230,38 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
             poder responder desde acá.
           </Banner>
         ) : (
-          <Composer
-            key={row.id}
-            policy={policy}
-            label={`Responder a ${row.displayName}`}
-            onSend={sender.send}
-          />
+          <>
+            {draft && showDraft ? (
+              <DraftBanner
+                draft={draft}
+                tooLong={draftTooLong}
+                busy={draftBusy}
+                onSend={() => void sendDraft(draft)}
+                onEdit={() => setEditing({ conversationId: row.id, draftId: draft.id })}
+                onDiscard={() => void dropDraft()}
+              />
+            ) : null}
+            {draft && editingDraftId ? (
+              <div className="draft-banner-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => void dropDraft()}
+                  disabled={draftBusy}
+                  aria-label="Descartar borrador"
+                >
+                  Descartar
+                </button>
+              </div>
+            ) : null}
+            <Composer
+              key={`${row.id}:${editingDraftId ?? ""}`}
+              policy={policy}
+              label={`Responder a ${row.displayName}`}
+              initialValue={draft && draft.id === editingDraftId ? draft.content : ""}
+              onSend={sendFromComposer}
+            />
+          </>
         )}
       </footer>
     </section>
