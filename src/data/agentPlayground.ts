@@ -12,6 +12,7 @@ export type PlaygroundScenario = {
   platform: PlatformType;
   salesStage: SalesStage;
   categoryId: string | null;
+  comment?: boolean;
 };
 
 export type PlaygroundRun = {

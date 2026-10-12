@@ -52,7 +52,13 @@ function parseScope(raw: unknown): AgentScope | null {
   };
 }
 
-export type AgentInput = { name: string; instructions: string; enabled: boolean; scopes: AgentScope[] };
+export type AgentInput = {
+  name: string;
+  instructions: string;
+  enabled: boolean;
+  publicCommentReplies: boolean;
+  scopes: AgentScope[];
+};
 
 export function parseAgentBody(body: Json): AgentInput | null {
   const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -60,6 +66,7 @@ export function parseAgentBody(body: Json): AgentInput | null {
   const instructions = body.instructions === undefined ? "" : body.instructions;
   if (typeof instructions !== "string" || instructions.length > MAX_TEXT) return null;
   if (body.enabled !== undefined && typeof body.enabled !== "boolean") return null;
+  if (body.publicCommentReplies !== undefined && typeof body.publicCommentReplies !== "boolean") return null;
   if (!Array.isArray(body.scopes) || body.scopes.length < 1 || body.scopes.length > MAX_SCOPES) return null;
   const scopes: AgentScope[] = [];
   for (const raw of body.scopes) {
@@ -69,7 +76,13 @@ export function parseAgentBody(body: Json): AgentInput | null {
   }
   const keys = scopes.map((s) => `${s.platform}|${s.categoryId}|${s.salesStage}`);
   if (new Set(keys).size !== keys.length) return null;
-  return { name, instructions, enabled: body.enabled ?? true, scopes };
+  return {
+    name,
+    instructions,
+    enabled: body.enabled ?? true,
+    publicCommentReplies: body.publicCommentReplies === true,
+    scopes,
+  };
 }
 
 export function unknownCategories(scopes: AgentScope[], known: string[]): string[] {
@@ -83,6 +96,7 @@ export function toAgentResponse(input: AgentInput, position: number, existing?: 
     name: input.name,
     instructions: input.instructions,
     enabled: input.enabled,
+    publicCommentReplies: input.publicCommentReplies,
     position,
     scopes: input.scopes.map((scope) => ({ ...scope, id: nextId("5c0e") })),
     createdAt: existing?.createdAt ?? now,

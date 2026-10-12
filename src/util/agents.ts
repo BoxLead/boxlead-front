@@ -81,6 +81,7 @@ export function toAgentRequest(agent: AgentResponse, patch: Partial<AgentRequest
     name: agent.name,
     instructions: agent.instructions,
     enabled: agent.enabled,
+    publicCommentReplies: agent.publicCommentReplies,
     scopes: agent.scopes.map(({ platform, categoryId, salesStage, replyMode }) => ({
       platform,
       categoryId,

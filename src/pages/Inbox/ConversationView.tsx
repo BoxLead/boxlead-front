@@ -18,7 +18,7 @@ import { ChatThread } from "./ChatThread";
 import { Composer } from "./Composer";
 import { ConversationHeader } from "./ConversationHeader";
 import { DraftBanner } from "./DraftBanner";
-import { pairQuestions, type ConversationRow } from "./inboxModel";
+import { draftDelivery, pairQuestions, type ConversationRow } from "./inboxModel";
 import { OrderSummary } from "./OrderSummary";
 import { QuestionThread } from "./QuestionThread";
 import { useMissingPostRefresh } from "./useMissingPostRefresh";
@@ -89,7 +89,9 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const questions = policy.kind === "questions" ? pairQuestions(list) : null;
   const draft = draftQuery.data ?? null;
   const showDraft = draft !== null && draft.id !== editingDraftId;
-  const draftTooLong = draft !== null && policy.maxLength !== null && draft.content.length > policy.maxLength;
+  const delivery = draftDelivery(messages.data, draft);
+  const draftLimit = delivery.kind === "comment" ? (platform.commentReply?.maxLength ?? policy.maxLength) : policy.maxLength;
+  const draftTooLong = draft !== null && draftLimit !== null && draft.content.length > draftLimit;
   const nothingToAnswer = questions !== null && questions.nextToAnswer === null && list.length > 0;
 
   function stopEditing() {
@@ -97,8 +99,19 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   }
 
   async function sendDraft(current: ReplyDraft) {
+    const plan = draftDelivery(messages.data, current);
+    if (plan.kind === "unavailable") {
+      toast({
+        tone: "danger",
+        message: "No encontramos el mensaje de este borrador. Recargá la conversación antes de enviarlo.",
+      });
+      return;
+    }
     setBusyConversationId(row.id);
-    const sent = await sender.send(current.content);
+    const sent =
+      plan.kind === "comment"
+        ? await sender.replyToComment(plan.commentId, current.content)
+        : await sender.send(current.content);
     if (sent) stopEditing();
     setBusyConversationId((currentId) => (currentId === row.id ? null : currentId));
   }

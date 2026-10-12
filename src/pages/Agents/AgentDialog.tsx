@@ -3,6 +3,7 @@ import { ApiError } from "../../api/client";
 import type { AgentResponse, CategoryResponse } from "../../api/types";
 import { CharCounter } from "../../components/ui/CharCounter";
 import { Dialog } from "../../components/ui/Dialog";
+import { Switch } from "../../components/ui/Switch";
 import { createAgent, updateAgent } from "../../data/agents";
 import {
   AGENT_INSTRUCTIONS_MAX,
@@ -44,6 +45,7 @@ export function AgentDialog({ open, agent, categories, onClose, onSaved, onTest 
   const instructionsCounterId = useId();
   const [name, setName] = useState(agent?.name ?? "");
   const [instructions, setInstructions] = useState(agent?.instructions ?? "");
+  const [publicCommentReplies, setPublicCommentReplies] = useState(agent?.publicCommentReplies ?? false);
   const [drafts, setDrafts] = useState<ScopeDraft[]>(() => initialDrafts(agent));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export function AgentDialog({ open, agent, categories, onClose, onSaved, onTest 
       name: trimmed,
       instructions: instructions.trim(),
       enabled: agent?.enabled ?? true,
+      publicCommentReplies,
       scopes: drafts.map((draft) => draft.scope),
     };
     try {
@@ -117,6 +120,17 @@ export function AgentDialog({ open, agent, categories, onClose, onSaved, onTest 
           />
           <CharCounter id={instructionsCounterId} length={instructions.length} max={AGENT_INSTRUCTIONS_MAX} />
         </label>
+        <div className="field">
+          <Switch
+            label="Responder comentarios en público"
+            checked={publicCommentReplies}
+            disabled={saving}
+            onChange={setPublicCommentReplies}
+          />
+          <span className="field-help">
+            La respuesta se publica en el comentario. Si el agente no está seguro, se lo deja a una persona.
+          </span>
+        </div>
         <ScopesEditor drafts={drafts} categories={categories} onChange={setDrafts} />
         {problem ? (
           <p className="field-error" role="alert">

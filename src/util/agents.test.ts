@@ -84,6 +84,7 @@ describe("toAgentRequest", () => {
     name: "Ventas",
     instructions: "Vendé",
     enabled: true,
+    publicCommentReplies: false,
     position: 0,
     scopes: [{ id: "s-1", platform: null, categoryId: null, salesStage: null, replyMode: "AUTO" }],
     createdAt: null,
@@ -95,6 +96,7 @@ describe("toAgentRequest", () => {
       name: "Ventas",
       instructions: "Vendé",
       enabled: true,
+      publicCommentReplies: false,
       scopes: [{ platform: null, categoryId: null, salesStage: null, replyMode: "AUTO" }],
     });
   });

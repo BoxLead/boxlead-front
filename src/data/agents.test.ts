@@ -14,6 +14,7 @@ const agent = (patch: Partial<AgentResponse> = {}): AgentResponse => ({
   name: "Ventas",
   instructions: "",
   enabled: true,
+  publicCommentReplies: false,
   position: 0,
   scopes: [{ id: "s-1", platform: null, categoryId: null, salesStage: null, replyMode: "AUTO" }],
   createdAt: null,
@@ -50,6 +51,7 @@ describe("agent mutations", () => {
       name: "Ventas",
       instructions: "",
       enabled: false,
+      publicCommentReplies: false,
       scopes: [{ platform: null, categoryId: null, salesStage: null, replyMode: "AUTO" }],
     });
   });
@@ -67,7 +69,13 @@ describe("agent mutations", () => {
     setQueryData<AgentResponse[]>(AGENTS_KEY, () => [agent()]);
     fetchMock.mockResolvedValueOnce(json(agent({ id: "a-2", name: "Postventa", position: 1 }), 201));
 
-    await createAgent({ name: "Postventa", instructions: "", enabled: true, scopes: agent().scopes });
+    await createAgent({
+      name: "Postventa",
+      instructions: "",
+      enabled: true,
+      publicCommentReplies: false,
+      scopes: agent().scopes,
+    });
     expect(getQueryState<AgentResponse[]>(AGENTS_KEY).data?.map((item) => item.id)).toEqual(["a-1", "a-2"]);
 
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));

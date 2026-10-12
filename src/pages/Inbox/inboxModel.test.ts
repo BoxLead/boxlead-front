@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ConversationResponse, LeadResponse, MessageResponse } from "../../api/types";
-import { answeredCommentIds, filterRows, groupByDay, pairQuestions, toRows, unreadBy } from "./inboxModel";
+import type { ConversationResponse, LeadResponse, MessageResponse, ReplyDraft } from "../../api/types";
+import { answeredCommentIds, draftDelivery, filterRows, groupByDay, pairQuestions, toRows, unreadBy } from "./inboxModel";
 
 const conversation = (patch: Partial<ConversationResponse>): ConversationResponse => ({
   id: "c",
@@ -117,6 +117,34 @@ describe("groupByDay", () => {
       ["Ayer", 1],
       ["Hoy", 2],
     ]);
+  });
+});
+
+describe("draftDelivery", () => {
+  const draft = (basedOnMessageId: string | null): ReplyDraft => ({
+    id: "d-1",
+    conversationId: "c",
+    content: "gracias",
+    agentName: "Ventas",
+    basedOnMessageId,
+    createdAt: "2026-10-01T10:00:00Z",
+    updatedAt: "2026-10-01T10:00:00Z",
+  });
+
+  it("sends a draft of an inbound comment as a public reply to that comment", () => {
+    const comment = message({ id: "c-1", kind: "COMMENT" });
+
+    expect(draftDelivery([comment], draft("c-1"))).toEqual({ kind: "comment", commentId: "c-1" });
+  });
+
+  it("sends a draft of a text message as a direct message", () => {
+    expect(draftDelivery([message({ id: "m-1" })], draft("m-1"))).toEqual({ kind: "text" });
+    expect(draftDelivery([message({ id: "m-1" })], draft(null))).toEqual({ kind: "text" });
+  });
+
+  it("does not send when the message the draft answers is not in the thread", () => {
+    expect(draftDelivery([], draft("c-1"))).toEqual({ kind: "unavailable" });
+    expect(draftDelivery(undefined, draft("c-1"))).toEqual({ kind: "unavailable" });
   });
 });
 

@@ -82,7 +82,32 @@ afterEach(() => {
   setQueryFetcher(null);
 });
 
+function CommentProbe() {
+  const sender = useConversationSender("c-1", "INSTAGRAM");
+  return (
+    <button type="button" onClick={() => void sender.replyToComment("c-9", "gracias")}>
+      Responder
+    </button>
+  );
+}
+
 describe("useConversationSender", () => {
+  it("posts a public reply to the comment", async () => {
+    vi.mocked(api.post).mockResolvedValue({ ...created, kind: "COMMENT", content: "gracias" });
+
+    render(<CommentProbe />);
+    await userEvent.click(screen.getByRole("button", { name: "Responder" }));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith(messagesKey("c-1"), {
+        direction: "OUTBOUND",
+        kind: "COMMENT",
+        content: "gracias",
+        replyToMessageId: "c-9",
+      }),
+    );
+  });
+
   it("publishes one copy of the reply and clears the handoff", async () => {
     let resolvePost: (message: MessageResponse) => void = () => undefined;
     vi.mocked(api.post).mockReturnValue(

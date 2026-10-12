@@ -3,6 +3,7 @@ import type {
   LeadResponse,
   MessageResponse,
   PlatformType,
+  ReplyDraft,
   SalesStage,
 } from "../../api/types";
 import { getPlatform } from "../../platforms";
@@ -112,6 +113,22 @@ export function pairQuestions(messages: MessageResponse[]): QuestionThread {
     });
   const pending = entries.filter((entry) => !entry.answer);
   return { entries, pending, nextToAnswer: pending[0] ?? null };
+}
+
+export type DraftDelivery =
+  | { kind: "text" }
+  | { kind: "comment"; commentId: string }
+  | { kind: "unavailable" };
+
+export function draftDelivery(messages: MessageResponse[] | undefined, draft: ReplyDraft | null): DraftDelivery {
+  if (!draft?.basedOnMessageId) return { kind: "text" };
+  if (!messages) return { kind: "unavailable" };
+  const message = messages.find((item) => item.id === draft.basedOnMessageId);
+  if (!message) return { kind: "unavailable" };
+  if (message.kind === "COMMENT" && message.direction === "INBOUND") {
+    return { kind: "comment", commentId: message.id };
+  }
+  return { kind: "text" };
 }
 
 export function answeredCommentIds(messages: MessageResponse[]): Set<string> {

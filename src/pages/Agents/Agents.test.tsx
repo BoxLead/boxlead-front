@@ -28,6 +28,7 @@ const agent: AgentResponse = {
   name: "Ventas",
   instructions: "Sé breve",
   enabled: true,
+  publicCommentReplies: false,
   position: 0,
   scopes: [{ id: "s-1", platform: null, categoryId: "c-1", salesStage: null, replyMode: "AUTO" }],
   createdAt: null,

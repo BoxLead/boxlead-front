@@ -4,8 +4,9 @@ import { SendIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { CharCounter } from "../../components/ui/CharCounter";
 import { Dialog } from "../../components/ui/Dialog";
+import { Switch } from "../../components/ui/Switch";
 import { runPlayground, type PlaygroundTarget, type PlaygroundTurn } from "../../data/agentPlayground";
-import { CONNECTABLE_PLATFORMS, stageChoices } from "../../platforms";
+import { CONNECTABLE_PLATFORMS, getPlatform, stageChoices } from "../../platforms";
 import { PLAYGROUND_MAX_MESSAGES, PLAYGROUND_MESSAGE_MAX, agentErrorMessage } from "../../util/agents";
 import { PlaygroundResultView } from "./PlaygroundResultView";
 
@@ -33,6 +34,7 @@ export function PlaygroundDialog({ open, agentName, target, categories, onClose 
   const [platform, setPlatform] = useState<PlatformType>(FIRST_PLATFORM);
   const [stage, setStage] = useState<SalesStage>("PRE_SALE");
   const [categoryId, setCategoryId] = useState(NO_CATEGORY);
+  const [asComment, setAsComment] = useState(false);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [result, setResult] = useState<PlaygroundResult | null>(null);
   const [draft, setDraft] = useState("");
@@ -59,6 +61,7 @@ export function PlaygroundDialog({ open, agentName, target, categories, onClose 
     const choices = stageChoices(next);
     setPlatform(next);
     setStage(choices.some((choice) => choice.value === stage) ? stage : (choices[0]?.value ?? "PRE_SALE"));
+    if (!getPlatform(next).commentReply) setAsComment(false);
     restart();
   }
 
@@ -77,7 +80,7 @@ export function PlaygroundDialog({ open, agentName, target, categories, onClose 
     try {
       const outcome = await runPlayground({
         target,
-        scenario: { platform, salesStage: stage, categoryId: categoryId || null },
+        scenario: { platform, salesStage: stage, categoryId: categoryId || null, comment: asComment },
         history: toHistory(history),
         signal: controller.signal,
       });
@@ -168,6 +171,19 @@ export function PlaygroundDialog({ open, agentName, target, categories, onClose 
               ))}
             </select>
           </label>
+          {getPlatform(platform).commentReply ? (
+            <div className="field">
+              <Switch
+                label="Probar como comentario"
+                checked={asComment}
+                disabled={running}
+                onChange={(checked) => {
+                  setAsComment(checked);
+                  restart();
+                }}
+              />
+            </div>
+          ) : null}
         </div>
 
         {entries.length === 0 && !running ? (

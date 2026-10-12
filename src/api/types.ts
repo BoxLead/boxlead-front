@@ -266,6 +266,7 @@ export type AgentRequest = {
   name: string;
   instructions: string;
   enabled: boolean;
+  publicCommentReplies: boolean;
   scopes: AgentScope[];
 };
 
@@ -274,6 +275,7 @@ export type AgentResponse = {
   name: string;
   instructions: string;
   enabled: boolean;
+  publicCommentReplies: boolean;
   position: number;
   scopes: AgentScopeResponse[];
   createdAt: string | null;
