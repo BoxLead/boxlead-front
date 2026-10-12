@@ -90,3 +90,15 @@ describe("query cache origins", () => {
     expect(getQueryState("/agents").data).toEqual({ from: "https://api.example.com/agents" });
   });
 });
+
+describe("rate limited answers", () => {
+  it("explains a 429 in Spanish whatever the server says", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+    fetchMock.mockResolvedValue(json({ error: "Too many requests", message: "Too many requests" }, 429));
+
+    await expect(api.post("/auth/login", {})).rejects.toMatchObject({
+      status: 429,
+      message: expect.stringContaining("demasiados intentos"),
+    });
+  });
+});
