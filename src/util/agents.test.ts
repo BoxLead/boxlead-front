@@ -17,6 +17,7 @@ import {
   toAgentRequest,
   unassignedActivityLine,
   withPlatform,
+  workingAgentLabel,
 } from "./agents";
 
 const category = (id: string, name: string): CategoryResponse => ({
@@ -169,6 +170,12 @@ describe("describeChannelRules", () => {
 describe("answeredByLabel", () => {
   it("names the agent", () => {
     expect(answeredByLabel("Ventas")).toBe("Respondido por Ventas");
+  });
+});
+
+describe("workingAgentLabel", () => {
+  it("names the agent that is composing", () => {
+    expect(workingAgentLabel("Ventas")).toBe("Ventas está respondiendo");
   });
 });
 

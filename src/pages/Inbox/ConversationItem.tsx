@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../../components/ui/Avatar";
 import { Tag } from "../../components/ui/Tag";
 import { getPlatform, hasStages, stageLabel } from "../../platforms";
+import { workingAgentLabel } from "../../util/agents";
 import { formatListTime } from "../../util/format";
 import type { ConversationRow } from "./inboxModel";
 
@@ -47,7 +48,11 @@ export function ConversationItem({ row, to, selected }: ConversationItemProps) {
                 {stageLabel(row.platform, row.salesStage)}
               </Tag>
             ) : null}
-            {row.awaitingReply ? <span className="conversation-item-awaiting">Esperando respuesta</span> : null}
+            {row.workingAgentName ? (
+              <span className="conversation-item-working">{workingAgentLabel(row.workingAgentName)}</span>
+            ) : row.awaitingReply ? (
+              <span className="conversation-item-awaiting">Esperando respuesta</span>
+            ) : null}
             {row.unread > 0 ? (
               <span className="conversation-item-unread-count">
                 <span aria-hidden="true">{row.unread > 99 ? "99+" : row.unread}</span>

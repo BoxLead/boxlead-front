@@ -45,6 +45,7 @@ export type ConversationResponse = {
   unreadCount?: number;
   needsAttention?: boolean;
   attentionReason?: string | null;
+  workingAgentName?: string | null;
   createdAt: string;
   updatedAt: string;
 };

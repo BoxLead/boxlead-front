@@ -129,6 +129,10 @@ export function answeredByLabel(agentName: string): string {
   return `Respondido por ${agentName}`;
 }
 
+export function workingAgentLabel(agentName: string): string {
+  return `${agentName} está respondiendo`;
+}
+
 export type ActivityNumbers = {
   labeled: number;
   sent: number;

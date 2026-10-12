@@ -19,7 +19,7 @@ import {
 import { CONVERSATIONS_KEY } from "./useConversationSender";
 import "./Inbox.css";
 
-const LIST_REFRESH_MS = 15_000;
+const LIST_REFRESH_MS = 5_000;
 const STAGES: SalesStage[] = ["PRE_SALE", "POST_SALE"];
 
 function parseChannel(value: string | null): ChannelFilter {

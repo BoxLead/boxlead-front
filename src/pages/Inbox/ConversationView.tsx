@@ -27,6 +27,7 @@ import { TemplateDialog } from "./TemplateDialog";
 import { QuestionThread } from "./QuestionThread";
 import { useMissingPostRefresh } from "./useMissingPostRefresh";
 import { CONVERSATIONS_KEY, messagesKey, useConversationSender } from "./useConversationSender";
+import { WorkingNotice } from "./WorkingNotice";
 import "./ConversationView.css";
 
 const MESSAGES_REFRESH_MS = 10_000;
@@ -239,6 +240,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
       </div>
 
       <footer className="conversation-footer">
+        {row.workingAgentName ? <WorkingNotice agentName={row.workingAgentName} /> : null}
         {sender.failure && !templatesOpen ? (
           <Banner
             tone="danger"

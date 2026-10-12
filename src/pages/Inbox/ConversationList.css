@@ -198,6 +198,12 @@
   font-weight: 500;
 }
 
+.conversation-item-working {
+  color: var(--signal-accent);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 .conversation-item-unread-count {
   min-width: 20px;
   height: 20px;

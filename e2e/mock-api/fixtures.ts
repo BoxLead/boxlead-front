@@ -493,6 +493,9 @@ function withAgents(state: MockState, scenario: Scenario): MockState {
   });
   instagramChat.needsAttention = true;
   instagramChat.attentionReason = "El cliente pidió hablar con una persona.";
+  const postSale = state.conversations.find((c) => c.salesStage === "POST_SALE");
+  if (!postSale) throw new Error("fixture: missing post-sale conversation");
+  postSale.workingAgentName = "Ventas";
 
   const ventas = state.agents.find((item) => item.name === "Ventas");
   const postventa = state.agents.find((item) => item.name === "Postventa");

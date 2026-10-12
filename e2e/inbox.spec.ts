@@ -321,6 +321,15 @@ test.describe("agents in the inbox", () => {
     await expect(page.getByText("Respondido por")).toHaveCount(0);
   });
 
+  test("shows which agent is writing a reply", async ({ page }) => {
+    await login(page);
+    const row = list(page).getByRole("link", { name: /CAROLINA_PZ/ });
+    await expect(row).toContainText("Ventas está respondiendo");
+    await expect(row).not.toContainText("Esperando respuesta");
+    await openConversation(page, "CAROLINA_PZ");
+    await expect(page.locator(".conversation-footer").getByRole("status")).toContainText("Ventas está respondiendo");
+  });
+
   test("a handoff shows its reason until a person answers", async ({ page }) => {
     await login(page);
     await openConversation(page, "sofi.decoraciones");
