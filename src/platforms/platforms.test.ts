@@ -81,6 +81,23 @@ describe("Instagram", () => {
   });
 });
 
+describe("whatsapp", () => {
+  const whatsapp = getPlatform("WHATSAPP");
+
+  it.each([
+    [409, "Cannot send WhatsApp message: the reply window is closed, the customer has to write first", null, "Pasaron más de 24 horas"],
+    [400, "WhatsApp messages are limited to 4096 characters", null, "El mensaje es demasiado largo"],
+    [409, "WhatsApp account 3 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar WhatsApp"],
+  ])("explains %i %s", (status, message, action, title) => {
+    expect(whatsapp.explainError(status, message)).toMatchObject({ action, title });
+  });
+
+  it("leaves other failures to the generic message", () => {
+    expect(whatsapp.explainError(502, "WhatsApp send message failed (HTTP 400 BAD_REQUEST)")).toBeNull();
+    expect(whatsapp.explainError(409, "Cannot send WhatsApp message: connection 1 has no phone number")).toBeNull();
+  });
+});
+
 describe("contact fields", () => {
   it("links WhatsApp contacts to wa.me with digits only", () => {
     const [field] = getPlatform("WHATSAPP").contactFields(lead({ platform: "WHATSAPP", phone: "+54 9 11 5555-0142" }));
