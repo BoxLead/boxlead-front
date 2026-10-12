@@ -116,6 +116,20 @@ export function useConversationSender(conversationId: string, platform: Platform
     [platform, post],
   );
 
+  const sendTemplate = useCallback(
+    async (templateId: string, parameters: string[]) => {
+      setFailure(null);
+      try {
+        await post({ direction: "OUTBOUND", template: { id: templateId, parameters } });
+        return true;
+      } catch (error) {
+        setFailure(explain(platform, error));
+        return false;
+      }
+    },
+    [platform, post],
+  );
+
   const retry = useCallback(
     (tempId: string) => {
       const message = pending.find((p) => p.tempId === tempId);
@@ -129,5 +143,5 @@ export function useConversationSender(conversationId: string, platform: Platform
     setFailure(null);
   }, []);
 
-  return { pending, failure, send, replyToComment, retry, discard, dismissFailure: () => setFailure(null) };
+  return { pending, failure, send, sendTemplate, replyToComment, retry, discard, dismissFailure: () => setFailure(null) };
 }

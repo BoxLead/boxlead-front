@@ -7,6 +7,7 @@ import type {
   ConversationResponse,
   LeadResponse,
   MessageResponse,
+  MessageTemplate,
   PlatformType,
   ReplyDraft,
   ReplyMode,
@@ -41,6 +42,23 @@ export type MockState = {
   playgroundRuns: number;
   playgroundLimit: number;
 };
+
+export const WHATSAPP_TEMPLATES: MessageTemplate[] = [
+  {
+    id: "tpl-order-update",
+    name: "order_update",
+    language: "es_AR",
+    body: "Hola {{1}}, tu pedido {{2}} ya salió. Te avisamos cuando llegue.",
+    parameterCount: 2,
+  },
+  {
+    id: "tpl-we-are-open",
+    name: "we_are_open",
+    language: "es_AR",
+    body: "Seguimos atendiendo de lunes a viernes de 9 a 18 h.",
+    parameterCount: 0,
+  },
+];
 
 export const MELI_SELLER_ID = "241550991";
 export const WABA_ID = "104882915577";

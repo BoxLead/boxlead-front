@@ -23,6 +23,7 @@ import { ConversationHeader } from "./ConversationHeader";
 import { DraftBanner } from "./DraftBanner";
 import { draftDelivery, pairQuestions, type ConversationRow } from "./inboxModel";
 import { OrderSummary } from "./OrderSummary";
+import { TemplateDialog } from "./TemplateDialog";
 import { QuestionThread } from "./QuestionThread";
 import { useMissingPostRefresh } from "./useMissingPostRefresh";
 import { CONVERSATIONS_KEY, messagesKey, useConversationSender } from "./useConversationSender";
@@ -48,6 +49,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const draftQuery = useApiQuery<ReplyDraft | undefined>(draftKey(row.id), { refreshInterval: MESSAGES_REFRESH_MS });
   const toast = useToast();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<{ conversationId: string; draftId: string } | null>(null);
   const [busyConversationId, setBusyConversationId] = useState<string | null>(null);
@@ -99,6 +101,11 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const draftLimit = delivery.kind === "comment" ? (platform.commentReply?.maxLength ?? policy.maxLength) : policy.maxLength;
   const draftTooLong = draft !== null && draftLimit !== null && draft.content.length > draftLimit;
   const nothingToAnswer = questions !== null && questions.nextToAnswer === null && list.length > 0;
+
+  function openTemplates() {
+    sender.dismissFailure();
+    setTemplatesOpen(true);
+  }
 
   function stopEditing() {
     setEditing((current) => (current?.conversationId === row.id ? null : current));
@@ -232,12 +239,16 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
       </div>
 
       <footer className="conversation-footer">
-        {sender.failure ? (
+        {sender.failure && !templatesOpen ? (
           <Banner
             tone="danger"
             title={sender.failure.title}
             action={
-              sender.failure.action === "reconnect" ? (
+              sender.failure.action === "template" ? (
+                <button type="button" className="btn btn-primary btn-sm" onClick={openTemplates}>
+                  Usar una plantilla
+                </button>
+              ) : sender.failure.action === "reconnect" ? (
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
@@ -292,10 +303,21 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
               label={`Responder a ${row.displayName}`}
               initialValue={draft && draft.id === editingDraftId ? draft.content : ""}
               onSend={sendFromComposer}
+              onTemplates={platform.supportsTemplates ? openTemplates : undefined}
             />
           </>
         )}
       </footer>
+      {platform.supportsTemplates ? (
+        <TemplateDialog
+          open={templatesOpen}
+          conversationId={row.id}
+          contactName={row.displayName}
+          error={sender.failure ? (sender.failure.detail ?? sender.failure.title) : null}
+          onClose={() => setTemplatesOpen(false)}
+          onSend={sender.sendTemplate}
+        />
+      ) : null}
       <ConfirmDialog
         open={confirmingDelete}
         title={`¿Eliminar la conversación con ${row.displayName}?`}

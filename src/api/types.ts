@@ -81,6 +81,15 @@ export type CreateMessageRequest = {
   externalMessageId?: string;
   kind?: MessageKind;
   replyToMessageId?: string;
+  template?: { id: string; parameters: string[] };
+};
+
+export type MessageTemplate = {
+  id: string;
+  name: string;
+  language: string;
+  body: string;
+  parameterCount: number;
 };
 
 export type LeadResponse = {

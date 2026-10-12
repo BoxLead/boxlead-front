@@ -18,6 +18,7 @@ export const whatsapp: PlatformDefinition = {
   ],
   connect: "whatsapp-embedded",
   stageLabels: { PRE_SALE: "Chats" },
+  supportsTemplates: true,
   reply: () => ({
     kind: "chat",
     maxLength: WHATSAPP_TEXT_LIMIT,
@@ -32,8 +33,8 @@ export const whatsapp: PlatformDefinition = {
       return {
         title: "Pasaron más de 24 horas",
         detail:
-          "WhatsApp solo deja responder dentro de las 24 horas del último mensaje de la persona. Vas a poder responderle cuando te escriba de nuevo.",
-        action: null,
+          "WhatsApp solo deja escribir texto libre dentro de las 24 horas del último mensaje de la persona. Podés responderle ahora con una plantilla aprobada.",
+        action: "template",
       };
     }
     return null;
