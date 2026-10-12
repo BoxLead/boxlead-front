@@ -6,7 +6,7 @@ import { useAuth } from "../../context/auth";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { DEFAULT_APP_PATH, NEXT_PARAM, safeAppPath } from "../../util/redirect";
 
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 8;
 
 export function Register() {
   useDocumentTitle("Crear cuenta");

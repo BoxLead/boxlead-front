@@ -73,7 +73,10 @@ async function parseBody(res: Response): Promise<unknown> {
   }
 }
 
+const TOO_MANY_REQUESTS_MESSAGE = "Hiciste demasiados intentos seguidos. Probá de nuevo en un rato.";
+
 function errorMessage(status: number, data: unknown): string {
+  if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
   if (data && typeof data === "object" && "message" in data) {
     const m = (data as { message: unknown }).message;
     if (typeof m === "string") return m;
