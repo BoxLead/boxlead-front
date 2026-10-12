@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api } from "../../api/client";
+import { api, ApiError } from "../../api/client";
 import type { ConversationResponse, MessageResponse } from "../../api/types";
 import { clearQueryCache, getQueryState, setQueryFetcher } from "../../data/queryCache";
 import { useApiQuery } from "../../hooks/useApiQuery";
@@ -91,7 +91,46 @@ function CommentProbe() {
   );
 }
 
+function TemplateProbe() {
+  const sender = useConversationSender("c-1", "WHATSAPP");
+  return (
+    <>
+      <button type="button" onClick={() => void sender.sendTemplate("t-1", ["Ana", "#123"])}>
+        Plantilla
+      </button>
+      <p>{sender.failure?.title}</p>
+      <p>{sender.failure?.action}</p>
+    </>
+  );
+}
+
 describe("useConversationSender", () => {
+  it("posts a template with its values", async () => {
+    vi.mocked(api.post).mockResolvedValue({ ...created, content: "Hola Ana, tu pedido #123 salió" });
+
+    render(<TemplateProbe />);
+    await userEvent.click(screen.getByRole("button", { name: "Plantilla" }));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith(messagesKey("c-1"), {
+        direction: "OUTBOUND",
+        template: { id: "t-1", parameters: ["Ana", "#123"] },
+      }),
+    );
+  });
+
+  it("offers a template when the 24 hour window is closed", async () => {
+    vi.mocked(api.post).mockRejectedValue(
+      new ApiError("Cannot send WhatsApp message: the reply window is closed, the customer has to write first", 409),
+    );
+
+    render(<TemplateProbe />);
+    await userEvent.click(screen.getByRole("button", { name: "Plantilla" }));
+
+    expect(await screen.findByText("Pasaron más de 24 horas")).toBeInTheDocument();
+    expect(screen.getByText("template")).toBeInTheDocument();
+  });
+
   it("posts a public reply to the comment", async () => {
     vi.mocked(api.post).mockResolvedValue({ ...created, kind: "COMMENT", content: "gracias" });
 

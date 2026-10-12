@@ -481,6 +481,11 @@
   field-sizing: content;
 }
 
+.composer-templates {
+  flex-shrink: 0;
+  gap: 6px;
+}
+
 .composer-input::placeholder {
   color: var(--signal-text-muted);
 }

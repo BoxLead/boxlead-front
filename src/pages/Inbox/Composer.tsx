@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
-import { SendIcon } from "../../components/icons/UiIcons";
+import { SendIcon, TemplateIcon } from "../../components/icons/UiIcons";
 import { CharCounter } from "../../components/ui/CharCounter";
 import type { ReplyPolicy } from "../../platforms/types";
 
@@ -8,9 +8,10 @@ type ComposerProps = {
   label: string;
   initialValue?: string;
   onSend: (content: string) => Promise<boolean>;
+  onTemplates?: () => void;
 };
 
-export function Composer({ policy, label, initialValue = "", onSend }: ComposerProps) {
+export function Composer({ policy, label, initialValue = "", onSend, onTemplates }: ComposerProps) {
   const [draft, setDraft] = useState(initialValue);
   const [sending, setSending] = useState(false);
   const hintId = useId();
@@ -56,6 +57,12 @@ export function Composer({ policy, label, initialValue = "", onSend }: ComposerP
         <p className={`composer-hint${policy.hint ? "" : " composer-hint-default"}`} id={hintId}>
           {policy.hint ?? "Enter para enviar, Shift + Enter para un salto de línea."}
         </p>
+        {onTemplates ? (
+          <button type="button" className="btn btn-secondary btn-sm composer-templates" onClick={onTemplates}>
+            <TemplateIcon width={16} height={16} />
+            <span>Plantilla</span>
+          </button>
+        ) : null}
         {policy.maxLength ? <CharCounter id={counterId} length={draft.length} max={policy.maxLength} /> : null}
         <button
           type="submit"
