@@ -28,6 +28,14 @@ export const whatsapp: PlatformDefinition = {
     const reconnect = reconnectError("WhatsApp", message);
     if (reconnect) return reconnect;
     if (status === 400 && /limited to/i.test(message)) return lengthError(WHATSAPP_TEXT_LIMIT);
+    if (status === 409 && /reply window/i.test(message)) {
+      return {
+        title: "Pasaron más de 24 horas",
+        detail:
+          "WhatsApp solo deja responder dentro de las 24 horas del último mensaje de la persona. Vas a poder responderle cuando te escriba de nuevo.",
+        action: null,
+      };
+    }
     return null;
   },
   contactFields: (lead) => {
