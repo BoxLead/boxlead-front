@@ -56,6 +56,8 @@ export function useConversationSender(conversationId: string, platform: Platform
                 lastMessagePreview: created.content,
                 lastMessageDirection: "OUTBOUND",
                 lastMessageAt: created.createdAt,
+                needsAttention: false,
+                attentionReason: null,
               }
             : c,
         ),
@@ -75,7 +77,7 @@ export function useConversationSender(conversationId: string, platform: Platform
       ]);
       try {
         await post({ direction: "OUTBOUND", content: message.content });
-        setPending((current) => current.filter((p) => p.tempId !== message.tempId));
+        setPending((current) => current.filter((item) => item.tempId !== message.tempId));
         return true;
       } catch (error) {
         setFailure(explain(platform, error));

@@ -210,7 +210,7 @@ test.describe("agents in the inbox", () => {
     await screenshot(page, "inbox-draft");
 
     await draft.getByRole("button", { name: "Enviar borrador" }).click();
-    await expect(page.locator(".bubble-list").getByText("Pasame el CUIT y te mandamos la factura A hoy mismo.")).toBeVisible();
+    await expect(page.locator(".bubble-outbound").last()).toContainText("Pasame el CUIT y te mandamos la factura A hoy mismo.");
     await expect(draft).toBeHidden();
     await page.reload();
     await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
@@ -227,7 +227,7 @@ test.describe("agents in the inbox", () => {
     await expect(composer).toHaveValue("¡Perfecto Martín! Pasame el CUIT y te mandamos la factura A hoy mismo.");
     await composer.fill("¡Perfecto Martín! Te mandamos la factura A mañana.");
     await composer.press("Enter");
-    await expect(page.getByText("Te mandamos la factura A mañana.")).toBeVisible();
+    await expect(page.locator(".bubble-outbound").last()).toContainText("Te mandamos la factura A mañana.");
     await page.reload();
     await expect(page.getByRole("region", { name: "Borrador de Ventas" })).toHaveCount(0);
   });
@@ -274,8 +274,8 @@ test.describe("agents in the inbox", () => {
     await screenshot(page, "inbox-handoff");
 
     await page.getByLabel("Responder a sofi.decoraciones").fill("Hola Sofi, te escribo yo.");
-    await page.getByRole("button", { name: "Enviar" }).click();
-    await expect(page.getByText("Hola Sofi, te escribo yo.")).toBeVisible();
+    await page.locator(".conversation-footer").getByRole("button", { name: "Enviar" }).click();
+    await expect(page.locator(".bubble-outbound").last()).toContainText("Hola Sofi, te escribo yo.");
     await expect(banner).toBeHidden();
     await openConversation(page, "Martín Herrera");
     await expect(page.getByRole("status").filter({ hasText: "Un agente pidió tu atención" })).toHaveCount(0);
