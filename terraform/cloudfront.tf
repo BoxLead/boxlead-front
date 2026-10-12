@@ -6,6 +6,53 @@ resource "aws_cloudfront_origin_access_control" "site" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_response_headers_policy" "site" {
+  name    = "${var.project_name}-security-headers"
+  comment = "Security headers for ${var.domain_name}"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = false
+      preload                    = false
+      override                   = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    content_security_policy {
+      content_security_policy = "frame-ancestors 'none'"
+      override                = true
+    }
+  }
+
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      value    = "camera=(), microphone=(), geolocation=()"
+      override = true
+    }
+
+    items {
+      header   = "Cross-Origin-Opener-Policy"
+      value    = "same-origin-allow-popups"
+      override = true
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -23,9 +70,10 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   default_cache_behavior {
-    target_origin_id       = "s3-site"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    target_origin_id           = "s3-site"
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
 
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
     cached_methods  = ["GET", "HEAD"]
