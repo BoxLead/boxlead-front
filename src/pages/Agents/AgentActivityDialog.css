@@ -1,0 +1,58 @@
+.agent-activity {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-activity-item {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--signal-border);
+}
+
+.agent-activity-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.agent-activity-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.agent-activity-outcome {
+  color: var(--signal-heading);
+  font-weight: 600;
+}
+
+.agent-activity-head time {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.agent-activity-detail {
+  margin: 0;
+  color: var(--signal-text-muted);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.agent-activity-empty {
+  margin: 0;
+}
+
+.agent-activity-skeleton {
+  display: grid;
+  gap: 8px;
+}
+
+.agent-activity-row-skeleton {
+  height: 48px;
+  border-radius: var(--signal-radius-sm);
+}

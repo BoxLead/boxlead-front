@@ -8,6 +8,11 @@ const BUSINESS_PROFILE_PATH = "/business-profile";
 
 export const AGENTS_KEY = `${AGENT_KEY_PREFIX}${AGENTS_PATH}`;
 export const BUSINESS_PROFILE_KEY = `${AGENT_KEY_PREFIX}${BUSINESS_PROFILE_PATH}`;
+export const ACTIVITY_KEY = `${AGENT_KEY_PREFIX}${AGENTS_PATH}/activity`;
+
+export function agentActivityKey(agentId: string): string {
+  return `${AGENT_KEY_PREFIX}${AGENTS_PATH}/${agentId}/activity`;
+}
 
 function sortByPosition(agents: AgentResponse[]): AgentResponse[] {
   return [...agents].sort((a, b) => a.position - b.position);

@@ -259,6 +259,27 @@ test("tests an unsaved agent from the editor", async ({ page }) => {
   await expect(editor.getByLabel("Nombre")).toHaveValue("Borrador");
 });
 
+test("shows what an agent did and opens the conversation it answered", async ({ page }) => {
+  await login(page, "/app/agents");
+
+  const ventas = card(page, "Ventas");
+  const stats = ventas.getByRole("region", { name: "Actividad de Ventas, últimos 30 días" });
+  await expect(stats).toContainText("Respondidos");
+  await expect(stats).toContainText("8");
+  await expect(page.getByText("4 mensajes no llegaron a ningún agente y 1 lead se etiquetó sin agente.")).toBeVisible();
+
+  await ventas.getByRole("button", { name: "Ver actividad de Ventas" }).click();
+  const dialog = page.getByRole("dialog", { name: "Actividad de Ventas" });
+  await expect(dialog).toContainText("Respondió");
+  await expect(dialog).toContainText("Etiquetó como Presupuesto");
+  await expect(dialog).toContainText("Este agente no responde comentarios públicos");
+  await expect(dialog.getByRole("link", { name: "Ver conversación" }).first()).toBeVisible();
+
+  await dialog.getByRole("link", { name: "Ver conversación" }).first().click();
+  await expect(page).toHaveURL(/\/app\/inbox\?id=/);
+  await expect(page.getByRole("heading", { name: "Martín Herrera" })).toBeVisible();
+});
+
 test("explains when the test limit was reached", async ({ page }) => {
   await resetApi("agents-limited");
   await login(page, "/app/agents");

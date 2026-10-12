@@ -291,6 +291,42 @@ export type AgentResponse = {
   updatedAt: string | null;
 };
 
+export type AgentRunOutcome = "SENT" | "DRAFTED" | "HANDOFF" | "SKIPPED" | "SUPERSEDED";
+
+export type AgentActivityCounts = {
+  agentId: string;
+  labeled: number;
+  sent: number;
+  drafted: number;
+  skipped: number;
+  handedOff: number;
+};
+
+export type AgentActivitySummary = {
+  days: number;
+  unassigned: { skipped: number; labeled: number };
+  agents: AgentActivityCounts[];
+};
+
+export type AgentActivityEvent = {
+  id: string;
+  conversationId: string | null;
+  outcome: AgentRunOutcome;
+  reason: string | null;
+  labeledCategoryId: string | null;
+  createdAt: string;
+};
+
+export type AgentActivityDetail = {
+  days: number;
+  labeled: number;
+  sent: number;
+  drafted: number;
+  skipped: number;
+  handedOff: number;
+  events: AgentActivityEvent[];
+};
+
 export type BusinessProfile = {
   description: string;
   tone: string | null;

@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { ApiError } from "../../api/client";
-import type { AgentResponse, CategoryResponse } from "../../api/types";
+import type { AgentActivitySummary, AgentResponse, CategoryResponse } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { BotIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/toast";
-import { AGENTS_KEY, deleteAgent, setAgentEnabled } from "../../data/agents";
+import { ACTIVITY_KEY, AGENTS_KEY, deleteAgent, setAgentEnabled } from "../../data/agents";
 import type { PlaygroundTarget } from "../../data/agentPlayground";
 import { CATEGORIES_KEY } from "../../data/categories";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { agentErrorMessage } from "../../util/agents";
+import { activityFor, agentErrorMessage, unassignedActivityLine } from "../../util/agents";
+import { AgentActivityDialog } from "./AgentActivityDialog";
 import { AgentCard } from "./AgentCard";
 import { AgentDialog } from "./AgentDialog";
 import { BusinessProfilePanel } from "./BusinessProfilePanel";
@@ -33,8 +34,11 @@ export function Agents() {
   const [toggling, setToggling] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AgentResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [activityAgent, setActivityAgent] = useState<AgentResponse | null>(null);
+  const activity = useApiQuery<AgentActivitySummary>(agents.data ? ACTIVITY_KEY : null);
 
   const list = agents.data ?? [];
+  const unassigned = activity.data ? unassignedActivityLine(activity.data.unassigned) : null;
 
   function openEditor(agent: AgentResponse | null) {
     setOpened((count) => count + 1);
@@ -99,6 +103,20 @@ export function Agents() {
         <h2 id="agents-title" className="agents-section-title">
           Tus agentes
         </h2>
+        {unassigned ? <p className="agents-unassigned">{unassigned}</p> : null}
+        {activity.error && !activity.data ? (
+          <Banner
+            tone="danger"
+            title="No pudimos cargar la actividad"
+            action={
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => void activity.reload()}>
+                Reintentar
+              </button>
+            }
+          >
+            {activity.error}
+          </Banner>
+        ) : null}
         {categories.error && !categories.data ? (
           <Banner
             tone="danger"
@@ -147,10 +165,14 @@ export function Agents() {
                 agent={agent}
                 categories={categories.data}
                 toggling={toggling === agent.id}
+                activityLoading={activity.loading}
+                activityDays={activity.data?.days}
+                counts={activity.data ? activityFor(activity.data, agent.id) : undefined}
                 onToggle={(enabled) => void toggle(agent, enabled)}
                 onTest={() => openPlayground(agent.name, { agentId: agent.id })}
                 onEdit={() => openEditor(agent)}
                 onDelete={() => setPendingDelete(agent)}
+                onActivity={() => setActivityAgent(agent)}
               />
             ))}
           </ul>
@@ -169,6 +191,14 @@ export function Agents() {
             toast({ message: created ? `Creaste ${saved.name}.` : `Guardaste ${saved.name}.` });
           }}
           onTest={(draft) => openPlayground(draft.name, { agent: draft })}
+        />
+      ) : null}
+
+      {activityAgent ? (
+        <AgentActivityDialog
+          agent={activityAgent}
+          categories={categories.data}
+          onClose={() => setActivityAgent(null)}
         />
       ) : null}
 

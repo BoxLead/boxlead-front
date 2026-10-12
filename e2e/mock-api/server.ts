@@ -12,6 +12,7 @@ import type {
 } from "../../src/api/types.ts";
 import {
   buildState,
+  emptyActivityDetail,
   MELI_SELLER_ID,
   nextId,
   type MockState,
@@ -402,6 +403,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 
   if (parts[0] === "agents") {
     if (parts[1] === "playground" && method === "POST") return playground(req, res);
+    if (parts[1] === "activity" && parts.length === 2 && method === "GET") {
+      return send(res, 200, state.activity.summary);
+    }
+    if (parts.length === 3 && parts[2] === "activity" && method === "GET") {
+      const agent = state.agents.find((item) => item.id === parts[1]);
+      if (!agent) return fail(res, 404, "Agent not found");
+      return send(res, 200, state.activity.details[agent.id] ?? emptyActivityDetail());
+    }
     if (parts.length === 1 && method === "GET") {
       return send(res, 200, [...state.agents].sort((a, b) => a.position - b.position));
     }

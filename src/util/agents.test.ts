@@ -2,15 +2,20 @@ import { describe, expect, it } from "vitest";
 import { ApiError } from "../api/client";
 import type { AgentResponse, AgentScope, CategoryResponse, ChannelRules } from "../api/types";
 import {
+  activityFor,
+  activityOutcomeLabel,
+  activityReasonLabel,
   agentErrorMessage,
   answeredByLabel,
   describeChannelRules,
   emptyScope,
   hasDuplicateScopes,
   isOrphanedCategory,
+  labeledLeadLabel,
   scopeKey,
   scopeLabel,
   toAgentRequest,
+  unassignedActivityLine,
   withPlatform,
 } from "./agents";
 
@@ -164,5 +169,53 @@ describe("describeChannelRules", () => {
 describe("answeredByLabel", () => {
   it("names the agent", () => {
     expect(answeredByLabel("Ventas")).toBe("Respondido por Ventas");
+  });
+});
+
+describe("activity labels", () => {
+  const summary = {
+    days: 30,
+    unassigned: { skipped: 0, labeled: 0 },
+    agents: [{ agentId: "a-1", labeled: 2, sent: 8, drafted: 1, skipped: 1, handedOff: 3 }],
+  };
+
+  it("uses zeroes when an agent has no runs", () => {
+    expect(activityFor(summary, "missing")).toEqual({
+      labeled: 0,
+      sent: 0,
+      drafted: 0,
+      skipped: 0,
+      handedOff: 0,
+    });
+    expect(activityFor(summary, "a-1").sent).toBe(8);
+  });
+
+  it("names outcomes and known skip reasons in Spanish", () => {
+    expect(activityOutcomeLabel("SENT")).toBe("Respondió");
+    expect(activityOutcomeLabel("DRAFTED")).toBe("Dejó un borrador");
+    expect(activityOutcomeLabel("HANDOFF")).toBe("Derivó");
+    expect(activityOutcomeLabel("SKIPPED")).toBe("Omitió");
+    expect(activityOutcomeLabel("SUPERSEDED")).toBe("Omitió");
+    expect(activityReasonLabel("public_comments_disabled")).toBe("Este agente no responde comentarios públicos");
+    expect(activityReasonLabel("a newer message arrived")).toBe("Llegó un mensaje más nuevo");
+    expect(activityReasonLabel("El cliente pidió una persona.")).toBe("El cliente pidió una persona.");
+    expect(activityReasonLabel(null)).toBeNull();
+    expect(activityReasonLabel("x".repeat(200))).toBe(`${"x".repeat(179)}…`);
+  });
+
+  it("names the category a run assigned", () => {
+    expect(labeledLeadLabel("c-1", categories)).toBe("Etiquetó como Presupuesto");
+    expect(labeledLeadLabel("gone", categories)).toBe("Etiquetó como Categoría eliminada");
+    expect(labeledLeadLabel("c-1", undefined)).toBe("Etiquetó el lead");
+    expect(labeledLeadLabel(null, categories)).toBeNull();
+  });
+
+  it("describes messages and labels that reached no agent", () => {
+    expect(unassignedActivityLine({ skipped: 0, labeled: 0 })).toBeNull();
+    expect(unassignedActivityLine({ skipped: 1, labeled: 0 })).toBe("1 mensaje no llegó a ningún agente.");
+    expect(unassignedActivityLine({ skipped: 4, labeled: 1 })).toBe(
+      "4 mensajes no llegaron a ningún agente y 1 lead se etiquetó sin agente.",
+    );
+    expect(unassignedActivityLine({ skipped: 0, labeled: 2 })).toBe("2 leads se etiquetaron sin agente.");
   });
 });

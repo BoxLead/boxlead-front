@@ -1,5 +1,7 @@
 import type {
   AccountConnectionResponse,
+  AgentActivityDetail,
+  AgentActivitySummary,
   AgentResponse,
   BusinessProfile,
   CategoryResponse,
@@ -27,6 +29,11 @@ export type StoredConversation = Omit<
 
 export type StoredCategory = Omit<CategoryResponse, "leadCount">;
 
+export type AgentActivityState = {
+  summary: AgentActivitySummary;
+  details: Record<string, AgentActivityDetail>;
+};
+
 export type MockState = {
   categories: StoredCategory[];
   leads: LeadResponse[];
@@ -41,6 +48,7 @@ export type MockState = {
   drafts: ReplyDraft[];
   playgroundRuns: number;
   playgroundLimit: number;
+  activity: AgentActivityState;
 };
 
 export const WHATSAPP_TEMPLATES: MessageTemplate[] = [
@@ -59,6 +67,14 @@ export const WHATSAPP_TEMPLATES: MessageTemplate[] = [
     parameterCount: 0,
   },
 ];
+
+export function emptyActivityDetail(): AgentActivityDetail {
+  return { days: 30, labeled: 0, sent: 0, drafted: 0, skipped: 0, handedOff: 0, events: [] };
+}
+
+export function emptyActivity(): AgentActivityState {
+  return { summary: { days: 30, unassigned: { skipped: 0, labeled: 0 }, agents: [] }, details: {} };
+}
 
 export const MELI_SELLER_ID = "241550991";
 export const WABA_ID = "104882915577";
@@ -200,6 +216,7 @@ export function emptyState(): MockState {
     drafts: [],
     playgroundRuns: 0,
     playgroundLimit: 30,
+    activity: emptyActivity(),
   };
 }
 
@@ -476,6 +493,51 @@ function withAgents(state: MockState, scenario: Scenario): MockState {
   });
   instagramChat.needsAttention = true;
   instagramChat.attentionReason = "El cliente pidió hablar con una persona.";
+
+  const ventas = state.agents.find((item) => item.name === "Ventas");
+  const postventa = state.agents.find((item) => item.name === "Postventa");
+  if (!ventas || !postventa) throw new Error("fixture: missing agents");
+  const ventasCounts = { agentId: ventas.id, labeled: 2, sent: 8, drafted: 1, skipped: 1, handedOff: 3 };
+  state.activity = {
+    summary: {
+      days: 30,
+      unassigned: { skipped: 4, labeled: 1 },
+      agents: [ventasCounts, { agentId: postventa.id, labeled: 0, sent: 0, drafted: 0, skipped: 0, handedOff: 0 }],
+    },
+    details: {
+      [ventas.id]: {
+        ...ventasCounts,
+        days: 30,
+        events: [
+          {
+            id: nextId("e0a1"),
+            conversationId: whatsappChat.id,
+            outcome: "SENT",
+            reason: null,
+            labeledCategoryId: presupuesto.id,
+            createdAt: ago(30),
+          },
+          {
+            id: nextId("e0a1"),
+            conversationId: whatsappChat.id,
+            outcome: "HANDOFF",
+            reason: "El cliente pidió hablar con una persona.",
+            labeledCategoryId: null,
+            createdAt: ago(80),
+          },
+          {
+            id: nextId("e0a1"),
+            conversationId: null,
+            outcome: "SKIPPED",
+            reason: "public_comments_disabled",
+            labeledCategoryId: null,
+            createdAt: ago(200),
+          },
+        ],
+      },
+      [postventa.id]: emptyActivityDetail(),
+    },
+  };
 
   state.playgroundLimit = scenario === "agents-limited" ? 0 : 30;
   return state;

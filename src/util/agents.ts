@@ -1,7 +1,9 @@
 import { ApiError } from "../api/client";
 import type {
+  AgentActivitySummary,
   AgentRequest,
   AgentResponse,
+  AgentRunOutcome,
   AgentScope,
   CategoryResponse,
   ChannelRules,
@@ -10,6 +12,7 @@ import type {
   SalesStage,
 } from "../api/types";
 import { getPlatform, stageChoices } from "../platforms";
+import { formatNumber } from "./format";
 
 export const AGENT_NAME_MAX = 80;
 export const AGENT_INSTRUCTIONS_MAX = 4000;
@@ -124,4 +127,86 @@ export function describeChannelRules(rules: ChannelRules): RuleLine[] {
 
 export function answeredByLabel(agentName: string): string {
   return `Respondido por ${agentName}`;
+}
+
+export type ActivityNumbers = {
+  labeled: number;
+  sent: number;
+  drafted: number;
+  skipped: number;
+  handedOff: number;
+};
+
+const OUTCOME_LABELS: Record<AgentRunOutcome, string> = {
+  SENT: "Respondió",
+  DRAFTED: "Dejó un borrador",
+  HANDOFF: "Derivó",
+  SKIPPED: "Omitió",
+  SUPERSEDED: "Omitió",
+};
+
+const REASON_LABELS: Record<string, string> = {
+  event_too_old: "El mensaje era demasiado viejo",
+  not_latest_inbound: "Llegó un mensaje más nuevo",
+  last_message_not_inbound: "El último mensaje no es del cliente",
+  needs_attention: "La conversación ya necesitaba atención",
+  human_took_over: "Una persona ya había respondido",
+  no_matching_scope: "Ninguna regla coincidía",
+  public_comments_disabled: "Este agente no responde comentarios públicos",
+  comments_not_supported: "El canal no permite responder comentarios",
+  "a newer message arrived": "Llegó un mensaje más nuevo",
+};
+
+const REASON_LIMIT = 180;
+
+export function activityFor(summary: AgentActivitySummary, agentId: string): ActivityNumbers {
+  const found = summary.agents.find((item) => item.agentId === agentId);
+  return {
+    labeled: found?.labeled ?? 0,
+    sent: found?.sent ?? 0,
+    drafted: found?.drafted ?? 0,
+    skipped: found?.skipped ?? 0,
+    handedOff: found?.handedOff ?? 0,
+  };
+}
+
+export function activityOutcomeLabel(outcome: AgentRunOutcome): string {
+  return OUTCOME_LABELS[outcome];
+}
+
+export function activityReasonLabel(reason: string | null): string | null {
+  if (!reason) return null;
+  const text = REASON_LABELS[reason] ?? reason;
+  if (text.length <= REASON_LIMIT) return text;
+  return `${text.slice(0, REASON_LIMIT - 1)}…`;
+}
+
+export function labeledLeadLabel(
+  categoryId: string | null,
+  categories: CategoryResponse[] | undefined,
+): string | null {
+  if (!categoryId) return null;
+  if (!categories) return "Etiquetó el lead";
+  const name = categories.find((category) => category.id === categoryId)?.name;
+  return `Etiquetó como ${name ?? DELETED_CATEGORY}`;
+}
+
+export function unassignedActivityLine(unassigned: { skipped: number; labeled: number }): string | null {
+  const parts: string[] = [];
+  if (unassigned.skipped > 0) {
+    parts.push(
+      unassigned.skipped === 1
+        ? "1 mensaje no llegó a ningún agente"
+        : `${formatNumber(unassigned.skipped)} mensajes no llegaron a ningún agente`,
+    );
+  }
+  if (unassigned.labeled > 0) {
+    parts.push(
+      unassigned.labeled === 1
+        ? "1 lead se etiquetó sin agente"
+        : `${formatNumber(unassigned.labeled)} leads se etiquetaron sin agente`,
+    );
+  }
+  if (parts.length === 0) return null;
+  return `${parts.join(" y ")}.`;
 }
