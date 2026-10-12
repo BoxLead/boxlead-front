@@ -101,7 +101,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
 - OAuth redirects go through `beginOAuthRedirect` and are checked on return with `consumeOAuthSession` (`state` validation).
 - Never render API or user content as HTML, and never accept `postMessage` data without an exact origin check.
-- Response headers that a `<meta>` tag cannot set (HSTS, `frame-ancestors`) are only sent by the nginx image; for S3 + CloudFront they must be configured at the CDN.
+- Response headers that a `<meta>` tag cannot set (HSTS, `frame-ancestors`) come from the nginx image and, in production, from the CloudFront response headers policy in `terraform/cloudfront.tf`. Change both together.
 
 ## Safety
 
