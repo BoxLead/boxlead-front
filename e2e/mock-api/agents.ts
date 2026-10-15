@@ -223,6 +223,7 @@ export function playgroundEvents(
   request: PlaygroundRequest,
   agentName: string,
   replyMode: ReplyMode | null,
+  scriptedReply: string | null = null,
 ): Json[] {
   const hands = HANDOFF_PATTERN.test(request.customerMessage);
   const result: PlaygroundResult = {
@@ -243,11 +244,9 @@ export function playgroundEvents(
   if (!hands) {
     events.push(
       { type: "TEXT_MESSAGE_START", messageId, role: "assistant" },
-      {
-        type: "TEXT_MESSAGE_CONTENT",
-        messageId,
-        delta: `¡Hola! Soy ${agentName}. Gracias por escribir, enseguida te ayudo.`,
-      },
+      ...replyChunks(scriptedReply ?? `¡Hola! Soy ${agentName}. Gracias por escribir, enseguida te ayudo.`, scriptedReply !== null).map(
+        (delta) => ({ type: "TEXT_MESSAGE_CONTENT", messageId, delta }),
+      ),
       { type: "TEXT_MESSAGE_END", messageId },
     );
   }
@@ -256,6 +255,10 @@ export function playgroundEvents(
     { type: "RUN_FINISHED", threadId: request.threadId, runId: request.runId },
   );
   return events;
+}
+
+function replyChunks(text: string, split: boolean): string[] {
+  return split ? (text.match(/\S+\s*/g) ?? [text]) : [text];
 }
 
 export function encodeEvents(events: Json[]): string {
