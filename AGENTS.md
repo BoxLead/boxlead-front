@@ -108,3 +108,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 Do not modify without explicit approval: `terraform/`, `.github/workflows/`, `.env.example`, or the behavior of `ProtectedRoute.tsx`.
 
 Run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before considering work complete. New behaviour gets unit tests next to the code (`*.test.ts(x)`) and an end-to-end spec in `e2e/`, with the mock API extended to match the backend contract.
+
+### Demo video
+
+The `showcase` scenario of the mock API is a store with about 800 leads across the four channels, three agents with drafts and handoffs, and six fixed conversations at the top of the inbox that the tour uses. `npm run demo:video` records that tour with a visible cursor and captions and writes `demo-video/boxlead-demo.mp4`. Start `npm run mock-api` and `npm run dev:mock` first and set `FFMPEG` to a full ffmpeg build. `DEMO_APP_URL`, `DEMO_API_URL` and `DEMO_SPEED` change the defaults. Everything in it is demo data, so the closing card says so.
