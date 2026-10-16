@@ -45,8 +45,7 @@
 }
 
 .kinetic-row-main .kinetic-word:nth-child(even) {
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--landing-accent);
+  color: rgba(143, 193, 238, 0.22);
 }
 
 .kinetic-row-sub .kinetic-word {

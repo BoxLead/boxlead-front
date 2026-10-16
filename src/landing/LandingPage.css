@@ -50,9 +50,19 @@
 }
 
 html:has(.landing) {
+  color-scheme: dark;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+.landing ::selection {
+  background: var(--landing-accent);
+  color: var(--landing-navy);
+}
+
+.landing p {
+  text-wrap: pretty;
 }
 
 .landing h1,
@@ -179,6 +189,10 @@ html:has(.landing) {
 .landing-btn-primary:hover {
   background: #ffffff;
   transform: translateY(-1px);
+}
+
+.landing-btn:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .landing-btn-secondary {
