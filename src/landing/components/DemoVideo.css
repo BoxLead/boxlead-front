@@ -83,10 +83,6 @@
   transition: transform 0.3s var(--landing-ease);
 }
 
-.demo-video-play-icon svg {
-  margin-left: 3px;
-}
-
 .demo-video-play-label {
   font-size: 1rem;
   font-weight: 600;
