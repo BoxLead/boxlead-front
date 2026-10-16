@@ -32,7 +32,12 @@
   aspect-ratio: 16 / 9;
   border-radius: var(--landing-radius-md);
   background: var(--landing-bg);
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.demo-video:fullscreen {
+  border-radius: 0;
+  background: #000000;
 }
 
 .demo-video-play {
