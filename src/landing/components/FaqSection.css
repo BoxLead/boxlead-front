@@ -11,8 +11,7 @@
 .faq-question {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   padding: 24px 4px;
   cursor: pointer;
   list-style: none;
@@ -20,6 +19,26 @@
   font-weight: 600;
   color: var(--landing-heading);
   transition: color 0.2s ease;
+}
+
+.faq-index {
+  flex-shrink: 0;
+  color: var(--landing-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  transition: color 0.2s ease;
+}
+
+.faq-question-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.faq-item[open] .faq-index,
+.faq-question:hover .faq-index {
+  color: var(--landing-accent);
 }
 
 .faq-question::-webkit-details-marker {
@@ -42,8 +61,48 @@
 
 .faq-answer {
   margin: 0;
-  padding: 0 40px 26px 4px;
+  padding: 0 40px 26px 42px;
   animation: faq-open 0.35s var(--landing-ease) both;
+}
+
+.faq-more {
+  max-width: var(--landing-content-narrow);
+  margin: 28px auto 0;
+  color: var(--landing-text-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.faq-more a {
+  color: var(--landing-heading);
+  text-decoration: underline;
+  text-decoration-color: var(--landing-accent-border);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+
+.landing .faq-more a:hover {
+  color: var(--landing-accent);
+  text-decoration: underline;
+  text-decoration-color: var(--landing-accent);
+}
+
+@supports (interpolate-size: allow-keywords) {
+  .faq-list {
+    interpolate-size: allow-keywords;
+  }
+
+  .faq-item::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.45s var(--landing-ease),
+      content-visibility 0.45s allow-discrete;
+  }
+
+  .faq-item[open]::details-content {
+    block-size: auto;
+  }
 }
 
 .faq-answer a {
@@ -72,6 +131,10 @@
   .faq-answer {
     animation: none;
   }
+
+  .faq-item::details-content {
+    transition: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -80,7 +143,11 @@
     font-size: 1.125rem;
   }
 
+  .faq-question {
+    gap: 14px;
+  }
+
   .faq-answer {
-    padding: 0 8px 22px 2px;
+    padding: 0 8px 22px 32px;
   }
 }

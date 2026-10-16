@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import {
   InstagramIcon,
-  MercadoLibreIcon,
+  MercadoLibreMark,
   MessengerIcon,
   WhatsAppIcon,
 } from "../../components/icons/PlatformIcons";
@@ -36,7 +36,7 @@ const steps: Step[] = [
           <MessengerIcon width={24} height={24} />
         </li>
         <li title="MercadoLibre">
-          <MercadoLibreIcon width={24} height={24} />
+          <MercadoLibreMark width={24} height={24} />
         </li>
       </ul>
     ),
@@ -80,7 +80,8 @@ export function HowItWorks() {
         <ol className="how-steps">
           {steps.map((step, index) => (
             <li
-              className="how-step landing-card"
+              className="how-step landing-card landing-glow"
+              data-glow
               key={step.title}
               data-reveal={index}
             >

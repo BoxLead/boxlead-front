@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
   InstagramIcon,
-  MercadoLibreIcon,
+  MercadoLibreMark,
   WhatsAppIcon,
 } from "../../components/icons/PlatformIcons";
 import { CheckIcon } from "../../components/icons/UiIcons";
@@ -43,7 +43,7 @@ const scenes: Scene[] = [
   },
   {
     channel: "MercadoLibre",
-    icon: <MercadoLibreIcon width={18} height={18} />,
+    icon: <MercadoLibreMark width={18} height={18} />,
     contact: "Comprador",
     context: "Pregunta en una publicación",
     inbound: "Buenas, ¿hacen factura A?",

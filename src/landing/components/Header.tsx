@@ -1,48 +1,86 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../../components/Logo/Logo";
+import { RollText } from "./RollText";
 import "./Header.css";
+
+const HIDE_AFTER = 480;
+const SCROLL_TOLERANCE = 6;
+const NAV_LINKS = [
+  { href: "#demo", label: "Demo" },
+  { href: "#como-funciona", label: "Cómo funciona" },
+  { href: "#agente", label: "El agente" },
+  { href: "#faq", label: "Preguntas" },
+];
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [current, setCurrent] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!("IntersectionObserver" in window)) return;
+    const sections = NAV_LINKS.map((link) => document.querySelector(link.href)).filter(
+      (section): section is Element => section !== null,
+    );
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(`#${entry.target.id}`);
+          else visible.delete(`#${entry.target.id}`);
+        }
+        setCurrent(NAV_LINKS.find((link) => visible.has(link.href))?.href ?? null);
+      },
+      { rootMargin: "-45% 0px -50% 0px" },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let last = window.scrollY;
     function handleScroll() {
-      setScrolled(window.scrollY > 12);
+      const current = window.scrollY;
+      setScrolled(current > 12);
+      if (Math.abs(current - last) < SCROLL_TOLERANCE) return;
+      setHidden(current > HIDE_AFTER && current > last);
+      last = current;
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <header className={`landing-header${scrolled ? " header-scrolled" : ""}`}>
+    <header
+      className={`landing-header${scrolled ? " header-scrolled" : ""}${hidden ? " header-hidden" : ""}`}
+      onFocus={() => setHidden(false)}
+    >
       <div className="landing-header-inner">
         <Link to="/" className="header-logo" aria-label="BoxLead — inicio">
           <Logo />
         </Link>
         <nav className="header-nav" aria-label="Principal">
-          <a href="#demo" className="header-nav-link">
-            Demo
-          </a>
-          <a href="#como-funciona" className="header-nav-link">
-            Cómo funciona
-          </a>
-          <a href="#agente" className="header-nav-link">
-            El agente
-          </a>
-          <a href="#faq" className="header-nav-link">
-            Preguntas
-          </a>
+          {NAV_LINKS.map((link) => (
+            <a
+              href={link.href}
+              className={`header-nav-link${current === link.href ? " is-current" : ""}`}
+              aria-current={current === link.href ? "location" : undefined}
+              key={link.href}
+            >
+              <RollText>{link.label}</RollText>
+            </a>
+          ))}
         </nav>
         <div className="header-actions">
           <Link to="/login" className="header-signin">
-            Ingresar
+            <RollText>Ingresar</RollText>
           </Link>
           <Link
             to="/register"
             className="landing-btn landing-btn-primary landing-btn-sm"
           >
-            Empezar
+            <RollText>Empezar</RollText>
           </Link>
         </div>
       </div>

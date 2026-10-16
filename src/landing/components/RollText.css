@@ -1,0 +1,36 @@
+.roll-text {
+  display: inline-block;
+  height: 1.2em;
+  overflow: hidden;
+  line-height: 1.2;
+  vertical-align: bottom;
+}
+
+.roll-text-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.5s var(--landing-ease);
+}
+
+.roll-text-track > span {
+  display: block;
+  white-space: nowrap;
+}
+
+a:hover > .roll-text .roll-text-track,
+a:focus-visible > .roll-text .roll-text-track,
+button:hover > .roll-text .roll-text-track {
+  transform: translateY(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll-text-track {
+    transition: none;
+  }
+
+  a:hover > .roll-text .roll-text-track,
+  a:focus-visible > .roll-text .roll-text-track,
+  button:hover > .roll-text .roll-text-track {
+    transform: none;
+  }
+}

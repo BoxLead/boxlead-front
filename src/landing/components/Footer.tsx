@@ -72,6 +72,10 @@ export function Footer() {
           dueños.
         </p>
       </div>
+
+      <p className="footer-wordmark" aria-hidden="true">
+        <strong>BOX</strong>LEAD
+      </p>
     </footer>
   );
 }
