@@ -509,43 +509,78 @@ function activity(state: MockState, list: AgentResponse[]) {
     list.map((agent) => [agent.name, { agentId: agent.id, labeled: 0, sent: 0, drafted: 0, skipped: 0, handedOff: 0 }]),
   );
   const events = new Map<string, AgentActivityEvent[]>(list.map((agent) => [agent.name, []]));
+  const categoryOf = new Map(
+    state.conversations.map((chat) => [chat.id, state.leads.find((item) => item.id === chat.leadId)?.categoryId ?? null]),
+  );
+  const labeledChats = new Set<string>();
+  const record = (agentName: string, event: Omit<AgentActivityEvent, "id">) => {
+    events.get(agentName)?.push({ id: nextId("e0a1"), ...event });
+  };
+
   for (const item of state.messages) {
     if (item.direction !== "OUTBOUND" || !item.agentName) continue;
     const count = counts.get(item.agentName);
     if (!count) continue;
     count.sent += 1;
-    events.get(item.agentName)?.push({
-      id: nextId("e0a1"),
+    const category = labeledChats.has(item.conversationId) ? null : (categoryOf.get(item.conversationId) ?? null);
+    if (category) {
+      labeledChats.add(item.conversationId);
+      count.labeled += 1;
+    }
+    record(item.agentName, {
       conversationId: item.conversationId,
       outcome: "SENT",
       reason: null,
-      labeledCategoryId: null,
+      labeledCategoryId: category,
       createdAt: item.createdAt,
     });
   }
   for (const draft of state.drafts) {
     const count = draft.agentName ? counts.get(draft.agentName) : undefined;
-    if (count) count.drafted += 1;
+    if (!count || !draft.agentName) continue;
+    count.drafted += 1;
+    record(draft.agentName, {
+      conversationId: draft.conversationId,
+      outcome: "DRAFTED",
+      reason: null,
+      labeledCategoryId: categoryOf.get(draft.conversationId) ?? null,
+      createdAt: draft.createdAt,
+    });
   }
-  const categorized = state.leads.filter((item) => item.categoryId !== null).length;
-  const ventas = counts.get("Ventas");
-  const presupuestos = counts.get("Presupuestos");
-  if (ventas) {
-    ventas.labeled = Math.round(categorized * 0.55);
-    ventas.handedOff = state.conversations.filter((item) => item.needsAttention).length + 6;
-    ventas.skipped = 3;
+  for (const chat of state.conversations.filter((item) => item.needsAttention)) {
+    const count = counts.get("Ventas");
+    if (!count) continue;
+    count.handedOff += 1;
+    record("Ventas", {
+      conversationId: chat.id,
+      outcome: "HANDOFF",
+      reason: chat.attentionReason ?? null,
+      labeledCategoryId: null,
+      createdAt: ago(4),
+    });
   }
-  if (presupuestos) {
-    presupuestos.labeled = Math.round(categorized * 0.2);
-    presupuestos.drafted += 22;
+  const skipped = state.conversations.filter((chat) => chat.platform === "WHATSAPP").slice(10, 13);
+  for (const [index, chat] of skipped.entries()) {
+    const count = counts.get("Ventas");
+    if (!count) continue;
+    count.skipped += 1;
+    record("Ventas", {
+      conversationId: chat.id,
+      outcome: "SKIPPED",
+      reason: "human_took_over",
+      labeledCategoryId: null,
+      createdAt: ago(24 + index * 90),
+    });
   }
+
   state.activity = {
     summary: { days: 30, unassigned: { skipped: 2, labeled: 0 }, agents: [...counts.values()] },
     details: Object.fromEntries(
       list.map((agent) => {
         const count = counts.get(agent.name) as AgentActivityCounts;
         const recent = (events.get(agent.name) ?? []).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 25);
-        return [agent.id, { days: 30, labeled: count.labeled, sent: count.sent, drafted: count.drafted, skipped: count.skipped, handedOff: count.handedOff, events: recent }];
+        const { labeled, sent, drafted, skipped: omitted, handedOff } = count;
+        return [agent.id, { days: 30, labeled, sent, drafted, skipped: omitted, handedOff, events: recent }];
       }),
     ),
   };
@@ -598,6 +633,11 @@ export function buildShowcase(): MockState {
   };
   activity(state, roster);
   state.playgroundReplies = [
+    {
+      pattern: "mayor|revend|local",
+      reply:
+        "¡Hola! Sí, vendemos por mayor. La compra mínima es de 10 unidades combinadas y te pasamos la lista mayorista por acá. ¿Me pasás tu CUIT para armarte el presupuesto?",
+    },
     {
       pattern: "env[ií]o|llega|c[oó]rdoba|rosario|mendoza",
       reply:
