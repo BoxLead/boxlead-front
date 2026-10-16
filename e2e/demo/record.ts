@@ -2,19 +2,16 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium, type CDPSession, type Locator, type Page } from "playwright";
 import { installOverlay } from "./overlay.ts";
-import { encode, renderCaptions, type Caption, type Frame, type Move, type Placement } from "./timeline.ts";
+import { encode, renderCaptions, type Caption, type Frame, type Placement } from "./timeline.ts";
 
 const APP = process.env.DEMO_APP_URL ?? "http://localhost:5173";
 const API = process.env.DEMO_API_URL ?? "http://localhost:8090";
 const OUT = resolve(process.env.DEMO_OUT ?? "demo-video");
 const FFMPEG = process.env.FFMPEG ?? "ffmpeg";
 const SPEED = Number(process.env.DEMO_SPEED ?? 1.2);
-const VIEWPORT = { width: 1440, height: 810 };
+const VIEWPORT = { width: 1280, height: 720 };
 const SCALE = 2;
-const SOURCE = { width: VIEWPORT.width * SCALE, height: VIEWPORT.height * SCALE };
-const OUTPUT = { width: 1920, height: 1080, fps: 30, speed: SPEED };
-const CAPTION_SCALE = OUTPUT.width / VIEWPORT.width;
-const MAX_ZOOM = 1.9;
+const OUTPUT = { width: VIEWPORT.width * SCALE, height: VIEWPORT.height * SCALE, fps: 30, speed: SPEED };
 
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 const now = () => Date.now() / 1000;
@@ -22,7 +19,6 @@ const now = () => Date.now() / 1000;
 class Director {
   readonly page: Page;
   readonly captions: Caption[] = [];
-  readonly moves: Move[] = [];
   private x = VIEWPORT.width / 2;
   private y = VIEWPORT.height / 2;
 
@@ -40,7 +36,7 @@ class Director {
     if (open && open.end === Number.POSITIVE_INFINITY) open.end = now();
   }
 
-  async focus(target: Locator, options: { zoom?: number; ms?: number; padding?: number } = {}) {
+  async spotlight(target: Locator) {
     await target.waitFor();
     const outside = await target.evaluate((element) => {
       const rect = element.getBoundingClientRect();
@@ -50,20 +46,11 @@ class Director {
       await target.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "smooth" }));
       await sleep(700);
     }
-    const box = await target.boundingBox();
-    if (!box) throw new Error("demo: nothing to focus on");
-    const padding = options.padding ?? 1.25;
-    const fit = Math.min(VIEWPORT.width / (box.width * padding), VIEWPORT.height / (box.height * padding));
-    const zoom = Math.min(Math.max(options.zoom ?? fit, 1), MAX_ZOOM);
-    this.moves.push({
-      start: now(),
-      duration: (options.ms ?? 1100) / 1000,
-      to: { zoom, x: (box.x + box.width / 2) * SCALE, y: (box.y + box.height / 2) * SCALE },
-    });
+    await target.evaluate((element) => window.demo.spotlight(element));
   }
 
-  wide(ms = 1000) {
-    this.moves.push({ start: now(), duration: ms / 1000, to: { zoom: 1, x: SOURCE.width / 2, y: SOURCE.height / 2 } });
+  async clearSpotlight() {
+    await this.page.evaluate(() => window.demo.spotlight(null));
   }
 
   async card(variant: "intro" | "chapter" | "outro", html: string) {
@@ -76,7 +63,7 @@ class Director {
 
   async chapter(number: string, title: string, subtitle: string) {
     this.endCaption();
-    this.wide(700);
+    await this.clearSpotlight();
     await this.card(
       "chapter",
       `<div class="demo-stack"><span class="demo-chapter-number">${number}</span><h2 class="demo-chapter-title">${title}</h2><span class="demo-chapter-line"></span><p class="demo-chapter-sub">${subtitle}</p></div>`,
@@ -153,9 +140,9 @@ async function capture(client: CDPSession, dir: string): Promise<{ frames: Frame
   });
   await client.send("Page.startScreencast", {
     format: "jpeg",
-    quality: 88,
-    maxWidth: SOURCE.width,
-    maxHeight: SOURCE.height,
+    quality: 95,
+    maxWidth: OUTPUT.width,
+    maxHeight: OUTPUT.height,
     everyNthFrame: 1,
   });
   return { frames, stop: () => client.send("Page.stopScreencast").then(() => undefined) };
@@ -196,10 +183,9 @@ async function opening(d: Director) {
   await d.hideCard();
   await sleep(700);
   d.caption("BoxLead", "Responde, califica y ordena cada consulta por vos");
-  await d.focus(page.getByLabel("Demostración del agente de BoxLead"), { zoom: 1.3, ms: 1400 });
-  await sleep(3200);
-  d.wide(900);
-  await sleep(500);
+  await d.spotlight(page.getByLabel("Demostración del agente de BoxLead"));
+  await sleep(3600);
+  await d.clearSpotlight();
   await d.click(page.getByRole("link", { name: "Ingresar" }).first());
   await page.waitForURL("**/app/inbox");
   await page.getByRole("link", { name: /LUCASRIVERO_77/ }).waitFor();
@@ -211,32 +197,30 @@ async function agents(d: Director) {
   await d.chapter("01", "Agentes de IA", "Atienden a tus clientes por vos, con tus reglas");
 
   d.caption("Contexto del negocio", "Le contás tu negocio y todos tus agentes lo usan");
-  await d.focus(page.getByRole("region", { name: /Contexto del negocio/i }), { ms: 1200 });
+  await d.spotlight(page.getByRole("region", { name: /Contexto del negocio/i }));
   await sleep(1600);
   await d.point(page.getByRole("switch", { name: /Categorizar leads/ }), 700);
   d.caption("Contexto del negocio", "Y etiquetan cada lead con su categoría");
   await sleep(2000);
-  d.wide(900);
+  await d.clearSpotlight();
 
-  await d.scroll(page.locator("main"), 760, 900);
+  await d.scroll(page.locator("main"), 700, 900);
   await sleep(300);
   d.caption("Tus agentes", "Cada agente con su rol y sus reglas");
-  await d.focus(page.getByRole("list", { name: "Agentes", exact: true }), { ms: 1200, padding: 1.08 });
+  await d.spotlight(page.getByRole("list", { name: "Agentes", exact: true }));
   await sleep(2600);
-  await d.focus(page.getByRole("region", { name: /Actividad de Ventas/ }).first(), { zoom: 1.75, ms: 1100 });
+  await d.spotlight(page.getByRole("region", { name: /Actividad de Ventas/ }).first());
   d.caption("Actividad", "Respuestas, borradores y derivaciones del último mes");
   await sleep(2600);
-  d.wide(800);
+  await d.clearSpotlight();
 
   await d.click(page.getByRole("button", { name: "Ver actividad de Ventas" }));
   const activity = page.getByRole("dialog", { name: "Actividad de Ventas" });
   await activity.waitFor();
   d.caption("Actividad", "Cada decisión, con un clic a la conversación", "top");
-  await d.focus(activity, { padding: 1.12, ms: 1000 });
-  await sleep(1500);
+  await sleep(1300);
   await d.scroll(activity.getByRole("list"), 420, 1100);
   await sleep(1200);
-  d.wide(700);
   await d.click(activity.getByRole("button", { name: "Cerrar" }));
   await sleep(400);
 
@@ -244,7 +228,6 @@ async function agents(d: Director) {
   const dialog = page.getByRole("dialog", { name: "Nuevo agente" });
   await dialog.waitFor();
   d.caption("Nuevo agente", "Creás un agente nuevo con tus propias instrucciones", "top");
-  await d.focus(dialog.getByLabel("Nombre").locator("xpath=ancestor::form[1]"), { zoom: 1.35, ms: 1000 });
   await d.type(dialog.getByLabel("Nombre"), "Mayoristas", 45);
   await d.type(
     dialog.getByLabel("Instrucciones"),
@@ -254,39 +237,37 @@ async function agents(d: Director) {
   await sleep(500);
   const rule = dialog.locator(".scopes-editor");
   d.caption("Reglas", "Dónde trabaja y si responde solo o deja un borrador", "top");
-  await d.focus(rule, { padding: 1.12, ms: 1100 });
+  await d.spotlight(rule);
   await d.choose(rule.getByLabel("Canal").first(), "WhatsApp");
   await d.choose(rule.getByLabel("Categoría").first(), "Mayorista");
   await d.choose(rule.getByLabel("Modo").first(), "Automático");
   await sleep(900);
-  d.wide(800);
+  await d.clearSpotlight();
   await d.click(dialog.getByRole("button", { name: "Crear agente" }));
   await page.getByRole("button", { name: "Probar Mayoristas" }).waitFor();
   await sleep(600);
-  await d.focus(page.getByRole("button", { name: "Probar Mayoristas" }).locator("xpath=ancestor::li[1]"), { zoom: 1.6, ms: 1000 });
+  await d.spotlight(page.getByRole("button", { name: "Probar Mayoristas" }).locator("xpath=ancestor::li[1]"));
   d.caption("Nuevo agente", "Listo, ya está trabajando en tus conversaciones");
-  await sleep(2000);
-  d.wide(800);
+  await sleep(2200);
+  await d.clearSpotlight();
 
   await d.click(page.getByRole("button", { name: "Probar Mayoristas" }));
   const trial = page.getByRole("dialog", { name: /Probar Mayoristas/ });
   await trial.waitFor();
+  d.caption("Playground", "Lo probás como un cliente antes de activarlo", "top");
   await d.choose(trial.getByLabel("Canal"), "WhatsApp");
   await d.choose(trial.getByLabel("Categoría del lead"), "Mayorista");
-  d.caption("Playground", "Lo probás como un cliente antes de activarlo", "top");
-  await d.focus(trial, { padding: 1.06, ms: 1000 });
   await d.type(trial.getByLabel("Mensaje del cliente"), "Tengo un local en Rosario, ¿venden por mayor?", 34);
   await d.click(trial.getByRole("button", { name: "Enviar" }));
   await trial.locator(".playground-turn-agent").filter({ hasText: "CUIT" }).waitFor();
-  await sleep(2200);
+  await sleep(2400);
   await d.type(trial.getByLabel("Mensaje del cliente"), "Prefiero hablar con una persona", 34);
   await d.click(trial.getByRole("button", { name: "Enviar" }));
-  const result = trial.getByText(/derivaría a una persona/);
-  await result.waitFor();
+  await trial.getByText(/derivaría a una persona/).waitFor();
   d.caption("Derivación", "Y sabe cuándo pasarle la conversación a una persona", "top");
-  await d.focus(trial.getByRole("region", { name: "Resultado de la prueba" }), { zoom: 1.7, ms: 1000 });
-  await sleep(2800);
-  d.wide(800);
+  await d.spotlight(trial.getByRole("region", { name: "Resultado de la prueba" }));
+  await sleep(3000);
+  await d.clearSpotlight();
   await d.click(trial.getByRole("button", { name: "Cerrar" }));
   await sleep(300);
 }
@@ -306,29 +287,35 @@ async function inbox(d: Director) {
 
   await conversation(d, "Valentina Ruiz");
   d.caption("Borradores", "Deja la respuesta lista y vos la mandás", "top");
-  await d.focus(page.locator(".draft-banner"), { zoom: 1.6, ms: 1000 });
+  await d.spotlight(page.locator(".draft-banner"));
   await sleep(2400);
+  await d.clearSpotlight();
   await d.click(page.getByRole("button", { name: "Enviar borrador" }));
   await sleep(1200);
-  d.wide(800);
 
   await conversation(d, "LUCASRIVERO_77");
   d.caption("MercadoLibre", "Responde solo las preguntas de MercadoLibre", "top");
-  await d.focus(page.locator(".question-group").first(), {
-    zoom: 1.6,
-    ms: 1000,
-  });
+  await d.spotlight(page.locator(".question-group").first());
   await sleep(2600);
-  d.wide(800);
+  await d.clearSpotlight();
 
   await conversation(d, "martu.home");
   d.caption("Derivación", "Si hace falta una persona, el agente te avisa", "top");
-  await d.focus(page.locator(".banner").filter({ hasText: "Un agente pidió tu atención" }), {
-    zoom: 1.8,
-    ms: 1000,
-  });
+  await d.spotlight(page.locator(".banner").filter({ hasText: "Un agente pidió tu atención" }));
   await sleep(2400);
-  d.wide(800);
+  await d.clearSpotlight();
+
+  await conversation(d, "flor.deco");
+  d.caption("Instagram", "Respondés comentarios en público sin salir de la bandeja", "top");
+  const comment = page.locator(".comment-event").first();
+  await d.spotlight(comment);
+  await sleep(1200);
+  await d.click(comment.getByRole("button", { name: "Responder en público" }));
+  await d.type(page.getByLabel("Responder en público a flor.deco"), "¡Hola Flor! Sí, lo tenemos en azul. Te escribimos por privado.", 28);
+  await d.click(comment.getByRole("button", { name: "Enviar" }));
+  await comment.getByText("Respondido en público").waitFor();
+  await sleep(1400);
+  await d.clearSpotlight();
 
   await d.type(page.getByPlaceholder("Buscar por nombre o mensaje"), "Diego", 70);
   await sleep(400);
@@ -337,14 +324,12 @@ async function inbox(d: Director) {
   await d.click(page.getByRole("button", { name: "Plantilla" }));
   const templates = page.getByRole("dialog", { name: "Responder con una plantilla" });
   await templates.waitFor();
-  await d.focus(templates, { padding: 1.1, ms: 900 });
   await d.click(templates.getByRole("button", { name: /back in stock/i }));
   await d.type(templates.getByLabel("Valor 1"), "Diego", 55);
   await d.type(templates.getByLabel("Valor 2"), "el Sony XM5 blanco", 32);
   await sleep(700);
   await d.click(templates.getByRole("button", { name: "Enviar plantilla" }));
-  await sleep(1100);
-  d.wide(800);
+  await sleep(1300);
 }
 
 async function metrics(d: Director) {
@@ -353,60 +338,82 @@ async function metrics(d: Director) {
   await d.chapter("03", "Métricas", "Sabé qué funciona y dónde poner foco");
 
   d.caption("Métricas", "Leads, respuesta y calificación de un vistazo");
-  await sleep(1500);
-  await d.focus(page.getByRole("region", { name: "Señales" }), { zoom: 1.6, ms: 1000 });
+  await sleep(1800);
+  await d.spotlight(page.getByRole("region", { name: "Señales" }));
   d.caption("Señales", "Te avisa qué canal rinde más y qué está cambiando");
-  await sleep(2400);
-  d.wide(800);
+  await sleep(2600);
+  await d.clearSpotlight();
 
   const chart = page.getByRole("group", { name: /por día/ }).first();
   const box = await chart.boundingBox();
   if (box) {
     d.caption("Proyección", "Y proyecta los leads de las próximas dos semanas");
-    await d.focus(chart, { zoom: 1.35, ms: 1000 });
     await d.glide(box.x + box.width * 0.55, box.y + box.height * 0.5, 600);
     await d.glide(box.x + box.width * 0.97, box.y + box.height * 0.45, 1400);
-    await sleep(1200);
-    d.wide(800);
+    await sleep(1400);
   }
 
-  await d.scroll(page.locator("main"), 640, 900);
+  const funnel = page.getByRole("region", { name: "Embudo" });
   d.caption("Embudo", "De lead a calificado, paso por paso");
-  await d.focus(page.getByRole("region", { name: "Embudo" }), { padding: 1.08, ms: 1000 });
-  for (const stage of await page.getByRole("region", { name: "Embudo" }).getByRole("button").all()) {
+  await d.spotlight(funnel);
+  for (const stage of await funnel.getByRole("button").all()) {
     await d.point(stage, 500);
     await sleep(500);
   }
-  d.wide(800);
+  await d.clearSpotlight();
 
-  await d.scroll(page.locator("main"), 480, 800);
+  const breakdown = page.getByRole("region", { name: "Desglose" });
   d.caption("Desglose", "Qué canal y qué categoría traen mejores clientes");
-  await d.focus(page.getByRole("region", { name: "Desglose" }), { padding: 1.08, ms: 1000 });
-  await d.click(page.getByRole("region", { name: "Desglose" }).getByRole("group", { name: "Agrupar por" }).getByRole("button", { name: "Categoría" }));
-  await sleep(1600);
-  await d.focus(page.getByRole("region", { name: "Atención" }), { zoom: 1.6, ms: 1000 });
+  await d.spotlight(breakdown);
+  await d.click(breakdown.getByRole("group", { name: "Agrupar por" }).getByRole("button", { name: "Categoría" }));
+  await sleep(1800);
+  await d.spotlight(page.getByRole("region", { name: "Atención" }));
   d.caption("Atención", "Cuánto resuelve el agente y cuántas horas te ahorra");
-  await sleep(2400);
-  d.wide(800);
+  await sleep(2600);
+  await d.clearSpotlight();
 
-  await d.scroll(page.locator("main"), 600, 800);
-  d.caption("Horarios", "Cuándo te escriben, para organizar a tu equipo");
   const cells = page.locator(".hours-cell");
-  await d.focus(cells.nth(80).locator("xpath=ancestor::section[1]"), { padding: 1.06, ms: 1000 });
+  d.caption("Horarios", "Cuándo te escriben, para organizar a tu equipo");
+  await d.spotlight(cells.nth(80).locator("xpath=ancestor::section[1]"));
   for (const index of [24 + 19, 24 * 2 + 20, 24 * 3 + 21]) {
     await d.point(cells.nth(index), 500);
     await sleep(450);
   }
-  d.wide(800);
+  await sleep(400);
+  await d.clearSpotlight();
+}
+
+async function leads(d: Director) {
+  const page = d.page;
+  await sidebar(d, "Leads");
+  d.caption("Leads", "Cientos de leads, ordenados y calificados");
+  await sleep(1200);
+  await d.spotlight(page.getByRole("group", { name: "Filtrar por estado" }));
+  await d.click(page.getByRole("button", { name: /Calificado/ }));
+  await sleep(1400);
+  await d.clearSpotlight();
+  await d.type(page.getByPlaceholder("Buscar por nombre, email o teléfono"), "Diego", 70);
+  await sleep(500);
+  await d.click(page.getByRole("link", { name: "Diego Fernández" }).first(), 550);
+  await page.getByRole("heading", { level: 1, name: "Diego Fernández" }).waitFor();
+  d.caption("Ficha del lead", "Su contacto, su estado y todas sus conversaciones");
+  await sleep(500);
+  await d.spotlight(page.locator(".lead-detail-header"));
+  await sleep(2200);
+  await d.spotlight(page.locator(".lead-detail-grid"));
+  await sleep(2200);
+  await d.clearSpotlight();
+
+  await sidebar(d, "Conexiones");
+  d.caption("Conexiones", "Conectás tus canales y empiezan a trabajar");
+  await d.spotlight(page.getByRole("list", { name: "Canales" }));
+  await sleep(3000);
+  await d.clearSpotlight();
 }
 
 async function closing(d: Director) {
   const page = d.page;
-  await sidebar(d, "Leads");
-  d.caption("Leads", "Cientos de leads, ordenados y calificados");
-  await sleep(1800);
   d.endCaption();
-  d.wide(600);
   await sleep(300);
   const logo = await logoMarkup(page);
   await d.card(
@@ -416,13 +423,13 @@ async function closing(d: Director) {
   await sleep(9500);
 }
 
-type Recorded = { frames: Frame[]; moves: Move[]; captions: Caption[]; captionFiles: string[] };
+type Recorded = { frames: Frame[]; captions: Caption[]; captionFiles: string[] };
 
 function render(dir: string, recorded: Recorded) {
   const file = join(OUT, "boxlead-demo.mp4");
-  encode({ ffmpeg: FFMPEG, dir, ...recorded, source: SOURCE, output: OUTPUT, file });
+  encode({ ffmpeg: FFMPEG, dir, ...recorded, output: OUTPUT, file });
   console.log(
-    `demo: ${recorded.frames.length} frames, ${recorded.moves.length} camera moves, ${recorded.captions.length} captions, video at ${file}`,
+    `demo: ${recorded.frames.length} frames, ${recorded.captions.length} captions, video at ${file}`,
   );
 }
 
@@ -457,6 +464,8 @@ async function record(dir: string): Promise<Recorded> {
     await inbox(director);
     mark("metrics");
     await metrics(director);
+    mark("leads");
+    await leads(director);
     mark("closing");
     await closing(director);
     mark("end");
@@ -464,9 +473,9 @@ async function record(dir: string): Promise<Recorded> {
     await recording.stop();
     director.endCaption();
   }
-  const captionFiles = await renderCaptions(browser, APP, director.captions, dir, CAPTION_SCALE);
+  const captionFiles = await renderCaptions(browser, APP, director.captions, dir, SCALE);
   await browser.close();
-  const recorded = { frames: recording.frames, moves: director.moves, captions: director.captions, captionFiles };
+  const recorded = { frames: recording.frames, captions: director.captions, captionFiles };
   writeFileSync(join(dir, "timeline.json"), JSON.stringify(recorded));
   return recorded;
 }

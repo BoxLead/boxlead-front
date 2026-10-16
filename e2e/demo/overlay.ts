@@ -4,6 +4,7 @@ declare global {
       card: (variant: "intro" | "chapter" | "outro", html: string) => void;
       hideCard: () => void;
       raise: () => void;
+      spotlight: (element: Element | null) => void;
     };
   }
 }
@@ -11,10 +12,13 @@ declare global {
 export function installOverlay() {
   const css = `
     #demo-overlay { position: fixed; inset: 0; width: 100vw; height: 100vh; margin: 0; padding: 0; border: 0; overflow: visible; background: transparent; z-index: 2147483647; pointer-events: none; font-family: "Inter Variable", system-ui, sans-serif; color: #f4f4ef; }
-    .demo-cursor { position: absolute; left: 0; top: 0; width: 30px; height: 30px; transform: translate(-100px, -100px); filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); transition: scale 0.12s ease; }
+    .demo-cursor { position: absolute; left: 0; top: 0; width: 30px; height: 30px; transform: translate(-100px, -100px); filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); transition: scale 0.12s ease, opacity 0.4s ease; }
+    .demo-card.is-visible ~ .demo-cursor { opacity: 0; }
     .demo-cursor.is-pressed { scale: 0.86; }
     .demo-ripple { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border: 2px solid rgba(143, 193, 238, 0.95); border-radius: 50%; background: rgba(143, 193, 238, 0.18); animation: demo-ripple 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
     @keyframes demo-ripple { from { transform: scale(0.25); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+    .demo-spotlight { position: absolute; border-radius: 14px; box-shadow: 0 0 0 2px rgba(143, 193, 238, 0.9), 0 0 28px rgba(143, 193, 238, 0.35), 0 0 0 100vmax rgba(7, 13, 23, 0.34); opacity: 0; transition: opacity 0.5s ease; }
+    .demo-spotlight.is-visible { opacity: 1; }
     .demo-card { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 0.7s ease; }
     .demo-card.is-visible { opacity: 1; }
     .demo-card[data-variant="intro"], .demo-card[data-variant="outro"] { background: radial-gradient(120% 90% at 50% 30%, #1a3655 0%, #0d1828 48%, #070d17 100%); }
@@ -61,6 +65,13 @@ export function installOverlay() {
   }
 
   const cursor = () => root().querySelector<SVGElement>(".demo-cursor");
+  const SPOTLIGHT_PADDING = 8;
+
+  function raise() {
+    const overlay = root();
+    overlay.hidePopover();
+    overlay.showPopover();
+  }
 
   window.addEventListener(
     "mousemove",
@@ -97,10 +108,29 @@ export function installOverlay() {
     hideCard() {
       root().querySelector(".demo-card")?.classList.remove("is-visible");
     },
-    raise() {
+    raise,
+    spotlight(element) {
       const overlay = root();
-      overlay.hidePopover();
-      overlay.showPopover();
+      overlay.querySelectorAll(".demo-spotlight").forEach((old) => {
+        old.classList.remove("is-visible");
+        setTimeout(() => old.remove(), 550);
+      });
+      if (!element) return;
+      const ring = document.createElement("div");
+      ring.className = "demo-spotlight";
+      overlay.insertBefore(ring, cursor());
+      const follow = () => {
+        if (!ring.isConnected) return;
+        const rect = element.getBoundingClientRect();
+        ring.style.left = `${rect.left - SPOTLIGHT_PADDING}px`;
+        ring.style.top = `${rect.top - SPOTLIGHT_PADDING}px`;
+        ring.style.width = `${rect.width + SPOTLIGHT_PADDING * 2}px`;
+        ring.style.height = `${rect.height + SPOTLIGHT_PADDING * 2}px`;
+        requestAnimationFrame(follow);
+      };
+      follow();
+      requestAnimationFrame(() => requestAnimationFrame(() => ring.classList.add("is-visible")));
+      raise();
     },
   };
 
