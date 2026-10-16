@@ -96,21 +96,35 @@ html:has(.landing) {
   text-align: center;
 }
 
+.landing main {
+  counter-reset: landing-section;
+}
+
 .landing-section-label {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--landing-accent);
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+  counter-increment: landing-section;
+}
+
+.landing-section-label::before {
+  content: "[ " counter(landing-section, decimal-leading-zero) " ]";
+  color: var(--landing-text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
 }
 
 .landing-section-title {
-  font-size: clamp(1.875rem, 4.2vw, 3rem);
+  font-size: clamp(2rem, 5vw, 3.75rem);
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
   margin: 0;
   text-wrap: balance;
 }
@@ -211,6 +225,42 @@ html:has(.landing) {
   display: none;
 }
 
+.landing-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.landing-glow {
+  position: relative;
+  isolation: isolate;
+}
+
+.landing-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    420px circle at var(--glow-x, 50%) var(--glow-y, 0%),
+    rgba(143, 193, 238, 0.1),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-glow:hover::after {
+    opacity: 1;
+  }
+}
+
 .landing [data-reveal] {
   opacity: 0;
   transform: translateY(40px) scale(0.97);
@@ -263,6 +313,19 @@ html:has(.landing) {
   transform: none;
 }
 
+.landing-section-head .landing-section-title {
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(32px);
+  transition:
+    clip-path 1s var(--landing-ease) 0.1s,
+    transform 1s var(--landing-ease) 0.1s;
+}
+
+.landing-section-head.is-visible .landing-section-title {
+  clip-path: inset(-20% -5% -20% -5%);
+  transform: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: scroll()) {
     .landing-progress {
@@ -296,8 +359,10 @@ html:has(.landing) {
   }
 
   .landing [data-reveal],
-  .landing [data-reveal].landing-card.is-visible:hover {
+  .landing [data-reveal].landing-card.is-visible:hover,
+  .landing-section-head .landing-section-title {
     opacity: 1;
+    clip-path: none;
     transform: none;
     transition: none;
   }
