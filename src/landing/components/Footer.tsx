@@ -25,6 +25,9 @@ export function Footer() {
 
         <nav className="footer-column" aria-label="Producto">
           <h2 className="footer-heading">Producto</h2>
+          <a href="#demo" className="footer-link">
+            Demo
+          </a>
           <a href="#como-funciona" className="footer-link">
             Cómo funciona
           </a>

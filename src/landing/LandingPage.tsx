@@ -3,6 +3,7 @@ import "./LandingPage.css";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { IntegrationsMarquee } from "./components/IntegrationsMarquee";
+import { DemoVideo } from "./components/DemoVideo";
 import { ProductOverview } from "./components/ProductOverview";
 import { HowItWorks } from "./components/HowItWorks";
 import { AgentFlow } from "./components/AgentFlow";
@@ -43,6 +44,7 @@ export function LandingPage() {
       <main>
         <HeroSection />
         <IntegrationsMarquee />
+        <DemoVideo />
         <ProductOverview />
         <HowItWorks />
         <AgentFlow />
