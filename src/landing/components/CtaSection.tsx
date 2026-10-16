@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { SUPPORT_EMAIL } from "../../util/company";
 import {
   InstagramIcon,
-  MercadoLibreIcon,
+  MercadoLibreMark,
   MessengerIcon,
   WhatsAppIcon,
 } from "../../components/icons/PlatformIcons";
@@ -31,7 +31,7 @@ const activity: Activity[] = [
     result: "Respondido",
   },
   {
-    icon: <MercadoLibreIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    icon: <MercadoLibreMark width={ICON_SIZE} height={ICON_SIZE} />,
     title: "Pregunta sobre facturación",
     result: "Respondido",
   },
