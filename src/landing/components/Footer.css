@@ -1,5 +1,6 @@
 .landing-footer {
-  padding: 56px var(--landing-content-padding) 32px;
+  overflow: hidden;
+  padding: 56px var(--landing-content-padding) 0;
   border-top: 1px solid var(--landing-border);
   background: var(--landing-bg-subtle);
 }
@@ -106,5 +107,46 @@
 
   .footer-bottom {
     margin-top: 32px;
+  }
+}
+
+.footer-wordmark {
+  max-width: var(--landing-content-max);
+  margin: clamp(36px, 5vw, 64px) auto -0.05em;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(241, 241, 230, 0.24), rgba(143, 193, 238, 0.04) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  font-size: clamp(3rem, 17vw, 15.5rem);
+  font-weight: 300;
+  line-height: 0.82;
+  letter-spacing: -0.02em;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.footer-wordmark strong {
+  font-weight: 750;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .footer-wordmark {
+      animation: footer-wordmark-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+
+@keyframes footer-wordmark-rise {
+  from {
+    opacity: 0;
+    transform: translateY(40%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

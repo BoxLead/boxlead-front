@@ -8,6 +8,7 @@ import {
   WhatsAppIcon,
 } from "../../components/icons/PlatformIcons";
 import { ArrowRightIcon, CheckIcon } from "../../components/icons/UiIcons";
+import { RollText } from "./RollText";
 import "./CtaSection.css";
 
 type Activity = {
@@ -69,7 +70,7 @@ export function CtaSection() {
   return (
     <section className="landing-section">
       <div className="landing-container">
-        <div className="cta-card">
+        <div className="cta-card landing-glow" data-glow>
           <div>
             <h2 className="cta-title">Poné tus ventas en automático</h2>
             <p className="cta-subtitle">
@@ -81,14 +82,14 @@ export function CtaSection() {
                 to="/register"
                 className="landing-btn landing-btn-primary landing-btn-lg"
               >
-                Empezar ahora
+                <RollText>Empezar ahora</RollText>
                 <ArrowRightIcon width={18} height={18} />
               </Link>
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
                 className="landing-btn landing-btn-secondary landing-btn-lg"
               >
-                Hablar con nosotros
+                <RollText>Hablar con nosotros</RollText>
               </a>
             </div>
             <p className="cta-note">

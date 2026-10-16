@@ -128,7 +128,8 @@ export function ProductOverview() {
 
         <div className="problem-compare">
           <article
-            className="problem-panel problem-panel-before"
+            className="problem-panel problem-panel-before landing-glow"
+            data-glow
             data-reveal
             data-reveal-from="left"
           >
@@ -161,7 +162,8 @@ export function ProductOverview() {
           </span>
 
           <article
-            className="problem-panel problem-panel-after"
+            className="problem-panel problem-panel-after landing-glow"
+            data-glow
             data-reveal="1"
             data-reveal-from="right"
           >

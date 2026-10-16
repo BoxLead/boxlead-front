@@ -80,7 +80,8 @@ export function HowItWorks() {
         <ol className="how-steps">
           {steps.map((step, index) => (
             <li
-              className="how-step landing-card"
+              className="how-step landing-card landing-glow"
+              data-glow
               key={step.title}
               data-reveal={index}
             >

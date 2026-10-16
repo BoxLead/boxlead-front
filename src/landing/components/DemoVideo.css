@@ -120,3 +120,24 @@
     transition: none;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .demo-video-frame {
+      animation: demo-video-grow linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+  }
+}
+
+@keyframes demo-video-grow {
+  from {
+    transform: scale(0.84) translateY(40px);
+    border-radius: 40px;
+  }
+  to {
+    transform: none;
+    border-radius: var(--landing-radius-lg);
+  }
+}
