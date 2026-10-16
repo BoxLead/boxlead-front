@@ -54,10 +54,14 @@
   color: var(--landing-text);
   text-decoration: none;
   overflow-wrap: anywhere;
-  transition: color 0.2s ease;
+  background: linear-gradient(var(--landing-accent), var(--landing-accent)) 0 100% / 0 1px no-repeat;
+  transition:
+    color 0.2s ease,
+    background-size 0.35s var(--landing-ease);
 }
 
 .footer-link:hover {
+  background-size: 100% 1px;
   color: var(--landing-heading);
 }
 

@@ -59,8 +59,34 @@
   transition: color 0.2s ease;
 }
 
-.header-nav-link:hover {
+.header-nav-link {
+  position: relative;
+}
+
+.header-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--landing-accent);
+  opacity: 0;
+  transform: translateX(-50%) scale(0);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s var(--landing-ease);
+}
+
+.header-nav-link:hover,
+.header-nav-link.is-current {
   color: var(--landing-heading);
+}
+
+.header-nav-link.is-current::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 .header-actions {

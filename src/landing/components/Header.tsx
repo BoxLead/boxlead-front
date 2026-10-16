@@ -16,6 +16,27 @@ const NAV_LINKS = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [current, setCurrent] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!("IntersectionObserver" in window)) return;
+    const sections = NAV_LINKS.map((link) => document.querySelector(link.href)).filter(
+      (section): section is Element => section !== null,
+    );
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(`#${entry.target.id}`);
+          else visible.delete(`#${entry.target.id}`);
+        }
+        setCurrent(NAV_LINKS.find((link) => visible.has(link.href))?.href ?? null);
+      },
+      { rootMargin: "-45% 0px -50% 0px" },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let last = window.scrollY;
@@ -41,7 +62,12 @@ export function Header() {
         </Link>
         <nav className="header-nav" aria-label="Principal">
           {NAV_LINKS.map((link) => (
-            <a href={link.href} className="header-nav-link" key={link.href}>
+            <a
+              href={link.href}
+              className={`header-nav-link${current === link.href ? " is-current" : ""}`}
+              aria-current={current === link.href ? "location" : undefined}
+              key={link.href}
+            >
               <RollText>{link.label}</RollText>
             </a>
           ))}
