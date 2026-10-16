@@ -21,6 +21,9 @@ export function Header() {
           <Logo />
         </Link>
         <nav className="header-nav" aria-label="Principal">
+          <a href="#demo" className="header-nav-link">
+            Demo
+          </a>
           <a href="#como-funciona" className="header-nav-link">
             Cómo funciona
           </a>

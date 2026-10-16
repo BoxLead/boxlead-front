@@ -16,7 +16,7 @@ import type {
   SalesStage,
 } from "../../src/api/types.ts";
 
-export type Scenario = "default" | "empty" | "meli-reconnect" | "agents" | "agents-limited";
+export type Scenario = "default" | "empty" | "meli-reconnect" | "agents" | "agents-limited" | "showcase";
 
 export type StoredConversation = Omit<
   ConversationResponse,
@@ -34,6 +34,11 @@ export type AgentActivityState = {
   details: Record<string, AgentActivityDetail>;
 };
 
+export type PlaygroundReply = {
+  pattern: string;
+  reply: string;
+};
+
 export type MockState = {
   categories: StoredCategory[];
   leads: LeadResponse[];
@@ -49,6 +54,7 @@ export type MockState = {
   playgroundRuns: number;
   playgroundLimit: number;
   activity: AgentActivityState;
+  playgroundReplies: PlaygroundReply[];
 };
 
 export const WHATSAPP_TEMPLATES: MessageTemplate[] = [
@@ -66,6 +72,13 @@ export const WHATSAPP_TEMPLATES: MessageTemplate[] = [
     body: "Seguimos atendiendo de lunes a viernes de 9 a 18 h.",
     parameterCount: 0,
   },
+  {
+    id: "tpl-back-in-stock",
+    name: "back_in_stock",
+    language: "es_AR",
+    body: "¡Hola {{1}}! Volvió a entrar {{2}}. ¿Querés que te lo reservemos?",
+    parameterCount: 2,
+  },
 ];
 
 export function emptyActivityDetail(): AgentActivityDetail {
@@ -82,9 +95,9 @@ export const IG_ACCOUNT_ID = "17841400008460056";
 export const IG_REEL_ID = "18034412345678901";
 export const PAGE_ID = "112233445566778";
 
-const MINUTE = 60_000;
+export const MINUTE = 60_000;
 
-function ago(minutes: number): string {
+export function ago(minutes: number): string {
   return new Date(Date.now() - minutes * MINUTE).toISOString();
 }
 
@@ -97,7 +110,7 @@ export function nextId(prefix: string): string {
   return `${tag}-0000-4000-8000-${hex}`;
 }
 
-function lead(
+export function lead(
   platform: PlatformType,
   name: string | null,
   externalLeadId: string,
@@ -120,7 +133,7 @@ function lead(
   };
 }
 
-function conversation(
+export function conversation(
   leadRef: LeadResponse,
   externalThreadId: string,
   minutes: number,
@@ -141,7 +154,7 @@ function conversation(
   };
 }
 
-function message(
+export function message(
   conversationRef: StoredConversation,
   direction: MessageResponse["direction"],
   content: string,
@@ -163,7 +176,7 @@ function message(
   };
 }
 
-function listing(
+export function listing(
   externalId: string,
   title: string,
   price: number,
@@ -217,6 +230,7 @@ export function emptyState(): MockState {
     playgroundRuns: 0,
     playgroundLimit: 30,
     activity: emptyActivity(),
+    playgroundReplies: [],
   };
 }
 
@@ -427,7 +441,7 @@ export function buildState(scenario: Scenario): MockState {
   return state;
 }
 
-function scope(
+export function scope(
   platform: PlatformType | null,
   categoryId: string | null,
   salesStage: SalesStage | null,
