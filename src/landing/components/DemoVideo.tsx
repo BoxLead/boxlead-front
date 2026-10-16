@@ -40,11 +40,11 @@ export function DemoVideo() {
           </video>
           {started ? null : (
             <button type="button" className="demo-video-play" onClick={play}>
-              <span className="demo-video-play-icon">
-                <PlayIcon width={26} height={26} />
-              </span>
-              <span className="demo-video-play-label">
-                Ver la demo
+              <span className="demo-video-play-pill">
+                <span className="demo-video-play-icon">
+                  <PlayIcon width={18} height={18} />
+                </span>
+                <span className="demo-video-play-label">Ver la demo</span>
                 <span className="demo-video-play-time">{DURATION_LABEL}</span>
               </span>
             </button>
