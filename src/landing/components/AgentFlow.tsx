@@ -61,6 +61,9 @@ export function AgentFlow() {
                   {stage.icon}
                 </span>
                 <div>
+                  <span className="agent-flow-index" aria-hidden="true">
+                    0{index + 1}
+                  </span>
                   <h3 className="agent-flow-title">{stage.title}</h3>
                   <p className="agent-flow-desc">{stage.description}</p>
                 </div>
