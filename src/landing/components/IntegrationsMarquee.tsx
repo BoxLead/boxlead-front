@@ -3,7 +3,7 @@ import {
   WhatsAppIcon,
   InstagramIcon,
   MessengerIcon,
-  MercadoLibreIcon,
+  MercadoLibreMark,
   TikTokIcon,
   LinkedInIcon,
   GoogleAdsIcon,
@@ -32,7 +32,7 @@ const platforms: Platform[] = [
   },
   {
     name: "MercadoLibre",
-    icon: <MercadoLibreIcon width={ICON_SIZE} height={ICON_SIZE} />,
+    icon: <MercadoLibreMark width={ICON_SIZE} height={ICON_SIZE} />,
   },
   { name: "TikTok", icon: <TikTokIcon width={ICON_SIZE} height={ICON_SIZE} /> },
   {

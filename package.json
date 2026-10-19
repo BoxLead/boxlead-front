@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "mock-api": "node e2e/mock-api/server.ts",
+    "demo:video": "node e2e/demo/record.ts",
     "dev:mock": "VITE_API_BASE_URL=http://localhost:8090 VITE_AGENT_API_BASE_URL=http://localhost:8090 vite"
   },
   "dependencies": {

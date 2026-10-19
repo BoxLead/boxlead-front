@@ -1,7 +1,31 @@
 .hero {
-  padding-top: calc(var(--landing-header-height) + clamp(32px, 8vw, 96px));
-  padding-bottom: clamp(56px, 8vw, 104px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min(100svh, 940px);
+  padding-top: calc(var(--landing-header-height) + clamp(32px, 6vw, 72px));
+  padding-bottom: clamp(72px, 9vw, 120px);
   overflow: hidden;
+}
+
+.hero-spotlight {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      520px circle at var(--glow-x, 72%) var(--glow-y, 32%),
+      rgba(143, 193, 238, 0.12),
+      transparent 65%
+    ),
+    linear-gradient(rgba(143, 193, 238, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 193, 238, 0.09) 1px, transparent 1px);
+  background-size:
+    auto,
+    56px 56px,
+    56px 56px;
+  mask-image: radial-gradient(260px circle at var(--glow-x, 72%) var(--glow-y, 32%), black, transparent 75%);
+  -webkit-mask-image: radial-gradient(260px circle at var(--glow-x, 72%) var(--glow-y, 32%), black, transparent 75%);
+  pointer-events: none;
 }
 
 .hero-backdrop {
@@ -26,7 +50,7 @@
 
 .hero-content {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   gap: clamp(40px, 6vw, 72px);
   align-items: center;
   position: relative;
@@ -36,14 +60,27 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 22px;
-  animation: hero-enter 0.7s var(--landing-ease) both;
+  gap: 24px;
+}
+
+.hero-badge,
+.hero-subtitle,
+.hero-actions {
+  animation: hero-enter 0.9s var(--landing-ease) both;
+}
+
+.hero-subtitle {
+  animation-delay: 0.3s;
+}
+
+.hero-actions {
+  animation-delay: 0.42s;
 }
 
 .hero-visual {
   display: flex;
   justify-content: center;
-  animation: hero-enter 0.7s var(--landing-ease) 0.12s both;
+  animation: hero-enter 1s var(--landing-ease) 0.25s both;
 }
 
 @keyframes hero-enter {
@@ -85,12 +122,94 @@
 }
 
 .hero-title {
-  font-size: clamp(2.125rem, 5.2vw, 4rem);
+  font-size: clamp(2.375rem, 5.2vw, 4.5rem);
   font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  line-height: 1;
+  letter-spacing: -0.045em;
   margin: 0;
-  text-wrap: balance;
+}
+
+.hero-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.hero-line > span {
+  display: inline-block;
+  animation: hero-line-rise 1.1s var(--landing-ease) both;
+}
+
+.hero-line:nth-child(2) > span {
+  animation-delay: 0.1s;
+}
+
+.hero-line:nth-child(3) > span {
+  animation-delay: 0.2s;
+}
+
+@keyframes hero-line-rise {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.hero-tilt {
+  width: 100%;
+  max-width: 480px;
+  transform: perspective(1400px) rotateY(calc(var(--glow-nx, 0) * 7deg)) rotateX(calc(var(--glow-ny, 0) * -7deg));
+  transition: transform 0.6s var(--landing-ease);
+}
+
+.hero-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--landing-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateX(-50%);
+  transition: color 0.2s ease;
+}
+
+.hero-scroll:hover {
+  color: var(--landing-heading);
+}
+
+.hero-scroll-line {
+  position: relative;
+  width: 1px;
+  height: 44px;
+  overflow: hidden;
+  background: var(--landing-border-strong);
+}
+
+.hero-scroll-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--landing-accent);
+  animation: hero-scroll-drop 2.2s var(--landing-ease) infinite;
+}
+
+@keyframes hero-scroll-drop {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }
 
 .hero-title-accent {
@@ -125,6 +244,10 @@
 
   .hero-actions {
     justify-content: center;
+  }
+
+  .hero-scroll {
+    display: none;
   }
 }
 
@@ -179,9 +302,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-text,
+  .hero-badge,
+  .hero-subtitle,
+  .hero-actions,
+  .hero-line > span,
   .hero-visual,
-  .hero-badge-dot {
+  .hero-badge-dot,
+  .hero-scroll-line::after {
     animation: none;
+  }
+
+  .hero-tilt {
+    transform: none;
+    transition: none;
   }
 }

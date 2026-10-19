@@ -20,6 +20,7 @@ import {
   type StoredConversation,
   WHATSAPP_TEMPLATES,
 } from "./fixtures.ts";
+import { buildShowcase } from "./showcase.ts";
 import {
   encodeEvents,
   parseAgentBody,
@@ -329,6 +330,8 @@ function oauthUrl(platform: PlatformType, redirectUri: string) {
   return url.toString();
 }
 
+const STREAM_PAUSE_MS = 45;
+
 async function playground(req: IncomingMessage, res: ServerResponse) {
   const parsed = parsePlaygroundRequest(await readBody(req));
   if ("status" in parsed) return fail(res, parsed.status, parsed.message);
@@ -340,8 +343,15 @@ async function playground(req: IncomingMessage, res: ServerResponse) {
   state.playgroundRuns += 1;
   const name = saved?.name ?? parsed.unsavedName ?? "Agente";
   const replyMode = saved ? resolveReplyMode(saved, parsed.platform, parsed.stage, parsed.categoryId) : null;
+  const scripted = state.playgroundReplies.find((item) => new RegExp(item.pattern, "i").test(parsed.customerMessage));
+  const events = playgroundEvents(parsed, name, replyMode, scripted?.reply ?? null);
   res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
-  res.end(encodeEvents(playgroundEvents(parsed, name, replyMode)));
+  if (!scripted) return res.end(encodeEvents(events));
+  for (const event of events) {
+    res.write(encodeEvents([event]));
+    await new Promise((resolve) => setTimeout(resolve, STREAM_PAUSE_MS));
+  }
+  res.end();
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -363,7 +373,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/__reset" && method === "POST") {
     const body = await readBody(req);
     const scenario = (body.scenario as Scenario | undefined) ?? "default";
-    state = buildState(scenario);
+    state = scenario === "showcase" ? buildShowcase() : buildState(scenario);
     return send(res, 200, { scenario });
   }
   if (parts[0] === "__img") {
@@ -543,13 +553,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const leadId = url.searchParams.get("leadId");
       const limit = Number(url.searchParams.get("limit") ?? "0");
       const before = url.searchParams.get("before");
-      let list = state.conversations
+      const matching = state.conversations
         .filter((c) => !platform || c.platform === platform)
         .filter((c) => !stage || c.salesStage === stage)
-        .filter((c) => !leadId || c.leadId === leadId)
-        .sort((a, b) => activity(b).localeCompare(activity(a)));
+        .filter((c) => !leadId || c.leadId === leadId);
+      const activityOf = new Map(matching.map((c) => [c.id, activity(c)]));
+      const at = (c: StoredConversation) => activityOf.get(c.id) ?? c.updatedAt;
+      let list = matching.sort((a, b) => at(b).localeCompare(at(a)));
       if (limit > 0) {
-        list = list.filter((c) => !before || activity(c) < before).slice(0, limit);
+        list = list.filter((c) => !before || at(c) < before).slice(0, limit);
       }
       return send(res, 200, list.map(summary));
     }
