@@ -37,6 +37,12 @@ export const REQUEST_HEADERS = {
   [CSRF_HEADER]: CSRF_HEADER_VALUE,
 } as const;
 
+function readName(value: object): string | null {
+  if (!("name" in value) || typeof value.name !== "string") return null;
+  const trimmed = value.name.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
 function toAuthUser(value: unknown): AuthUser | null {
   if (
     value &&
@@ -46,7 +52,7 @@ function toAuthUser(value: unknown): AuthUser | null {
     typeof value.userId === "string" &&
     typeof value.email === "string"
   ) {
-    return { userId: value.userId, email: value.email };
+    return { userId: value.userId, email: value.email, name: readName(value) };
   }
   return null;
 }

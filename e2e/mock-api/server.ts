@@ -39,7 +39,11 @@ const APP_ORIGIN = process.env.MOCK_APP_ORIGIN ?? "http://localhost:5173";
 const SELF = `http://localhost:${PORT}`;
 const SESSION_COOKIE = "boxlead_session";
 const DEMO_PASSWORD = "demo1234";
-const USER = { userId: "0b0e0000-0000-4000-8000-000000000001", email: "demo@boxlead.app" };
+const USER = {
+  userId: "0b0e0000-0000-4000-8000-000000000001",
+  email: "demo@boxlead.app",
+  name: "Ana Pérez",
+};
 const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "GOOGLE_ADS", "MELI"];
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 const MELI_ANSWER_LIMIT = 2000;

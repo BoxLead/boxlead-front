@@ -1,10 +1,13 @@
 .layout {
-  --signal-text-muted: #91a0ae;
   display: flex;
   height: 100vh;
   height: 100dvh;
   width: 100%;
   background: var(--signal-bg);
+}
+
+html:not([data-theme="light"]) .layout {
+  --signal-text-muted: #91a0ae;
 }
 
 .layout-content {

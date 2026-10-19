@@ -91,6 +91,23 @@ describe("query cache origins", () => {
   });
 });
 
+describe("session user", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+  });
+
+  it("keeps a trimmed name and drops a blank one", async () => {
+    fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", name: " Ana Pérez " }));
+    await expect(api.me()).resolves.toEqual({ userId: "u-1", email: "ana@example.com", name: "Ana Pérez" });
+
+    fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", name: "  " }));
+    await expect(api.me()).resolves.toEqual({ userId: "u-1", email: "ana@example.com", name: null });
+
+    fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com" }));
+    await expect(api.me()).resolves.toEqual({ userId: "u-1", email: "ana@example.com", name: null });
+  });
+});
+
 describe("rate limited answers", () => {
   it("explains a 429 in Spanish whatever the server says", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");

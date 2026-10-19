@@ -8,13 +8,9 @@
   gap: clamp(24px, 4vh, 40px);
   padding: var(--signal-space-xl) var(--signal-space-lg);
   background:
-    radial-gradient(
-      ellipse 60% 50% at 50% 0%,
-      rgba(36, 82, 124, 0.4) 0%,
-      transparent 70%
-    ),
-    linear-gradient(rgba(234, 234, 220, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(234, 234, 220, 0.025) 1px, transparent 1px),
+    radial-gradient(ellipse 60% 50% at 50% 0%, var(--signal-auth-glow) 0%, transparent 70%),
+    linear-gradient(var(--signal-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--signal-grid-line) 1px, transparent 1px),
     var(--signal-bg);
   background-size:
     auto,
@@ -101,7 +97,7 @@
 }
 
 .auth-input:hover {
-  border-color: rgba(234, 234, 220, 0.24);
+  border-color: var(--signal-border-strong);
 }
 
 .auth-input:focus {
@@ -146,7 +142,7 @@
 
 .auth-error {
   padding: 12px var(--signal-space-md);
-  border: 1px solid rgba(240, 138, 138, 0.25);
+  border: 1px solid color-mix(in srgb, var(--signal-danger) 25%, transparent);
   border-radius: var(--signal-radius-sm);
   background: var(--signal-danger-muted);
   color: var(--signal-danger);
@@ -160,8 +156,8 @@
   padding: 0 var(--signal-space-lg);
   border: none;
   border-radius: var(--signal-radius-sm);
-  background: var(--signal-cream);
-  color: var(--signal-navy);
+  background: var(--signal-btn-primary-bg);
+  color: var(--signal-btn-primary-text);
   font-size: 1rem;
   font-weight: 600;
   transition:
@@ -170,7 +166,7 @@
 }
 
 .auth-submit:hover:not(:disabled) {
-  background: #ffffff;
+  background: var(--signal-btn-primary-hover);
   transform: translateY(-1px);
 }
 
