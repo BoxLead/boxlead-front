@@ -23,11 +23,11 @@ const API = process.env.DEMO_API_URL ?? "http://localhost:8090";
 const OUT = resolve(process.env.PROMO_OUT ?? "promo-video");
 const FFMPEG = process.env.FFMPEG ?? "ffmpeg";
 const FPS = 30;
-const DURATION = 40;
+const DURATION = 45;
 const TOTAL_FRAMES = FPS * DURATION;
 const MAX_LOAD_PER_CORE = 0.75;
 const POSTER_AT = 12.6;
-const STILLS = [1.1, 5.6, 8.0, 9.9, 12.6, 15.0, 18.2, 20.0, 21.6, 23.1, 24.6, 26.1, 28.2, 31.6, 38.5];
+const STILLS = [1.1, 5.6, 8.0, 9.9, 12.6, 15.0, 18.2, 20.8, 23.3, 25.8, 28.3, 30.8, 33.3, 37.0, 43.5];
 const STREAM_SIZE = 72;
 const HEADERS = { "X-Requested-With": "boxlead-web" };
 const HERO_PAIRS: Array<[RegExp, RegExp]> = [
@@ -47,35 +47,35 @@ const lines: Line[] = [
   { at: 9.4, until: 11.3, text: "Mismo cliente, *3* *AM.*", kind: "title" },
   { at: 11.6, until: 13.55, text: "Tu agente ya le respondió.", kind: "title" },
   { at: 13.8, until: 16.85, text: "En automático, las 24 horas.", kind: "title" },
-  { at: 17.15, until: 18.9, text: "Todos tus canales, una bandeja.", kind: "title", fast: true, kicker: "Bandeja" },
-  { at: 19.15, until: 20.4, text: "Responde y califica a cada cliente.", kind: "title", fast: true, kicker: "Leads" },
-  { at: 20.65, until: 21.9, text: "Te deja el borrador listo.", kind: "title", fast: true, kicker: "Borradores" },
-  { at: 22.15, until: 23.4, text: "¿Hace falta una persona? Te avisa.", kind: "title", fast: true, kicker: "Derivación" },
-  { at: 23.65, until: 24.9, text: "Responde comentarios de Instagram.", kind: "title", fast: true, kicker: "Instagram" },
-  { at: 25.15, until: 26.4, text: "Tu agente, con tus reglas.", kind: "title", fast: true, kicker: "Agentes" },
-  { at: 26.65, until: 28.9, text: "Sabé qué canal vende más.", kind: "title", fast: true, kicker: "Métricas" },
-  { at: 29.4, until: 33.75, text: "Más ventas con el *mismo* *equipo.*", kind: "title" },
+  { at: 17.15, until: 19.4, text: "Todos tus canales, una bandeja.", kind: "title", fast: true, kicker: "Bandeja" },
+  { at: 19.65, until: 21.9, text: "Responde y califica a cada cliente.", kind: "title", fast: true, kicker: "Leads" },
+  { at: 22.15, until: 24.4, text: "Te deja el borrador listo.", kind: "title", fast: true, kicker: "Borradores" },
+  { at: 24.65, until: 26.9, text: "¿Hace falta una persona? Te avisa.", kind: "title", fast: true, kicker: "Derivación" },
+  { at: 27.15, until: 29.4, text: "Responde comentarios de Instagram.", kind: "title", fast: true, kicker: "Instagram" },
+  { at: 29.65, until: 31.9, text: "Tu agente, con tus reglas.", kind: "title", fast: true, kicker: "Agentes" },
+  { at: 32.15, until: 34.4, text: "Sabé qué canal vende más.", kind: "title", fast: true, kicker: "Métricas" },
+  { at: 34.9, until: 39.25, text: "Más ventas con el *mismo* *equipo.*", kind: "title" },
 ];
 
 const shots: Shot[] = [
   { at: 9, until: 17, layer: "a", enter: "wipe-up", focus: { selector: ".chat-thread", zoom: 1.6, align: "top" } },
-  { at: 17, until: 19, layer: "b", enter: "wipe-right", focus: { selector: ".conversation-stages", align: "keep", ring: true } },
-  { at: 19, until: 20.5, layer: "a", enter: "wipe-up", focus: { selector: ".leads-row", zoom: 1.8, ring: true } },
-  { at: 20.5, until: 22, layer: "b", enter: "wipe-left", focus: { selector: ".draft-banner", zoom: 1.75, ring: true } },
-  { at: 22, until: 23.5, layer: "a", enter: "wipe-up", focus: { selector: ".banner", zoom: 1.8, ring: true } },
-  { at: 23.5, until: 25, layer: "b", enter: "wipe-right", focus: { selector: ".comment-event-outbound", zoom: 1.65, ring: true } },
-  { at: 25, until: 26.5, layer: "a", enter: "wipe-up", focus: { selector: 'dialog textarea', zoom: 1.6, ring: true } },
-  { at: 26.5, until: 29, layer: "b", enter: "wipe-left", focus: { selector: ".breakdown-table", ring: true } },
+  { at: 17, until: 19.5, layer: "b", enter: "wipe-right", focus: { selector: ".conversation-stages", align: "keep", ring: true } },
+  { at: 19.5, until: 22, layer: "a", enter: "wipe-up", focus: { selector: ".leads-row", zoom: 1.8, ring: true } },
+  { at: 22, until: 24.5, layer: "b", enter: "wipe-left", focus: { selector: ".draft-banner", zoom: 1.75, ring: true } },
+  { at: 24.5, until: 27, layer: "a", enter: "wipe-up", focus: { selector: ".banner", zoom: 1.8, ring: true } },
+  { at: 27, until: 29.5, layer: "b", enter: "wipe-right", focus: { selector: ".comment-event-outbound", zoom: 1.65, ring: true } },
+  { at: 29.5, until: 32, layer: "a", enter: "wipe-up", focus: { selector: 'dialog textarea', zoom: 1.6, ring: true } },
+  { at: 32, until: 34.5, layer: "b", enter: "wipe-left", focus: { selector: ".breakdown-table", ring: true } },
 ];
 
 const chips: Chip[] = [
   { at: 11.9, until: 16.75, text: "Respondido solo", tone: "green", anchor: { layer: "a", selector: "[data-promo-reply]", dx: -4, dy: -26 } },
-  { at: 19.6, until: 20.35, text: "Calificado", tone: "green", anchor: { layer: "a", selector: ".leads-row", dx: -20, dy: -14 } },
-  { at: 21.1, until: 21.85, text: "Borrador listo", tone: "blue", anchor: { layer: "b", selector: ".draft-banner", dx: -16, dy: -16 } },
-  { at: 22.6, until: 23.35, text: "Pidió una persona", tone: "amber", anchor: { layer: "a", selector: ".banner", dx: -16, dy: -16 } },
-  { at: 24.1, until: 24.85, text: "Respondido en público", tone: "green", anchor: { layer: "b", selector: ".comment-event-outbound", dx: -16, dy: -16 } },
-  { at: 25.6, until: 26.35, text: "Tus reglas", tone: "blue", anchor: { layer: "a", selector: 'dialog textarea', dx: -16, dy: -16 } },
-  { at: 27.1, until: 28.85, text: "Por canal", tone: "blue", anchor: { layer: "b", selector: ".breakdown-table", dx: -16, dy: -16 } },
+  { at: 20.1, until: 21.85, text: "Calificado", tone: "green", anchor: { layer: "a", selector: ".leads-row", dx: -20, dy: -14 } },
+  { at: 22.6, until: 24.35, text: "Borrador listo", tone: "blue", anchor: { layer: "b", selector: ".draft-banner", dx: -16, dy: -16 } },
+  { at: 25.1, until: 26.85, text: "Pidió una persona", tone: "amber", anchor: { layer: "a", selector: ".banner", dx: -16, dy: -16 } },
+  { at: 27.6, until: 29.35, text: "Respondido en público", tone: "green", anchor: { layer: "b", selector: ".comment-event-outbound", dx: -16, dy: -16 } },
+  { at: 30.1, until: 31.85, text: "Tus reglas", tone: "blue", anchor: { layer: "a", selector: 'dialog textarea', dx: -16, dy: -16 } },
+  { at: 32.6, until: 34.35, text: "Por canal", tone: "blue", anchor: { layer: "b", selector: ".breakdown-table", dx: -16, dy: -16 } },
 ];
 
 const notices: Notice[] = [
@@ -105,8 +105,8 @@ function buildScript(hero: Hero, stream: StreamItem[]): Script {
     arrival: { at: 9.25, until: 10.5, notice: { platform: "whatsapp", name: hero.name, text: hero.question }, time: "03:01" },
     channels: { at: 14.2, until: 16.85 },
     pulses: [{ at: 11.45, tone: "green" }],
-    stream: { at: 29, until: 34, items: stream },
-    closing: { at: 34 },
+    stream: { at: 34.5, until: 39.5, items: stream },
+    closing: { at: 39.5 },
   };
 }
 
@@ -271,21 +271,21 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
       },
     },
     {
-      at: 19.2,
+      at: 19.7,
       run: async () => {
         await stage.conversation("b", ids.valentina);
         await stage.center("b", ".draft-banner");
       },
     },
     {
-      at: 20.7,
+      at: 22.2,
       run: async () => {
         await stage.conversation("a", ids.martu);
         await stage.center("a", ".banner");
       },
     },
     {
-      at: 22.2,
+      at: 24.7,
       run: async () => {
         await stage.conversation("b", ids.flor);
         const frame = stage.frame("b");
@@ -298,7 +298,7 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
       },
     },
     {
-      at: 23.7,
+      at: 27.2,
       run: async () => {
         await stage.open("a", "/app/agents");
         const frame = stage.frame("a");
@@ -315,7 +315,7 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
       },
     },
     {
-      at: 25.2,
+      at: 29.7,
       run: async () => {
         await stage.open("b", "/app/metrics");
         await stage.frame("b").locator(".breakdown-table").waitFor();
