@@ -47,6 +47,7 @@ coverage
 playwright-report
 test-results
 demo-video
+promo-video
 
 # Auth0 credentials
 .env.local
