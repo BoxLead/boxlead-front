@@ -64,7 +64,7 @@ const shots: Shot[] = [
   { at: 22, until: 24.5, layer: "b", enter: "wipe-left", focus: { selector: ".draft-banner", zoom: 1.75, ring: true } },
   { at: 24.5, until: 27, layer: "a", enter: "wipe-up", focus: { selector: ".banner", zoom: 1.8, ring: true } },
   { at: 27, until: 29.5, layer: "b", enter: "wipe-right", focus: { selector: ".comment-event-outbound", zoom: 1.65, ring: true } },
-  { at: 29.5, until: 32, layer: "a", enter: "wipe-up", focus: { selector: 'dialog textarea', zoom: 1.6, ring: true } },
+  { at: 29.5, until: 32, layer: "a", enter: "wipe-up", focus: { selector: ".agent-textarea", zoom: 1.6, ring: true } },
   { at: 32, until: 34.5, layer: "b", enter: "wipe-left", focus: { selector: ".breakdown-table", ring: true } },
 ];
 
@@ -74,7 +74,7 @@ const chips: Chip[] = [
   { at: 22.6, until: 24.35, text: "Borrador listo", tone: "blue", anchor: { layer: "b", selector: ".draft-banner", dx: -16, dy: -16 } },
   { at: 25.1, until: 26.85, text: "Pidió una persona", tone: "amber", anchor: { layer: "a", selector: ".banner", dx: -16, dy: -16 } },
   { at: 27.6, until: 29.35, text: "Respondido en público", tone: "green", anchor: { layer: "b", selector: ".comment-event-outbound", dx: -16, dy: -16 } },
-  { at: 30.1, until: 31.85, text: "Tus reglas", tone: "blue", anchor: { layer: "a", selector: 'dialog textarea', dx: -16, dy: -16 } },
+  { at: 30.1, until: 31.85, text: "Tus reglas", tone: "blue", anchor: { layer: "a", selector: ".agent-textarea", dx: -16, dy: -16 } },
   { at: 32.6, until: 34.35, text: "Por canal", tone: "blue", anchor: { layer: "b", selector: ".breakdown-table", dx: -16, dy: -16 } },
 ];
 
@@ -303,15 +303,15 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
         await stage.open("a", "/app/agents");
         const frame = stage.frame("a");
         await frame.getByRole("button", { name: "Nuevo agente" }).dispatchEvent("click");
-        const dialog = frame.getByRole("dialog", { name: "Nuevo agente" });
-        await dialog.waitFor();
-        await dialog.getByLabel("Nombre").fill("Mayoristas");
-        await dialog.getByLabel("Instrucciones").fill("Atendé a comercios y revendedores. Pasá la lista mayorista y pedí el CUIT.");
-        const rule = dialog.locator(".scopes-editor");
+        const form = frame.getByRole("form", { name: "Configuración del agente" });
+        await form.waitFor();
+        await form.getByLabel("Nombre").fill("Mayoristas");
+        await form.getByLabel("Instrucciones").fill("Atendé a comercios y revendedores. Pasá la lista mayorista y pedí el CUIT.");
+        const rule = form.locator(".scopes-editor");
         await rule.getByLabel("Canal").first().selectOption({ label: "WhatsApp" });
         await rule.getByLabel("Categoría").first().selectOption({ label: "Mayorista" });
         await rule.getByLabel("Modo").first().selectOption({ label: "Automático" });
-        await stage.center("a", 'dialog textarea');
+        await stage.center("a", ".agent-textarea");
       },
     },
     {
@@ -333,7 +333,7 @@ async function record(format: Format, frames: string) {
   mkdirSync(frames, { recursive: true });
 
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: layout.width, height: layout.height }, deviceScaleFactor: 1, locale: "es-AR" });
+  const context = await browser.newContext({ viewport: { width: layout.width, height: layout.height }, deviceScaleFactor: 1, locale: "es-AR", colorScheme: "dark" });
   const page = await context.newPage();
   await login(page);
   const assets = await collectAssets(page);
