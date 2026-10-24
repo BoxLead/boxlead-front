@@ -4,7 +4,8 @@ export type PlatformType =
   | "TIKTOK"
   | "WHATSAPP"
   | "GOOGLE_ADS"
-  | "MELI";
+  | "MELI"
+  | "GMAIL";
 
 export type ConversationStatus = "OPEN" | "CLOSED";
 

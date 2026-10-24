@@ -1,4 +1,5 @@
 import type { PlatformType, SalesStage } from "../api/types";
+import { gmail } from "./gmail";
 import { instagram } from "./instagram";
 import { meli } from "./meli";
 import { messenger } from "./messenger";
@@ -11,11 +12,12 @@ const PLATFORMS: Record<PlatformType, PlatformDefinition> = {
   WHATSAPP: whatsapp,
   INSTAGRAM: instagram,
   META: messenger,
+  GMAIL: gmail,
   TIKTOK: tiktok,
   GOOGLE_ADS: googleAds,
 };
 
-export const CONNECTABLE_PLATFORMS: PlatformDefinition[] = [meli, whatsapp, instagram, messenger];
+export const CONNECTABLE_PLATFORMS: PlatformDefinition[] = [meli, whatsapp, instagram, messenger, gmail];
 
 export function getPlatform(id: PlatformType): PlatformDefinition {
   return PLATFORMS[id];

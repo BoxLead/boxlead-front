@@ -21,7 +21,7 @@ src/
 ├── context/          # AuthProvider (AuthContext.tsx) and useAuth (auth.ts)
 ├── data/             # queryCache (shared request cache behind useApiQuery), lead and category mutations, metrics source and demo data
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
-├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
+├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger, Gmail) and the registry
 ├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal

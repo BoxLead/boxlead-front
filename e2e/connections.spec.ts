@@ -2,16 +2,17 @@ import { expect, test } from "@playwright/test";
 import { expectAccessible, login, resetApi, routeOAuthProvider, screenshot } from "./support.ts";
 
 const MELI_AUTH = "auth.mercadolibre.test";
+const GOOGLE_AUTH = "accounts.google.test";
 
 test("each channel shows its own card, with MercadoLibre featured", async ({ page }) => {
   await resetApi("empty");
   await login(page, "/app/connections");
   const cards = page.getByRole("list", { name: "Canales" }).locator(":scope > li");
-  await expect(cards).toHaveCount(4);
+  await expect(cards).toHaveCount(5);
   await expect(cards.first()).toContainText("MercadoLibre");
   await expect(cards.first()).toContainText("Cómo funciona");
   await expect(cards.first()).toContainText("Preguntas de tus publicaciones");
-  await expect(page.getByText("0 de 4 canales conectados")).toBeVisible();
+  await expect(page.getByText("0 de 5 canales conectados")).toBeVisible();
   await expectAccessible(page);
   await screenshot(page, "connections-empty");
 });
@@ -23,7 +24,7 @@ test("connected accounts show their activity", async ({ page }) => {
   await expect(meli.getByText("TIENDA_NORTE")).toBeVisible();
   await expect(meli.getByText(/Última actividad hace \d+ min/)).toBeVisible();
   await expect(meli.getByText("Conectado")).toBeVisible();
-  await expect(page.getByText("3 de 4 canales conectados")).toBeVisible();
+  await expect(page.getByText("3 de 5 canales conectados")).toBeVisible();
   await expectAccessible(page);
   await screenshot(page, "connections-connected");
 });
@@ -44,7 +45,28 @@ test("connecting MercadoLibre goes through OAuth with PKCE and comes back highli
   await expect(page).toHaveURL(/\/app\/connections$/);
   await expect(page.getByRole("status").filter({ hasText: "Conectaste MercadoLibre: TIENDA_NORTE." })).toBeVisible();
   await expect(page.locator(".channel-card-highlight")).toContainText("TIENDA_NORTE");
-  await expect(page.getByText("1 de 4 canales conectados")).toBeVisible();
+  await expect(page.getByText("1 de 5 canales conectados")).toBeVisible();
+});
+
+test("connecting Gmail goes through OAuth with PKCE and explains what is kept", async ({ page }) => {
+  await resetApi("empty");
+  await login(page, "/app/connections");
+  const card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Gmail" }) });
+  await expect(card).toContainText("Solo se conservan los correos de posibles clientes");
+  let stateSent = "";
+  page.on("request", (request) => {
+    if (request.url().startsWith(`https://${GOOGLE_AUTH}`)) {
+      stateSent = new URL(request.url()).searchParams.get("state") ?? "";
+    }
+  });
+  await routeOAuthProvider(page, GOOGLE_AUTH, () => ({ code: "abc", state: stateSent }));
+
+  await page.getByRole("button", { name: "Conectar Gmail" }).click();
+
+  await expect(page).toHaveURL(/\/app\/connections$/);
+  await expect(page.locator(".channel-card-highlight")).toContainText("ventas@tienda.test");
+  await expect(page.getByText("1 de 5 canales conectados")).toBeVisible();
+  await expectAccessible(page);
 });
 
 test("cancelling the authorization explains what happened", async ({ page }) => {
@@ -110,5 +132,5 @@ test("disconnecting asks for confirmation and keeps the user informed", async ({
   await dialog.getByRole("button", { name: "Desconectar" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Desconectaste @tiendanorte." })).toBeVisible();
   await expect(page.getByText("@tiendanorte")).toHaveCount(0);
-  await expect(page.getByText("2 de 4 canales conectados")).toBeVisible();
+  await expect(page.getByText("2 de 5 canales conectados")).toBeVisible();
 });

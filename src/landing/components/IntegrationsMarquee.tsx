@@ -3,6 +3,7 @@ import {
   WhatsAppIcon,
   InstagramIcon,
   MessengerIcon,
+  GmailIcon,
   MercadoLibreMark,
   TikTokIcon,
   LinkedInIcon,
@@ -29,6 +30,10 @@ const platforms: Platform[] = [
   {
     name: "Messenger",
     icon: <MessengerIcon width={ICON_SIZE} height={ICON_SIZE} />,
+  },
+  {
+    name: "Gmail",
+    icon: <GmailIcon width={ICON_SIZE} height={ICON_SIZE} />,
   },
   {
     name: "MercadoLibre",

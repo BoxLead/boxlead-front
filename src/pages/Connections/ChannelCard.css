@@ -37,6 +37,10 @@
   --channel-accent: var(--platform-messenger);
 }
 
+.channel-card-gmail {
+  --channel-accent: var(--platform-gmail);
+}
+
 .channel-card-featured {
   grid-column: 1 / -1;
   background:

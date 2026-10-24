@@ -243,6 +243,7 @@ function threadPrefix(platform: PlatformType): string {
     META: PAGE_ID,
     TIKTOK: "tiktok",
     GOOGLE_ADS: "google",
+    GMAIL: "gmail",
   };
   return prefixes[platform];
 }

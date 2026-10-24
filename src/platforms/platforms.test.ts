@@ -94,12 +94,40 @@ describe("whatsapp", () => {
 
   it("is the only channel that offers templates", () => {
     expect(whatsapp.supportsTemplates).toBe(true);
-    expect(["META", "INSTAGRAM", "MELI"].some((id) => getPlatform(id as never).supportsTemplates)).toBe(false);
+    expect(["META", "INSTAGRAM", "MELI", "GMAIL"].some((id) => getPlatform(id as never).supportsTemplates)).toBe(false);
   });
 
   it("leaves other failures to the generic message", () => {
     expect(whatsapp.explainError(502, "WhatsApp send message failed (HTTP 400 BAD_REQUEST)")).toBeNull();
     expect(whatsapp.explainError(409, "Cannot send WhatsApp message: connection 1 has no phone number")).toBeNull();
+  });
+});
+
+describe("Gmail", () => {
+  const gmail = getPlatform("GMAIL");
+
+  it("answers in plain text on the same thread, with no length limit and no new conversations", () => {
+    expect(gmail.reply("PRE_SALE")).toMatchObject({ kind: "chat", maxLength: null });
+    expect(gmail.reply("PRE_SALE").hint).toMatch(/mismo hilo/);
+    expect(gmail.canStartConversation).toBe(false);
+    expect(hasStages("GMAIL")).toBe(false);
+    expect(stageLabel("GMAIL", "PRE_SALE")).toBe("Correos");
+  });
+
+  it.each([
+    [409, "Gmail account 4 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar Gmail"],
+    [409, "Cannot send the email: lead 7 has no valid email address", null, "No hay una dirección válida"],
+  ])("explains %i %s", (status, message, action, title) => {
+    expect(gmail.explainError(status, message)).toMatchObject({ action, title });
+  });
+
+  it("leaves other failures to the generic message", () => {
+    expect(gmail.explainError(502, "Gmail send failed (HTTP 500)")).toBeNull();
+  });
+
+  it("names the sender by address and links it as mail", () => {
+    const sender = lead({ platform: "GMAIL", externalLeadId: "ana@example.com", email: "ana@example.com" });
+    expect(gmail.contactFields(sender)).toEqual([{ label: "Email", value: "ana@example.com", href: "mailto:ana@example.com" }]);
   });
 });
 
@@ -122,8 +150,8 @@ describe("contact fields", () => {
 });
 
 describe("registry", () => {
-  it("offers the four live channels for connection, MercadoLibre first", () => {
-    expect(CONNECTABLE_PLATFORMS.map((p) => p.id)).toEqual(["MELI", "WHATSAPP", "INSTAGRAM", "META"]);
+  it("offers the live channels for connection, MercadoLibre first", () => {
+    expect(CONNECTABLE_PLATFORMS.map((p) => p.id)).toEqual(["MELI", "WHATSAPP", "INSTAGRAM", "META", "GMAIL"]);
   });
 });
 

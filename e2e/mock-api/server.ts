@@ -44,7 +44,7 @@ const USER = {
   email: "demo@boxlead.app",
   name: "Ana Pérez",
 };
-const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "GOOGLE_ADS", "MELI"];
+const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "GOOGLE_ADS", "MELI", "GMAIL"];
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 const MELI_ANSWER_LIMIT = 2000;
 const MELI_MESSAGE_LIMIT = 350;
@@ -326,8 +326,14 @@ function validateCategory(body: Record<string, unknown>, creating: boolean): str
   return null;
 }
 
+const OAUTH_HOSTS: Partial<Record<PlatformType, string>> = {
+  MELI: "auth.mercadolibre.test",
+  GMAIL: "accounts.google.test",
+};
+const PKCE_PLATFORMS: PlatformType[] = ["MELI", "GMAIL"];
+
 function oauthUrl(platform: PlatformType, redirectUri: string) {
-  const host = platform === "MELI" ? "auth.mercadolibre.test" : "www.facebook.test";
+  const host = OAUTH_HOSTS[platform] ?? "www.facebook.test";
   const url = new URL(`https://${host}/authorization`);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("client_id", "mock");
@@ -692,7 +698,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (parts[2] === "auth-url") {
       const redirectUri = url.searchParams.get("redirectUri") ?? "";
       if (platform === "WHATSAPP") return fail(res, 500, "Internal server error");
-      return send(res, 200, platform === "MELI"
+      return send(res, 200, PKCE_PLATFORMS.includes(platform)
         ? { url: oauthUrl(platform, redirectUri), codeVerifier: "mock-verifier" }
         : { url: oauthUrl(platform, redirectUri) });
     }
@@ -700,7 +706,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const body = await readBody(req);
       if (typeof body.code !== "string" || !body.code) return fail(res, 400, "Validation failed");
       if (body.code === "rejected") return fail(res, 502, "MELI token exchange failed (HTTP 400 BAD_REQUEST)");
-      if (platform === "MELI" && body.codeVerifier !== "mock-verifier") return fail(res, 400, "Missing PKCE verifier");
+      if (PKCE_PLATFORMS.includes(platform) && body.codeVerifier !== "mock-verifier") return fail(res, 400, "Missing PKCE verifier");
       const externalAccountId = platform === "MELI" ? MELI_SELLER_ID : `${platform.toLowerCase()}-${body.code}`;
       const existing = state.connections.find(
         (c) => c.platform === platform && c.externalAccountId === externalAccountId,
@@ -709,7 +715,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         id: nextId("acc0"),
         platform,
         externalAccountId,
-        displayName: platform === "MELI" ? "TIENDA_NORTE" : `Cuenta ${platform.toLowerCase()}`,
+        displayName: platform === "MELI" ? "TIENDA_NORTE" : platform === "GMAIL" ? "ventas@tienda.test" : `Cuenta ${platform.toLowerCase()}`,
         connectedAt: new Date().toISOString(),
         needsReconnection: false,
         lastEventAt: null,

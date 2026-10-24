@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  GmailIcon,
   InstagramIcon,
   MercadoLibreMark,
   MessengerIcon,
@@ -34,6 +35,9 @@ const steps: Step[] = [
         </li>
         <li title="Messenger">
           <MessengerIcon width={24} height={24} />
+        </li>
+        <li title="Gmail">
+          <GmailIcon width={24} height={24} />
         </li>
         <li title="MercadoLibre">
           <MercadoLibreMark width={24} height={24} />
