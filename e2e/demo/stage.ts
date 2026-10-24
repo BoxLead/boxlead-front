@@ -3,16 +3,17 @@ export type Platform = "whatsapp" | "instagram" | "messenger" | "meli";
 export type Tone = "green" | "blue" | "amber";
 export type Enter = "cut" | "wipe-up" | "wipe-right" | "wipe-left" | "slide";
 
-export type Line = { at: number; until: number; text: string; kind: "hero" | "title"; fast?: boolean };
-export type Shot = { at: number; until: number; layer: Layer; enter: Enter };
+export type Line = { at: number; until: number; text: string; kind: "hero" | "title"; fast?: boolean; kicker?: string };
+export type Focus = { selector: string; zoom?: number; align?: "center" | "top" | "keep"; ring?: boolean };
+export type Shot = { at: number; until: number; layer: Layer; enter: Enter; focus?: Focus };
 export type Anchor = { layer: Layer; selector: string; dx: number; dy: number };
 export type Chip = { at: number; until: number; text: string; tone: Tone; x?: number; y?: number; anchor?: Anchor };
 export type Effect =
   | { kind: "typing"; layer: Layer; at: number; until: number }
   | { kind: "reveal"; layer: Layer; selector: string; at: number }
-  | { kind: "pin-bottom"; layer: Layer; at: number; until: number }
-  | { kind: "scroll"; layer: Layer; selector: string; at: number; until: number; from: number; to: number };
+  | { kind: "pin-bottom"; layer: Layer; at: number; until: number };
 export type Notice = { platform: Platform; name: string; text: string };
+export type StreamItem = { platform: Platform; name: string; state: string };
 export type Script = {
   lines: Line[];
   shots: Shot[];
@@ -21,6 +22,10 @@ export type Script = {
   notices: Notice[];
   problem: { at: number; until: number; tidyAt: number; clockFrom: number; clockTo: number; clockUntil: number };
   turn: { at: number; until: number };
+  arrival: { at: number; until: number; notice: Notice; time: string };
+  channels: { at: number; until: number };
+  pulses: Array<{ at: number; tone: Tone }>;
+  stream: { at: number; until: number; items: StreamItem[] };
   closing: { at: number };
 };
 export type Assets = { logo: string; icons: Record<Platform, string> };
@@ -31,29 +36,73 @@ declare global {
   }
 }
 
-export const STAGE = { width: 1080, height: 1920, squareTop: 420, square: 1080 };
-export const DEVICE = { left: 240, top: 210, width: 600, height: 840, scale: 1.5 };
-export const FRAME = { width: DEVICE.width / DEVICE.scale, height: DEVICE.height / DEVICE.scale };
+export type Format = "vertical" | "square";
+export type Layout = {
+  width: number;
+  height: number;
+  boxTop: number;
+  boxHeight: number;
+  device: { left: number; top: number; width: number; height: number; scale: number };
+  titleTop: number;
+  clockTop: number;
+  noticesTop: number;
+  visibleSlots: number;
+  channelsTop: number;
+  closingTop: number;
+};
 
-const css = `
-  html, body { margin: 0; width: ${STAGE.width}px; height: ${STAGE.height}px; overflow: hidden; background: #0a1521; color: #eaeadc; font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+export const LAYOUTS: Record<Format, Layout> = {
+  vertical: {
+    width: 1080,
+    height: 1920,
+    boxTop: 250,
+    boxHeight: 1270,
+    device: { left: 220, top: 250, width: 640, height: 1000, scale: 1.6 },
+    titleTop: 56,
+    clockTop: 170,
+    noticesTop: 330,
+    visibleSlots: 9,
+    channelsTop: 150,
+    closingTop: 180,
+  },
+  square: {
+    width: 1080,
+    height: 1080,
+    boxTop: 0,
+    boxHeight: 1080,
+    device: { left: 240, top: 210, width: 600, height: 840, scale: 1.5 },
+    titleTop: 36,
+    clockTop: 150,
+    noticesTop: 300,
+    visibleSlots: 7,
+    channelsTop: 118,
+    closingTop: 130,
+  },
+};
+
+function stageCss(layout: Layout) {
+  const { device } = layout;
+  const frame = { width: device.width / device.scale, height: device.height / device.scale };
+  return `
+  html, body { margin: 0; width: ${layout.width}px; height: ${layout.height}px; overflow: hidden; background: #0a1521; color: #eaeadc; font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   * { box-sizing: border-box; }
   .light { position: absolute; left: 0; top: 0; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; border-radius: 50%; background: radial-gradient(circle, rgba(143, 193, 238, 0.2), rgba(143, 193, 238, 0.05) 38%, transparent 62%); }
   .grain { position: absolute; inset: 0; opacity: 0.07; mix-blend-mode: soft-light; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-  .square { position: absolute; left: 0; top: ${STAGE.squareTop}px; width: ${STAGE.square}px; height: ${STAGE.square}px; }
+  .square { position: absolute; left: 0; top: ${layout.boxTop}px; width: ${layout.width}px; height: ${layout.boxHeight}px; }
+  .problem, .turn, .flash, .closing, .device-halo, .light, .grain, .arrival, .channels, .stream { pointer-events: none; }
   .lines { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
   .line { position: absolute; left: 50%; width: 980px; margin: 0; transform: translateX(-50%); text-align: center; font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
   .line-hero { top: 50%; translate: 0 -50%; font-size: 96px; line-height: 1.02; }
-  .line-title { top: 36px; font-size: 60px; line-height: 1.1; }
+  .line-title { top: ${layout.titleTop}px; font-size: 60px; line-height: 1.1; }
+  .line-kicker { display: block; margin-bottom: 14px; font-size: 20px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: #8fc1ee; }
   .word { display: inline-block; overflow: hidden; padding: 0.08em 0.04em 0.16em; margin: -0.08em -0.04em -0.16em; vertical-align: top; }
   .word-inner { display: inline-block; }
   .accent { color: #8fc1ee; }
-  .problem, .turn, .flash, .closing, .device-halo, .light, .grain { pointer-events: none; }
   .problem { position: absolute; inset: 0; }
-  .clock { position: absolute; left: 0; right: 0; top: 150px; text-align: center; font-size: 104px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; color: #eaeadc; }
+  .clock { position: absolute; left: 0; right: 0; top: ${layout.clockTop}px; text-align: center; font-size: 104px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; color: #eaeadc; }
   .clock small { display: block; margin-top: 10px; font-size: 20px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #8fc1ee; }
   .clock small[data-tone="green"] { color: #5fd3a0; }
-  .notices { position: absolute; left: 50%; top: 300px; width: 580px; height: 740px; margin-left: -290px; }
+  .notices { position: absolute; left: 50%; top: ${layout.noticesTop}px; width: 580px; height: ${layout.visibleSlots * 94}px; margin-left: -290px; }
   .notice { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 18px; width: 580px; height: 84px; padding: 0 22px; border: 1px solid rgba(143, 193, 238, 0.16); border-radius: 22px; background: rgba(16, 30, 46, 0.94); box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4); }
   .notice-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: rgba(234, 234, 220, 0.06); }
   .notice-icon svg { width: 26px; height: 26px; }
@@ -64,30 +113,49 @@ const css = `
   .notice-state { flex-shrink: 0; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
   .notice-state[data-tone="amber"] { background: rgba(242, 193, 78, 0.14); color: #f2c14e; }
   .notice-state[data-tone="green"] { background: rgba(95, 211, 160, 0.16); color: #5fd3a0; }
+  .notice-state[data-tone="blue"] { background: rgba(143, 193, 238, 0.16); color: #8fc1ee; }
   .turn { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; }
   .turn-logo { position: absolute; width: 250px; height: 300px; color: #eaeadc; filter: drop-shadow(0 0 28px rgba(143, 193, 238, 0.45)); }
   .turn-logo svg { width: 100%; height: 100%; }
   .burst { position: absolute; width: 900px; height: 900px; border-radius: 50%; background: radial-gradient(circle, rgba(143, 193, 238, 0.75), rgba(143, 193, 238, 0.18) 35%, transparent 65%); }
-  .flash { position: absolute; z-index: 6; inset: -${STAGE.squareTop}px 0 -${STAGE.height - STAGE.squareTop - STAGE.square}px; background: #cfe3f6; }
-  .device { position: absolute; left: ${DEVICE.left}px; top: ${DEVICE.top}px; width: ${DEVICE.width}px; height: ${DEVICE.height}px; overflow: hidden; border-radius: 38px; background: #0f1d2c; box-shadow: 0 0 0 1px rgba(143, 193, 238, 0.28), 0 50px 140px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
-  .device iframe { display: block; width: ${FRAME.width}px; height: ${FRAME.height}px; border: 0; transform: scale(${DEVICE.scale}); transform-origin: 0 0; }
-  .device-halo { position: absolute; left: ${DEVICE.left - 60}px; top: ${DEVICE.top + 40}px; width: ${DEVICE.width + 120}px; height: ${DEVICE.height}px; border-radius: 50%; background: radial-gradient(closest-side, rgba(143, 193, 238, 0.18), transparent); filter: blur(50px); }
+  .flash { position: absolute; z-index: 6; inset: -${layout.boxTop}px 0 -${layout.height - layout.boxTop - layout.boxHeight}px; background: #cfe3f6; }
+  .device { position: absolute; left: ${device.left}px; top: ${device.top}px; width: ${device.width}px; height: ${device.height}px; overflow: hidden; border-radius: 38px; background: #0f1d2c; box-shadow: 0 0 0 1px rgba(143, 193, 238, 0.22), 0 50px 140px rgba(0, 0, 0, 0.62); }
+  .device iframe { display: block; width: ${frame.width}px; height: ${frame.height}px; border: 0; transform: scale(${device.scale}); transform-origin: 0 0; }
+  .device-edge { position: absolute; inset: 0; z-index: 3; border-radius: 38px; padding: 2px; background: conic-gradient(from var(--angle, 0deg), rgba(143, 193, 238, 0) 0deg, rgba(143, 193, 238, 0.95) 70deg, rgba(95, 211, 160, 0.7) 110deg, rgba(143, 193, 238, 0) 180deg, rgba(143, 193, 238, 0) 360deg); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; opacity: 0.9; }
+  .focus-ring { position: absolute; z-index: 2; border-radius: 16px; box-shadow: 0 0 0 2px rgba(143, 193, 238, 0.95), 0 0 30px rgba(143, 193, 238, 0.4), 0 0 0 2000px rgba(5, 10, 18, 0.5); opacity: 0; }
+  .device-halo { position: absolute; left: ${device.left - 60}px; top: ${device.top + 40}px; width: ${device.width + 120}px; height: ${device.height}px; border-radius: 50%; background: radial-gradient(closest-side, rgba(143, 193, 238, 0.2), transparent); filter: blur(50px); }
+  .device-halo-green { background: radial-gradient(closest-side, rgba(95, 211, 160, 0.42), transparent); }
+  .arrival { position: absolute; left: ${device.left + 10}px; top: ${device.top + 26}px; z-index: 4; }
+  .arrival .notice { width: ${device.width - 20}px; border-color: rgba(143, 193, 238, 0.4); background: rgba(22, 40, 60, 0.98); box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6); }
+  .channels { position: absolute; left: 0; right: 0; top: ${layout.channelsTop}px; z-index: 5; display: flex; justify-content: center; gap: 18px; }
+  .channel { display: grid; place-items: center; width: 58px; height: 58px; border: 1px solid rgba(143, 193, 238, 0.3); border-radius: 50%; background: rgba(16, 30, 46, 0.95); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45); }
+  .channel svg { width: 29px; height: 29px; }
+  .stream { position: absolute; left: ${device.left + 10}px; top: ${device.top - 10}px; width: ${device.width - 20}px; height: ${device.height + 20}px; overflow: hidden; }
+  .stream .notice { width: ${device.width - 20}px; }
+  .stream::before, .stream::after { content: ""; position: absolute; left: 0; right: 0; z-index: 2; height: 130px; pointer-events: none; }
+  .stream::before { top: 0; background: linear-gradient(#0a1521, rgba(10, 21, 33, 0)); }
+  .stream::after { bottom: 0; background: linear-gradient(rgba(10, 21, 33, 0), #0a1521); }
   .chips { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-  .chip { position: absolute; display: inline-flex; align-items: center; gap: 12px; padding: 14px 24px 14px 18px; border: 1px solid; border-radius: 999px; background: rgba(10, 21, 33, 0.92); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); font-size: 25px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  .chip { position: absolute; display: inline-flex; align-items: center; gap: 12px; padding: 14px 24px 14px 18px; border: 1px solid; border-radius: 999px; background: rgba(10, 21, 33, 0.94); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); font-size: 25px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
   .chip::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: currentColor; box-shadow: 0 0 14px currentColor; }
   .chip[data-tone="green"] { color: #5fd3a0; border-color: rgba(95, 211, 160, 0.5); }
   .chip[data-tone="blue"] { color: #8fc1ee; border-color: rgba(143, 193, 238, 0.5); }
   .chip[data-tone="amber"] { color: #f2c14e; border-color: rgba(242, 193, 78, 0.5); }
-  .closing { position: absolute; inset: 0; z-index: 7; display: grid; justify-items: center; align-content: start; padding-top: 150px; text-align: center; }
-  .closing-logo { width: 190px; height: 228px; color: #eaeadc; filter: drop-shadow(0 0 24px rgba(143, 193, 238, 0.4)); }
+  .closing { position: absolute; inset: 0; z-index: 7; display: grid; justify-items: center; align-content: start; padding-top: ${layout.closingTop}px; text-align: center; }
+  .closing-ring { position: absolute; left: 50%; top: ${layout.closingTop + 120}px; width: 520px; height: 520px; margin-left: -260px; border-radius: 50%; background: radial-gradient(circle, rgba(143, 193, 238, 0.22), rgba(143, 193, 238, 0.04) 45%, transparent 70%); }
+  .closing-logo { position: relative; width: 190px; height: 228px; color: #eaeadc; filter: drop-shadow(0 0 24px rgba(143, 193, 238, 0.4)); }
   .closing-logo svg { width: 100%; height: 100%; }
-  .closing-word { margin-top: 26px; font-size: 74px; font-weight: 400; letter-spacing: 0.08em; line-height: 1; }
+  .closing-word { position: relative; margin-top: 26px; font-size: 74px; font-weight: 400; letter-spacing: 0.08em; line-height: 1; }
   .closing-word b { font-weight: 800; }
-  .closing-line { margin: 54px 0 0; width: 900px; font-size: 66px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; text-wrap: balance; }
-  .closing-cta { margin-top: 58px; padding: 24px 52px; border-radius: 999px; background: #eaeadc; color: #0a1521; font-size: 32px; font-weight: 800; letter-spacing: -0.01em; box-shadow: 0 18px 60px rgba(234, 234, 220, 0.22); }
-  .closing-url { margin-top: 30px; font-size: 32px; font-weight: 600; color: #b8c4d3; letter-spacing: -0.01em; }
-  .closing-note { margin-top: 44px; font-size: 20px; color: #5f6d80; }
+  .closing-line { position: relative; left: auto; margin: 50px 0 0; width: 900px; font-size: 66px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; text-wrap: balance; }
+  .closing-cta { position: relative; margin-top: 52px; padding: 24px 52px; border-radius: 999px; background: #eaeadc; color: #0a1521; font-size: 32px; font-weight: 800; letter-spacing: -0.01em; box-shadow: 0 18px 60px rgba(234, 234, 220, 0.24); }
+  .closing-url { position: relative; margin-top: 28px; font-size: 32px; font-weight: 600; color: #b8c4d3; letter-spacing: -0.01em; }
+  .closing-channels { position: relative; display: flex; gap: 14px; margin-top: 34px; }
+  .closing-channels .channel { width: 54px; height: 54px; }
+  .closing-channels .channel svg { width: 27px; height: 27px; }
+  .closing-note { position: relative; margin-top: 30px; font-size: 20px; color: #5f6d80; }
 `;
+}
 
 const frameCss = `
   .sidebar { display: none !important; }
@@ -97,34 +165,65 @@ const frameCss = `
   .typing i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 `;
 
-export function stageHtml(assets: Assets) {
+export function uniqueIds(markup: string, key: string) {
+  return markup.replace(/id="([^"]+)"/g, `id="$1-${key}"`).replace(/url\(#([^)]+)\)/g, `url(#$1-${key})`);
+}
+
+function device(layer: Layer) {
+  return `<div class="device" data-layer="${layer}"><iframe title="BoxLead ${layer}"></iframe><div class="focus-ring"></div><div class="device-edge"></div></div>`;
+}
+
+export function stageHtml(assets: Assets, layout: Layout) {
+  const channels = (where: string) =>
+    (["whatsapp", "instagram", "messenger", "meli"] as Platform[])
+      .map((platform) => `<span class="channel">${uniqueIds(assets.icons[platform], `${where}-${platform}`)}</span>`)
+      .join("");
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>BoxLead promo</title>
 <link rel="stylesheet" href="/node_modules/@fontsource-variable/inter/index.css">
-<style>${css}</style></head><body>
+<style>${stageCss(layout)}</style></head><body>
 <div class="light"></div><div class="grain"></div>
 <section class="square">
   <div class="problem"><div class="clock"><span class="clock-value">03:00</span><small>Sin responder</small></div><div class="notices"></div></div>
   <div class="turn"><div class="burst"></div><div class="turn-logo">${assets.logo}</div></div>
   <div class="flash"></div>
   <div class="device-halo"></div>
-  <div class="device" data-layer="a"><iframe title="BoxLead a"></iframe></div>
-  <div class="device" data-layer="b"><iframe title="BoxLead b"></iframe></div>
+  <div class="device-halo device-halo-green"></div>
+  ${device("a")}
+  ${device("b")}
+  <div class="arrival"></div>
+  <div class="channels">${channels("row")}</div>
+  <div class="stream"></div>
   <div class="lines"></div>
   <div class="chips"></div>
-  <div class="closing"><div class="closing-logo">${assets.logo}</div><div class="closing-word"><b>BOX</b>LEAD</div><p class="closing-line line"></p><div class="closing-cta">Sumate a la beta</div><div class="closing-url">boxlead.app</div><div class="closing-note">Datos de ejemplo</div></div>
+  <div class="closing"><div class="closing-ring"></div><div class="closing-logo">${assets.logo}</div><div class="closing-word"><b>BOX</b>LEAD</div><p class="closing-line line"></p><div class="closing-cta">Sumate a la beta</div><div class="closing-url">boxlead.app</div><div class="closing-channels">${channels("closing")}</div><div class="closing-note">Datos de ejemplo</div></div>
 </section>
-<script>window.promoAssets = ${JSON.stringify(assets)}; window.promoFrameCss = ${JSON.stringify(frameCss)};</script>
+<script>window.promoAssets = ${JSON.stringify(assets)}; window.promoFrameCss = ${JSON.stringify(frameCss)}; window.promoLayout = ${JSON.stringify(layout)};</script>
 <script>(${stageRuntime.toString()})();</script>
 </body></html>`;
 }
 
 export function stageRuntime() {
-  const { promoAssets: assets, promoFrameCss } = window as unknown as { promoAssets: Assets; promoFrameCss: string };
+  const { promoAssets: assets, promoFrameCss, promoLayout: layout } = window as unknown as {
+    promoAssets: Assets;
+    promoFrameCss: string;
+    promoLayout: Layout;
+  };
+  const DEVICE_SCALE = layout.device.scale;
+  const DEVICE_W = layout.device.width;
+  const DEVICE_H = layout.device.height;
+  const FRAME_W = DEVICE_W / DEVICE_SCALE;
+  const FRAME_H = DEVICE_H / DEVICE_SCALE;
+  let iconCount = 0;
+  const icon = (platform: Platform) => {
+    iconCount += 1;
+    return assets.icons[platform].replace(/id="([^"]+)"/g, `id="$1-r${iconCount}"`).replace(/url\(#([^)]+)\)/g, `url(#$1-r${iconCount})`);
+  };
   const clamp = (value: number) => Math.min(1, Math.max(0, value));
   const prog = (t: number, start: number, duration: number) => clamp((t - start) / duration);
   const outCubic = (p: number) => 1 - (1 - p) ** 3;
   const inOutCubic = (p: number) => (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2);
   const outBack = (p: number) => 1 + 2.70158 * (p - 1) ** 3 + 1.70158 * (p - 1) ** 2;
+  const bump = (t: number, at: number, width: number) => Math.exp(-(((t - at) / width) ** 2));
   const seeded = (index: number, salt: number) => {
     const x = Math.sin(index * 127.1 + salt * 311.7) * 43758.5453;
     return x - Math.floor(x);
@@ -134,16 +233,19 @@ export function stageRuntime() {
     for (const [key, value] of Object.entries(values)) element.style.setProperty(key, value);
   };
 
+  type Framing = { s: number; tx: number; ty: number };
   let script: Script;
   const lineElements: HTMLElement[] = [];
   const chipElements: HTMLElement[] = [];
   const noticeElements: HTMLElement[] = [];
-  const revealed = new Set<string>();
+  const streamElements: HTMLElement[] = [];
   const devices = {
     a: query<HTMLElement>('.device[data-layer="a"]'),
     b: query<HTMLElement>('.device[data-layer="b"]'),
   };
   const frames = { a: devices.a.querySelector("iframe")!, b: devices.b.querySelector("iframe")! };
+  const framing: Record<Layer, Framing> = { a: { s: DEVICE_SCALE, tx: 0, ty: 0 }, b: { s: DEVICE_SCALE, tx: 0, ty: 0 } };
+  const framingCache = new Map<number, Framing>();
   const docOf = (layer: Layer) => frames[layer].contentDocument;
 
   for (const frame of Object.values(frames)) {
@@ -156,8 +258,23 @@ export function stageRuntime() {
     });
   }
 
-  function words(target: HTMLElement, text: string) {
+  function noticeMarkup(notice: Notice, time: string, state: string, tone: Tone) {
+    return `<span class="notice-icon">${icon(notice.platform)}</span><span class="notice-body"><span class="notice-top"><span class="notice-name"></span><span class="notice-time">${time}</span></span><span class="notice-text"></span></span><span class="notice-state" data-tone="${tone}">${state}</span>`;
+  }
+
+  function fillNotice(element: HTMLElement, notice: Notice) {
+    element.querySelector<HTMLElement>(".notice-name")!.textContent = notice.name;
+    element.querySelector<HTMLElement>(".notice-text")!.textContent = notice.text;
+  }
+
+  function words(target: HTMLElement, text: string, kicker?: string) {
     target.innerHTML = "";
+    if (kicker) {
+      const label = document.createElement("span");
+      label.className = "line-kicker";
+      label.textContent = kicker;
+      target.append(label);
+    }
     for (const token of text.split(" ")) {
       const accent = token.startsWith("*") && token.endsWith("*");
       const word = document.createElement("span");
@@ -180,8 +297,13 @@ export function stageRuntime() {
       const p = outCubic(prog(t, start + index * stagger, duration));
       inner.style.transform = `translateY(${(1 - p) * 112}%)`;
     });
+    const kicker = target.querySelector<HTMLElement>(".line-kicker");
+    if (kicker) {
+      const p = outCubic(prog(t, start, 0.4));
+      style(kicker, { opacity: String(p), transform: `translateY(${(1 - p) * 10}px)`, "letter-spacing": `${0.24 + (1 - p) * 0.2}em` });
+    }
     const leave = outCubic(prog(t, end - 0.3, 0.3));
-    style(target, { opacity: String(1 - leave), "--leave": `${-leave * 22}px` });
+    target.style.opacity = String(1 - leave);
     target.style.transform = `translateX(-50%) translateY(${-leave * 22}px)`;
   }
 
@@ -225,7 +347,7 @@ export function stageRuntime() {
       const mess = 1 - tidy;
       const rotate = (seeded(index, 1) - 0.5) * 7 * mess;
       const shift = (seeded(index, 2) - 0.5) * 70 * mess;
-      const fade = slot >= 6 ? 1 - Math.min(1, slot - 5) : 1;
+      const fade = slot >= layout.visibleSlots - 1 ? 1 - Math.min(1, slot - layout.visibleSlots + 2) : 1;
       style(element, {
         transform: `translate(${shift}px, ${y}px) rotate(${rotate}deg) scale(${0.9 + 0.1 * enter})`,
         opacity: String(enter * (0.45 + 0.55 * fade)),
@@ -238,12 +360,16 @@ export function stageRuntime() {
     });
   }
 
-  let logoLengths: number[] = [];
+  const logoLengths = new Map<HTMLElement, number[]>();
   function drawLogo(root: HTMLElement, p: number) {
     const paths = root.querySelectorAll<SVGPathElement>("path");
-    if (logoLengths.length !== paths.length) logoLengths = Array.from(paths, (path) => path.getTotalLength());
+    let lengths = logoLengths.get(root);
+    if (!lengths) {
+      lengths = Array.from(paths, (path) => path.getTotalLength());
+      logoLengths.set(root, lengths);
+    }
     paths.forEach((path, index) => {
-      const length = logoLengths[index];
+      const length = lengths[index];
       path.style.strokeDasharray = String(length);
       path.style.strokeDashoffset = String(length * (1 - p));
     });
@@ -276,22 +402,81 @@ export function stageRuntime() {
     return "none";
   }
 
+  function focusRect(layer: Layer, selector: string) {
+    const target = docOf(layer)?.querySelector(selector);
+    return target ? target.getBoundingClientRect() : null;
+  }
+
+  function framingFor(index: number, shot: Shot): Framing {
+    const cached = framingCache.get(index);
+    if (cached) return cached;
+    const base = { s: DEVICE_SCALE, tx: 0, ty: 0 };
+    const focus = shot.focus;
+    if (!focus || focus.align === "keep") return base;
+    const rect = focusRect(shot.layer, focus.selector);
+    if (!rect) return base;
+    const s = focus.zoom ?? DEVICE_SCALE;
+    const centerX = DEVICE_W / 2 - s * (rect.left + rect.width / 2);
+    const centerY = focus.align === "top" ? 120 - s * rect.top : DEVICE_H / 2 - s * (rect.top + rect.height / 2);
+    const result = {
+      s,
+      tx: Math.min(0, Math.max(DEVICE_W - s * FRAME_W, centerX)),
+      ty: Math.min(0, Math.max(DEVICE_H - s * FRAME_H, centerY)),
+    };
+    framingCache.set(index, result);
+    return result;
+  }
+
+  function applyFraming(layer: Layer, next: Framing) {
+    framing[layer] = next;
+    frames[layer].style.transform = `translate(${next.tx}px, ${next.ty}px) scale(${next.s})`;
+  }
+
+  function renderRing(layer: Layer, shot: Shot | null, t: number) {
+    const ring = devices[layer].querySelector<HTMLElement>(".focus-ring")!;
+    const focus = shot?.focus;
+    if (!shot || !focus || !focus.ring) {
+      ring.style.opacity = "0";
+      return;
+    }
+    const rect = focusRect(layer, focus.selector);
+    if (!rect) {
+      ring.style.opacity = "0";
+      return;
+    }
+    const { s, tx, ty } = framing[layer];
+    const pad = 10;
+    const show = outCubic(prog(t, shot.at + 0.4, 0.35));
+    const hide = shot.until - t < 0.25 ? 0 : 1;
+    style(ring, {
+      left: `${tx + s * rect.left - pad}px`,
+      top: `${ty + s * rect.top - pad}px`,
+      width: `${s * rect.width + pad * 2}px`,
+      height: `${s * rect.height + pad * 2}px`,
+      opacity: String(show * hide),
+    });
+  }
+
   function renderDevices(t: number) {
     const index = script.shots.findIndex((shot, position) => t >= shot.at && (position === script.shots.length - 1 || t < script.shots[position + 1].at));
     const current = index >= 0 ? script.shots[index] : null;
     const previous = index > 0 ? script.shots[index - 1] : null;
-    const halo = query<HTMLElement>(".device-halo");
+    query<HTMLElement>(".square").style.setProperty("--angle", `${(t * 50) % 360}deg`);
     for (const layer of ["a", "b"] as Layer[]) {
       const device = devices[layer];
       let opacity = 0;
       let clip = "none";
       let shift = 0;
+      let shot: Shot | null = null;
       if (current && layer === current.layer && t < current.until) {
+        shot = current;
+        applyFraming(layer, framingFor(index, current));
         const p = current.enter === "cut" ? 1 : outCubic(prog(t, current.at, 0.5));
         opacity = current.enter === "slide" ? p : 1;
         clip = clipFor(current.enter, p);
         shift = current.enter === "slide" ? (1 - p) * 50 : 0;
       } else if (current && previous && layer === previous.layer && layer !== current.layer && t < current.at + 0.5) {
+        shot = previous;
         opacity = 1;
       }
       if (current && t >= current.until && layer === current.layer) {
@@ -300,9 +485,20 @@ export function stageRuntime() {
         shift = leave * 60;
       }
       style(device, { opacity: String(opacity), "clip-path": clip, transform: `translateY(${shift}px)`, "z-index": current && layer === current.layer ? "2" : "1" });
+      renderRing(layer, shot, t);
     }
     const active = current ? (t < current.until ? 1 : 1 - outCubic(prog(t, current.until, 0.45))) : 0;
-    halo.style.opacity = String(active * (current ? outCubic(prog(t, current.at, 0.6)) : 0));
+    const base = active * (current ? outCubic(prog(t, current.at, 0.6)) : 0);
+    let blue = 0;
+    let green = 0;
+    for (const pulse of script.pulses) {
+      const amount = bump(t, pulse.at, pulse.tone === "green" ? 0.35 : 0.2);
+      if (pulse.tone === "green") green += amount;
+      else blue += amount;
+    }
+    for (const shot of script.shots) blue += 0.6 * bump(t, shot.at + 0.1, 0.18);
+    query<HTMLElement>(".device-halo:not(.device-halo-green)").style.opacity = String(Math.min(1, base * (1 + blue)));
+    query<HTMLElement>(".device-halo-green").style.opacity = String(Math.min(1, green));
   }
 
   function renderEffects(t: number) {
@@ -312,11 +508,9 @@ export function stageRuntime() {
       if (effect.kind === "reveal") {
         const target = doc.querySelector<HTMLElement>(effect.selector);
         if (!target) continue;
-        const key = `${effect.layer}:${effect.selector}`;
-        const p = outCubic(prog(t, effect.at, 0.4));
+        const p = outBack(prog(t, effect.at, 0.45));
         target.style.display = t >= effect.at ? "" : "none";
-        style(target, { opacity: String(p), transform: `translateY(${(1 - p) * 14}px)` });
-        if (t >= effect.at) revealed.add(key);
+        style(target, { opacity: String(Math.min(1, p)), transform: `translateY(${(1 - p) * 16}px) scale(${0.92 + 0.08 * p})`, "transform-origin": "0 0" });
       }
       if (effect.kind === "typing") {
         const list = doc.querySelector<HTMLElement>(".bubble-list:last-of-type");
@@ -341,28 +535,20 @@ export function stageRuntime() {
         const scroller = doc.querySelector<HTMLElement>(".conversation-scroll");
         if (scroller) scroller.scrollTop = scroller.scrollHeight;
       }
-      if (effect.kind === "scroll") {
-        const scroller = doc.querySelector<HTMLElement>(effect.selector);
-        if (!scroller) continue;
-        const p = inOutCubic(prog(t, effect.at, effect.until - effect.at));
-        if (t >= effect.at - 0.5) scroller.scrollTop = effect.from + (effect.to - effect.from) * p;
-      }
     }
   }
 
   function anchorPoint(anchor: Anchor) {
-    const doc = docOf(anchor.layer);
-    const target = doc?.querySelector(anchor.selector);
-    if (!target) return null;
-    const rect = target.getBoundingClientRect();
+    const rect = focusRect(anchor.layer, anchor.selector);
+    if (!rect) return null;
     const device = devices[anchor.layer].getBoundingClientRect();
     const square = query<HTMLElement>(".square").getBoundingClientRect();
+    const { s, tx, ty } = framing[anchor.layer];
     return {
-      x: device.left - square.left + rect.right * DEVICE_SCALE + anchor.dx,
-      y: device.top - square.top + rect.top * DEVICE_SCALE + anchor.dy,
+      x: device.left - square.left + tx + s * rect.right + anchor.dx,
+      y: device.top - square.top + ty + s * rect.top + anchor.dy,
     };
   }
-  const DEVICE_SCALE = 1.5;
 
   function renderChips(t: number) {
     script.chips.forEach((chip, index) => {
@@ -377,12 +563,58 @@ export function stageRuntime() {
       }
       const enter = outBack(prog(t, chip.at, 0.45));
       const leave = outCubic(prog(t, chip.until - 0.25, 0.25));
+      const x = Math.min(Math.max(point.x, 300), 1040);
       style(element, {
-        left: `${point.x}px`,
+        left: `${x}px`,
         top: `${point.y}px`,
         transform: `translate(-100%, -50%) scale(${0.6 + 0.4 * enter}) translateY(${leave * 10}px)`,
         opacity: String(Math.min(enter, 1) * (1 - leave)),
       });
+    });
+  }
+
+  function renderArrival(t: number) {
+    const { at, until } = script.arrival;
+    const arrival = query<HTMLElement>(".arrival");
+    const visible = t >= at && t < until;
+    arrival.style.visibility = visible ? "visible" : "hidden";
+    if (!visible) return;
+    const enter = outBack(prog(t, at, 0.55));
+    const leave = outCubic(prog(t, until - 0.35, 0.35));
+    style(arrival, {
+      transform: `translateY(${(1 - enter) * -70 - leave * 40}px) scale(${0.94 + 0.06 * enter})`,
+      opacity: String(Math.min(1, enter) * (1 - leave)),
+    });
+  }
+
+  function renderChannels(t: number) {
+    const { at, until } = script.channels;
+    const row = query<HTMLElement>(".channels");
+    const visible = t >= at && t < until;
+    row.style.visibility = visible ? "visible" : "hidden";
+    if (!visible) return;
+    const leave = outCubic(prog(t, until - 0.3, 0.3));
+    row.querySelectorAll<HTMLElement>(".channel").forEach((channel, index) => {
+      const p = outBack(prog(t, at + index * 0.1, 0.5));
+      style(channel, { transform: `translateY(${(1 - p) * 30}px) scale(${0.6 + 0.4 * p})`, opacity: String(Math.min(1, p) * (1 - leave)) });
+    });
+  }
+
+  function renderStream(t: number) {
+    const { at, until } = script.stream;
+    const stream = query<HTMLElement>(".stream");
+    const visible = t >= at && t < until;
+    stream.style.display = visible ? "" : "none";
+    if (!visible) return;
+    const local = t - at;
+    const offset = 260 * local + 42 * local ** 3;
+    const leave = outCubic(prog(t, until - 0.4, 0.4));
+    stream.style.opacity = String(1 - leave);
+    streamElements.forEach((element, index) => {
+      const y = DEVICE_H + 40 + index * 96 - offset;
+      const shown = y > -120 && y < DEVICE_H + 140;
+      element.style.visibility = shown ? "visible" : "hidden";
+      if (shown) element.style.transform = `translateY(${y}px)`;
     });
   }
 
@@ -393,20 +625,29 @@ export function stageRuntime() {
     closing.style.visibility = visible ? "visible" : "hidden";
     if (!visible) return;
     drawLogo(closing.querySelector<HTMLElement>(".closing-logo")!, inOutCubic(prog(t, at + 0.1, 0.9)));
-    const rise = (selector: string, start: number) => {
+    const ringP = outCubic(prog(t, at, 1.4));
+    style(query<HTMLElement>(".closing-ring"), { opacity: String(ringP * (0.8 + 0.2 * Math.sin((t - at) * 1.6))), transform: `scale(${0.6 + 0.4 * ringP})` });
+    const rise = (selector: string, start: number, extra: Record<string, string> = {}) => {
       const p = outCubic(prog(t, start, 0.6));
-      style(query<HTMLElement>(selector), { opacity: String(p), transform: `translateY(${(1 - p) * 26}px)` });
+      style(query<HTMLElement>(selector), { opacity: String(p), transform: `translateY(${(1 - p) * 26}px)`, ...extra });
+      return p;
     };
-    rise(".closing-word", at + 0.55);
+    const wordP = rise(".closing-word", at + 0.55);
+    query<HTMLElement>(".closing-word").style.letterSpacing = `${0.08 + (1 - wordP) * 0.3}em`;
     const line = closing.querySelector<HTMLElement>(".closing-line")!;
-    line.style.position = "static";
     animateWords(line, t, at + 1.0, Number.POSITIVE_INFINITY, false);
     line.style.transform = "none";
     const cta = query<HTMLElement>(".closing-cta");
     const pop = outBack(prog(t, at + 2.0, 0.55));
-    style(cta, { opacity: String(Math.min(1, pop)), transform: `scale(${0.7 + 0.3 * pop})` });
+    const breathe = t > at + 2.6 ? 1 + 0.02 * Math.sin((t - at) * 2.4) : 1;
+    style(cta, { opacity: String(Math.min(1, pop)), transform: `scale(${(0.7 + 0.3 * pop) * breathe})`, "box-shadow": `0 18px 60px rgba(234, 234, 220, ${0.18 + 0.1 * Math.sin((t - at) * 2.4)})` });
     rise(".closing-url", at + 2.35);
-    rise(".closing-note", at + 2.7);
+    query<HTMLElement>(".closing-channels").style.opacity = "1";
+    closing.querySelectorAll<HTMLElement>(".closing-channels .channel").forEach((channel, index) => {
+      const p = outBack(prog(t, at + 2.6 + index * 0.08, 0.5));
+      style(channel, { opacity: String(Math.min(1, p)), transform: `translateY(${(1 - p) * 20}px) scale(${0.6 + 0.4 * p})` });
+    });
+    rise(".closing-note", at + 3.0);
   }
 
   function renderLight(t: number) {
@@ -419,13 +660,14 @@ export function stageRuntime() {
   window.promo = {
     load(next) {
       script = next;
+      framingCache.clear();
       const lines = query<HTMLElement>(".lines");
       lines.innerHTML = "";
       lineElements.length = 0;
       for (const line of script.lines) {
         const element = document.createElement("p");
         element.className = `line line-${line.kind}`;
-        words(element, line.text);
+        words(element, line.text, line.kicker);
         lines.append(element);
         lineElements.push(element);
       }
@@ -446,12 +688,25 @@ export function stageRuntime() {
       for (const notice of script.notices) {
         const element = document.createElement("div");
         element.className = "notice";
-        element.innerHTML = `<span class="notice-icon">${assets.icons[notice.platform]}</span><span class="notice-body"><span class="notice-top"><span></span><span class="notice-time"></span></span><span class="notice-text"></span></span><span class="notice-state" data-tone="amber">Sin responder</span>`;
-        element.querySelector<HTMLElement>(".notice-top span")!.textContent = notice.name;
-        element.querySelector<HTMLElement>(".notice-text")!.textContent = notice.text;
+        element.innerHTML = noticeMarkup(notice, "", "Sin responder", "amber");
+        fillNotice(element, notice);
         notices.prepend(element);
         noticeElements.push(element);
       }
+      const arrival = query<HTMLElement>(".arrival");
+      arrival.innerHTML = `<div class="notice">${noticeMarkup(script.arrival.notice, script.arrival.time, "Nuevo", "blue")}</div>`;
+      fillNotice(arrival.querySelector<HTMLElement>(".notice")!, script.arrival.notice);
+      const stream = query<HTMLElement>(".stream");
+      stream.innerHTML = "";
+      streamElements.length = 0;
+      script.stream.items.forEach((item) => {
+        const element = document.createElement("div");
+        element.className = "notice";
+        element.innerHTML = noticeMarkup({ platform: item.platform, name: item.name, text: "" }, "", item.state, item.state === "Lead creado" ? "blue" : "green");
+        fillNotice(element, { platform: item.platform, name: item.name, text: item.state === "Calificado" ? "Listo para comprar" : item.state === "Lead creado" ? "Sumado a tu pipeline" : "Atendido por tu agente" });
+        stream.append(element);
+        streamElements.push(element);
+      });
       words(query<HTMLElement>(".closing-line"), "*Nunca* *más* un mensaje sin responder.");
     },
     render(t) {
@@ -461,6 +716,9 @@ export function stageRuntime() {
       renderTurn(t);
       renderDevices(t);
       renderEffects(t);
+      renderArrival(t);
+      renderChannels(t);
+      renderStream(t);
       renderChips(t);
       renderClosing(t);
     },

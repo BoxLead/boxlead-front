@@ -3,7 +3,20 @@ import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "no
 import { cpus } from "node:os";
 import { join, resolve } from "node:path";
 import { chromium, type BrowserContext, type FrameLocator, type Page } from "playwright";
-import { stageHtml, type Assets, type Chip, type Layer, type Line, type Notice, type Script, type Shot } from "./stage.ts";
+import {
+  LAYOUTS,
+  stageHtml,
+  type Assets,
+  type Format,
+  type Chip,
+  type Layer,
+  type Line,
+  type Notice,
+  type Platform,
+  type Script,
+  type Shot,
+  type StreamItem,
+} from "./stage.ts";
 
 const APP = process.env.DEMO_APP_URL ?? "http://localhost:5173";
 const API = process.env.DEMO_API_URL ?? "http://localhost:8090";
@@ -13,51 +26,56 @@ const FPS = 30;
 const DURATION = 40;
 const TOTAL_FRAMES = FPS * DURATION;
 const MAX_LOAD_PER_CORE = 0.75;
-const POSTER_AT = 12.4;
-const STILLS = [1.1, 5.6, 8.0, 10.4, 12.4, 15.0, 18.2, 20.0, 21.6, 23.1, 24.6, 26.1, 28.2, 31.6, 38.5];
+const POSTER_AT = 12.6;
+const STILLS = [1.1, 5.6, 8.0, 9.9, 12.6, 15.0, 18.2, 20.0, 21.6, 23.1, 24.6, 26.1, 28.2, 31.6, 38.5];
+const STREAM_SIZE = 72;
 const HEADERS = { "X-Requested-With": "boxlead-web" };
 const HERO_PAIRS: Array<[RegExp, RegExp]> = [
   [/otro color/i, /negro y en azul/i],
   [/equipar un local/i, /precio por cantidad/i],
   [/precio tiene en efectivo/i, /transferencia/i],
 ];
+const PLATFORMS: Record<string, Platform> = { WHATSAPP: "whatsapp", INSTAGRAM: "instagram", MESSENGER: "messenger", MELI: "meli" };
+const STREAM_STATES = ["Respondido", "Calificado", "Respondido", "Lead creado"];
 const PREVIEW = process.env.PROMO_TIMES?.split(",").map(Number) ?? null;
+const PREVIEW_FORMAT = (process.env.PROMO_FORMAT as Format | undefined) ?? "vertical";
 
 const lines: Line[] = [
   { at: 0.15, until: 1.95, text: "Tu cliente escribe a las *3* *AM.*", kind: "hero" },
   { at: 2.15, until: 4.5, text: "Vos, durmiendo.", kind: "title" },
   { at: 4.7, until: 6.95, text: "Ya le compró a otro.", kind: "title" },
-  { at: 9.45, until: 12.95, text: "Tu agente ya le respondió.", kind: "title" },
-  { at: 13.1, until: 16.85, text: "En automático, las 24 horas.", kind: "title" },
-  { at: 17.15, until: 18.9, text: "Todos tus canales, una bandeja.", kind: "title", fast: true },
-  { at: 19.15, until: 20.4, text: "Responde y califica a cada cliente.", kind: "title", fast: true },
-  { at: 20.65, until: 21.9, text: "Te deja el borrador listo.", kind: "title", fast: true },
-  { at: 22.15, until: 23.4, text: "¿Hace falta una persona? Te avisa.", kind: "title", fast: true },
-  { at: 23.65, until: 24.9, text: "Responde comentarios de Instagram.", kind: "title", fast: true },
-  { at: 25.15, until: 26.4, text: "Tu agente, con tus reglas.", kind: "title", fast: true },
-  { at: 26.65, until: 28.9, text: "Sabé qué canal vende más.", kind: "title", fast: true },
+  { at: 9.4, until: 11.3, text: "Mismo cliente, *3* *AM.*", kind: "title" },
+  { at: 11.6, until: 13.55, text: "Tu agente ya le respondió.", kind: "title" },
+  { at: 13.8, until: 16.85, text: "En automático, las 24 horas.", kind: "title" },
+  { at: 17.15, until: 18.9, text: "Todos tus canales, una bandeja.", kind: "title", fast: true, kicker: "Bandeja" },
+  { at: 19.15, until: 20.4, text: "Responde y califica a cada cliente.", kind: "title", fast: true, kicker: "Leads" },
+  { at: 20.65, until: 21.9, text: "Te deja el borrador listo.", kind: "title", fast: true, kicker: "Borradores" },
+  { at: 22.15, until: 23.4, text: "¿Hace falta una persona? Te avisa.", kind: "title", fast: true, kicker: "Derivación" },
+  { at: 23.65, until: 24.9, text: "Responde comentarios de Instagram.", kind: "title", fast: true, kicker: "Instagram" },
+  { at: 25.15, until: 26.4, text: "Tu agente, con tus reglas.", kind: "title", fast: true, kicker: "Agentes" },
+  { at: 26.65, until: 28.9, text: "Sabé qué canal vende más.", kind: "title", fast: true, kicker: "Métricas" },
   { at: 29.4, until: 33.75, text: "Más ventas con el *mismo* *equipo.*", kind: "title" },
 ];
 
 const shots: Shot[] = [
-  { at: 9, until: 17, layer: "a", enter: "wipe-up" },
-  { at: 17, until: 19, layer: "b", enter: "wipe-right" },
-  { at: 19, until: 20.5, layer: "a", enter: "wipe-up" },
-  { at: 20.5, until: 22, layer: "b", enter: "wipe-left" },
-  { at: 22, until: 23.5, layer: "a", enter: "wipe-up" },
-  { at: 23.5, until: 25, layer: "b", enter: "wipe-right" },
-  { at: 25, until: 26.5, layer: "a", enter: "wipe-up" },
-  { at: 26.5, until: 29, layer: "b", enter: "wipe-left" },
-  { at: 29, until: 34, layer: "a", enter: "slide" },
+  { at: 9, until: 17, layer: "a", enter: "wipe-up", focus: { selector: ".chat-thread", zoom: 1.6, align: "top" } },
+  { at: 17, until: 19, layer: "b", enter: "wipe-right", focus: { selector: ".conversation-stages", align: "keep", ring: true } },
+  { at: 19, until: 20.5, layer: "a", enter: "wipe-up", focus: { selector: ".leads-row", zoom: 1.8, ring: true } },
+  { at: 20.5, until: 22, layer: "b", enter: "wipe-left", focus: { selector: ".draft-banner", zoom: 1.75, ring: true } },
+  { at: 22, until: 23.5, layer: "a", enter: "wipe-up", focus: { selector: ".banner", zoom: 1.8, ring: true } },
+  { at: 23.5, until: 25, layer: "b", enter: "wipe-right", focus: { selector: ".comment-event-outbound", zoom: 1.65, ring: true } },
+  { at: 25, until: 26.5, layer: "a", enter: "wipe-up", focus: { selector: 'dialog textarea', zoom: 1.6, ring: true } },
+  { at: 26.5, until: 29, layer: "b", enter: "wipe-left", focus: { selector: ".breakdown-table", ring: true } },
 ];
 
 const chips: Chip[] = [
-  { at: 11.55, until: 16.75, text: "Respondido solo", tone: "green", anchor: { layer: "a", selector: "[data-promo-reply]", dx: -4, dy: -24 } },
-  { at: 29.5, until: 33.8, text: "Calificado", tone: "green", x: 310, y: 330 },
-  { at: 30.3, until: 33.8, text: "Lead creado", tone: "blue", x: 1010, y: 520 },
-  { at: 31.1, until: 33.8, text: "Respondido", tone: "green", x: 340, y: 700 },
-  { at: 31.9, until: 33.8, text: "Calificado", tone: "green", x: 1020, y: 880 },
-  { at: 32.7, until: 33.8, text: "Lead creado", tone: "blue", x: 360, y: 1000 },
+  { at: 11.9, until: 16.75, text: "Respondido solo", tone: "green", anchor: { layer: "a", selector: "[data-promo-reply]", dx: -4, dy: -26 } },
+  { at: 19.6, until: 20.35, text: "Calificado", tone: "green", anchor: { layer: "a", selector: ".leads-row", dx: -20, dy: -14 } },
+  { at: 21.1, until: 21.85, text: "Borrador listo", tone: "blue", anchor: { layer: "b", selector: ".draft-banner", dx: -16, dy: -16 } },
+  { at: 22.6, until: 23.35, text: "Pidió una persona", tone: "amber", anchor: { layer: "a", selector: ".banner", dx: -16, dy: -16 } },
+  { at: 24.1, until: 24.85, text: "Respondido en público", tone: "green", anchor: { layer: "b", selector: ".comment-event-outbound", dx: -16, dy: -16 } },
+  { at: 25.6, until: 26.35, text: "Tus reglas", tone: "blue", anchor: { layer: "a", selector: 'dialog textarea', dx: -16, dy: -16 } },
+  { at: 27.1, until: 28.85, text: "Por canal", tone: "blue", anchor: { layer: "b", selector: ".breakdown-table", dx: -16, dy: -16 } },
 ];
 
 const notices: Notice[] = [
@@ -71,24 +89,31 @@ const notices: Notice[] = [
   { platform: "whatsapp", name: "Romina G.", text: "Hola, ¿están?" },
 ];
 
-const script: Script = {
-  lines,
-  shots,
-  chips,
-  notices,
-  effects: [
-    { kind: "pin-bottom", layer: "a", at: 8.5, until: 17 },
-    { kind: "typing", layer: "a", at: 9.6, until: 11.0 },
-    { kind: "reveal", layer: "a", selector: "[data-promo-reply]", at: 11.0 },
-    { kind: "scroll", layer: "a", selector: ".layout-content", at: 29.2, until: 34, from: 420, to: 6400 },
-  ],
-  problem: { at: 2, until: 9, tidyAt: 8.35, clockFrom: 180, clockTo: 460, clockUntil: 4.6 },
-  turn: { at: 7, until: 9 },
-  closing: { at: 34 },
-};
+function buildScript(hero: Hero, stream: StreamItem[]): Script {
+  return {
+    lines,
+    shots,
+    chips,
+    notices,
+    effects: [
+      { kind: "pin-bottom", layer: "a", at: 8.5, until: 17 },
+      { kind: "typing", layer: "a", at: 10.3, until: 11.4 },
+      { kind: "reveal", layer: "a", selector: "[data-promo-reply]", at: 11.4 },
+    ],
+    problem: { at: 2, until: 9, tidyAt: 8.35, clockFrom: 180, clockTo: 460, clockUntil: 4.6 },
+    turn: { at: 7, until: 9 },
+    arrival: { at: 9.25, until: 10.5, notice: { platform: "whatsapp", name: hero.name, text: hero.question }, time: "03:01" },
+    channels: { at: 14.2, until: 16.85 },
+    pulses: [{ at: 11.45, tone: "green" }],
+    stream: { at: 29, until: 34, items: stream },
+    closing: { at: 34 },
+  };
+}
 
 type Conversation = { id: string; leadName: string | null; platform: string };
 type Message = { direction: "INBOUND" | "OUTBOUND"; content: string | null; agentName: string | null };
+type Lead = { name: string | null; platform: string };
+type Hero = { id: string; name: string; question: string };
 type Step = { at: number; run: () => Promise<void> };
 
 function checkLoad() {
@@ -146,7 +171,7 @@ async function conversations(context: BrowserContext) {
     if (!found) throw new Error(`promo: no conversation with ${name}`);
     return found.id;
   };
-  let hero: string | null = null;
+  let hero: Hero | null = null;
   for (const chat of list.filter((item) => item.platform === "WHATSAPP").slice(0, 150)) {
     const messages = await api<Message[]>(context, `/conversations/${chat.id}/messages`);
     const [question, reply] = messages;
@@ -157,12 +182,20 @@ async function conversations(context: BrowserContext) {
       reply.agentName &&
       HERO_PAIRS.some(([asked, answered]) => asked.test(question.content ?? "") && answered.test(reply.content ?? ""));
     if (fits) {
-      hero = chat.id;
+      hero = { id: chat.id, name: chat.leadName ?? "Cliente", question: question.content ?? "" };
       break;
     }
   }
   if (!hero) throw new Error("promo: no WhatsApp conversation fits the hero scene");
   return { hero, valentina: byName("Valentina Ruiz"), martu: byName("martu.home"), flor: byName("flor.deco") };
+}
+
+async function streamItems(context: BrowserContext): Promise<StreamItem[]> {
+  const leads = await api<Lead[]>(context, "/leads");
+  return leads
+    .filter((lead) => lead.name && PLATFORMS[lead.platform])
+    .slice(0, STREAM_SIZE)
+    .map((lead, index) => ({ platform: PLATFORMS[lead.platform], name: lead.name as string, state: STREAM_STATES[index % STREAM_STATES.length] }));
 }
 
 class Stage {
@@ -194,15 +227,11 @@ class Stage {
     await this.page.waitForTimeout(250);
   }
 
-  async scrollTo(layer: Layer, selector: string, offset = 0) {
-    await this.frame(layer)
-      .locator(selector)
-      .first()
-      .evaluate((element, shift) => {
-        const scroller = element.closest(".layout-content") as HTMLElement;
-        const top = element.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-        scroller.scrollTop += top - shift;
-      }, offset);
+  async center(layer: Layer, selector: string) {
+    const target = this.frame(layer).locator(selector).first();
+    await target.waitFor();
+    await target.evaluate((element) => element.scrollIntoView({ block: "center", inline: "nearest" }));
+    await this.page.waitForTimeout(150);
   }
 }
 
@@ -212,7 +241,7 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
     {
       at: 0,
       run: async () => {
-        await stage.conversation("a", ids.hero);
+        await stage.conversation("a", ids.hero.id);
         await stage
           .frame("a")
           .locator(".bubble-outbound")
@@ -238,11 +267,23 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
         const frame = stage.frame("a");
         await frame.getByRole("button", { name: /Calificado/ }).dispatchEvent("click");
         await frame.locator(".leads-row").first().waitFor();
-        await stage.scrollTo("a", ".leads-table-wrap", 24);
+        await stage.center("a", ".leads-row");
       },
     },
-    { at: 19.2, run: () => stage.conversation("b", ids.valentina) },
-    { at: 20.7, run: () => stage.conversation("a", ids.martu) },
+    {
+      at: 19.2,
+      run: async () => {
+        await stage.conversation("b", ids.valentina);
+        await stage.center("b", ".draft-banner");
+      },
+    },
+    {
+      at: 20.7,
+      run: async () => {
+        await stage.conversation("a", ids.martu);
+        await stage.center("a", ".banner");
+      },
+    },
     {
       at: 22.2,
       run: async () => {
@@ -253,7 +294,7 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
         await frame.getByLabel("Responder en público a flor.deco").fill("¡Hola Flor! Sí, lo tenemos en azul. Te escribimos por privado.");
         await comment.getByRole("button", { name: "Enviar" }).dispatchEvent("click");
         await comment.getByText("Respondido en público").waitFor();
-        await page.waitForTimeout(300);
+        await stage.center("b", ".comment-event-outbound");
       },
     },
     {
@@ -270,43 +311,36 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
         await rule.getByLabel("Canal").first().selectOption({ label: "WhatsApp" });
         await rule.getByLabel("Categoría").first().selectOption({ label: "Mayorista" });
         await rule.getByLabel("Modo").first().selectOption({ label: "Automático" });
-        await page.waitForTimeout(200);
+        await stage.center("a", 'dialog textarea');
       },
     },
     {
       at: 25.2,
       run: async () => {
         await stage.open("b", "/app/metrics");
-        const frame = stage.frame("b");
-        await frame.locator(".breakdown-table").waitFor();
+        await stage.frame("b").locator(".breakdown-table").waitFor();
         await page.waitForTimeout(900);
-        await stage.scrollTo("b", ".breakdown-table", 150);
-      },
-    },
-    {
-      at: 26.7,
-      run: async () => {
-        await stage.open("a", "/app/leads");
-        await stage.frame("a").locator(".leads-row").nth(20).waitFor();
+        await stage.center("b", ".breakdown-table");
       },
     },
   ];
 }
 
-async function record(frames: string) {
+async function record(format: Format, frames: string) {
+  const layout = LAYOUTS[format];
   checkLoad();
   await reset();
-  rmSync(OUT, { recursive: true, force: true });
   mkdirSync(frames, { recursive: true });
 
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1, locale: "es-AR" });
+  const context = await browser.newContext({ viewport: { width: layout.width, height: layout.height }, deviceScaleFactor: 1, locale: "es-AR" });
   const page = await context.newPage();
   await login(page);
   const assets = await collectAssets(page);
   const ids = await conversations(context);
+  const script = buildScript(ids.hero, await streamItems(context));
 
-  await page.route(`${APP}/__promo`, (route) => route.fulfill({ contentType: "text/html", body: stageHtml(assets) }));
+  await page.route(`${APP}/__promo`, (route) => route.fulfill({ contentType: "text/html", body: stageHtml(assets, layout) }));
   await page.goto(`${APP}/__promo`);
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate((data) => window.promo.load(data), script);
@@ -323,19 +357,18 @@ async function record(frames: string) {
     await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
     const shot = await client.send("Page.captureScreenshot", { format: "png" });
     writeFileSync(join(frames, frameName(index)), Buffer.from(shot.data, "base64"));
-    if (index % (FPS * 5) === 0) console.log(`promo: ${t.toFixed(0)} s rendered, ${((Date.now() - started) / 1000).toFixed(0)} s elapsed`);
+    if (index % (FPS * 5) === 0) console.log(`promo: ${format} ${t.toFixed(0)} s rendered, ${((Date.now() - started) / 1000).toFixed(0)} s elapsed`);
   }
   await browser.close();
 }
 
 const frameName = (index: number) => `frame-${String(index).padStart(6, "0")}.png`;
 
-function encode(frames: string, file: string, filter?: string) {
+function encode(frames: string, file: string) {
   execFileSync(
     FFMPEG,
     [
-      "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(frames, "frame-%06d.png"),
-      ...(filter ? ["-vf", filter] : []), "-frames:v", String(TOTAL_FRAMES),
+      "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(frames, "frame-%06d.png"), "-frames:v", String(TOTAL_FRAMES),
       "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-profile:v", "high", "-pix_fmt", "yuv420p",
       "-movflags", "+faststart", file,
     ],
@@ -343,9 +376,10 @@ function encode(frames: string, file: string, filter?: string) {
   );
 }
 
-function deliver(frames: string) {
+function deliver() {
+  const frames = framesDir("vertical");
   encode(frames, join(OUT, "boxlead-promo-9x16.mp4"));
-  encode(frames, join(OUT, "boxlead-promo-1x1.mp4"), "crop=1080:1080:0:420");
+  encode(framesDir("square"), join(OUT, "boxlead-promo-1x1.mp4"));
   copyFileSync(join(frames, frameName(Math.round(POSTER_AT * FPS))), join(OUT, "boxlead-promo-poster.png"));
   const stills = join(OUT, "stills");
   mkdirSync(stills, { recursive: true });
@@ -355,6 +389,10 @@ function deliver(frames: string) {
   console.log(`promo: ${TOTAL_FRAMES} frames, ${DURATION} s, videos and poster at ${OUT}`);
 }
 
-const frames = join(OUT, "frames");
-if (!process.argv.includes("--encode-only")) await record(frames);
-if (!PREVIEW) deliver(frames);
+const framesDir = (format: Format) => join(OUT, "frames", format);
+if (!process.argv.includes("--encode-only")) {
+  rmSync(OUT, { recursive: true, force: true });
+  const formats: Format[] = PREVIEW ? [PREVIEW_FORMAT] : ["vertical", "square"];
+  for (const format of formats) await record(format, framesDir(format));
+}
+if (!PREVIEW) deliver();
