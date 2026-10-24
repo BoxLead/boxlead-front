@@ -21,7 +21,7 @@
   inset: 10% 6% -8%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(143, 193, 238, 0.16), transparent);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--landing-accent) 16%, transparent), transparent);
   filter: blur(40px);
   pointer-events: none;
 }
@@ -62,10 +62,10 @@
   padding: 7px 8px 7px 7px;
   border: 1px solid var(--landing-border-strong);
   border-radius: 999px;
-  background: rgba(10, 21, 33, 0.78);
+  background: color-mix(in srgb, var(--landing-bg) 78%, transparent);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  box-shadow: 0 18px 48px rgba(2, 8, 15, 0.55);
+  box-shadow: var(--landing-shadow-lg);
   transition:
     border-color 0.3s var(--landing-ease),
     transform 0.3s var(--landing-ease);
@@ -78,8 +78,8 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: var(--landing-cream);
-  color: var(--landing-navy);
+  background: var(--landing-btn-bg);
+  color: var(--landing-btn-text);
   transition: transform 0.3s var(--landing-ease);
 }
 
@@ -92,7 +92,7 @@
 .demo-video-play-time {
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(234, 234, 220, 0.08);
+  background: color-mix(in srgb, var(--landing-heading) 8%, transparent);
   color: var(--landing-text);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;

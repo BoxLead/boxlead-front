@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support.ts";
 
 test("the landing shows the demo video and starts it on request", async ({ page }) => {
   await page.goto("/");
@@ -19,4 +19,29 @@ test("the demo video keeps the whole frame in full screen", async ({ page }) => 
   await video.evaluate((element) => element.requestFullscreen());
   await expect.poll(() => page.evaluate(() => document.fullscreenElement?.tagName)).toBe("VIDEO");
   await expect(video).toHaveCSS("object-fit", "contain");
+});
+
+for (const [scheme, background] of [
+  ["light", "rgb(244, 243, 236)"],
+  ["dark", "rgb(10, 21, 33)"],
+] as const) {
+  test(`the landing follows the ${scheme} theme`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", scheme);
+    await expect(page.locator(".landing")).toHaveCSS("background-color", background);
+    await expect(page.locator("html")).toHaveCSS("color-scheme", scheme);
+  });
+}
+
+test("the footer wordmark fits inside the footer", async ({ page }) => {
+  await page.goto("/");
+  const wordmark = page.locator(".footer-wordmark");
+  await wordmark.scrollIntoViewIfNeeded();
+  const fits = await page.evaluate(() => {
+    const footer = document.querySelector(".landing-footer")?.getBoundingClientRect();
+    const mark = document.querySelector(".footer-wordmark")?.getBoundingClientRect();
+    return footer !== undefined && mark !== undefined && mark.bottom <= footer.bottom + 0.5;
+  });
+  expect(fits).toBe(true);
 });

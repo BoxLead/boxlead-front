@@ -150,7 +150,7 @@
   padding: 6px 12px;
   border-radius: 100px;
   background: var(--landing-success-soft);
-  border: 1px solid rgba(95, 211, 160, 0.25);
+  border: 1px solid color-mix(in srgb, var(--landing-success) 25%, transparent);
   color: var(--landing-success);
   font-size: 0.8125rem;
   font-weight: 600;

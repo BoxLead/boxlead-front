@@ -1,27 +1,56 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
 import type { Scenario } from "./mock-api/fixtures.ts";
+import { MOCK_API_ORIGIN, mockApiPortOf } from "./ports.ts";
 
-export const MOCK_API = "http://localhost:8090";
+export { expect };
+
 export const DEMO_EMAIL = "demo@boxlead.app";
 export const DEMO_PASSWORD = "demo1234";
 
+const CSRF_HEADERS = { "Content-Type": "application/json", "X-Requested-With": "boxlead-web" };
+
+export function mockApiUrl(): string {
+  return `http://localhost:${mockApiPortOf(base.info().parallelIndex)}`;
+}
+
+export const test = base.extend({
+  context: async ({ context }, provide, testInfo) => {
+    const workerApi = `http://localhost:${mockApiPortOf(testInfo.parallelIndex)}`;
+    if (workerApi !== MOCK_API_ORIGIN) {
+      await context.route(`${MOCK_API_ORIGIN}/**`, (route) => {
+        const url = route.request().url().replace(MOCK_API_ORIGIN, workerApi);
+        return route.continue({ url }).catch(() => undefined);
+      });
+    }
+    await provide(context);
+  },
+});
+
 export async function resetApi(scenario: Scenario = "default") {
-  const res = await fetch(`${MOCK_API}/__reset`, {
+  const res = await fetch(`${mockApiUrl()}/__reset`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Requested-With": "boxlead-web" },
+    headers: CSRF_HEADERS,
     body: JSON.stringify({ scenario }),
   });
   expect(res.ok).toBe(true);
 }
 
 export async function login(page: Page, path = "/app/inbox") {
+  const session = await page.context().request.post(`${mockApiUrl()}/auth/login`, {
+    headers: CSRF_HEADERS,
+    data: { email: DEMO_EMAIL, password: DEMO_PASSWORD },
+  });
+  expect(session.ok()).toBe(true);
+  await page.goto(path);
+}
+
+export async function loginThroughForm(page: Page) {
   await page.goto("/login");
   await page.locator('input[name="email"]').fill(DEMO_EMAIL);
   await page.locator('input[name="password"]').fill(DEMO_PASSWORD);
   await page.getByRole("button", { name: "Ingresar" }).click();
   await page.waitForURL("**/app/inbox");
-  if (path !== "/app/inbox") await page.goto(path);
 }
 
 async function waitForEnterAnimations(page: Page) {

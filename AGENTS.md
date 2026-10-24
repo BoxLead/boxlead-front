@@ -85,7 +85,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 
 ## Landing
 
-- Lives in `src/landing/`, dark theme only.
+- Lives in `src/landing/`. Dark by default; `html[data-theme="light"] .landing` in `LandingPage.css` overrides the `--landing-*` tokens, so components must use tokens (or `color-mix` on them) and never hard-coded colors.
 - `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
 - Keep the legal entity, the legal page links and the support email in the footer (required for Meta app review).
 
