@@ -82,6 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [authenticate],
   );
 
+  const socialLogin = useCallback(
+    (idToken: string, redirectTo?: string) =>
+      authenticate(
+        () => api.socialLogin({ idToken }),
+        "No pudimos iniciar sesión.",
+        redirectTo,
+      ),
+    [authenticate],
+  );
+
   const logout = useCallback(() => {
     void api.logout().catch(() => undefined);
     clearAuth();
@@ -93,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   const value = useMemo(
-    () => ({ user, login, register, logout, isLoading, error, clearError }),
-    [user, login, register, logout, isLoading, error, clearError],
+    () => ({ user, login, register, socialLogin, logout, isLoading, error, clearError }),
+    [user, login, register, socialLogin, logout, isLoading, error, clearError],
   );
 
   return (

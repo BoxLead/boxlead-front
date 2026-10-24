@@ -77,6 +77,18 @@ async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> 
   return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
 }
 
+function socialClaims(idToken: unknown): Record<string, unknown> | null {
+  if (typeof idToken !== "string") return null;
+  const payload = idToken.split(".")[1];
+  if (!payload) return null;
+  try {
+    const parsed: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 function isAuthed(req: IncomingMessage): boolean {
   return (req.headers.cookie ?? "").split(/;\s*/).includes(`${SESSION_COOKIE}=valid`);
 }
@@ -398,6 +410,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   }
   if (path === "/auth/register" && method === "POST") {
     return send(res, 201, USER, { "Set-Cookie": sessionCookie("valid", 86400) });
+  }
+  if (path === "/auth/social" && method === "POST") {
+    const claims = socialClaims((await readBody(req)).idToken);
+    if (!claims) return fail(res, 401, "Invalid social login");
+    if (claims.email_verified !== true || typeof claims.email !== "string") {
+      return fail(res, 403, "A verified email is required");
+    }
+    const name = typeof claims.name === "string" ? claims.name : USER.name;
+    return send(res, 200, { ...USER, email: claims.email, name }, { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });

@@ -44,6 +44,7 @@ SSM parameters created:
 
 - `{ssm_prefix}VITE_API_BASE_URL`
 - `{ssm_prefix}VITE_AGENT_API_BASE_URL`
+- `{ssm_prefix}VITE_AUTH0_DOMAIN` and `{ssm_prefix}VITE_AUTH0_CLIENT_ID` (only created when `auth0_domain` and `auth0_client_id` are set; without them the build hides the Google and Facebook buttons)
 - `{ssm_prefix}S3_BUCKET_NAME`
 - `{ssm_prefix}CLOUDFRONT_DISTRIBUTION_ID`
 

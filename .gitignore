@@ -47,3 +47,10 @@ coverage
 playwright-report
 test-results
 demo-video
+
+# Auth0 credentials
+.env.local
+
+.auth0-mcp-state.json
+
+.auth0-mcp-writes.log

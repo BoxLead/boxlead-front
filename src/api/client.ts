@@ -1,5 +1,5 @@
 import { loginPathFor } from "../util/redirect";
-import type { AuthUser, LoginRequest, RegisterRequest } from "./types";
+import type { AuthUser, LoginRequest, RegisterRequest, SocialLoginRequest } from "./types";
 
 const CSRF_HEADER = "X-Requested-With";
 const CSRF_HEADER_VALUE = "boxlead-web";
@@ -172,6 +172,9 @@ export const api = {
 
   register: (body: RegisterRequest) =>
     requestUser("POST", "/auth/register", body),
+
+  socialLogin: (body: SocialLoginRequest) =>
+    requestUser("POST", "/auth/social", body),
 
   me: () => requestUser("GET", "/auth/me"),
 

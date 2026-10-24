@@ -64,3 +64,84 @@ export async function routeOAuthProvider(
     await route.fulfill({ status: 302, headers: { location: redirect.toString() } });
   });
 }
+
+export const AUTH0_HOST = "auth0.test";
+export const AUTH0_CLIENT_ID = "e2e-client";
+
+type IdentityClaims = { sub: string; email: string; email_verified: boolean; name: string };
+
+export type FakeAuth0 = { connections: string[] };
+
+function base64Url(value: object): string {
+  return Buffer.from(JSON.stringify(value)).toString("base64url");
+}
+
+function idToken(claims: IdentityClaims, nonce: string): string {
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const header = base64Url({ alg: "RS256", typ: "JWT" });
+  const payload = base64Url({
+    ...claims,
+    iss: `https://${AUTH0_HOST}/`,
+    aud: AUTH0_CLIENT_ID,
+    iat: issuedAt,
+    exp: issuedAt + 600,
+    nonce,
+  });
+  return `${header}.${payload}.signature`;
+}
+
+export async function routeAuth0(
+  page: Page,
+  outcome: { claims: IdentityClaims } | { error: string },
+): Promise<FakeAuth0> {
+  const fake: FakeAuth0 = { connections: [] };
+  let nonce = "";
+  await page.route(`https://${AUTH0_HOST}/**`, async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const cors = {
+      "access-control-allow-origin": request.headers().origin ?? "*",
+      "access-control-allow-headers": "*",
+      "access-control-allow-methods": "POST, OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers: cors });
+      return;
+    }
+    if (url.pathname === "/authorize") {
+      fake.connections.push(url.searchParams.get("connection") ?? "");
+      nonce = url.searchParams.get("nonce") ?? "";
+      const redirect = new URL(url.searchParams.get("redirect_uri") ?? "");
+      redirect.searchParams.set("state", url.searchParams.get("state") ?? "");
+      if ("error" in outcome) {
+        redirect.searchParams.set("error", outcome.error);
+      } else {
+        redirect.searchParams.set("code", "provider-code");
+      }
+      await route.fulfill({ status: 302, headers: { location: redirect.toString() } });
+      return;
+    }
+    if (url.pathname === "/oauth/token" && "claims" in outcome) {
+      await route.fulfill({
+        status: 200,
+        headers: { ...cors, "content-type": "application/json" },
+        body: JSON.stringify({
+          access_token: "provider-access-token",
+          id_token: idToken(outcome.claims, nonce),
+          token_type: "Bearer",
+          expires_in: 600,
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 404, headers: cors });
+  });
+  return fake;
+}
+
+export const GOOGLE_IDENTITY: IdentityClaims = {
+  sub: "google-oauth2|1",
+  email: "ana.social@example.com",
+  email_verified: true,
+  name: "Ana Social",
+};

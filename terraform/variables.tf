@@ -35,6 +35,23 @@ variable "agent_api_base_url" {
   description = "Agent API origin baked into the SPA (stored in SSM as VITE_AGENT_API_BASE_URL; e.g. https://agent.boxlead.app)."
 }
 
+variable "auth0_domain" {
+  type        = string
+  description = "Auth0 tenant domain baked into the SPA for Google and Facebook logins (stored in SSM as VITE_AUTH0_DOMAIN; e.g. tenant.us.auth0.com). Empty hides the social buttons."
+  default     = ""
+
+  validation {
+    condition     = !strcontains(var.auth0_domain, "://") && !endswith(var.auth0_domain, "/")
+    error_message = "auth0_domain is a hostname without scheme or trailing slash."
+  }
+}
+
+variable "auth0_client_id" {
+  type        = string
+  description = "Client ID of the Auth0 application the SPA signs in with (stored in SSM as VITE_AUTH0_CLIENT_ID). Public value, not a secret."
+  default     = ""
+}
+
 variable "project_name" {
   type        = string
   description = "Prefix for resource Name tags."

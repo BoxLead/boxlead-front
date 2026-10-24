@@ -14,6 +14,7 @@ function renderMenu(user: AuthUser | null = named) {
     user,
     login: vi.fn(),
     register: vi.fn(),
+    socialLogin: vi.fn(),
     logout,
     isLoading: false,
     error: null,

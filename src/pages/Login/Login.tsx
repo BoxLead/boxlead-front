@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
+import { SocialButtons } from "../../components/AuthLayout/SocialButtons";
 import { useAuth } from "../../context/auth";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { DEFAULT_APP_PATH, NEXT_PARAM, safeAppPath } from "../../util/redirect";
@@ -29,6 +30,7 @@ export function Login() {
     <AuthLayout>
       <h1 className="auth-title">Iniciar sesión</h1>
       <p className="auth-subtitle">Ingresá a tu cuenta de BoxLead.</p>
+      <SocialButtons next={next} />
       <form className="auth-form" onSubmit={handleSubmit}>
         {error ? (
           <div className="auth-error" role="alert">

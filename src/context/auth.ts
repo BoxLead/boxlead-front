@@ -5,6 +5,7 @@ export type AuthContextValue = {
   user: AuthUser | null;
   login: (body: LoginRequest, redirectTo?: string) => Promise<void>;
   register: (body: RegisterRequest, redirectTo?: string) => Promise<void>;
+  socialLogin: (idToken: string, redirectTo?: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   error: string | null;

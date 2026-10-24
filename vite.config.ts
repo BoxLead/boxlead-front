@@ -9,17 +9,22 @@ function originOf(baseUrl: string | undefined): string {
   return baseUrl ? new URL(baseUrl).origin : ''
 }
 
-function contentSecurityPolicy(apiBaseUrl: string | undefined, agentApiBaseUrl: string | undefined): Plugin {
+function contentSecurityPolicy(
+  apiBaseUrl: string | undefined,
+  agentApiBaseUrl: string | undefined,
+  auth0Domain: string | undefined,
+): Plugin {
   const apiOrigin = originOf(apiBaseUrl)
   const agentApiOrigin = originOf(agentApiBaseUrl)
+  const auth0Origin = auth0Domain ? `https://${auth0Domain}` : ''
   const policy = [
     "default-src 'self'",
     `script-src 'self' https://connect.facebook.net`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     `img-src 'self' data: ${FACEBOOK_SOURCES} ${MERCADOLIBRE_IMAGES} ${INSTAGRAM_IMAGES}`,
-    `connect-src 'self' ${apiOrigin} ${agentApiOrigin} ${FACEBOOK_SOURCES}`.replace(/\s+/g, ' '),
-    `frame-src ${FACEBOOK_SOURCES}`,
+    `connect-src 'self' ${apiOrigin} ${agentApiOrigin} ${auth0Origin} ${FACEBOOK_SOURCES}`.replace(/\s+/g, ' '),
+    `frame-src ${FACEBOOK_SOURCES} ${auth0Origin}`.trim(),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -42,7 +47,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
 
   return {
-    plugins: [react(), contentSecurityPolicy(env.VITE_API_BASE_URL, env.VITE_AGENT_API_BASE_URL)],
+    plugins: [react(), contentSecurityPolicy(env.VITE_API_BASE_URL, env.VITE_AGENT_API_BASE_URL, env.VITE_AUTH0_DOMAIN)],
     server: {
       proxy: {
         '/api': {

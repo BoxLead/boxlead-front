@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test'
 
 const MOCK_API_PORT = 8090
 const APP_PORT = 5174
+const AUTH0_DOMAIN = 'auth0.test'
+const AUTH0_CLIENT_ID = 'e2e-client'
 
 export default defineConfig({
   testDir: 'e2e',
@@ -31,6 +33,8 @@ export default defineConfig({
       env: {
         VITE_API_BASE_URL: `http://localhost:${MOCK_API_PORT}`,
         VITE_AGENT_API_BASE_URL: `http://localhost:${MOCK_API_PORT}`,
+        VITE_AUTH0_DOMAIN: AUTH0_DOMAIN,
+        VITE_AUTH0_CLIENT_ID: AUTH0_CLIENT_ID,
       },
       reuseExistingServer: !process.env.CI,
     },

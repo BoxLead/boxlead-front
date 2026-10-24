@@ -43,6 +43,11 @@ const OAuthCallback = lazy(() =>
     default: m.OAuthCallback,
   })),
 );
+const SocialCallback = lazy(() =>
+  import("./pages/SocialCallback/SocialCallback").then((m) => ({
+    default: m.SocialCallback,
+  })),
+);
 const DataDeletion = lazy(() =>
   import("./pages/Legal/DataDeletion").then((m) => ({
     default: m.DataDeletion,
@@ -70,6 +75,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/social/callback" element={<SocialCallback />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/data-deletion" element={<DataDeletion />} />

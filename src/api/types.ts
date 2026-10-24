@@ -31,6 +31,10 @@ export type LoginRequest = {
   password: string;
 };
 
+export type SocialLoginRequest = {
+  idToken: string;
+};
+
 export type ConversationResponse = {
   id: string;
   leadId: string;

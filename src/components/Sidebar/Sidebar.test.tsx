@@ -10,6 +10,7 @@ const auth: AuthContextValue = {
   user: { userId: "u-1", email: "ana@example.com", name: "Ana Pérez" },
   login: vi.fn(),
   register: vi.fn(),
+  socialLogin: vi.fn(),
   logout: vi.fn(),
   isLoading: false,
   error: null,

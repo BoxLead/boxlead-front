@@ -43,6 +43,10 @@ terraform/            # Infrastructure (do not modify without approval)
 
 Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
+## Social login
+
+Login and register offer "Continuar con Google" and "Continuar con Facebook" next to the email and password form, which stays as it was. The buttons use the Auth0 React SDK (`context/SocialAuthProvider.tsx`, `hooks/useSocialLogin.ts`) and only appear when `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` are set. The SDK never owns the session: it sends the visitor to Auth0, `/social/callback` (`pages/SocialCallback`) completes the redirect by hand, takes the ID token and posts it to `POST /auth/social`, and the API answers with the same `httpOnly` cookie as the password login. The SDK keeps nothing after that (`logout({ openUrl: false })`). Providers live in `util/social.ts`. Auth0 must list `<origin>/social/callback` as a callback URL. The e2e specs answer for Auth0 with `routeAuth0` in `e2e/support.ts`.
+
 ## Categories
 
 Each lead belongs to at most one category (`categoryId`). Categories come from `GET /categories` (`data/categories.ts`), every account starts with four defaults, and colors are a fixed palette mapped to `category-color-*` classes in `index.css`. Assigning goes through `PUT /leads/{id}/category` with an optimistic update. Deleting a category leaves its leads without one.
