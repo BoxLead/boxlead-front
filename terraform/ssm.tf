@@ -25,6 +25,34 @@ resource "aws_ssm_parameter" "vite_agent_api_base_url" {
   }
 }
 
+locals {
+  auth0_enabled = var.auth0_domain != "" && var.auth0_client_id != ""
+}
+
+resource "aws_ssm_parameter" "vite_auth0_domain" {
+  count = local.auth0_enabled ? 1 : 0
+
+  name  = "${local.ssm_dir}VITE_AUTH0_DOMAIN"
+  type  = "String"
+  value = var.auth0_domain
+
+  tags = {
+    Name = "${var.project_name}-vite-auth0-domain"
+  }
+}
+
+resource "aws_ssm_parameter" "vite_auth0_client_id" {
+  count = local.auth0_enabled ? 1 : 0
+
+  name  = "${local.ssm_dir}VITE_AUTH0_CLIENT_ID"
+  type  = "String"
+  value = var.auth0_client_id
+
+  tags = {
+    Name = "${var.project_name}-vite-auth0-client-id"
+  }
+}
+
 resource "aws_ssm_parameter" "s3_bucket_name" {
   name  = "${local.ssm_dir}S3_BUCKET_NAME"
   type  = "String"

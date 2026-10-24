@@ -6,6 +6,7 @@ export type Choice<T extends string> = {
   label: string;
   icon?: ReactNode;
   count?: number;
+  disabled?: boolean;
 };
 
 type ChoiceGroupProps<T extends string> = {
@@ -39,6 +40,7 @@ export function ChoiceGroup<T extends string>({
             type="button"
             className={`choice${selected ? " choice-selected" : ""}`}
             aria-pressed={selected}
+            disabled={choice.disabled}
             onClick={() => onChange(choice.value)}
           >
             {choice.icon ? <span className="choice-icon">{choice.icon}</span> : null}

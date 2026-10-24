@@ -1,26 +1,46 @@
 import { Link } from "react-router-dom";
 import type { AgentActivityDetail, AgentResponse, CategoryResponse } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
-import { Dialog } from "../../components/ui/Dialog";
 import { agentActivityKey } from "../../data/agents";
 import { useApiQuery } from "../../hooks/useApiQuery";
-import { activityOutcomeLabel, activityReasonLabel, labeledLeadLabel } from "../../util/agents";
-import { formatRelative } from "../../util/format";
-import "./AgentActivityDialog.css";
+import { activityOutcomeLabel, activityReasonLabel, labeledLeadLabel, type ActivityNumbers } from "../../util/agents";
+import { formatNumber, formatRelative } from "../../util/format";
 
-type AgentActivityDialogProps = {
+const STATS: { key: keyof ActivityNumbers; label: string }[] = [
+  { key: "labeled", label: "Etiquetados" },
+  { key: "sent", label: "Respondidos" },
+  { key: "drafted", label: "Borradores" },
+  { key: "skipped", label: "Omitidos" },
+  { key: "handedOff", label: "Derivados" },
+];
+
+type AgentActivityProps = {
   agent: AgentResponse;
   categories: CategoryResponse[] | undefined;
-  onClose: () => void;
+  counts: ActivityNumbers | undefined;
+  activityDays: number | undefined;
 };
 
-export function AgentActivityDialog({ agent, categories, onClose }: AgentActivityDialogProps) {
+export function AgentActivity({ agent, categories, counts, activityDays }: AgentActivityProps) {
   const detail = useApiQuery<AgentActivityDetail>(agentActivityKey(agent.id));
-  const days = detail.data?.days ?? 30;
+  const days = detail.data?.days ?? activityDays ?? 30;
   const events = detail.data?.events ?? [];
 
   return (
-    <Dialog open title={`Actividad de ${agent.name}`} description={`Últimos ${days} días`} onClose={onClose}>
+    <div className="agent-activity-panel">
+      {counts && activityDays ? (
+        <section className="agent-stats" aria-label={`Actividad de ${agent.name}, últimos ${activityDays} días`}>
+          <p className="agent-stats-period">Últimos {activityDays} días</p>
+          <dl className="agent-stats-grid">
+            {STATS.map((stat) => (
+              <div key={stat.key} className="agent-stat">
+                <dt>{stat.label}</dt>
+                <dd>{formatNumber(counts[stat.key])}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
       {detail.loading ? (
         <div className="agent-activity-skeleton" aria-hidden="true">
           {[0, 1, 2].map((index) => (
@@ -54,19 +74,12 @@ export function AgentActivityDialog({ agent, categories, onClose }: AgentActivit
                 </div>
                 {labeled ? <p className="agent-activity-detail">{labeled}</p> : null}
                 {reason ? <p className="agent-activity-detail">{reason}</p> : null}
-                {event.conversationId ? (
-                  <Link to={`/app/inbox?id=${event.conversationId}`}>Ver conversación</Link>
-                ) : null}
+                {event.conversationId ? <Link to={`/app/inbox?id=${event.conversationId}`}>Ver conversación</Link> : null}
               </li>
             );
           })}
         </ul>
       )}
-      <div className="dialog-actions">
-        <button type="button" className="btn btn-secondary" onClick={onClose}>
-          Cerrar
-        </button>
-      </div>
-    </Dialog>
+    </div>
   );
 }

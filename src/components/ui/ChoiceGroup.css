@@ -35,9 +35,13 @@
     color 0.15s ease;
 }
 
-.choice:hover {
+.choice:hover:not(:disabled) {
   border-color: rgba(234, 234, 220, 0.3);
   color: var(--signal-heading);
+}
+
+.choice:disabled {
+  opacity: 0.45;
 }
 
 .choice-selected,

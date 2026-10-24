@@ -1,0 +1,14 @@
+.social-callback-msg {
+  margin: var(--signal-space-md) 0 var(--signal-space-lg);
+}
+
+.social-callback-btn {
+  width: 100%;
+  min-height: 48px;
+}
+
+.social-callback-spinner {
+  display: flex;
+  justify-content: center;
+  padding: var(--signal-space-md) 0;
+}

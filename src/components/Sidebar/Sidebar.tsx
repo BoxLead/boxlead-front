@@ -1,8 +1,18 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { useAuth } from "../../context/auth";
-import { BotIcon, ChartIcon, InboxIcon, LogoutIcon, PlugIcon, TagIcon, UsersIcon } from "../icons/UiIcons";
+import { setSidebar, useSidebar } from "../../theme/theme";
+import {
+  BotIcon,
+  ChartIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  InboxIcon,
+  PlugIcon,
+  TagIcon,
+  UsersIcon,
+} from "../icons/UiIcons";
 import { Logo } from "../Logo/Logo";
+import { UserMenu } from "./UserMenu";
 import "./Sidebar.css";
 
 type NavItem = {
@@ -21,7 +31,8 @@ const links: NavItem[] = [
 ];
 
 export function Sidebar() {
-  const { user, logout } = useAuth();
+  const collapsed = useSidebar() === "collapsed";
+  const sidebarLabel = collapsed ? "Expandir menú" : "Contraer menú";
 
   return (
     <aside className="sidebar" aria-label="Navegación principal">
@@ -33,23 +44,27 @@ export function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            title={collapsed ? label : undefined}
             className={({ isActive }) =>
               `sidebar-link${isActive ? " sidebar-link-active" : ""}`
             }
           >
             {icon}
-            <span>{label}</span>
+            <span className="sidebar-link-label">{label}</span>
           </NavLink>
         ))}
       </nav>
+      <button
+        type="button"
+        className="sidebar-toggle"
+        aria-label={sidebarLabel}
+        title={sidebarLabel}
+        onClick={() => setSidebar(collapsed ? "expanded" : "collapsed")}
+      >
+        {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+      </button>
       <div className="sidebar-footer">
-        <div className="sidebar-user" title={user?.email}>
-          {user?.email}
-        </div>
-        <button type="button" className="sidebar-logout" onClick={logout}>
-          <LogoutIcon />
-          <span>Cerrar sesión</span>
-        </button>
+        <UserMenu />
       </div>
     </aside>
   );

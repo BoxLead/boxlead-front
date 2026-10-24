@@ -51,8 +51,32 @@ test("the session lives in an httpOnly cookie and survives a reload", async ({ p
 
 test("logging out ends the session", async ({ page }) => {
   await login(page);
+  await page.getByRole("button", { name: "Cuenta" }).click();
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/app/inbox");
   await expect(page).toHaveURL(/\/login\?next=%2Fapp%2Finbox$/);
+});
+
+test("the account menu switches theme and the rail collapses to icons", async ({ page }, testInfo) => {
+  await login(page);
+  await page.getByRole("button", { name: "Cuenta" }).click();
+  const dialog = page.getByRole("dialog", { name: "Cuenta" });
+  await expect(dialog).toContainText("Ana Pérez");
+  const root = page.locator("html");
+  const wasLight = (await root.getAttribute("data-theme")) === "light";
+  await dialog.getByRole("switch", { name: "Modo claro" }).click();
+  const next = wasLight ? "dark" : "light";
+  await expect(root).toHaveAttribute("data-theme", next);
+  await page.reload();
+  await expect(root).toHaveAttribute("data-theme", next);
+
+  if (testInfo.project.name !== "desktop") return;
+
+  await page.getByRole("button", { name: "Contraer menú" }).click();
+  await expect(root).toHaveAttribute("data-sidebar", "collapsed");
+  await expect(page.locator(".sidebar")).toHaveCSS("width", "72px");
+  await page.getByRole("link", { name: "Métricas" }).click();
+  await expect(page).toHaveURL(/\/app\/metrics$/);
+  await expect(page.getByRole("link", { name: "BoxLead" })).toBeVisible();
 });

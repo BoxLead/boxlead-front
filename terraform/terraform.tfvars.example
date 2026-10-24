@@ -13,3 +13,8 @@ api_base_url = "https://api.boxlead.app"
 
 # PriceClass_100 = US/EU only (cheapest); PriceClass_All = global
 price_class = "PriceClass_100"
+
+# Auth0 application for Google and Facebook login — written to SSM as VITE_AUTH0_DOMAIN / VITE_AUTH0_CLIENT_ID for the CI build.
+# Both are public values. Leave empty to hide the social login buttons.
+auth0_domain    = "login.boxlead.app"
+auth0_client_id = "your-auth0-application-client-id"

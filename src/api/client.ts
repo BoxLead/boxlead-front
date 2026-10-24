@@ -1,5 +1,5 @@
 import { loginPathFor } from "../util/redirect";
-import type { AuthUser, LoginRequest, RegisterRequest } from "./types";
+import type { AuthUser, LoginRequest, RegisterRequest, SocialLoginRequest } from "./types";
 
 const CSRF_HEADER = "X-Requested-With";
 const CSRF_HEADER_VALUE = "boxlead-web";
@@ -37,6 +37,12 @@ export const REQUEST_HEADERS = {
   [CSRF_HEADER]: CSRF_HEADER_VALUE,
 } as const;
 
+function readName(value: object): string | null {
+  if (!("name" in value) || typeof value.name !== "string") return null;
+  const trimmed = value.name.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
 function toAuthUser(value: unknown): AuthUser | null {
   if (
     value &&
@@ -46,7 +52,7 @@ function toAuthUser(value: unknown): AuthUser | null {
     typeof value.userId === "string" &&
     typeof value.email === "string"
   ) {
-    return { userId: value.userId, email: value.email };
+    return { userId: value.userId, email: value.email, name: readName(value) };
   }
   return null;
 }
@@ -166,6 +172,9 @@ export const api = {
 
   register: (body: RegisterRequest) =>
     requestUser("POST", "/auth/register", body),
+
+  socialLogin: (body: SocialLoginRequest) =>
+    requestUser("POST", "/auth/social", body),
 
   me: () => requestUser("GET", "/auth/me"),
 

@@ -17,6 +17,7 @@ export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "LOST" | "CLOSED";
 export type AuthUser = {
   userId: string;
   email: string;
+  name: string | null;
 };
 
 export type RegisterRequest = {
@@ -28,6 +29,10 @@ export type RegisterRequest = {
 export type LoginRequest = {
   email: string;
   password: string;
+};
+
+export type SocialLoginRequest = {
+  idToken: string;
 };
 
 export type ConversationResponse = {

@@ -51,6 +51,20 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
             <li key={key}>
               <fieldset className="scope-row">
                 <legend className="visually-hidden">Regla {index + 1}</legend>
+                <div className="scope-row-top">
+                  <span className="scope-index" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => remove(key)}
+                    disabled={drafts.length === 1}
+                    aria-label={`Quitar regla ${index + 1}`}
+                  >
+                    Quitar
+                  </button>
+                </div>
                 <label className="field">
                   <span className="field-label">Canal</span>
                   <select
@@ -116,15 +130,6 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                     ))}
                   </select>
                 </label>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm scope-remove"
-                  onClick={() => remove(key)}
-                  disabled={drafts.length === 1}
-                  aria-label={`Quitar regla ${index + 1}`}
-                >
-                  Quitar
-                </button>
                 {orphaned ? (
                   <p className="field-error scope-row-error">Esta categoría ya no existe. Quitá la regla o elegí otra.</p>
                 ) : null}

@@ -48,6 +48,13 @@
   --signal-bubble-inbound: #172d43;
   --signal-bubble-outbound: #eaeadc;
   --signal-bubble-outbound-text: #132c44;
+  --signal-btn-primary-bg: var(--signal-cream);
+  --signal-btn-primary-text: var(--signal-navy);
+  --signal-btn-primary-hover: #ffffff;
+  --signal-btn-secondary-hover-border: var(--signal-cream);
+  --signal-btn-secondary-hover-bg: rgba(234, 234, 220, 0.05);
+  --signal-auth-glow: rgba(36, 82, 124, 0.4);
+  --signal-grid-line: rgba(234, 234, 220, 0.025);
   --signal-font:
     "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --signal-mono: ui-monospace, "SF Mono", Consolas, monospace;
@@ -57,6 +64,7 @@
   --signal-space-lg: 24px;
   --signal-space-xl: 32px;
   --signal-sidebar-width: 240px;
+  --signal-sidebar-width-collapsed: 72px;
 
   font-family: var(--signal-font);
   font-size: 15px;
@@ -71,6 +79,48 @@
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scrollbar-color: rgba(234, 234, 220, 0.2) transparent;
+}
+
+html[data-theme="light"] {
+  --signal-bg: #f4f3ec;
+  --signal-bg-subtle: #eae9e0;
+  --signal-surface: #fffcf7;
+  --signal-surface-elevated: #ffffff;
+  --signal-border: rgba(19, 44, 68, 0.12);
+  --signal-border-strong: rgba(19, 44, 68, 0.22);
+  --signal-hairline: rgba(19, 44, 68, 0.08);
+  --signal-hover: rgba(19, 44, 68, 0.04);
+  --signal-backdrop: rgba(19, 44, 68, 0.45);
+  --signal-text: #3d5163;
+  --signal-text-muted: #5c7080;
+  --signal-heading: #132c44;
+  --signal-accent: #2f6fae;
+  --signal-accent-hover: #1f568c;
+  --signal-accent-muted: rgba(47, 111, 174, 0.12);
+  --signal-accent-contrast: #ffffff;
+  --signal-danger: #b23b3b;
+  --signal-danger-muted: rgba(178, 59, 59, 0.1);
+  --signal-success: #1d8a5b;
+  --signal-success-muted: rgba(29, 138, 91, 0.1);
+  --signal-warning: #a86a00;
+  --signal-warning-muted: rgba(168, 106, 0, 0.12);
+  --signal-shadow: 0 16px 40px rgba(19, 44, 68, 0.12);
+  --signal-sidebar-bg: #fffcf7;
+  --signal-sidebar-text: #3d5163;
+  --signal-sidebar-active: #132c44;
+  --signal-sidebar-hover: rgba(19, 44, 68, 0.05);
+  --signal-bubble-inbound: #e7eef5;
+  --signal-bubble-outbound: #132c44;
+  --signal-bubble-outbound-text: #f4f3ec;
+  --signal-btn-primary-bg: var(--signal-navy);
+  --signal-btn-primary-text: var(--signal-cream);
+  --signal-btn-primary-hover: #1c4060;
+  --signal-btn-secondary-hover-border: var(--signal-border-strong);
+  --signal-btn-secondary-hover-bg: var(--signal-hover);
+  --signal-auth-glow: rgba(19, 44, 68, 0.08);
+  --signal-grid-line: rgba(19, 44, 68, 0.06);
+  color-scheme: light;
+  scrollbar-color: rgba(19, 44, 68, 0.25) transparent;
 }
 
 *,
@@ -184,12 +234,12 @@ button {
 }
 
 .btn-primary {
-  background: var(--signal-cream);
-  color: var(--signal-navy);
+  background: var(--signal-btn-primary-bg);
+  color: var(--signal-btn-primary-text);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #ffffff;
+  background: var(--signal-btn-primary-hover);
 }
 
 .btn-secondary {
@@ -199,12 +249,12 @@ button {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  border-color: var(--signal-cream);
-  background: rgba(234, 234, 220, 0.05);
+  border-color: var(--signal-btn-secondary-hover-border);
+  background: var(--signal-btn-secondary-hover-bg);
 }
 
 .btn-danger {
-  border-color: rgba(240, 138, 138, 0.3);
+  border-color: color-mix(in srgb, var(--signal-danger) 30%, transparent);
   background: transparent;
   color: var(--signal-danger);
 }
@@ -490,6 +540,8 @@ button {
 }
 
 @media print {
+  html[data-theme="light"],
+  html[data-theme="dark"],
   :root {
     --signal-bg: #ffffff;
     --signal-bg-subtle: #f4f6f8;
@@ -507,6 +559,9 @@ button {
     --signal-success: #1d8a5b;
     --signal-danger: #b23b3b;
     --signal-warning: #a86a00;
+    --signal-btn-primary-bg: #0f2236;
+    --signal-btn-primary-text: #ffffff;
+    --signal-btn-primary-hover: #0f2236;
     background: var(--signal-bg);
     color-scheme: light;
   }

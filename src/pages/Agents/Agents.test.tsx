@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -67,6 +67,14 @@ function renderAgents() {
   );
 }
 
+function agentList() {
+  return screen.getByRole("list", { name: "Agentes" });
+}
+
+function agentButton(name: string) {
+  return within(agentList()).getByRole("button", { name: new RegExp(name) });
+}
+
 describe("Agents", () => {
   it("offers a retry when categories fail to load", async () => {
     const reload = vi.fn();
@@ -83,12 +91,12 @@ describe("Agents", () => {
     renderAgents();
 
     expect(screen.getByText("No pudimos cargar las categorías")).toBeInTheDocument();
-    expect(screen.getByText(/Categoría/)).toBeInTheDocument();
+    expect(agentButton("Ventas")).toHaveTextContent(/Categoría/);
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(reload).toHaveBeenCalled();
   });
 
-  it("shows each agent's last 30 days and the messages no agent took", () => {
+  it("shows each agent's last 30 days and the messages no agent took", async () => {
     const postventa: AgentResponse = { ...agent, id: "a-2", name: "Postventa", instructions: "", enabled: false };
     queries.set(AGENTS_KEY, query([agent, postventa]));
     queries.set(BUSINESS_PROFILE_KEY, query(profile));
@@ -104,6 +112,14 @@ describe("Agents", () => {
 
     renderAgents();
 
+    expect(agentButton("Ventas")).toHaveTextContent("8 respondidos");
+    expect(agentButton("Postventa")).toHaveTextContent("Pausado");
+    expect(agentButton("Postventa")).toHaveTextContent("Sin instrucciones");
+    expect(agentButton("Postventa")).toHaveTextContent("0 respondidos");
+    expect(screen.getByText("4 mensajes no llegaron a ningún agente y 1 lead se etiquetó sin agente.")).toBeInTheDocument();
+
+    await userEvent.click(agentButton("Ventas"));
+    await userEvent.click(screen.getByRole("button", { name: "Actividad" }));
     const ventas = screen.getByRole("region", { name: "Actividad de Ventas, últimos 30 días" });
     expect(ventas).toHaveTextContent("Etiquetados");
     expect(ventas).toHaveTextContent("2");
@@ -113,13 +129,9 @@ describe("Agents", () => {
     expect(ventas).toHaveTextContent("Omitidos");
     expect(ventas).toHaveTextContent("Derivados");
     expect(ventas).toHaveTextContent("3");
-    const paused = screen.getByRole("region", { name: "Actividad de Postventa, últimos 30 días" });
-    expect(paused).toHaveTextContent("0");
-    expect(screen.getByText("4 mensajes no llegaron a ningún agente y 1 lead se etiquetó sin agente.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Editar Ventas" })).toBeInTheDocument();
   });
 
-  it("keeps the agent editable when activity fails to load", () => {
+  it("keeps the agent editable when activity fails to load", async () => {
     queries.set(AGENTS_KEY, query([agent]));
     queries.set(BUSINESS_PROFILE_KEY, query(profile));
     queries.set(CATEGORIES_KEY, query([presupuesto]));
@@ -129,7 +141,8 @@ describe("Agents", () => {
 
     expect(screen.getByText("No pudimos cargar la actividad")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /Actividad de Ventas/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Editar Ventas" })).toBeEnabled();
+    await userEvent.click(agentButton("Ventas"));
+    expect(screen.getByRole("textbox", { name: /Nombre/ })).toBeEnabled();
   });
 
   it("opens the recent activity and links a run to the conversation", async () => {
@@ -166,16 +179,14 @@ describe("Agents", () => {
     queries.set(agentActivityKey(agent.id), query(detail));
 
     renderAgents();
-    await userEvent.click(screen.getByRole("button", { name: "Ver actividad de Ventas" }));
+    await userEvent.click(agentButton("Ventas"));
+    await userEvent.click(screen.getByRole("button", { name: "Actividad" }));
 
-    const activity = screen.getByRole("list", { name: "Actividad de Ventas", hidden: true });
+    const activity = screen.getByRole("list", { name: "Actividad de Ventas" });
     expect(activity).toHaveTextContent("Respondió");
     expect(activity).toHaveTextContent("Etiquetó como Presupuesto");
     expect(activity).toHaveTextContent("Este agente no responde comentarios públicos");
-    expect(screen.getByRole("link", { name: "Ver conversación", hidden: true })).toHaveAttribute(
-      "href",
-      "/app/inbox?id=conv-1",
-    );
+    expect(screen.getByRole("link", { name: "Ver conversación" })).toHaveAttribute("href", "/app/inbox?id=conv-1");
   });
 
   it("says when the agent has no activity in the period", async () => {
@@ -195,10 +206,27 @@ describe("Agents", () => {
     queries.set(agentActivityKey(agent.id), query(detail));
 
     renderAgents();
-    await userEvent.click(screen.getByRole("button", { name: "Ver actividad de Ventas" }));
+    await userEvent.click(agentButton("Ventas"));
+    await userEvent.click(screen.getByRole("button", { name: "Actividad" }));
 
     expect(document.querySelector(".agent-activity-empty")?.textContent).toBe(
       "Todavía no hay actividad en los últimos 30 días.",
     );
+  });
+
+  it("asks before leaving an agent with unsaved edits", async () => {
+    const postventa: AgentResponse = { ...agent, id: "a-2", name: "Postventa" };
+    queries.set(AGENTS_KEY, query([agent, postventa]));
+    queries.set(BUSINESS_PROFILE_KEY, query(profile));
+    queries.set(CATEGORIES_KEY, query([presupuesto]));
+    queries.set(ACTIVITY_KEY, query(quietActivity));
+
+    renderAgents();
+    await userEvent.click(agentButton("Ventas"));
+    await userEvent.type(screen.getByRole("textbox", { name: /Nombre/ }), " extra");
+    await userEvent.click(agentButton("Postventa"));
+
+    expect(screen.getByRole("heading", { level: 2, name: "Ventas extra" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 2, name: "Postventa" })).not.toBeInTheDocument();
   });
 });

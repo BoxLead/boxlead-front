@@ -39,7 +39,11 @@ const APP_ORIGIN = process.env.MOCK_APP_ORIGIN ?? "http://localhost:5173";
 const SELF = `http://localhost:${PORT}`;
 const SESSION_COOKIE = "boxlead_session";
 const DEMO_PASSWORD = "demo1234";
-const USER = { userId: "0b0e0000-0000-4000-8000-000000000001", email: "demo@boxlead.app" };
+const USER = {
+  userId: "0b0e0000-0000-4000-8000-000000000001",
+  email: "demo@boxlead.app",
+  name: "Ana Pérez",
+};
 const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "GOOGLE_ADS", "MELI"];
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 const MELI_ANSWER_LIMIT = 2000;
@@ -71,6 +75,18 @@ async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> 
   if (!raw) return {};
   const parsed: unknown = JSON.parse(raw);
   return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+}
+
+function socialClaims(idToken: unknown): Record<string, unknown> | null {
+  if (typeof idToken !== "string") return null;
+  const payload = idToken.split(".")[1];
+  if (!payload) return null;
+  try {
+    const parsed: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }
 
 function isAuthed(req: IncomingMessage): boolean {
@@ -394,6 +410,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   }
   if (path === "/auth/register" && method === "POST") {
     return send(res, 201, USER, { "Set-Cookie": sessionCookie("valid", 86400) });
+  }
+  if (path === "/auth/social" && method === "POST") {
+    const claims = socialClaims((await readBody(req)).idToken);
+    if (!claims) return fail(res, 401, "Invalid social login");
+    if (claims.email_verified !== true || typeof claims.email !== "string") {
+      return fail(res, 403, "A verified email is required");
+    }
+    const name = typeof claims.name === "string" ? claims.name : USER.name;
+    return send(res, 200, { ...USER, email: claims.email, name }, { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });
