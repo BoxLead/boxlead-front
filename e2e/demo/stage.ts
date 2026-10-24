@@ -43,6 +43,7 @@ export type Layout = {
   boxTop: number;
   boxHeight: number;
   device: { left: number; top: number; width: number; height: number; scale: number };
+  crop: boolean;
   titleTop: number;
   clockTop: number;
   noticesTop: number;
@@ -58,6 +59,7 @@ export const LAYOUTS: Record<Format, Layout> = {
     boxTop: 250,
     boxHeight: 1270,
     device: { left: 220, top: 250, width: 640, height: 1000, scale: 1.6 },
+    crop: false,
     titleTop: 56,
     clockTop: 170,
     noticesTop: 330,
@@ -71,6 +73,7 @@ export const LAYOUTS: Record<Format, Layout> = {
     boxTop: 0,
     boxHeight: 1080,
     device: { left: 240, top: 210, width: 600, height: 840, scale: 1.5 },
+    crop: true,
     titleTop: 36,
     clockTop: 150,
     noticesTop: 300,
@@ -412,7 +415,7 @@ export function stageRuntime() {
     if (cached) return cached;
     const base = { s: DEVICE_SCALE, tx: 0, ty: 0 };
     const focus = shot.focus;
-    if (!focus || focus.align === "keep") return base;
+    if (!focus || focus.align === "keep" || !layout.crop) return base;
     const rect = focusRect(shot.layer, focus.selector);
     if (!rect) return base;
     const s = focus.zoom ?? DEVICE_SCALE;

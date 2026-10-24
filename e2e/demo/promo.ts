@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { cpus } from "node:os";
 import { join, resolve } from "node:path";
 import { chromium, type BrowserContext, type FrameLocator, type Page } from "playwright";
@@ -38,7 +38,7 @@ const HERO_PAIRS: Array<[RegExp, RegExp]> = [
 const PLATFORMS: Record<string, Platform> = { WHATSAPP: "whatsapp", INSTAGRAM: "instagram", MESSENGER: "messenger", MELI: "meli" };
 const STREAM_STATES = ["Respondido", "Calificado", "Respondido", "Lead creado"];
 const PREVIEW = process.env.PROMO_TIMES?.split(",").map(Number) ?? null;
-const PREVIEW_FORMAT = (process.env.PROMO_FORMAT as Format | undefined) ?? "vertical";
+const FORMATS = (process.env.PROMO_FORMATS?.split(",") as Format[] | undefined) ?? ["vertical", "square"];
 
 const lines: Line[] = [
   { at: 0.15, until: 1.95, text: "Tu cliente escribe a las *3* *AM.*", kind: "hero" },
@@ -378,8 +378,9 @@ function encode(frames: string, file: string) {
 
 function deliver() {
   const frames = framesDir("vertical");
-  encode(frames, join(OUT, "boxlead-promo-9x16.mp4"));
-  encode(framesDir("square"), join(OUT, "boxlead-promo-1x1.mp4"));
+  if (existsSync(frames)) encode(frames, join(OUT, "boxlead-promo-9x16.mp4"));
+  if (existsSync(framesDir("square"))) encode(framesDir("square"), join(OUT, "boxlead-promo-1x1.mp4"));
+  if (!existsSync(frames)) return;
   copyFileSync(join(frames, frameName(Math.round(POSTER_AT * FPS))), join(OUT, "boxlead-promo-poster.png"));
   const stills = join(OUT, "stills");
   mkdirSync(stills, { recursive: true });
@@ -391,8 +392,9 @@ function deliver() {
 
 const framesDir = (format: Format) => join(OUT, "frames", format);
 if (!process.argv.includes("--encode-only")) {
-  rmSync(OUT, { recursive: true, force: true });
-  const formats: Format[] = PREVIEW ? [PREVIEW_FORMAT] : ["vertical", "square"];
-  for (const format of formats) await record(format, framesDir(format));
+  for (const format of PREVIEW ? FORMATS.slice(0, 1) : FORMATS) {
+    rmSync(framesDir(format), { recursive: true, force: true });
+    await record(format, framesDir(format));
+  }
 }
 if (!PREVIEW) deliver();
