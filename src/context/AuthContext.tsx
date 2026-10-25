@@ -14,7 +14,7 @@ import { clearQueryCache } from "../data/queryCache";
 import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
 import { AuthContext, sessionFlags } from "./auth";
 
-const SESSION_ROUTES = /^\/(app|login|register)(\/|$)/;
+const SESSION_ROUTES = /^\/(app|login|register|invitacion)(\/|$)/;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { FeatureRoute } from "./components/FeatureRoute";
 import { Loading } from "./components/Loading";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -66,6 +67,43 @@ const TermsOfService = lazy(() =>
 const Register = lazy(() =>
   import("./pages/Register/Register").then((m) => ({ default: m.Register })),
 );
+const Billing = lazy(() =>
+  import("./pages/Billing/Billing").then((m) => ({ default: m.Billing })),
+);
+const BillingReturn = lazy(() =>
+  import("./pages/Billing/BillingReturn").then((m) => ({
+    default: m.BillingReturn,
+  })),
+);
+const Reseller = lazy(() =>
+  import("./pages/Reseller/Reseller").then((m) => ({ default: m.Reseller })),
+);
+const Invitation = lazy(() =>
+  import("./pages/Invitation/Invitation").then((m) => ({
+    default: m.Invitation,
+  })),
+);
+const Terms = lazy(() =>
+  import("./pages/Legal/Terms").then((m) => ({ default: m.Terms })),
+);
+const Privacy = lazy(() =>
+  import("./pages/Legal/Privacy").then((m) => ({ default: m.Privacy })),
+);
+const AdhesionContracts = lazy(() =>
+  import("./pages/Legal/AdhesionContracts").then((m) => ({
+    default: m.AdhesionContracts,
+  })),
+);
+const Withdrawal = lazy(() =>
+  import("./pages/ConsumerRequest/Withdrawal").then((m) => ({
+    default: m.Withdrawal,
+  })),
+);
+const Cancellation = lazy(() =>
+  import("./pages/ConsumerRequest/Cancellation").then((m) => ({
+    default: m.Cancellation,
+  })),
+);
 
 export default function App() {
   return (
@@ -79,6 +117,12 @@ export default function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/data-deletion" element={<DataDeletion />} />
+        <Route path="/invitacion" element={<Invitation />} />
+        <Route path="/terminos" element={<Terms />} />
+        <Route path="/privacidad" element={<Privacy />} />
+        <Route path="/contratos" element={<AdhesionContracts />} />
+        <Route path="/arrepentimiento" element={<Withdrawal />} />
+        <Route path="/baja" element={<Cancellation />} />
         <Route element={<ProtectedRoute />}>
           <Route
             path="/app/oauth/callback/:platform"
@@ -93,6 +137,13 @@ export default function App() {
             <Route path="categories" element={<Categories />} />
             <Route path="agents" element={<Agents />} />
             <Route path="connections" element={<Connections />} />
+            <Route element={<FeatureRoute feature="billing" />}>
+              <Route path="billing" element={<Billing />} />
+              <Route path="billing/return" element={<BillingReturn />} />
+            </Route>
+            <Route element={<FeatureRoute feature="reseller" />}>
+              <Route path="reseller" element={<Reseller />} />
+            </Route>
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
