@@ -103,6 +103,23 @@ describe("whatsapp", () => {
   });
 });
 
+describe("messenger", () => {
+  const messenger = getPlatform("META");
+
+  it.each([
+    [409, "Cannot send Messenger message: the reply window is closed, the customer has to write first", null, "Pasaron más de 24 horas"],
+    [400, "Messenger messages are limited to 2000 characters", null, "El mensaje es demasiado largo"],
+    [409, "Messenger account 3 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar Messenger"],
+  ])("explains %i %s", (status, message, action, title) => {
+    expect(messenger.explainError(status, message)).toMatchObject({ action, title });
+  });
+
+  it("leaves other failures to the generic message", () => {
+    expect(messenger.explainError(502, "Messenger send message failed (HTTP 400 BAD_REQUEST)")).toBeNull();
+    expect(messenger.explainError(409, "Cannot send Messenger message: lead 3 has no Messenger id")).toBeNull();
+  });
+});
+
 describe("contact fields", () => {
   it("links WhatsApp contacts to wa.me with digits only", () => {
     const [field] = getPlatform("WHATSAPP").contactFields(lead({ platform: "WHATSAPP", phone: "+54 9 11 5555-0142" }));

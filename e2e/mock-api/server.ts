@@ -70,6 +70,7 @@ const LEAD_TEMPERATURES: LeadTemperature[] = ["COLD", "WARM", "HOT"];
 const MELI_ANSWER_LIMIT = 2000;
 const MELI_MESSAGE_LIMIT = 350;
 const INSTAGRAM_COMMENT_LIMIT = 2200;
+const MESSENGER_TEXT_LIMIT = 2000;
 const HOUR = 3_600_000;
 const MESSAGING_WINDOW = 24 * HOUR;
 const PRIVATE_REPLY_WINDOW = 7 * 24 * HOUR;
@@ -348,6 +349,19 @@ function instagramDirectReply(
     return null;
   }
   return outbound(conversation, content, { replyToExternalId: comment.externalMessageId });
+}
+
+function messengerReply(res: ServerResponse, conversation: StoredConversation, content: string): MessageResponse | null {
+  if (content.length > MESSENGER_TEXT_LIMIT) {
+    fail(res, 400, `Messenger messages are limited to ${MESSENGER_TEXT_LIMIT} characters`);
+    return null;
+  }
+  const lastText = messagesOf(conversation.id).filter((m) => m.direction === "INBOUND").at(-1);
+  if (!lastText || Date.now() - Date.parse(lastText.createdAt) >= MESSAGING_WINDOW) {
+    fail(res, 409, "Cannot send Messenger message: the reply window is closed, the customer has to write first");
+    return null;
+  }
+  return outbound(conversation, content);
 }
 
 function withLeadCount(category: Omit<CategoryResponse, "leadCount">): CategoryResponse {
@@ -791,6 +805,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
           body.kind === "COMMENT"
             ? instagramPublicReply(res, conversation, content, body.replyToMessageId)
             : instagramDirectReply(res, conversation, content);
+        if (!created) return;
+      } else if (body.direction === "OUTBOUND" && conversation.platform === "META") {
+        created = messengerReply(res, conversation, content);
         if (!created) return;
       } else {
         created = {

@@ -180,6 +180,28 @@ test("a closed WhatsApp window offers a template instead of a dead end", async (
   await expect(page.locator(".bubble-outbound", { hasText: "Seguimos atendiendo de lunes a viernes" })).toBeVisible();
 });
 
+test("Messenger explains that the 24 hour window is closed instead of failing silently", async ({ page }) => {
+  await login(page);
+  await openConversation(page, "Contacto de Messenger");
+  await page.getByLabel("Responder a Contacto de Messenger").fill("Sí, tenemos local. Abrimos de lunes a viernes.");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "Pasaron más de 24 horas" });
+  await expect(banner).toContainText("Messenger solo deja responder dentro de las 24 horas");
+  await expect(banner.getByRole("button", { name: "Usar una plantilla" })).toHaveCount(0);
+  await expect(page.locator(".bubble-failed")).toContainText("No se envió.");
+});
+
+test("Messenger delivers a reply while the person's last message is recent", async ({ page }) => {
+  await resetApi("default", new Date(Date.now() + 49 * 60 * 60 * 1000));
+  await login(page);
+  await openConversation(page, "Contacto de Messenger");
+  await page.getByLabel("Responder a Contacto de Messenger").fill("Sí, tenemos local.");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  await expect(page.locator(".bubble-outbound", { hasText: "Sí, tenemos local." })).toBeVisible();
+});
+
 test("only WhatsApp offers templates", async ({ page }) => {
   await login(page);
   await openConversation(page, "nico.audio");
