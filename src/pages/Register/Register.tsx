@@ -1,94 +1,39 @@
-import { type FormEvent, useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
-import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
-import { PasswordField } from "../../components/AuthLayout/PasswordField";
-import { SocialButtons } from "../../components/AuthLayout/SocialButtons";
+import { useEffect, useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
+import { Loading } from "../../components/Loading";
 import { useAuth } from "../../context/auth";
+import { loadSignupOptions, PLAN_PARAM, type SignupOptions } from "../../data/plans";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { DEFAULT_APP_PATH, NEXT_PARAM, safeAppPath } from "../../util/redirect";
-
-const MIN_PASSWORD_LENGTH = 8;
+import { RegisterForm } from "./RegisterForm";
 
 export function Register() {
   useDocumentTitle("Crear cuenta");
 
-  const { user, register, isLoading, error, clearError } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const [options, setOptions] = useState<SignupOptions | null>(null);
   const next = safeAppPath(searchParams.get(NEXT_PARAM)) ?? DEFAULT_APP_PATH;
+  const [signedIn] = useState(() => user !== null);
 
-  if (user) {
+  useEffect(() => {
+    if (signedIn) return;
+    let cancelled = false;
+    void loadSignupOptions().then((loaded) => {
+      if (!cancelled) setOptions(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn]);
+
+  if (signedIn) {
     return <Navigate to={next} replace />;
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    clearError();
-    await register({
-      email: email.trim(),
-      password,
-      name: name.trim() || undefined,
-    }, next);
+  if (!options) {
+    return <Loading />;
   }
 
-  return (
-    <AuthLayout>
-      <h1 className="auth-title">Crear cuenta</h1>
-      <p className="auth-subtitle">Empezá a usar BoxLead en minutos.</p>
-      <SocialButtons next={next} />
-      <form className="auth-form" onSubmit={handleSubmit}>
-        {error ? (
-          <div className="auth-error" role="alert">
-            {error}
-          </div>
-        ) : null}
-        <label className="auth-label">
-          <span>
-            Nombre <span className="auth-optional">(opcional)</span>
-          </span>
-          <input
-            className="auth-input"
-            type="text"
-            name="name"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-        <label className="auth-label">
-          Email
-          <input
-            className="auth-input"
-            type="email"
-            name="email"
-            autoComplete="email"
-            placeholder="vos@tuempresa.com"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <PasswordField
-          autoComplete="new-password"
-          minLength={MIN_PASSWORD_LENGTH}
-          hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`}
-          value={password}
-          onChange={setPassword}
-        />
-        <button className="auth-submit" type="submit" disabled={isLoading}>
-          {isLoading ? "Creando cuenta…" : "Crear cuenta"}
-        </button>
-      </form>
-      <p className="auth-terms">
-        Al crear tu cuenta aceptás los{" "}
-        <Link to="/terms-of-service">Términos de servicio</Link> y la{" "}
-        <Link to="/privacy-policy">Política de privacidad</Link>.
-      </p>
-      <p className="auth-footer">
-        ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
-      </p>
-    </AuthLayout>
-  );
+  return <RegisterForm options={options} next={next} planParam={searchParams.get(PLAN_PARAM)} />;
 }

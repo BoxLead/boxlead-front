@@ -480,8 +480,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const body = await readBody(req);
     const legal = missingLegal(billing, body);
     if (legal) return reply(res, legal);
+    const created = sessionUser();
     if (typeof body.email === "string") startInvitedDemo(billing, readCookies(req), body.email);
-    return send(res, 201, sessionUser(), { "Set-Cookie": sessionCookie("valid", 86400) });
+    return send(res, 201, created, { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/social" && method === "POST") {
     const body = await readBody(req);
@@ -492,8 +493,16 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (claims.email_verified !== true || typeof claims.email !== "string") {
       return fail(res, 403, "A verified email is required");
     }
+    if (claims.email.toLowerCase() === USER.email) {
+      return reply(res, {
+        status: 409,
+        body: { error: "Conflict", message: "An account with a password exists", code: "ACCOUNT_EXISTS_WITH_PASSWORD" },
+      });
+    }
     const name = typeof claims.name === "string" ? claims.name : USER.name;
-    return send(res, 200, sessionUser({ email: claims.email, name }), { "Set-Cookie": sessionCookie("valid", 86400) });
+    const signedIn = sessionUser({ email: claims.email, name });
+    startInvitedDemo(billing, readCookies(req), claims.email);
+    return send(res, 200, signedIn, { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });
