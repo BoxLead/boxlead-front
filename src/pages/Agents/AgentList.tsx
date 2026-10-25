@@ -1,5 +1,5 @@
 import type { AgentResponse, CategoryResponse } from "../../api/types";
-import { scopeLabel, type ActivityNumbers } from "../../util/agents";
+import { agentStatusLabel, scopeLabel, type ActivityNumbers } from "../../util/agents";
 import { cx } from "../../util/classNames";
 import { formatNumber } from "../../util/format";
 
@@ -32,8 +32,11 @@ export function AgentList({ agents, categories, selectedId, activityForId, onSel
               <span className="agent-row-identity">
                 <span className="agent-row-name">{agent.name}</span>
                 <span className="agent-row-status">
-                  <span className={cx("agent-status-dot", agent.enabled && "agent-status-dot-on")} aria-hidden="true" />
-                  {agent.enabled ? "Activo" : "Pausado"}
+                  <span
+                    className={cx("agent-status-dot", agent.enabled && !agent.overPlanLimit && "agent-status-dot-on")}
+                    aria-hidden="true"
+                  />
+                  {agentStatusLabel(agent)}
                 </span>
               </span>
               {agent.instructions ? null : <span className="agent-row-note">Sin instrucciones</span>}

@@ -5,6 +5,8 @@ import {
   activityFor,
   activityOutcomeLabel,
   activityReasonLabel,
+  overPlanLimitLine,
+  agentStatusLabel,
   agentErrorMessage,
   answeredByLabel,
   describeChannelRules,
@@ -236,5 +238,29 @@ describe("activity labels", () => {
       "4 mensajes no llegaron a ningún agente y 1 lead se etiquetó sin agente.",
     );
     expect(unassignedActivityLine({ skipped: 0, labeled: 2 })).toBe("2 leads se etiquetaron sin agente.");
+  });
+});
+
+describe("overPlanLimitLine", () => {
+  const agent = (name: string, overPlanLimit = false): AgentResponse => ({ id: name, name, instructions: "", enabled: true, publicCommentReplies: false, position: 0, scopes: [], overPlanLimit, createdAt: null, updatedAt: null });
+
+  it("labels an enabled agent left out of the plan", () => {
+    expect(agentStatusLabel(agent("Ventas"))).toBe("Activo");
+    expect(agentStatusLabel(agent("Postventa", true))).toBe("Fuera del plan");
+    expect(agentStatusLabel({ ...agent("Pausado"), enabled: false })).toBe("Pausado");
+  });
+
+  it("says nothing when every agent fits", () => {
+    expect(overPlanLimitLine([agent("Ventas"), agent("Postventa", false)], 3)).toBeNull();
+  });
+
+  it("names the agents left out and the plan maximum", () => {
+    expect(overPlanLimitLine([agent("Ventas"), agent("Postventa", true)], 1)).toBe(
+      "Tu plan permite 1 agente activo. Postventa no responde hasta que pauses otro agente o cambies de plan.",
+    );
+    expect(overPlanLimitLine([agent("A", true), agent("B", true), agent("C", true)], 2)).toBe(
+      "Tu plan permite 2 agentes activos. A, B y C no responden hasta que pauses otro agente o cambies de plan.",
+    );
+    expect(overPlanLimitLine([agent("A", true)], undefined)).toBe("A no responde hasta que pauses otro agente o cambies de plan.");
   });
 });

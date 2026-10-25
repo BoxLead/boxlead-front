@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { CategoryResponse, PlatformType, PlaygroundResult, SalesStage } from "../../api/types";
 import { SendIcon } from "../../components/icons/UiIcons";
+import { PlanLink } from "../../components/PlanBanner/PlanLink";
+import { CHOOSE_PLAN } from "../../components/PlanBanner/planNotice";
 import { Banner } from "../../components/ui/Banner";
 import { CharCounter } from "../../components/ui/CharCounter";
 import { Switch } from "../../components/ui/Switch";
@@ -14,6 +16,7 @@ type PlaygroundProps = {
   agentName: string;
   target: PlaygroundTarget;
   categories: CategoryResponse[] | undefined;
+  restricted?: boolean;
 };
 
 type Entry = { id: string; turn: PlaygroundTurn };
@@ -25,7 +28,7 @@ function toHistory(entries: Entry[]): PlaygroundTurn[] {
   return entries.map((entry) => entry.turn);
 }
 
-export function Playground({ agentName, target, categories }: PlaygroundProps) {
+export function Playground({ agentName, target, categories, restricted = false }: PlaygroundProps) {
   const counterId = useId();
   const inputId = useId();
   const abort = useRef<AbortController | null>(null);
@@ -44,7 +47,7 @@ export function Playground({ agentName, target, categories }: PlaygroundProps) {
   const stages = stageChoices(platform);
   const full = entries.length >= PLAYGROUND_MAX_MESSAGES;
   const tooLong = draft.length > PLAYGROUND_MESSAGE_MAX;
-  const canSend = draft.trim().length > 0 && !tooLong && !running && !full;
+  const canSend = draft.trim().length > 0 && !tooLong && !running && !full && !restricted;
   const saved = "agentId" in target;
   const showAside = Boolean(error || (result && !running) || full);
 
@@ -111,6 +114,15 @@ export function Playground({ agentName, target, categories }: PlaygroundProps) {
   return (
     <div className="playground">
       <p className="playground-intro">Escribí como si fueras un cliente. Nada se envía ni se guarda en tus conversaciones.</p>
+      {restricted ? (
+        <Banner
+          tone="warning"
+          title="Necesitás un plan para probar agentes"
+          action={<PlanLink action={CHOOSE_PLAN} />}
+        >
+          Con un plan activo podés ver cómo responde este agente antes de que hable con tus clientes.
+        </Banner>
+      ) : null}
       <div className="playground-scenario">
         <label className="field">
           <span className="field-label">Canal</span>
@@ -228,7 +240,7 @@ export function Playground({ agentName, target, categories }: PlaygroundProps) {
             rows={2}
             value={draft}
             placeholder="Mensaje del cliente"
-            disabled={full}
+            disabled={full || restricted}
             aria-invalid={tooLong || undefined}
             aria-describedby={counterId}
             onChange={(event) => setDraft(event.target.value)}

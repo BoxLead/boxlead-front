@@ -4,7 +4,7 @@ import type { Choice } from "../../components/ui/ChoiceGroup";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
 import { Switch } from "../../components/ui/Switch";
 import type { PlaygroundTarget } from "../../data/agentPlayground";
-import { AGENT_NAME_MAX, type ActivityNumbers } from "../../util/agents";
+import { AGENT_NAME_MAX, agentStatusLabel, type ActivityNumbers } from "../../util/agents";
 import { AgentActivity } from "./AgentActivity";
 import { AgentForm, type AgentDraftSnapshot } from "./AgentForm";
 import { Playground } from "./Playground";
@@ -17,6 +17,7 @@ type AgentWorkspaceProps = {
   tab: AgentTab;
   dirty: boolean;
   toggling: boolean;
+  restricted?: boolean;
   counts: ActivityNumbers | undefined;
   activityDays: number | undefined;
   onTabChange: (tab: AgentTab) => void;
@@ -34,6 +35,7 @@ export function AgentWorkspace({
   tab,
   dirty,
   toggling,
+  restricted = false,
   counts,
   activityDays,
   onTabChange,
@@ -83,8 +85,8 @@ export function AgentWorkspace({
             <h2>{title}</h2>
             {agent ? (
               <span className="agent-row-status">
-                <span className={`agent-status-dot${agent.enabled ? " agent-status-dot-on" : ""}`} aria-hidden="true" />
-                {agent.enabled ? "Activo" : "Pausado"}
+                <span className={`agent-status-dot${agent.enabled && !agent.overPlanLimit ? " agent-status-dot-on" : ""}`} aria-hidden="true" />
+                {agentStatusLabel(agent)}
               </span>
             ) : null}
           </div>
@@ -93,7 +95,7 @@ export function AgentWorkspace({
               <Switch
                 label={`Activar ${agent.name}`}
                 checked={agent.enabled}
-                disabled={toggling}
+                disabled={toggling || (restricted && !agent.enabled)}
                 onChange={onToggle}
               />
               <button type="button" className="btn btn-secondary btn-sm" aria-label={`Eliminar ${agent.name}`} onClick={onDelete}>
@@ -120,7 +122,13 @@ export function AgentWorkspace({
           />
         </div>
         <div className="agent-pane" hidden={shownTab !== "test"}>
-          <Playground key={agent && !dirty ? "saved" : "draft"} agentName={title} target={target} categories={categories} />
+          <Playground
+            key={agent && !dirty ? "saved" : "draft"}
+            agentName={title}
+            target={target}
+            categories={categories}
+            restricted={restricted}
+          />
         </div>
         {shownTab === "activity" && agent ? (
           <div className="agent-pane">

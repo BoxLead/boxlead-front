@@ -3,6 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import type { AgentActivitySummary, AgentResponse, CategoryResponse } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
+import { PlanLink } from "../../components/PlanBanner/PlanLink";
+import { SEE_PLANS } from "../../components/PlanBanner/planNotice";
 import { BotIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
@@ -13,7 +15,14 @@ import { CATEGORIES_KEY } from "../../data/categories";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { activityFor, agentErrorMessage, unassignedActivityLine, type ActivityNumbers } from "../../util/agents";
+import { usePlan } from "../../hooks/usePlan";
+import {
+  activityFor,
+  agentErrorMessage,
+  overPlanLimitLine,
+  unassignedActivityLine,
+  type ActivityNumbers,
+} from "../../util/agents";
 import { cx } from "../../util/classNames";
 import { AgentList } from "./AgentList";
 import { AgentWorkspace, type AgentTab } from "./AgentWorkspace";
@@ -44,6 +53,7 @@ export function Agents() {
   useDocumentTitle("Agentes");
 
   const toast = useToast();
+  const plan = usePlan();
   const wide = useMediaQuery(WIDE_QUERY);
   const [searchParams, setSearchParams] = useSearchParams();
   const agents = useApiQuery<AgentResponse[]>(AGENTS_KEY);
@@ -65,6 +75,7 @@ export function Agents() {
   const selected = creating ? null : (explicit ?? (wide && !paramId ? (list[0] ?? null) : null));
   const open = paramId !== null;
   const unassigned = activity.data ? unassignedActivityLine(activity.data.unassigned) : null;
+  const overLimit = plan.billing ? overPlanLimitLine(list, plan.limits.AGENTS_MAX) : null;
 
   function countsFor(id: string): ActivityNumbers | undefined {
     if (!activity.data) return undefined;
@@ -169,7 +180,12 @@ export function Agents() {
   ].filter((failure) => failure !== null);
 
   const createButton = (
-    <button type="button" className="btn btn-primary" onClick={() => request({ kind: "open", id: NEW_AGENT })} disabled={!agents.data}>
+    <button
+      type="button"
+      className="btn btn-primary"
+      onClick={() => request({ kind: "open", id: NEW_AGENT })}
+      disabled={!agents.data || plan.restricted}
+    >
       Nuevo agente
     </button>
   );
@@ -200,6 +216,14 @@ export function Agents() {
           {section === "agents" && list.length > 0 ? createButton : null}
         </div>
       </header>
+
+      {overLimit ? (
+        <div className="agents-alerts">
+          <Banner tone="warning" title="Algunos agentes quedaron fuera de tu plan" action={<PlanLink action={SEE_PLANS} />}>
+            {overLimit}
+          </Banner>
+        </div>
+      ) : null}
 
       {failures.length > 0 ? (
         <div className="agents-alerts">
@@ -274,6 +298,7 @@ export function Agents() {
                 tab={tab}
                 dirty={dirty}
                 toggling={toggling === workspaceAgent?.id}
+                restricted={plan.restricted}
                 counts={workspaceAgent ? countsFor(workspaceAgent.id) : undefined}
                 activityDays={activity.data?.days}
                 onTabChange={changeTab}

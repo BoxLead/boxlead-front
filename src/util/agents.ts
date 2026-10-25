@@ -220,3 +220,17 @@ export function unassignedActivityLine(unassigned: { skipped: number; labeled: n
   if (parts.length === 0) return null;
   return `${parts.join(" y ")}.`;
 }
+
+export function agentStatusLabel(agent: AgentResponse): string {
+  if (!agent.enabled) return "Pausado";
+  return agent.overPlanLimit ? "Fuera del plan" : "Activo";
+}
+
+export function overPlanLimitLine(agents: AgentResponse[], max: number | null | undefined): string | null {
+  const names = agents.filter((agent) => agent.overPlanLimit).map((agent) => agent.name);
+  if (names.length === 0) return null;
+  const who = names.length === 1 ? `${names[0]} no responde` : `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]} no responden`;
+  const allowed =
+    typeof max === "number" ? `Tu plan permite ${max === 1 ? "1 agente activo" : `${formatNumber(max)} agentes activos`}. ` : "";
+  return `${allowed}${who} hasta que pauses otro agente o cambies de plan.`;
+}

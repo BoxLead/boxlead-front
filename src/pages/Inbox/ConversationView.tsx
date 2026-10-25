@@ -8,6 +8,8 @@ import type {
   MessageResponse,
   ReplyDraft,
 } from "../../api/types";
+import { PlanLink } from "../../components/PlanBanner/PlanLink";
+import { CHOOSE_PLAN } from "../../components/PlanBanner/planNotice";
 import { Banner } from "../../components/ui/Banner";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/toast";
@@ -16,6 +18,7 @@ import { discardDraft, draftKey } from "../../data/drafts";
 import { setQueryData } from "../../data/queryCache";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useConnectPlatform } from "../../hooks/useConnectPlatform";
+import { usePlan } from "../../hooks/usePlan";
 import { getPlatform } from "../../platforms";
 import { ChatThread } from "./ChatThread";
 import { Composer } from "./Composer";
@@ -58,6 +61,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const draftBusy = busyConversationId === row.id;
   const sender = useConversationSender(row.id, row.platform);
   const { connect, connecting } = useConnectPlatform();
+  const plan = usePlan();
   const scrollRef = useRef<HTMLDivElement>(null);
   const list = useMemo(() => messages.data ?? [], [messages.data]);
   const unread = row.unread;
@@ -269,7 +273,15 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
             {sender.failure.detail}
           </Banner>
         ) : null}
-        {nothingToAnswer ? (
+        {plan.restricted ? (
+          <Banner
+            tone="warning"
+            title="Necesitás un plan para responder"
+            action={<PlanLink action={CHOOSE_PLAN} />}
+          >
+            Podés leer la conversación, pero los mensajes se envían solo con un plan activo.
+          </Banner>
+        ) : nothingToAnswer ? (
           <Banner tone="info" title="No hay preguntas pendientes">
             {platform.name} solo permite responder preguntas abiertas. Cuando este comprador pregunte de nuevo vas a
             poder responder desde acá.

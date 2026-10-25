@@ -743,6 +743,10 @@
     display: none;
   }
 
+  .agents-panels {
+    min-height: 280px;
+  }
+
   .agents-list {
     flex-basis: auto;
     width: 100%;
