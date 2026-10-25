@@ -12,7 +12,7 @@ function user(access: AuthUser["access"]): AuthUser {
     userId: "u1",
     email: "ana@negocio.com",
     name: null,
-    features: { billing: true, referrals: false },
+    features: { billing: true, referrals: false, legal: false },
     access,
     isReseller: false,
     pendingLegal: [],
