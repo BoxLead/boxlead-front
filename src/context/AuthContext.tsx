@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError, clearAuth } from "../api/client";
-import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
+import type { AuthUser, LegalVersion, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
 import { clearQueryCache } from "../data/queryCache";
 import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
@@ -52,11 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       request: () => Promise<AuthUser>,
       fallbackError: string,
       redirectTo?: string,
+      reloadSession = false,
     ) => {
       setError(null);
       setIsLoading(true);
       try {
-        const current = await request();
+        const created = await request();
+        const current = reloadSession ? await api.me().catch(() => created) : created;
         clearQueryCache();
         setUser(current);
         setSessionChecked(true);
@@ -78,16 +80,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     (body: RegisterRequest, redirectTo?: string) =>
-      authenticate(() => api.register(body), "No pudimos crear la cuenta.", redirectTo),
+      authenticate(() => api.register(body), "No pudimos crear la cuenta.", redirectTo, true),
     [authenticate],
   );
 
   const socialLogin = useCallback(
-    (idToken: string, redirectTo?: string) =>
+    (idToken: string, redirectTo?: string, acceptedLegal?: LegalVersion[]) =>
       authenticate(
-        () => api.socialLogin({ idToken }),
+        () => api.socialLogin(acceptedLegal ? { idToken, acceptedLegal } : { idToken }),
         "No pudimos iniciar sesión.",
         redirectTo,
+        true,
       ),
     [authenticate],
   );

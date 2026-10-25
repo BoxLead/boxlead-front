@@ -57,7 +57,7 @@ describe("SocialCallback", () => {
 
   it("exchanges the provider token for a session and goes back to the saved page", async () => {
     const { socialLogin } = renderCallback();
-    await waitFor(() => expect(socialLogin).toHaveBeenCalledWith("id-token", "/app/leads?status=NEW"));
+    await waitFor(() => expect(socialLogin).toHaveBeenCalledWith("id-token", "/app/leads?status=NEW", undefined));
     expect(socialLogin).toHaveBeenCalledTimes(1);
     expect(auth0.logout).toHaveBeenCalledWith({ openUrl: false });
   });
@@ -65,7 +65,21 @@ describe("SocialCallback", () => {
   it("ignores a saved page outside the app", async () => {
     auth0.handleRedirectCallback.mockResolvedValue({ appState: { next: "https://evil.test/app" } });
     const { socialLogin } = renderCallback();
-    await waitFor(() => expect(socialLogin).toHaveBeenCalledWith("id-token", undefined));
+    await waitFor(() => expect(socialLogin).toHaveBeenCalledWith("id-token", undefined, undefined));
+  });
+
+  it("sends the legal versions accepted on the sign up", async () => {
+    const acceptedLegal = [
+      { kind: "TERMS", version: "2026-11" },
+      { kind: "PRIVACY", version: "2026-11" },
+    ];
+    auth0.handleRedirectCallback.mockResolvedValue({
+      appState: { next: "/app/billing?checkout=BUSINESS", acceptedLegal },
+    });
+    const { socialLogin } = renderCallback();
+    await waitFor(() =>
+      expect(socialLogin).toHaveBeenCalledWith("id-token", "/app/billing?checkout=BUSINESS", acceptedLegal),
+    );
   });
 
   it("explains a login the person cancelled", async () => {

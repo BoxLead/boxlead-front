@@ -4,6 +4,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { useAuth } from "../../context/auth";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { readAcceptedLegal } from "../../util/legalAcceptance";
 import { safeAppPath } from "../../util/redirect";
 import "./SocialCallback.css";
 
@@ -36,7 +37,11 @@ export function SocialCallback() {
           setFailure(FAILURE_MESSAGE);
           return;
         }
-        await socialLogin(claims.__raw, safeAppPath(appState?.next) ?? undefined);
+        await socialLogin(
+          claims.__raw,
+          safeAppPath(appState?.next) ?? undefined,
+          readAcceptedLegal(appState?.acceptedLegal),
+        );
       } catch (e: unknown) {
         setFailure(failureMessage(e));
       }

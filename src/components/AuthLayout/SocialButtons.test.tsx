@@ -6,7 +6,7 @@ import { SocialButtons } from "./SocialButtons";
 
 const social = vi.hoisted(() => ({
   enabled: true,
-  start: vi.fn<(provider: { id: string }, next: string) => Promise<void>>(),
+  start: vi.fn<(provider: { id: string }, next: string, acceptedLegal?: unknown) => Promise<void>>(),
 }));
 
 vi.mock("../../hooks/useSocialLogin", () => ({
@@ -42,8 +42,29 @@ describe("SocialButtons", () => {
     expect(social.start).toHaveBeenCalledWith(
       expect.objectContaining({ id: "facebook" }),
       "/app/leads?status=NEW",
+      undefined,
     );
     expect(screen.getByRole("button", { name: "Continuar con Google" })).toBeDisabled();
+  });
+
+  it("carries the accepted legal versions to the provider", async () => {
+    const acceptedLegal = [{ kind: "TERMS" as const, version: "2026-11" }];
+    render(<SocialButtons next="/app/billing?checkout=STARTER" acceptedLegal={acceptedLegal} />);
+    await userEvent.click(screen.getByRole("button", { name: "Continuar con Google" }));
+    expect(social.start).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "google" }),
+      "/app/billing?checkout=STARTER",
+      acceptedLegal,
+    );
+  });
+
+  it("waits while the page says something is missing", async () => {
+    const canStart = vi.fn(() => false);
+    render(<SocialButtons next="/app/inbox" canStart={canStart} />);
+    await userEvent.click(screen.getByRole("button", { name: "Continuar con Google" }));
+    expect(canStart).toHaveBeenCalled();
+    expect(social.start).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Continuar con Google" })).toBeEnabled();
   });
 
   it("shows an error and unlocks the buttons when the login cannot start", async () => {
