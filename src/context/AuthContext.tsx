@@ -102,6 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, [navigate]);
 
+  const refreshUser = useCallback(async () => {
+    const current = await api.me();
+    setUser(current);
+  }, []);
+
   const value = useMemo(
     () => ({
       ...sessionFlags(user),
@@ -110,11 +115,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       socialLogin,
       logout,
+      refreshUser,
       isLoading,
       error,
       clearError,
     }),
-    [user, login, register, socialLogin, logout, isLoading, error, clearError],
+    [user, login, register, socialLogin, logout, refreshUser, isLoading, error, clearError],
   );
 
   return (

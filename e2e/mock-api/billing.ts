@@ -40,6 +40,7 @@ export type BillingScenario = (typeof BILLING_SCENARIOS)[number];
 export type BillingOptions = {
   pendingLegal?: boolean;
   entitlementsUnavailable?: boolean;
+  agentReplies?: number;
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -400,6 +401,7 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
     state.payments = paymentHistory(chargeOf("BUSINESS"), 2);
     state.agentReplies = 900;
   }
+  if (typeof options.agentReplies === "number") state.agentReplies = options.agentReplies;
   if (scenario === "reseller") {
     state.referrals = true;
     state.reseller = true;
