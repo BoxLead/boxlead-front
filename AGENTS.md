@@ -26,7 +26,7 @@ src/
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # classNames, company, dates, format, labels, links, metrics, oauth, redirect, facebook-sdk
+└── util/             # classNames, company, dates, format, labels, links, metrics, oauth, redirect, referral, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -92,6 +92,9 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - Lives in `src/landing/`. Dark by default; `html[data-theme="light"] .landing` in `LandingPage.css` overrides the `--landing-*` tokens, so components must use tokens (or `color-mix` on them) and never hard-coded colors.
 - `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
 - Keep the legal entity, the legal page links and the support email in the footer (required for Meta app review).
+- `BILLING_ENABLED` and `REFERRALS_ENABLED` in `src/landing/flags.ts` stay `false` until payments go live, and with both off the landing looks as it does today. The payments plan in `boxlead-core` turns them on in its step 23.
+- `BILLING_ENABLED` shows the plans section (`PlansSection`, also linked from the header and footer). It lists Beta by invitation, Starter and Business with their capabilities, never amounts or limits, and leads to `/register?plan=STARTER` or `BUSINESS`. The price comes from the API inside the app.
+- `REFERRALS_ENABLED` turns on `captureReferral` (`util/referral.ts`). A `?ref=` code in the referral format (10 Crockford base32 characters) goes into the `boxlead_ref` cookie for `ATTRIBUTION_WINDOW_DAYS`, `Secure` and `SameSite=Lax`, on `.boxlead.app` there and with no domain on other hosts. An existing cookie is never replaced (first touch), and `ref` leaves the URL through `history.replaceState` whether it was valid or not.
 
 ## Build and deploy
 

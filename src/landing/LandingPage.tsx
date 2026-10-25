@@ -8,9 +8,12 @@ import { ProductOverview } from "./components/ProductOverview";
 import { KineticBand } from "./components/KineticBand";
 import { HowItWorks } from "./components/HowItWorks";
 import { AgentFlow } from "./components/AgentFlow";
+import { PlansSection } from "./components/PlansSection";
 import { FaqSection } from "./components/FaqSection";
 import { CtaSection } from "./components/CtaSection";
 import { Footer } from "./components/Footer";
+import { BILLING_ENABLED, REFERRALS_ENABLED } from "./flags";
+import { captureReferral } from "../util/referral";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -69,7 +72,14 @@ function usePointerGlow() {
   }, []);
 }
 
+function useReferralCapture() {
+  useEffect(() => {
+    if (REFERRALS_ENABLED) captureReferral();
+  }, []);
+}
+
 export function LandingPage() {
+  useReferralCapture();
   useScrollReveal();
   usePointerGlow();
 
@@ -86,6 +96,7 @@ export function LandingPage() {
         <KineticBand />
         <HowItWorks />
         <AgentFlow />
+        {BILLING_ENABLED && <PlansSection />}
         <FaqSection />
         <CtaSection />
       </main>

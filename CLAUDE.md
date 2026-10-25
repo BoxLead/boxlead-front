@@ -37,6 +37,7 @@ docker compose up --build   # Production image at localhost:3000
 - `src/api/types.ts` — All API type definitions
 - `src/index.css` — Global design tokens (`--signal-*`)
 - `src/landing/` — Public landing page (isolated from app). Animations are CSS, and JS only passes the pointer position as CSS variables to elements with `data-glow`
+- `src/landing/flags.ts` — `BILLING_ENABLED` (plans section) and `REFERRALS_ENABLED` (`?ref=` capture in `util/referral.ts`), both `false` until payments go live
 
 ### Route Structure
 ```
