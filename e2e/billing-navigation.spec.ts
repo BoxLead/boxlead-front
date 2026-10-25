@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
 
-const PUBLIC_PATHS = ["/invitacion", "/terminos", "/privacidad", "/contratos", "/arrepentimiento", "/baja"];
+const PUBLIC_PATHS = ["/terminos", "/privacidad", "/contratos", "/arrepentimiento", "/baja"];
 
 async function openAccount(page: Page) {
   await page.getByRole("button", { name: "Cuenta" }).click();
@@ -52,7 +52,7 @@ test("the invitation page asks for the session and keeps protected routes closed
     if (request.url().endsWith("/auth/me")) sessionChecks.push(request.url());
   });
   await page.goto("/invitacion");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Esta invitación no sirve" })).toBeVisible();
   expect(sessionChecks.length).toBeGreaterThan(0);
 
   await page.goto("/app/billing");
