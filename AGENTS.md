@@ -23,10 +23,11 @@ src/
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
 ├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
+│   ├── ProviderDetails/ # Catvin SRL details from util/company.ts, only the fields that have a value
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # classNames, company, dates, format, labels, links, metrics, oauth, redirect, referral, facebook-sdk
+└── util/             # classNames, company, consumerPages, dates, format, labels, links, metrics, oauth, redirect, referral, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -35,8 +36,10 @@ terraform/            # Infrastructure (do not modify without approval)
 ```
 /                                   Landing (public)
 /login, /register                   Auth (public)
-/privacy-policy, /terms-of-service, /data-deletion   Legal (public)
-/invitacion, /terminos, /privacidad, /contratos, /arrepentimiento, /baja   Payments placeholders (public, redirect to / for now)
+/terminos, /privacidad, /contratos  Legal texts in Spanish, the version that prevails (public)
+/terms-of-service, /privacy-policy  English translations, plus /data-deletion (public)
+/arrepentimiento, /baja             Withdrawal and cancellation requests without login (public)
+/invitacion                         Payments placeholder (public, redirects to / for now)
 /app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
 /app/billing, /app/billing/return   Protected, only with features.billing
 /app/reseller                       Protected, only with isReseller
@@ -52,9 +55,13 @@ Login and register offer "Continuar con Google" and "Continuar con Facebook" nex
 
 ## Payments
 
-Billing, invitations, referrals and the legal pages are built behind the flags core sends in `GET /auth/me`. `toAuthUser` keeps `features`, `access`, `isReseller` and `pendingLegal`, and anything missing or unexpected reads as off, with `access` as `FULL`. `useAuth()` exposes the same four values. `FeatureRoute` sends `/app/billing` and `/app/reseller` to `/` when their flag is off, and the account menu only links Facturación, Revendedor and the consumer pages when core enables them. The pages are placeholders that later steps fill in. The contract lives in `boxlead-core/payments-plan/contracts/api-customer.md` and the types in `api/types.ts`. `api/errors.ts` reads the stable `code` and the `fields` of an error.
+Billing, invitations, referrals and the legal pages are built behind the flags core sends in `GET /auth/me`. `toAuthUser` keeps `features`, `access`, `isReseller` and `pendingLegal`, and anything missing or unexpected reads as off, with `access` as `FULL`. `useAuth()` exposes the same four values. `FeatureRoute` sends `/app/billing` and `/app/reseller` to `/` when their flag is off, and the account menu links Facturación with `features.billing`, Revendedor with `isReseller` and the consumer pages with `features.legal`. The billing and reseller pages are placeholders that later steps fill in. The contract lives in `boxlead-core/payments-plan/contracts/api-customer.md` and the types in `api/types.ts`. `api/errors.ts` reads the stable `code` and the `fields` of an error.
 
 The mock API answers every endpoint of that contract from `e2e/mock-api/billing.ts`. The scenarios `billing-none`, `billing-demo`, `billing-active`, `billing-past-due`, `billing-suspended`, `billing-checkout-pending`, `billing-checkout-rejected`, `billing-downgrade-pending`, `billing-invited` and `reseller` turn billing and legal on and give the agents page two enabled agents. Every other scenario keeps the flags off and the new endpoints answer 404. `resetApi(scenario, now, { pendingLegal, entitlementsUnavailable })` adds pending legal versions or makes the agent answer 503, and `settleCheckout(status)` decides the open checkout as the Mercado Pago return would. The checkout URL always points to `www.mercadopago.com.ar`, so specs intercept it with `page.route`. Invitation tokens live in `INVITATION_TOKENS` and `billing-invited` behaves as if the invitation cookie of another email were already set. Prices and limits in the mock are made up for tests and are not the real catalog.
+
+## Legal and consumer
+
+The landing shows the Botón de arrepentimiento and the Botón de baja de servicio in the header and the footer on first access, without login and without calling the API (Disposición 954/2025). `/arrepentimiento` and `/baja` post `POST /consumer-requests` with the kind, the email and an optional detail of up to 500 characters and show the code. If the API fails or answers 404 they point to the support email with a prefilled subject. The footer and the Spanish legal pages show the provider block from `util/company.ts`. CUIT, address and support hours stay empty until Matías confirms them and `ProviderDetails` leaves out every empty field. The ARCA Data Fiscal badge appears in the footer only when `DATA_FISCAL_URL` and `DATA_FISCAL_IMAGE` are set, with the image served from `public/`. `/contratos` publishes the adhesion contract and is linked from the landing with the name that Resolución 271/2020 asks for. The texts of `/terminos`, `/privacidad` and `/contratos` are drafts for the lawyer, share their clauses through `pages/Legal/clauses` and show the version from `pages/Legal/legalVersion.ts`, which has to match the one core publishes.
 
 ## Categories
 
@@ -89,7 +96,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing. Derive tints from a token with `color-mix` instead of writing a new color.
 - Shared primitives live in `index.css` (`.btn`, `.btn-icon`, `.panel`, `.field`, `.input`, `.select`, `.form-error`) and in `components/ui` (`Dialog` for every modal). Compose conditional classes with `cx` from `util/classNames`.
 - No comments in code.
-- UI copy is in Spanish; the legal pages stay in English.
+- UI copy is in Spanish. Legal texts are written in Spanish, which prevails, and the English pages are translations that say so.
 - Load data with `useApiQuery` (shared cache, `refreshInterval` polls only while the tab is visible); mutations call `api` and then `invalidateQueries` or `setQueryData`.
 - Every page sets its tab title with `useDocumentTitle`.
 - Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
@@ -100,7 +107,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 
 - Lives in `src/landing/`. Dark by default; `html[data-theme="light"] .landing` in `LandingPage.css` overrides the `--landing-*` tokens, so components must use tokens (or `color-mix` on them) and never hard-coded colors.
 - `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
-- Keep the legal entity, the legal page links and the support email in the footer (required for Meta app review).
+- Keep the legal entity, the legal page links, the support email and the provider block in the footer (required for Meta app review and consumer law), and the withdrawal and cancellation buttons in the header and the footer.
 - `BILLING_ENABLED` and `REFERRALS_ENABLED` in `src/landing/flags.ts` stay `false` until payments go live, and with both off the landing looks as it does today. The payments plan in `boxlead-core` turns them on in its step 23.
 - `BILLING_ENABLED` shows the plans section (`PlansSection`, also linked from the header and footer). It lists Beta by invitation, Starter and Business with their capabilities, never amounts or limits, and leads to `/register?plan=STARTER` or `BUSINESS`. The price comes from the API inside the app.
 - `REFERRALS_ENABLED` turns on `captureReferral` (`util/referral.ts`). A `?ref=` code in the referral format (10 Crockford base32 characters) goes into the `boxlead_ref` cookie for `ATTRIBUTION_WINDOW_DAYS`, `Secure` and `SameSite=Lax`, on `.boxlead.app` there and with no domain on other hosts. An existing cookie is never replaced (first touch), and `ref` leaves the URL through `history.replaceState` whether it was valid or not.

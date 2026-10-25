@@ -38,14 +38,17 @@ docker compose up --build   # Production image at localhost:3000
 - `e2e/mock-api/billing.ts` — Payments mock and its `billing-*` and `reseller` scenarios
 - `src/index.css` — Global design tokens (`--signal-*`)
 - `src/landing/` — Public landing page (isolated from app). Animations are CSS, and JS only passes the pointer position as CSS variables to elements with `data-glow`
+- `src/util/company.ts` — Catvin SRL details for the provider block and the Data Fiscal badge, empty fields stay hidden
 - `src/landing/flags.ts` — `BILLING_ENABLED` (plans section) and `REFERRALS_ENABLED` (`?ref=` capture in `util/referral.ts`), both `false` until payments go live
 
 ### Route Structure
 ```
 /                 → Public landing page
 /login, /register → Auth
-/privacy-policy, /terms-of-service, /data-deletion → Legal
-/invitacion, /terminos, /privacidad, /contratos, /arrepentimiento, /baja → Payments placeholders, redirect to / for now
+/terminos, /privacidad, /contratos → Legal texts in Spanish, the version that prevails
+/terms-of-service, /privacy-policy, /data-deletion → English translations and data deletion
+/arrepentimiento, /baja → Withdrawal and cancellation requests without login
+/invitacion       → Payments placeholder, redirects to / for now
 /app/*            → Protected app (inbox, leads, metrics, categories, connections)
 /app/billing, /app/billing/return, /app/reseller → Only when /auth/me enables them (FeatureRoute)
 ```
@@ -57,7 +60,7 @@ docker compose up --build   # Production image at localhost:3000
 - `--signal-*` tokens for app UI, `--landing-*` for landing page
 - `type` keyword for TypeScript type aliases
 - Type-only imports: `import type { X } from '...'`
-- No comments in code; UI copy in Spanish (legal pages in English)
+- No comments in code; UI copy in Spanish, legal texts in Spanish with English translations that say Spanish prevails
 
 ### Auth Flow
 1. The session is an `httpOnly` cookie set by the API; the frontend never sees the token
