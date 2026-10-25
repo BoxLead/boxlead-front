@@ -3,6 +3,7 @@ import { Banner } from "../../components/ui/Banner";
 import { REFERRALS_KEY, activeCodes } from "../../data/referrals";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { Commissions } from "./Commissions";
 import { ReferralLinks } from "./ReferralLinks";
 import { ReferredCustomers } from "./ReferredCustomers";
 import { ResellerStats } from "./ResellerStats";
@@ -33,7 +34,7 @@ export function Reseller() {
       <header className="page-header">
         <div>
           <h1 className="page-title">Revendedor</h1>
-          <p className="page-header-desc">Compartí tu link y seguí a los clientes que traés.</p>
+          <p className="page-header-desc">Compartí tu link y seguí a los clientes que traés y tus comisiones.</p>
         </div>
       </header>
 
@@ -59,6 +60,7 @@ export function Reseller() {
           <ReferralLinks codes={activeCodes(data.codes)} />
           <ResellerStats stats={data.stats} />
           <ReferredCustomers customers={data.customers} />
+          <Commissions totals={data.totals} entries={data.entries} />
         </div>
       )}
     </div>

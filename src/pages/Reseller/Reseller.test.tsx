@@ -76,6 +76,10 @@ function renderPage(toast: (input: ToastInput) => void = () => undefined) {
   );
 }
 
+function plain(text: string | null): string {
+  return (text ?? "").replace(/\s/g, " ");
+}
+
 afterEach(() => {
   queries.clear();
   vi.restoreAllMocks();
@@ -97,7 +101,7 @@ describe("Reseller", () => {
     expect(reload).toHaveBeenCalledOnce();
   });
 
-  it("shows the active link, the stats and the customers", () => {
+  it("shows the active link, the stats, the customers and the commissions", () => {
     respond(filled);
     renderPage();
 
@@ -111,6 +115,15 @@ describe("Reseller", () => {
     expect(within(customers).getByText("Negocio SRL")).toBeInTheDocument();
     expect(within(customers).getByText("Cobro 3 de 6")).toBeInTheDocument();
     expect(within(customers).getByText("Pago atrasado")).toBeInTheDocument();
+
+    const totals = screen.getByLabelText("Totales por estado");
+    expect(within(totals).getAllByRole("term").map((term) => term.textContent)).toEqual(["Pendiente", "Pagada"]);
+    expect(within(totals).getAllByText(/\$/).map((node) => plain(node.textContent))).toEqual(["$ 1.851,75", "$ 10.000"]);
+
+    const rows = within(screen.getByRole("table")).getAllByRole("row").slice(1);
+    expect(rows.map((row) => within(row).getAllByRole("cell")[4].textContent)).toEqual(["Pendiente", "Pagada"]);
+    expect(plain(within(rows[0]).getAllByRole("cell")[3].textContent)).toBe("$ 1.851,75");
+    expect(within(rows[1]).getAllByRole("cell")[5]).toHaveTextContent("—");
   });
 
   it("shows empty states for a new reseller", () => {
@@ -118,6 +131,9 @@ describe("Reseller", () => {
     renderPage();
     expect(screen.getByText(LINK)).toBeInTheDocument();
     expect(screen.getByText("Todavía no tenés clientes")).toBeInTheDocument();
+    expect(screen.getByText("Todavía no hay comisiones")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Totales por estado")).not.toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 
   it("explains when there is no active link", () => {

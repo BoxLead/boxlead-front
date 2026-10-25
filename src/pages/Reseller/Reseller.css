@@ -45,14 +45,20 @@
   user-select: all;
 }
 
-.reseller-stats {
+.reseller-stats,
+.reseller-totals {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: var(--signal-space-md);
   margin: 0;
 }
 
-.reseller-stat {
+.reseller-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reseller-stat,
+.reseller-total {
   display: grid;
   align-content: start;
   gap: 6px;
@@ -64,8 +70,13 @@
   font-size: 0.875rem;
 }
 
-.reseller-stat dd {
+.reseller-stat dd,
+.reseller-total dd {
   margin: 0;
+}
+
+.reseller-stat dd,
+.reseller-total-amount {
   color: var(--signal-heading);
   font-size: 1.5rem;
   font-weight: 700;
@@ -74,6 +85,10 @@
   overflow-wrap: anywhere;
 }
 
+.reseller-total-hint {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
 
 .reseller-section {
   display: grid;
@@ -153,6 +168,57 @@
   font-variant-numeric: tabular-nums;
 }
 
+.reseller-table-wrap {
+  overflow: hidden;
+}
+
+.reseller-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.reseller-table th {
+  padding: 12px var(--signal-space-md);
+  border-bottom: 1px solid var(--signal-border);
+  color: var(--signal-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.reseller-table td {
+  padding: 12px var(--signal-space-md);
+  border-bottom: 1px solid var(--signal-hairline);
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.reseller-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.reseller-table .reseller-table-amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.reseller-cell-amount {
+  color: var(--signal-heading);
+  font-weight: 600;
+}
+
+.reseller-cell-customer {
+  color: var(--signal-heading);
+  overflow-wrap: anywhere;
+}
+
+.reseller-cell-date,
+.reseller-cell-release {
+  white-space: nowrap;
+}
 
 .reseller-skeleton-link {
   height: 128px;
@@ -192,5 +258,80 @@
 
   .reseller-stat dd {
     font-size: 1.25rem;
+  }
+
+  .reseller-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .reseller-table tbody,
+  .reseller-table tr {
+    display: block;
+  }
+
+  .reseller-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "customer amount"
+      "date status"
+      "cycle release";
+    gap: 6px var(--signal-space-sm);
+    padding: 14px var(--signal-space-md);
+    border-bottom: 1px solid var(--signal-hairline);
+  }
+
+  .reseller-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .reseller-table td,
+  .reseller-table tbody tr:last-child td {
+    padding: 0;
+    border: 0;
+  }
+
+  .reseller-table td[data-label]::before {
+    content: attr(data-label) " ";
+    color: var(--signal-text-muted);
+  }
+
+  .reseller-cell-customer {
+    grid-area: customer;
+    font-weight: 600;
+  }
+
+  .reseller-cell-amount {
+    grid-area: amount;
+  }
+
+  .reseller-cell-date {
+    grid-area: date;
+  }
+
+  .reseller-cell-status {
+    grid-area: status;
+    justify-self: end;
+  }
+
+  .reseller-cell-cycle {
+    grid-area: cycle;
+  }
+
+  .reseller-cell-release {
+    grid-area: release;
+    justify-self: end;
+  }
+
+  .reseller-cell-date,
+  .reseller-cell-cycle,
+  .reseller-cell-release {
+    color: var(--signal-text);
+    font-size: 0.875rem;
   }
 }

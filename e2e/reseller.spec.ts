@@ -12,6 +12,10 @@ const EMPTY = {
   entries: [],
 };
 
+function money(text: string | null): string {
+  return (text ?? "").replace(/\s/g, " ");
+}
+
 async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
@@ -30,10 +34,10 @@ async function screenshotThemes(page: Page, name: string, ready: (page: Page) =>
 
 async function showsData(page: Page) {
   await expect(page.getByText(LINK)).toBeVisible();
-  await expect(page.getByRole("list", { name: "Clientes" })).toBeVisible();
+  await expect(page.getByRole("table")).toBeVisible();
 }
 
-test("a reseller sees the link, the stats and the customers", async ({ page, context }) => {
+test("a reseller sees the link, the customers and the commissions", async ({ page, context }) => {
   test.slow();
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await resetApi("reseller");
@@ -55,6 +59,18 @@ test("a reseller sees the link, the stats and the customers", async ({ page, con
   await expect(customers.getByRole("listitem").first()).toContainText("Negocio SRL");
   await expect(customers.getByRole("listitem").first()).toContainText("Cobro 3 de 6");
   await expect(customers.getByText("Pago atrasado")).toBeVisible();
+
+  const totals = page.getByLabel("Totales por estado");
+  await expect(totals.getByRole("term")).toHaveText(["Pendiente", "Aprobada", "Pagada"]);
+  const amounts = await totals.locator(".reseller-total-amount").allTextContents();
+  expect(amounts.map(money)).toEqual(["$ 3.703,50", "$ 5.555,25", "$ 16.665,75"]);
+
+  const rows = page.getByRole("table").locator("tbody tr");
+  await expect(rows).toHaveCount(4);
+  await expect(rows.first()).toContainText("Negocio SRL");
+  await expect(rows.first()).toContainText("Pendiente");
+  expect(money(await rows.first().locator(".reseller-cell-amount").textContent())).toBe("$ 1.851,75");
+  await expect(rows.last()).toContainText("Pagada");
 
   await expect(page.getByText(/teléfono|@negocio\.com/)).toHaveCount(0);
   await expectNoHorizontalScroll(page);
@@ -93,10 +109,12 @@ test("a new reseller sees empty states", async ({ page }) => {
   await expect(page.getByText(LINK)).toBeVisible();
   await expect(page.getByLabel("Resumen").getByRole("definition")).toHaveText(["0", "0", "0"]);
   await expect(page.getByText("Todavía no tenés clientes")).toBeVisible();
+  await expect(page.getByText("Todavía no hay comisiones")).toBeVisible();
+  await expect(page.getByRole("table")).toHaveCount(0);
   await expectNoHorizontalScroll(page);
   await expectAccessible(page);
   await screenshotThemes(page, "reseller-empty", async (current) => {
-    await expect(current.getByText("Todavía no tenés clientes")).toBeVisible();
+    await expect(current.getByText("Todavía no hay comisiones")).toBeVisible();
   });
 });
 
