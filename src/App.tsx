@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { Loading } from "./components/Loading";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { preloadSocialAuth } from "./context/socialRoutes";
 import {
   lazyRoute,
   NotFound,
@@ -40,8 +41,9 @@ const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"),
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
 
 registerRoutePreload("/", [LandingPage]);
-registerRoutePreload("/login", [Login]);
-registerRoutePreload("/register", [Register]);
+const socialAuth = { preload: preloadSocialAuth };
+registerRoutePreload("/login", [Login, socialAuth]);
+registerRoutePreload("/register", [Register, socialAuth]);
 registerRoutePreload("/app", [Layout, Inbox]);
 registerRoutePreload("/app/inbox", [Layout, Inbox]);
 registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);

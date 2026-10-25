@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import type { LazyRoute } from "./lazyRoute";
-import { preloadRoute, registerRoutePreload, routesFor } from "./routePreload";
+import { preloadRoute, registerRoutePreload, routesFor, type Preloadable } from "./routePreload";
 
-function fakeRoute(): LazyRoute {
-  return { preload: vi.fn(() => Promise.resolve()) } as unknown as LazyRoute;
+function fakeRoute(): Preloadable {
+  return { preload: vi.fn(() => Promise.resolve()) };
 }
 
 describe("routePreload", () => {
