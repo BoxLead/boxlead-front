@@ -38,14 +38,6 @@ function defaultFetcher(key: string): Promise<unknown> {
 }
 
 let fetcher: (key: string) => Promise<unknown> = defaultFetcher;
-const resolvers = new Map<string, (key: string) => Promise<unknown>>();
-
-function resolve(key: string): Promise<unknown> {
-  for (const [prefix, resolver] of resolvers) {
-    if (key === prefix || key.startsWith(`${prefix}?`) || key.startsWith(`${prefix}/`)) return resolver(key);
-  }
-  return fetcher(key);
-}
 
 function entryFor(key: string): Entry {
   let entry = entries.get(key);
@@ -77,7 +69,7 @@ export function fetchQuery(key: string): Promise<void> {
     status: entry.state.status === "idle" ? "loading" : entry.state.status,
   });
   const generation = entry.generation;
-  const run = resolve(key).then(
+  const run = fetcher(key).then(
     (data) => {
       if (entry.generation !== generation) {
         update(entry, { fetching: false });
@@ -171,9 +163,4 @@ export function clearQueryCache() {
 
 export function setQueryFetcher(next: ((key: string) => Promise<unknown>) | null) {
   fetcher = next ?? defaultFetcher;
-}
-
-export function setQueryResolver(prefix: string, resolver: ((key: string) => Promise<unknown>) | null) {
-  if (resolver) resolvers.set(prefix, resolver);
-  else resolvers.delete(prefix);
 }
