@@ -14,7 +14,7 @@ export function Register() {
   const [searchParams] = useSearchParams();
   const [options, setOptions] = useState<SignupOptions | null>(null);
   const next = safeAppPath(searchParams.get(NEXT_PARAM)) ?? DEFAULT_APP_PATH;
-  const signedIn = user !== null;
+  const [signedIn] = useState(() => user !== null);
 
   useEffect(() => {
     if (signedIn) return;
@@ -27,7 +27,7 @@ export function Register() {
     };
   }, [signedIn]);
 
-  if (user) {
+  if (signedIn) {
     return <Navigate to={next} replace />;
   }
 
