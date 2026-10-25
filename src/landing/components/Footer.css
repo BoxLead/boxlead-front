@@ -116,14 +116,19 @@
 
 .footer-wordmark {
   max-width: var(--landing-content-max);
-  margin: clamp(36px, 5vw, 64px) auto -0.05em;
+  margin: clamp(32px, 4vw, 48px) auto 0;
+  padding-bottom: clamp(20px, 3vw, 36px);
   color: transparent;
-  background: linear-gradient(180deg, rgba(241, 241, 230, 0.24), rgba(143, 193, 238, 0.04) 90%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--landing-heading) 26%, transparent),
+    color-mix(in srgb, var(--landing-accent) 6%, transparent) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
-  font-size: clamp(3rem, 17vw, 15.5rem);
+  font-size: clamp(2.5rem, 13vw, 10rem);
   font-weight: 300;
-  line-height: 0.82;
+  line-height: 1.1;
   letter-spacing: -0.02em;
   text-align: center;
   white-space: nowrap;

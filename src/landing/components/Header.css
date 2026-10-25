@@ -17,7 +17,7 @@
 }
 
 .landing-header.header-scrolled {
-  background: rgba(10, 21, 33, 0.82);
+  background: color-mix(in srgb, var(--landing-bg) 82%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom-color: var(--landing-border);

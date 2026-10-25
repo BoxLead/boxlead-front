@@ -1,5 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible, login, resetApi, screenshot } from "./support.ts";
+import type { Page } from "@playwright/test";
+import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
 
 const agentList = (page: Page) => page.getByRole("list", { name: "Agentes" });
 const agentButton = (page: Page, name: string) => agentList(page).getByRole("button", { name: new RegExp(`^${name}(\\s|$)`) });

@@ -14,11 +14,11 @@
   background:
     radial-gradient(
       520px circle at var(--glow-x, 72%) var(--glow-y, 32%),
-      rgba(143, 193, 238, 0.12),
+      color-mix(in srgb, var(--landing-accent) 12%, transparent),
       transparent 65%
     ),
-    linear-gradient(rgba(143, 193, 238, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(143, 193, 238, 0.09) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--landing-accent) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--landing-accent) 9%, transparent) 1px, transparent 1px);
   background-size:
     auto,
     56px 56px,
@@ -34,11 +34,11 @@
   background:
     radial-gradient(
       ellipse 60% 55% at 78% 30%,
-      rgba(36, 82, 124, 0.38) 0%,
+      var(--landing-backdrop-glow) 0%,
       transparent 70%
     ),
-    linear-gradient(rgba(234, 234, 220, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(234, 234, 220, 0.025) 1px, transparent 1px);
+    linear-gradient(var(--landing-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--landing-grid-line) 1px, transparent 1px);
   background-size:
     auto,
     56px 56px,

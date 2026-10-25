@@ -1,5 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible, login, resetApi, screenshot } from "./support.ts";
+import type { Page } from "@playwright/test";
+import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
 
 const list = (page: Page) => page.getByRole("list", { name: "Conversaciones" });
 const openConversation = async (page: Page, name: string) => {

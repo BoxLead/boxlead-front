@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { DEMO_EMAIL, DEMO_PASSWORD, login, resetApi } from "./support.ts";
+import { DEMO_EMAIL, DEMO_PASSWORD, expect, login, resetApi, test } from "./support.ts";
 
 test.beforeEach(async () => {
   await resetApi();

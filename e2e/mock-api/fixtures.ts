@@ -10,6 +10,7 @@ import type {
   LeadResponse,
   MessageResponse,
   MessageTemplate,
+  MetricsSettings,
   PlatformType,
   ReplyDraft,
   ReplyMode,
@@ -50,6 +51,7 @@ export type MockState = {
   posts: Record<string, ContextItem>;
   agents: AgentResponse[];
   businessProfile: BusinessProfile;
+  metricsSettings: MetricsSettings;
   drafts: ReplyDraft[];
   playgroundRuns: number;
   playgroundLimit: number;
@@ -97,8 +99,14 @@ export const PAGE_ID = "112233445566778";
 
 export const MINUTE = 60_000;
 
+let fixedNow: number | null = null;
+
+export function setClock(iso: string | null) {
+  fixedNow = iso ? Date.parse(iso) : null;
+}
+
 export function ago(minutes: number): string {
-  return new Date(Date.now() - minutes * MINUTE).toISOString();
+  return new Date((fixedNow ?? Date.now()) - minutes * MINUTE).toISOString();
 }
 
 let sequence = 0;
@@ -226,6 +234,7 @@ export function emptyState(): MockState {
     posts: {},
     agents: [],
     businessProfile: { description: "", tone: null, autoCategorize: true },
+    metricsSettings: { manualReplyMinutes: 4, businessHours: null },
     drafts: [],
     playgroundRuns: 0,
     playgroundLimit: 30,

@@ -94,7 +94,7 @@
 }
 
 .how-visual-done li {
-  border-color: rgba(95, 211, 160, 0.25);
+  border-color: color-mix(in srgb, var(--landing-success) 25%, transparent);
   background: var(--landing-success-soft);
   color: var(--landing-success);
 }

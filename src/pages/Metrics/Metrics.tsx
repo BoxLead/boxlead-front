@@ -6,7 +6,6 @@ import { ChartIcon, SearchIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { useToast } from "../../components/ui/toast";
 import { cx } from "../../util/classNames";
-import { METRICS_DEMO } from "../../data/metrics";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
@@ -72,7 +71,6 @@ export function Metrics() {
   return (
     <div className="page metrics">
       <MetricsHeader
-        demo={METRICS_DEMO}
         period={period}
         filters={filters}
         platforms={view?.platforms ?? []}
