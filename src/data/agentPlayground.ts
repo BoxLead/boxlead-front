@@ -1,6 +1,6 @@
-import { HttpAgent, type Message } from "@ag-ui/client";
 import { agentApiUrl, ApiError, errorFromResponse, handleUnauthorized, REQUEST_HEADERS } from "../api/client";
 import type { PlatformType, PlaygroundResult, SalesStage } from "../api/types";
+import { readAgUiStream, type AgUiMessage, type AgUiRunInput } from "./agui";
 
 export type PlaygroundTurn = { role: "user" | "assistant"; content: string };
 
@@ -49,41 +49,50 @@ function isPlaygroundResult(value: unknown): value is PlaygroundResult {
   );
 }
 
-function toMessages(history: PlaygroundTurn[]): Message[] {
+function toMessages(history: PlaygroundTurn[]): AgUiMessage[] {
   return history.map((turn) => ({ id: crypto.randomUUID(), role: turn.role, content: turn.content }));
 }
 
-export async function runPlayground(run: PlaygroundRun): Promise<PlaygroundOutcome> {
-  const agent = new HttpAgent({
-    url: agentApiUrl(PLAYGROUND_PATH),
-    headers: { ...REQUEST_HEADERS },
-    fetch: fetchWithSession,
+export function buildRunInput(run: PlaygroundRun): AgUiRunInput {
+  return {
     threadId: crypto.randomUUID(),
-    initialMessages: toMessages(run.history),
-    initialState: { ...run.target, ...run.scenario },
-  });
-  run.signal?.addEventListener("abort", () => agent.abortRun(), { once: true });
+    runId: crypto.randomUUID(),
+    state: { ...run.target, ...run.scenario },
+    messages: toMessages(run.history),
+    tools: [],
+    context: [],
+    forwardedProps: {},
+  };
+}
 
+export async function runPlayground(run: PlaygroundRun): Promise<PlaygroundOutcome> {
   const outcome: PlaygroundOutcome & { failed: boolean } = { reply: "", result: null, failed: false };
 
   try {
-    await agent.runAgent(
-      {},
+    const response = await fetchWithSession(agentApiUrl(PLAYGROUND_PATH), {
+      method: "POST",
+      headers: { ...REQUEST_HEADERS, "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify(buildRunInput(run)),
+      signal: run.signal,
+    });
+    await readAgUiStream(
+      response,
       {
-        onTextMessageContentEvent: ({ event }) => {
-          outcome.reply += event.delta;
-          run.onReplyDelta?.(event.delta);
+        onTextMessageContent: (delta) => {
+          outcome.reply += delta;
+          run.onReplyDelta?.(delta);
         },
-        onStateSnapshotEvent: ({ event }) => {
-          if (isPlaygroundResult(event.snapshot)) outcome.result = event.snapshot;
+        onStateSnapshot: (snapshot) => {
+          if (isPlaygroundResult(snapshot)) outcome.result = snapshot;
         },
-        onRunErrorEvent: () => {
+        onRunError: () => {
           outcome.failed = true;
         },
       },
+      run.signal,
     );
   } catch (error) {
-    if (error instanceof ApiError || run.signal?.aborted) throw error;
+    if (error instanceof ApiError) throw error;
     throw new ApiError(FALLBACK_ERROR, 0);
   }
 
