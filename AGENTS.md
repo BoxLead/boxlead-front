@@ -115,7 +115,7 @@ Run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before co
 
 ### End-to-end isolation
 
-Playwright runs `E2E_WORKERS` workers (4 locally, 2 in CI, `e2e/ports.ts`). The mock API keeps its state in memory, so each worker gets its own instance on `8090 + parallelIndex`, and the app always talks to `8090`: the `test` exported from `e2e/support.ts` rewrites those requests to the worker's instance. Import `test` and `expect` from `./support.ts`, never from `@playwright/test`, and use `mockApiUrl()` for direct calls. `login()` signs in through the API and skips the form; tests of the form itself fill it in by hand. Playwright needs Node 24 (`.ts` mock server) and runs in `test-results/`, so do not start two runs at once.
+Playwright runs `E2E_WORKERS` workers (4, in `e2e/ports.ts`). The mock API keeps its state in memory, so each worker gets its own instance on `8090 + parallelIndex`, and the app always talks to `8090`: the `test` exported from `e2e/support.ts` rewrites those requests to the worker's instance. Import `test` and `expect` from `./support.ts`, never from `@playwright/test`, and use `mockApiUrl()` for direct calls. `login()` signs in through the API and skips the form; tests of the form itself fill it in by hand. Playwright needs Node 24 (`.ts` mock server) and runs in `test-results/`, so do not start two runs at once.
 
 ### Demo video
 
