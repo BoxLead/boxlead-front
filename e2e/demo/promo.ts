@@ -231,6 +231,7 @@ class Stage {
     const target = this.frame(layer).locator(selector).first();
     await target.waitFor();
     await target.evaluate((element) => element.scrollIntoView({ block: "center", inline: "nearest" }));
+    await this.page.evaluate(() => window.scrollTo(0, 0));
     await this.page.waitForTimeout(150);
   }
 }
