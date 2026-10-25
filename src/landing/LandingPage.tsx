@@ -12,7 +12,8 @@ import { PlansSection } from "./components/PlansSection";
 import { FaqSection } from "./components/FaqSection";
 import { CtaSection } from "./components/CtaSection";
 import { Footer } from "./components/Footer";
-import { BILLING_ENABLED } from "./flags";
+import { BILLING_ENABLED, REFERRALS_ENABLED } from "./flags";
+import { captureReferral } from "../util/referral";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -71,7 +72,14 @@ function usePointerGlow() {
   }, []);
 }
 
+function useReferralCapture() {
+  useEffect(() => {
+    if (REFERRALS_ENABLED) captureReferral();
+  }, []);
+}
+
 export function LandingPage() {
+  useReferralCapture();
   useScrollReveal();
   usePointerGlow();
 

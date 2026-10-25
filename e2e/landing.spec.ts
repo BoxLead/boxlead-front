@@ -1,4 +1,6 @@
-import { BILLING_ENABLED } from "../src/landing/flags.ts";
+import type { Page } from "@playwright/test";
+import { BILLING_ENABLED, REFERRALS_ENABLED } from "../src/landing/flags.ts";
+import { ATTRIBUTION_WINDOW_DAYS, REFERRAL_COOKIE } from "../src/util/referral.ts";
 import { expect, test } from "./support.ts";
 
 test("the landing shows the demo video and starts it on request", async ({ page }) => {
@@ -61,4 +63,54 @@ test("the plans section shows no amounts and leads to the register", async ({ pa
   await expect(plans.getByRole("link", { name: "Elegir Starter" })).toHaveAttribute("href", "/register?plan=STARTER");
   await expect(plans.getByRole("link", { name: "Elegir Business" })).toHaveAttribute("href", "/register?plan=BUSINESS");
   expect(await plans.innerText()).not.toMatch(/[\d$]/);
+});
+
+const REFERRAL_CODE = "7KX2M9QH4R";
+
+async function referralCookieOf(page: Page) {
+  const cookies = await page.context().cookies();
+  return cookies.find((cookie) => cookie.name === REFERRAL_COOKIE);
+}
+
+test("a valid referral code is kept on first touch and leaves the URL", async ({ page }) => {
+  await page.goto(`/?ref=${REFERRAL_CODE.toLowerCase()}&utm_source=ig`);
+  await expect(page.locator(".landing")).toBeVisible();
+  if (!REFERRALS_ENABLED) {
+    await expect(page).toHaveURL(/\/\?ref=7kx2m9qh4r&utm_source=ig$/);
+    expect(await referralCookieOf(page)).toBeUndefined();
+    return;
+  }
+  await expect(page).toHaveURL(/\/\?utm_source=ig$/);
+  const cookie = await referralCookieOf(page);
+  expect(cookie).toMatchObject({ value: REFERRAL_CODE, secure: true, sameSite: "Lax", path: "/", domain: "localhost" });
+  const days = ((cookie?.expires ?? 0) * 1000 - Date.now()) / 86_400_000;
+  expect(days).toBeGreaterThan(ATTRIBUTION_WINDOW_DAYS - 1);
+  expect(days).toBeLessThanOrEqual(ATTRIBUTION_WINDOW_DAYS);
+});
+
+test("an invalid referral code leaves no cookie", async ({ page }) => {
+  await page.goto("/?ref=abc%3B%20Domain%3Devil.test");
+  await expect(page.locator(".landing")).toBeVisible();
+  if (REFERRALS_ENABLED) await expect(page).toHaveURL(/localhost:\d+\/$/);
+  expect(await referralCookieOf(page)).toBeUndefined();
+});
+
+test("a referral code never replaces an earlier one", async ({ page, baseURL }) => {
+  await page.context().addCookies([{ name: REFERRAL_COOKIE, value: "AAAAAAAAAA", url: baseURL, secure: true, sameSite: "Lax" }]);
+  await page.goto(`/?ref=${REFERRAL_CODE}`);
+  await expect(page.locator(".landing")).toBeVisible();
+  if (REFERRALS_ENABLED) await expect(page).toHaveURL(/localhost:\d+\/$/);
+  expect((await referralCookieOf(page))?.value).toBe("AAAAAAAAAA");
+});
+
+test("the landing never calls the API", async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL ?? "").origin;
+  const foreign: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).origin !== appOrigin) foreign.push(request.url());
+  });
+  await page.goto(`/?ref=${REFERRAL_CODE}`);
+  await page.locator(".landing-footer").scrollIntoViewIfNeeded();
+  await page.waitForLoadState("networkidle");
+  expect(foreign).toEqual([]);
 });
