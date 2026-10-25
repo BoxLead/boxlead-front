@@ -19,11 +19,15 @@ function ProfileForm({ profile }: ProfileFormProps) {
   const [description, setDescription] = useState(profile.description);
   const [tone, setTone] = useState(profile.tone ?? "");
   const [autoCategorize, setAutoCategorize] = useState(profile.autoCategorize);
+  const [autoQualify, setAutoQualify] = useState(profile.autoQualify);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const dirty =
-    description !== profile.description || tone !== (profile.tone ?? "") || autoCategorize !== profile.autoCategorize;
+    description !== profile.description ||
+    tone !== (profile.tone ?? "") ||
+    autoCategorize !== profile.autoCategorize ||
+    autoQualify !== profile.autoQualify;
   const invalid = description.length > PROFILE_DESCRIPTION_MAX || tone.length > PROFILE_TONE_MAX;
 
   async function submit(event: FormEvent) {
@@ -36,10 +40,12 @@ function ProfileForm({ profile }: ProfileFormProps) {
         description: description.trim(),
         tone: tone.trim() || null,
         autoCategorize,
+        autoQualify,
       });
       setDescription(saved.description);
       setTone(saved.tone ?? "");
       setAutoCategorize(saved.autoCategorize);
+      setAutoQualify(saved.autoQualify);
       toast({ message: "Guardaste el contexto del negocio." });
     } catch (e) {
       setError(agentErrorMessage(e, "No pudimos guardar el contexto. Probá de nuevo."));
@@ -86,6 +92,13 @@ function ProfileForm({ profile }: ProfileFormProps) {
       <div className="field">
         <Switch label="Categorizar leads automáticamente" checked={autoCategorize} onChange={setAutoCategorize} />
         <span className="field-help">Los agentes eligen una categoría para los leads que todavía no tienen una.</span>
+      </div>
+      <div className="field">
+        <Switch label="Calificar leads automáticamente" checked={autoQualify} onChange={setAutoQualify} />
+        <span className="field-help">
+          Los agentes marcan cada lead como frío, tibio o caliente según la conversación. Lo que elegís vos no se
+          cambia.
+        </span>
       </div>
       <div className="profile-actions">
         <button type="submit" className="btn btn-primary" disabled={!dirty || invalid || saving}>

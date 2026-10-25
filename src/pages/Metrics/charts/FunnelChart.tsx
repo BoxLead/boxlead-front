@@ -23,7 +23,8 @@ function describe(steps: FunnelStep[], index: number | null): string {
   if (index === 0) return `${formatNumber(step.value)} leads en el período, ${formatNumber(step.previous)} en el anterior`;
   const before = steps[index - 1];
   const dropped = before.value - step.value;
-  return `${formatPercent(step.fromPrevious)} de los ${before.label.toLowerCase()} avanzó, ${formatNumber(dropped)} quedaron en el camino`;
+  const progress = `${formatPercent(step.fromPrevious)} de los ${before.label.toLowerCase()} avanzó, ${formatNumber(dropped)} quedaron en el camino`;
+  return step.explanation ? `${progress}. ${step.explanation}` : progress;
 }
 
 export function FunnelChart({ steps }: FunnelChartProps) {

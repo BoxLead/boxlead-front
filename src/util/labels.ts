@@ -1,4 +1,4 @@
-import type { LeadResponse, LeadStatus, PlatformType } from "../api/types";
+import type { LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../api/types";
 import { getPlatform } from "../platforms";
 
 const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
@@ -10,6 +10,18 @@ const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 };
 
 export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as LeadStatus[];
+
+const LEAD_TEMPERATURE_LABELS: Record<LeadTemperature, string> = {
+  COLD: "Frío",
+  WARM: "Tibio",
+  HOT: "Caliente",
+};
+
+export const LEAD_TEMPERATURES = Object.keys(LEAD_TEMPERATURE_LABELS) as LeadTemperature[];
+
+export function leadTemperatureLabel(temperature: LeadTemperature): string {
+  return LEAD_TEMPERATURE_LABELS[temperature];
+}
 
 export function platformLabel(platform: PlatformType): string {
   return getPlatform(platform).name;

@@ -1,12 +1,15 @@
-import type { LeadResponse, LeadStatus, PlatformType } from "../../api/types";
+import type { LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { UNCATEGORIZED } from "../../util/categories";
 import { LEAD_STATUSES, leadDisplayName } from "../../util/labels";
+
+export const UNEVALUATED = "none";
 
 export type LeadFilters = {
   status: LeadStatus | null;
   channel: PlatformType | "ALL";
   includeBuyers: boolean;
   category: string | null;
+  temperature: LeadTemperature | typeof UNEVALUATED | null;
   query: string;
 };
 
@@ -14,6 +17,12 @@ function matchesCategory(lead: LeadResponse, category: string | null): boolean {
   if (category === null) return true;
   if (category === UNCATEGORIZED) return !lead.categoryId;
   return lead.categoryId === category;
+}
+
+function matchesTemperature(lead: LeadResponse, temperature: LeadFilters["temperature"]): boolean {
+  if (temperature === null) return true;
+  if (temperature === UNEVALUATED) return !lead.temperature;
+  return lead.temperature === temperature;
 }
 
 function normalize(text: string): string {
@@ -30,6 +39,7 @@ export function filterLeads(leads: LeadResponse[], filters: LeadFilters): LeadRe
         (!filters.status || lead.status === filters.status) &&
         (filters.channel === "ALL" || lead.platform === filters.channel) &&
         matchesCategory(lead, filters.category) &&
+        matchesTemperature(lead, filters.temperature) &&
         (!query ||
           normalize(leadDisplayName(lead)).includes(query) ||
           normalize(lead.email ?? "").includes(query) ||

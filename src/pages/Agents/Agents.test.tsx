@@ -22,7 +22,7 @@ vi.mock("../../hooks/useApiQuery", () => ({
     queries.get(key ?? "") ?? { data: undefined, error: null, loading: true, reload: () => undefined },
 }));
 
-const profile: BusinessProfile = { description: "Vendemos audio", tone: null, autoCategorize: false };
+const profile: BusinessProfile = { description: "Vendemos audio", tone: null, autoCategorize: false, autoQualify: true };
 
 const agent: AgentResponse = {
   id: "a-1",

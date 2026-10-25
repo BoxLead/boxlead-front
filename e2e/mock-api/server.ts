@@ -6,6 +6,7 @@ import type {
   ConversationResponse,
   LeadResponse,
   LeadStatus,
+  LeadTemperature,
   MessageResponse,
   PlatformType,
   SalesStage,
@@ -48,6 +49,7 @@ const USER = {
 };
 const PLATFORMS: PlatformType[] = ["META", "INSTAGRAM", "TIKTOK", "WHATSAPP", "GOOGLE_ADS", "MELI"];
 const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
+const LEAD_TEMPERATURES: LeadTemperature[] = ["COLD", "WARM", "HOT"];
 const MELI_ANSWER_LIMIT = 2000;
 const MELI_MESSAGE_LIMIT = 350;
 const INSTAGRAM_COMMENT_LIMIT = 2200;
@@ -562,14 +564,32 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       leadRef.updatedAt = new Date().toISOString();
       return send(res, 200, leadRef);
     }
+    if (parts[2] === "temperature" && method === "PUT") {
+      const leadRef = state.leads.find((l) => l.id === parts[1]);
+      if (!leadRef) return fail(res, 404, "Lead not found");
+      const body = await readBody(req);
+      const temperature = body.temperature ?? null;
+      if (temperature !== null && !LEAD_TEMPERATURES.includes(temperature as LeadTemperature)) {
+        return fail(res, 400, "Invalid temperature");
+      }
+      leadRef.temperature = temperature as LeadTemperature | null;
+      leadRef.updatedAt = new Date().toISOString();
+      return send(res, 200, leadRef);
+    }
     if (parts.length === 1 && method === "GET") {
       const status = url.searchParams.get("status");
+      const temperature = url.searchParams.get("temperature");
+      if (temperature && !LEAD_TEMPERATURES.includes(temperature as LeadTemperature)) {
+        return fail(res, 400, "Invalid value for parameter 'temperature'");
+      }
       const includePostSale = url.searchParams.get("includePostSale") === "true";
       if (status && !LEAD_STATUSES.includes(status as LeadStatus)) {
         return fail(res, 400, "Invalid value for parameter 'status'");
       }
       const leads = state.leads.filter(
-        (l) => (includePostSale || !l.postSaleOnly) && (!status || l.status === status),
+        (l) => (includePostSale || !l.postSaleOnly) &&
+          (!status || l.status === status) &&
+          (!temperature || l.temperature === temperature),
       );
       return send(res, 200, leads);
     }

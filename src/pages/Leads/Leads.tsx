@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import type { CategoryResponse, LeadResponse, LeadStatus, PlatformType } from "../../api/types";
+import type { CategoryResponse, LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
 import { SearchIcon, UsersIcon } from "../../components/icons/UiIcons";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
+import { TemperatureSelect } from "../../components/TemperatureSelect/TemperatureSelect";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
 import { ChoiceGroup, type Choice } from "../../components/ui/ChoiceGroup";
@@ -16,12 +17,23 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { CONNECTABLE_PLATFORMS, getPlatform } from "../../platforms";
 import { UNCATEGORIZED } from "../../util/categories";
 import { formatRelative } from "../../util/format";
-import { LEAD_STATUSES, leadDisplayName, leadStatusLabel } from "../../util/labels";
-import { filterLeads, statusCounts, type LeadFilters } from "./leadsModel";
+import {
+  LEAD_STATUSES,
+  LEAD_TEMPERATURES,
+  leadDisplayName,
+  leadStatusLabel,
+  leadTemperatureLabel,
+} from "../../util/labels";
+import { UNEVALUATED, filterLeads, statusCounts, type LeadFilters } from "./leadsModel";
 import "./Leads.css";
 
 function parseStatus(value: string | null): LeadStatus | null {
   return LEAD_STATUSES.includes(value as LeadStatus) ? (value as LeadStatus) : null;
+}
+
+function parseTemperature(value: string | null): LeadFilters["temperature"] {
+  if (value === UNEVALUATED) return UNEVALUATED;
+  return LEAD_TEMPERATURES.includes(value as LeadTemperature) ? (value as LeadTemperature) : null;
 }
 
 function parseChannel(value: string | null): PlatformType | "ALL" {
@@ -41,6 +53,7 @@ export function Leads() {
     channel: parseChannel(searchParams.get("channel")),
     includeBuyers: searchParams.get("buyers") === "1",
     category: searchParams.get("category"),
+    temperature: parseTemperature(searchParams.get("temperature")),
     query,
   };
 
@@ -127,6 +140,22 @@ export function Leads() {
             </select>
           </label>
         ) : null}
+        <label className="leads-temperature-filter">
+          <span className="visually-hidden">Filtrar por temperatura</span>
+          <select
+            className="select"
+            value={filters.temperature ?? ""}
+            onChange={(event) => setParam("temperature", event.target.value || null)}
+          >
+            <option value="">Todas las temperaturas</option>
+            {LEAD_TEMPERATURES.map((temperature) => (
+              <option key={temperature} value={temperature}>
+                {leadTemperatureLabel(temperature)}
+              </option>
+            ))}
+            <option value={UNEVALUATED}>Sin evaluar</option>
+          </select>
+        </label>
         {buyers > 0 ? (
           <label className="leads-buyers-toggle">
             <input
@@ -199,6 +228,7 @@ export function Leads() {
               <tr>
                 <th scope="col">Contacto</th>
                 <th scope="col">Estado</th>
+                <th scope="col">Temperatura</th>
                 <th scope="col">Categoría</th>
                 <th scope="col">Datos</th>
                 <th scope="col">Primer contacto</th>
@@ -226,6 +256,9 @@ export function Leads() {
                     </td>
                     <td>
                       <StatusSelect lead={lead} />
+                    </td>
+                    <td>
+                      <TemperatureSelect lead={lead} />
                     </td>
                     <td>
                       <CategorySelect lead={lead} categories={categoryList} />

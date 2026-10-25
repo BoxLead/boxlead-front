@@ -1,5 +1,5 @@
 import { api } from "../api/client";
-import type { LeadResponse, LeadStatus } from "../api/types";
+import type { LeadResponse, LeadStatus, LeadTemperature } from "../api/types";
 import { getQueryState, invalidateQueries, setQueryData } from "./queryCache";
 
 export const ALL_LEADS_KEY = "/leads?includePostSale=true";
@@ -29,6 +29,23 @@ export async function updateLeadStatus(lead: LeadResponse, status: LeadStatus): 
     const saved = await api.patch<LeadResponse>(leadKey(lead.id), { status });
     replaceLead(saved);
     void invalidateQueries("/leads");
+    return saved;
+  } catch (error) {
+    replaceLead(previous);
+    throw error;
+  }
+}
+
+export async function assignLeadTemperature(
+  lead: LeadResponse,
+  temperature: LeadTemperature | null,
+): Promise<LeadResponse> {
+  const previous = getQueryState<LeadResponse>(leadKey(lead.id)).data ?? lead;
+  replaceLead({ ...lead, temperature });
+  try {
+    const saved = await api.put<LeadResponse>(`${leadKey(lead.id)}/temperature`, { temperature });
+    replaceLead(saved);
+    void invalidateQueries("/metrics");
     return saved;
   } catch (error) {
     replaceLead(previous);

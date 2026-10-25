@@ -77,6 +77,13 @@ export function PrivacyPolicy() {
           act as data processors under our instructions.
         </li>
         <li>
+          <strong>AI classification provider</strong> — we use TypeSafe AI to
+          classify conversations (for example, to suggest a category or how
+          interested a customer is). We send it only short excerpts of the
+          conversation with emails, phone numbers and links removed, and it
+          acts as a data processor under our instructions.
+        </li>
+        <li>
           <strong>Legal requirements</strong> — if required by applicable law,
           regulation, or valid legal process.
         </li>

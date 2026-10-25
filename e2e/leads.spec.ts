@@ -120,3 +120,35 @@ test("deleting a lead removes the person and their conversations", async ({ page
   await expect(page.getByRole("list", { name: "Conversaciones" }).getByRole("link")).toHaveCount(5);
   await expect(page.getByRole("list", { name: "Conversaciones" }).getByText("Martín Herrera")).toHaveCount(0);
 });
+
+test("the temperature changes from the table and sticks", async ({ page }) => {
+  await login(page, "/app/leads");
+  await expect(page.getByLabel("Temperatura de Martín Herrera")).toHaveValue("");
+  await page.getByLabel("Temperatura de Martín Herrera").selectOption("HOT");
+  await expect(page.getByRole("status").filter({ hasText: "Martín Herrera quedó caliente." })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Temperatura de Martín Herrera")).toHaveValue("HOT");
+
+  await page.getByLabel("Temperatura de Martín Herrera").selectOption("");
+  await expect(page.getByRole("status").filter({ hasText: "Martín Herrera quedó sin evaluar." })).toBeVisible();
+});
+
+test("the temperature filter keeps one temperature and lives in the URL", async ({ page }) => {
+  await login(page, "/app/leads");
+  await page.getByLabel("Filtrar por temperatura").selectOption("HOT");
+  await expect(page).toHaveURL(/temperature=HOT/);
+  await expect(rows(page)).toHaveCount(1);
+  await expect(rows(page)).toContainText("sofi.decoraciones");
+
+  await page.getByLabel("Filtrar por temperatura").selectOption("none");
+  await expect(page).toHaveURL(/temperature=none/);
+  await expect(rows(page)).toHaveCount(3);
+  await expect(rows(page).filter({ hasText: "Martín Herrera" })).toHaveCount(1);
+});
+
+test("the temperature is set from the lead page", async ({ page }) => {
+  await login(page, "/app/leads");
+  await page.getByRole("link", { name: "Martín Herrera" }).click();
+  await page.getByLabel("Temperatura de Martín Herrera").selectOption("COLD");
+  await expect(page.getByRole("status").filter({ hasText: "Martín Herrera quedó frío." })).toBeVisible();
+});

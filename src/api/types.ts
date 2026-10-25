@@ -14,6 +14,8 @@ export type MessageDirection = "INBOUND" | "OUTBOUND";
 
 export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "LOST" | "CLOSED";
 
+export type LeadTemperature = "COLD" | "WARM" | "HOT";
+
 export type AuthUser = {
   userId: string;
   email: string;
@@ -108,6 +110,7 @@ export type LeadResponse = {
   status: LeadStatus;
   postSaleOnly: boolean;
   categoryId?: string | null;
+  temperature?: LeadTemperature | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -337,6 +340,7 @@ export type BusinessProfile = {
   description: string;
   tone: string | null;
   autoCategorize: boolean;
+  autoQualify: boolean;
 };
 
 export type ReplyAudience = "PUBLIC" | "PRIVATE";

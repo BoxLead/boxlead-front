@@ -104,7 +104,7 @@ export function toAgentResponse(input: AgentInput, position: number, existing?: 
   };
 }
 
-export type ProfileInput = { description: string; tone: string | null; autoCategorize: boolean };
+export type ProfileInput = { description: string; tone: string | null; autoCategorize: boolean; autoQualify: boolean };
 
 export function parseProfileBody(body: Json): ProfileInput | null {
   const description = body.description === undefined ? "" : body.description;
@@ -113,7 +113,9 @@ export function parseProfileBody(body: Json): ProfileInput | null {
   if (tone !== null && (typeof tone !== "string" || tone.length > MAX_TONE)) return null;
   const auto = body.autoCategorize === undefined ? true : body.autoCategorize;
   if (typeof auto !== "boolean") return null;
-  return { description, tone: tone ? tone.trim() || null : null, autoCategorize: auto };
+  const qualify = body.autoQualify === undefined ? true : body.autoQualify;
+  if (typeof qualify !== "boolean") return null;
+  return { description, tone: tone ? tone.trim() || null : null, autoCategorize: auto, autoQualify: qualify };
 }
 
 function specificity(scope: AgentScope): number[] {

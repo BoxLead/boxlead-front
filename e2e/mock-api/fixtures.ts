@@ -135,6 +135,7 @@ export function lead(
     status: "NEW",
     postSaleOnly: false,
     categoryId: null,
+    temperature: null,
     createdAt: ago(minutes),
     updatedAt: ago(minutes),
     ...extra,
@@ -233,7 +234,7 @@ export function emptyState(): MockState {
     orders: {},
     posts: {},
     agents: [],
-    businessProfile: { description: "", tone: null, autoCategorize: true },
+    businessProfile: { description: "", tone: null, autoCategorize: true, autoQualify: true },
     metricsSettings: { manualReplyMinutes: 4, businessHours: null },
     drafts: [],
     playgroundRuns: 0,
@@ -298,7 +299,7 @@ export function buildState(scenario: Scenario): MockState {
   state.listings[parlante.externalId] = parlante;
 
   const [consulta, presupuesto, postventa] = state.categories;
-  const martin = lead("MELI", "MARTINGOMEZ_82", "MARTIN_ML_1", 300, { categoryId: consulta.id });
+  const martin = lead("MELI", "MARTINGOMEZ_82", "MARTIN_ML_1", 300, { categoryId: consulta.id, temperature: "WARM" });
   const preSale = conversation(martin, `${MELI_SELLER_ID}_99120001`, 300);
   state.leads.push(martin);
   state.conversations.push(preSale);
@@ -390,6 +391,7 @@ export function buildState(scenario: Scenario): MockState {
 
   const sofia = lead("INSTAGRAM", "sofi.decoraciones", "17841401234567", 180, {
     status: "QUALIFIED",
+    temperature: "HOT",
   });
   const instagram = conversation(sofia, `${IG_ACCOUNT_ID}_17841401234567`, 180);
   state.leads.push(sofia);
@@ -468,6 +470,7 @@ function withAgents(state: MockState, scenario: Scenario): MockState {
     description: "Vendemos audio y accesorios. Envíos a todo el país en 48 horas. Aceptamos todos los medios de pago.",
     tone: "cercano y directo",
     autoCategorize: true,
+    autoQualify: true,
   };
   state.agents.push(
     {

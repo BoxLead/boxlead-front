@@ -89,8 +89,10 @@ function bucketOf(seconds: number): number {
   return index === -1 ? BUCKETS - 1 : index;
 }
 
-function isQualified(status: LeadStatus): boolean {
-  return status === "QUALIFIED" || status === "CLOSED";
+function isQualified(lead: LeadResponse): boolean {
+  return (
+    lead.status === "QUALIFIED" || lead.status === "CLOSED" || lead.temperature === "WARM" || lead.temperature === "HOT"
+  );
 }
 
 function isOutsideBusinessHours(hours: BusinessHours | null, time: LocalTime): boolean {
@@ -155,7 +157,7 @@ export function buildMetricsReport(state: MockState, from: string, to: string, t
     const segment = segmentOf(segments, lead);
     const day = dayOf(segment, date);
     day.leads += 1;
-    if (isQualified(lead.status)) day.qualified += 1;
+    if (isQualified(lead)) day.qualified += 1;
     segment.statuses[lead.status] += 1;
   }
 
@@ -191,7 +193,7 @@ export function buildMetricsReport(state: MockState, from: string, to: string, t
     const bucket = bucketOf(seconds);
     day.buckets[bucket] += 1;
     (response.agentName ? segment.agent : segment.human)[bucket] += 1;
-    if (isQualified(lead.status)) segment.converted[bucket] += 1;
+    if (isQualified(lead)) segment.converted[bucket] += 1;
     if (outside && bucket < FAST_BUCKETS) segment.outsideAnsweredFast += 1;
   }
 
