@@ -66,4 +66,4 @@ docker compose up --build   # Production image at localhost:3000
 4. `api/client.ts` sends `credentials: "include"` and `X-Requested-With: boxlead-web` on every request
 5. 401 response → `clearAuthAndGoLogin()` → hard redirect to `/login?next=<path>`
 6. Post-login → navigate to the safe `next` path or `/app/inbox`; logout calls `POST /auth/logout` and clears the query cache
-7. Sign up with plans → a paid plan goes to `/app/billing?checkout=<plan>` and the Beta to `next` (`data/plans.ts`). Social login carries the accepted legal versions in `appState`
+7. Sign up with plans → a paid plan goes to `/app/billing?checkout=<plan>` and the Beta to `next` (`data/plans.ts`). Social login carries the accepted legal versions in `appState`, and both sign up paths read `/auth/me` again before navigating
