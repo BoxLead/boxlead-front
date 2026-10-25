@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { AGENTS_KEY } from "../../data/agents";
+import { CATEGORIES_KEY } from "../../data/categories";
+import { CONVERSATIONS_KEY } from "../../data/conversations";
+import { ALL_LEADS_KEY } from "../../data/leads";
+import { prefetchQuery } from "../../data/queryCache";
+import { CONNECTIONS_KEY } from "../../hooks/useConnectPlatform";
+import { preloadRoute } from "../../routing/routePreload";
 import { setSidebar, useSidebar } from "../../theme/theme";
 import {
   BotIcon,
@@ -19,16 +26,22 @@ type NavItem = {
   to: string;
   label: string;
   icon: ReactNode;
+  data?: string;
 };
 
 const links: NavItem[] = [
-  { to: "/app/inbox", label: "Bandeja", icon: <InboxIcon /> },
-  { to: "/app/leads", label: "Leads", icon: <UsersIcon /> },
-  { to: "/app/metrics", label: "Métricas", icon: <ChartIcon /> },
-  { to: "/app/categories", label: "Categorías", icon: <TagIcon /> },
-  { to: "/app/agents", label: "Agentes", icon: <BotIcon /> },
-  { to: "/app/connections", label: "Conexiones", icon: <PlugIcon /> },
+  { to: "/app/inbox", label: "Bandeja", icon: <InboxIcon />, data: CONVERSATIONS_KEY },
+  { to: "/app/leads", label: "Leads", icon: <UsersIcon />, data: ALL_LEADS_KEY },
+  { to: "/app/metrics", label: "Métricas", icon: <ChartIcon />, data: CATEGORIES_KEY },
+  { to: "/app/categories", label: "Categorías", icon: <TagIcon />, data: CATEGORIES_KEY },
+  { to: "/app/agents", label: "Agentes", icon: <BotIcon />, data: AGENTS_KEY },
+  { to: "/app/connections", label: "Conexiones", icon: <PlugIcon />, data: CONNECTIONS_KEY },
 ];
+
+function warmNavItem(item: NavItem): void {
+  void preloadRoute(item.to);
+  if (item.data) prefetchQuery(item.data);
+}
 
 export function Sidebar() {
   const collapsed = useSidebar() === "collapsed";
@@ -40,17 +53,21 @@ export function Sidebar() {
         <Logo />
       </Link>
       <nav className="sidebar-nav">
-        {links.map(({ to, label, icon }) => (
+        {links.map((item) => (
           <NavLink
-            key={to}
-            to={to}
-            title={collapsed ? label : undefined}
+            key={item.to}
+            to={item.to}
+            viewTransition
+            title={collapsed ? item.label : undefined}
             className={({ isActive }) =>
               `sidebar-link${isActive ? " sidebar-link-active" : ""}`
             }
+            onPointerEnter={() => warmNavItem(item)}
+            onFocus={() => warmNavItem(item)}
+            onTouchStart={() => warmNavItem(item)}
           >
-            {icon}
-            <span className="sidebar-link-label">{label}</span>
+            {item.icon}
+            <span className="sidebar-link-label">{item.label}</span>
           </NavLink>
         ))}
       </nav>

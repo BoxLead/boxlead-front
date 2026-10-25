@@ -103,6 +103,10 @@ export function fetchQuery(key: string): Promise<void> {
   return entry.inflight;
 }
 
+export function prefetchQuery(key: string): void {
+  if (isStale(key)) void fetchQuery(key);
+}
+
 export function isStale(key: string, now = Date.now()): boolean {
   const state = getQueryState(key);
   return state.status === "idle" || state.status === "error" || now - state.fetchedAt > STALE_MS;
