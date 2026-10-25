@@ -19,13 +19,13 @@ async function openMetrics(page: Page, path = "/app/metrics") {
 }
 
 test.beforeEach(async () => {
-  await resetApi();
+  await resetApi("showcase", NOW);
 });
 
 test("shows the period at a glance", async ({ page }) => {
   await openMetrics(page);
   await expect(page.getByRole("heading", { level: 1, name: "Métricas" })).toBeVisible();
-  await expect(page.getByText("Datos de ejemplo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Datos de ejemplo")).toHaveCount(0);
   await expect(page.getByText("8 sept al 7 oct")).toBeVisible();
   await expect(page.getByRole("region", { name: "Señales" }).locator("li")).toHaveCount(3);
   await expect(tabs(page)).toHaveText([/^Leads/, /^Respuesta en 5 min/, /^Primera respuesta/, /^Calificación/]);
@@ -128,10 +128,9 @@ test("the funnel explains each step", async ({ page }) => {
   await expect(summary).toContainText("de los leads avanzó");
 });
 
-test("the assumptions change the hours saved", async ({ page }) => {
+test("the assumptions are saved", async ({ page }) => {
   await openMetrics(page);
-  const saved = attention(page).locator("dl div").filter({ hasText: "Horas ahorradas" }).locator("dd");
-  const before = await saved.innerText();
+  await expect(attention(page).locator("dl div").filter({ hasText: "Horas ahorradas" })).toHaveCount(0);
   await page.getByRole("button", { name: "Supuestos" }).click();
   const dialog = page.getByRole("dialog", { name: "Supuestos" });
   await expect(dialog.getByLabel(/Ticket/)).toHaveCount(0);
@@ -143,7 +142,8 @@ test("the assumptions change the hours saved", async ({ page }) => {
   await dialog.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Guardamos los supuestos" })).toBeVisible();
   await expect(dialog).toBeHidden();
-  await expect(saved).not.toHaveText(before);
+  await page.getByRole("button", { name: "Supuestos" }).click();
+  await expect(dialog.getByLabel("Minutos por respuesta manual")).toHaveValue("8");
 });
 
 test("signals link to the leads behind them", async ({ page }) => {

@@ -27,11 +27,11 @@ export const test = base.extend({
   },
 });
 
-export async function resetApi(scenario: Scenario = "default") {
+export async function resetApi(scenario: Scenario = "default", now?: Date) {
   const res = await fetch(`${mockApiUrl()}/__reset`, {
     method: "POST",
     headers: CSRF_HEADERS,
-    body: JSON.stringify({ scenario }),
+    body: JSON.stringify({ scenario, now: now?.toISOString() }),
   });
   expect(res.ok).toBe(true);
 }
@@ -43,14 +43,6 @@ export async function login(page: Page, path = "/app/inbox") {
   });
   expect(session.ok()).toBe(true);
   await page.goto(path);
-}
-
-export async function loginThroughForm(page: Page) {
-  await page.goto("/login");
-  await page.locator('input[name="email"]').fill(DEMO_EMAIL);
-  await page.locator('input[name="password"]').fill(DEMO_PASSWORD);
-  await page.getByRole("button", { name: "Ingresar" }).click();
-  await page.waitForURL("**/app/inbox");
 }
 
 async function waitForEnterAnimations(page: Page) {

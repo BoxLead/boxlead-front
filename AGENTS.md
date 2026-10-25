@@ -55,7 +55,7 @@ Each lead belongs to at most one category (`categoryId`). Categories come from `
 
 The page reads `GET /metrics?from&to&timezone` for the current period, the previous one and the last 12 weeks, plus `GET /metrics/settings` for the assumptions (minutes per reply and business hours). The contract lives in `api/types.ts` and the backend brief in `boxlead-core/METRICS.md`. Every segment is one channel and one category, so filters are applied in the browser without new requests.
 
-Until the backend ships those endpoints `METRICS_DEMO` in `data/metrics.ts` answers both keys locally through `setQueryResolver`, loading `metricsDemoResolver.ts` on demand so the generator never ships with the page. The demo data is deterministic, uses the account categories and assumptions, and the page shows a "Datos de ejemplo" tag. To switch to the API set `METRICS_DEMO` to false, add the routes to `e2e/mock-api` and delete the demo files.
+The mock API (`e2e/mock-api/metrics.ts`) builds the same report from the scenario data and answers `/metrics` and `/metrics/settings`. `/__reset` accepts a `now` so a spec that fixes the page clock sees the data relative to the same moment (`resetApi("showcase", NOW)`). The backend returns `agent: null` for now, so the agent rows of the attention card (agent time, solved by the agent, hours saved) stay hidden. A reply moves a `NEW` lead to `CONTACTED` by itself, in the API and in the mock.
 
 The page only shows what BoxLead can measure. Sales and revenue are left out on purpose because they are hard to attribute, and ad spend for a cost per lead is the next step (see `METRICS.md`).
 
@@ -112,6 +112,10 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 Do not modify without explicit approval: `terraform/`, `.github/workflows/`, `.env.example`, or the behavior of `ProtectedRoute.tsx`.
 
 Run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before considering work complete. New behaviour gets unit tests next to the code (`*.test.ts(x)`) and an end-to-end spec in `e2e/`, with the mock API extended to match the backend contract.
+
+### End-to-end isolation
+
+Playwright runs `E2E_WORKERS` workers (4 locally, 2 in CI, `e2e/ports.ts`). The mock API keeps its state in memory, so each worker gets its own instance on `8090 + parallelIndex`, and the app always talks to `8090`: the `test` exported from `e2e/support.ts` rewrites those requests to the worker's instance. Import `test` and `expect` from `./support.ts`, never from `@playwright/test`, and use `mockApiUrl()` for direct calls. `login()` signs in through the API and skips the form; tests of the form itself fill it in by hand. Playwright needs Node 24 (`.ts` mock server) and runs in `test-results/`, so do not start two runs at once.
 
 ### Demo video
 

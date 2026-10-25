@@ -27,7 +27,7 @@ import {
 
 const DAY = 60 * 24;
 const BULK_LEADS = 780;
-const OLDEST_MINUTES = 30 * DAY;
+const OLDEST_MINUTES = 90 * DAY;
 const NEWEST_BULK_MINUTES = 25;
 const NEWEST_BULK_REPLY_MINUTES = 15;
 
@@ -355,14 +355,26 @@ function bulk(state: MockState, categories: Record<string, StoredCategory>, post
       const last = position === steps.length - 1 || at < 30;
       state.messages.push(message(chat, "INBOUND", step.question, at, { kind, contextRef }));
       if (last && waiting) break;
-      const reply = Math.max(at - dice.int(1, 40), NEWEST_BULK_REPLY_MINUTES);
+      const delay = dice.int(1, 40);
+      const byAgent = dice.chance(0.62);
+      const reply = Math.max(at - (byAgent ? Math.ceil(delay / 10) : delay * 3), NEWEST_BULK_REPLY_MINUTES);
       state.messages.push(
-        message(chat, "OUTBOUND", step.answer, reply, { kind, contextRef, agentName: dice.chance(0.62) ? agent : null }),
+        message(chat, "OUTBOUND", step.answer, reply, { kind, contextRef, agentName: byAgent ? agent : null }),
       );
       if (last || reply < 40) break;
       at = reply - dice.int(5, Math.min(600, reply - 20));
     }
     if (waiting && minutes < 8 * 60 && dice.chance(0.75)) chat.lastReadAt = null;
+  }
+}
+
+function contactAnswered(state: MockState) {
+  const conversationLead = new Map(state.conversations.map((chat) => [chat.id, chat.leadId]));
+  const answered = new Set(
+    state.messages.filter((m) => m.direction === "OUTBOUND").map((m) => conversationLead.get(m.conversationId)),
+  );
+  for (const person of state.leads) {
+    if (person.status === "NEW" && answered.has(person.id)) person.status = "CONTACTED";
   }
 }
 
@@ -622,6 +634,7 @@ export function buildShowcase(): MockState {
   const posts = images(state);
   heroes(state, categories);
   bulk(state, categories, posts);
+  contactAnswered(state);
 
   const roster = agents(categories);
   state.agents.push(...roster);
@@ -631,6 +644,7 @@ export function buildShowcase(): MockState {
     tone: "cercano y directo",
     autoCategorize: true,
   };
+  state.metricsSettings = { manualReplyMinutes: 4, businessHours: { weekdays: [0, 1, 2, 3, 4, 5], from: 9, to: 19 } };
   activity(state, roster);
   state.playgroundReplies = [
     {

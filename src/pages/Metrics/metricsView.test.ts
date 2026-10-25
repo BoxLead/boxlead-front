@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { CategoryResponse, MetricsReport } from "../../api/types";
-import { buildDemoReport, DEMO_SETTINGS } from "../../data/metricsDemo";
+import type { CategoryResponse, MetricsReport, MetricsSettings } from "../../api/types";
+import { dateRange } from "../../util/dates";
 import { buildChartData } from "./chartData";
 import { periodRange } from "./metricsModel";
 import { buildMetricsView, type MetricsInput } from "./metricsView";
+import { testDay, testSegment } from "./testSegments";
 
 const TODAY = "2026-10-07";
 
@@ -18,8 +19,31 @@ const categories: CategoryResponse[] = ["Consulta", "Presupuesto"].map((name, po
   updatedAt: "",
 }));
 
+const settings: MetricsSettings = {
+  manualReplyMinutes: 4,
+  businessHours: { weekdays: [0, 1, 2, 3, 4, 5], from: 9, to: 19 },
+};
+
+const SEGMENTS = [
+  { platform: "WHATSAPP", categoryId: "c0", leads: 4 },
+  { platform: "WHATSAPP", categoryId: "c1", leads: 2 },
+  { platform: "INSTAGRAM", categoryId: "c0", leads: 3 },
+  { platform: "META", categoryId: null, leads: 1 },
+] as const;
+
 function report(from: string, to: string): MetricsReport {
-  return buildDemoReport({ from, to, today: TODAY, timezone: "UTC", categories, settings: DEMO_SETTINGS });
+  return {
+    from,
+    to,
+    timezone: "UTC",
+    segments: SEGMENTS.map(({ platform, categoryId, leads }) =>
+      testSegment(
+        platform,
+        categoryId,
+        dateRange(from, to).map((date, index) => testDay(date, leads + (index % 3), { qualified: 1 })),
+      ),
+    ),
+  };
 }
 
 function input(period: 7 | 30 | 90, patch: Partial<MetricsInput> = {}): MetricsInput {
@@ -31,7 +55,7 @@ function input(period: 7 | 30 | 90, patch: Partial<MetricsInput> = {}): MetricsI
     current: report(range.from, range.to),
     previous: report(range.previousFrom, range.previousTo),
     history: report("2026-07-15", "2026-10-06"),
-    settings: DEMO_SETTINGS,
+    settings,
     categories,
     ...patch,
   };
@@ -49,7 +73,7 @@ describe("metrics view", () => {
   it("totals every indicator and forecasts leads only", () => {
     const view = buildMetricsView(input(30));
     expect(view.current.leads).toBe(view.totals.leads);
-    expect(view.current.fast).toBeGreaterThan(0.5);
+    expect(view.current.fast).toBe(1);
     expect(view.current.response).toBeGreaterThan(0);
     expect(Object.keys(view.forecasts)).toEqual(["leads"]);
     expect(view.categoryName("none")).toBe("Sin categoría");
