@@ -1,0 +1,156 @@
+.plan-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0 0 var(--signal-space-lg);
+  padding: 0;
+  border: none;
+}
+
+.plan-picker-legend {
+  margin-bottom: 10px;
+  padding: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--signal-heading);
+}
+
+.plan-picker-empty {
+  margin: 0 0 var(--signal-space-lg);
+  padding: 12px var(--signal-space-md);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-sm);
+  background: color-mix(in srgb, var(--signal-accent) 6%, var(--signal-surface));
+  color: var(--signal-text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.plan-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 6px;
+  padding: 14px var(--signal-space-md);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-surface);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.plan-option:hover:not(.plan-option-disabled, .plan-option-contact) {
+  border-color: var(--signal-border-strong);
+}
+
+.plan-option-selected,
+.plan-option-selected:hover:not(.plan-option-disabled, .plan-option-contact) {
+  border-color: var(--signal-accent);
+  background: color-mix(in srgb, var(--signal-accent) 8%, var(--signal-surface));
+  box-shadow: 0 0 0 1px var(--signal-accent);
+}
+
+.plan-option:has(.plan-option-radio:focus-visible) {
+  outline: 2px solid var(--signal-accent);
+  outline-offset: 2px;
+}
+
+.plan-option-disabled {
+  cursor: default;
+  background: color-mix(in srgb, var(--signal-heading) 3%, var(--signal-surface));
+}
+
+.plan-option-contact {
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: calc(var(--signal-space-md) + 30px);
+  cursor: default;
+}
+
+.plan-option-radio {
+  grid-row: 1;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--signal-accent);
+}
+
+.plan-option-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.plan-option-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--signal-heading);
+}
+
+.plan-option-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--signal-accent-muted);
+  color: var(--signal-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plan-option-details {
+  grid-column: -2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.plan-option-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.plan-option-amount {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--signal-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-option-period {
+  font-size: 0.875rem;
+  color: var(--signal-text-muted);
+}
+
+.plan-option-fine {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--signal-text-muted);
+}
+
+.plan-option-limits {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--signal-text);
+}
+
+.plan-option-note {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--signal-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-option {
+    transition: none;
+  }
+}
