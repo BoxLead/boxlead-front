@@ -36,6 +36,23 @@ import {
   PLAYGROUND_RUNS_PER_HOUR,
 } from "./agents.ts";
 import { PRODUCT_IMAGES } from "./images.ts";
+import {
+  agentGate,
+  billingRoute,
+  buildBilling,
+  isBillingScenario,
+  manualSendGate,
+  markOverPlanLimit,
+  metricsGate,
+  missingLegal,
+  playgroundLimit,
+  sessionFields,
+  settleCheckout,
+  startInvitedDemo,
+  withPlanAgents,
+  type BillingState,
+  type MockReply,
+} from "./billing.ts";
 
 const PORT = Number(process.env.MOCK_API_PORT ?? 8090);
 const APP_ORIGIN = process.env.MOCK_APP_ORIGIN ?? "http://localhost:5173";
@@ -61,6 +78,7 @@ const MAX_CATEGORIES = 30;
 const NAME_IN_USE = "Category name already in use";
 
 let state: MockState = buildState("default");
+let billing: BillingState = buildBilling("default");
 
 type Json = Record<string, unknown> | unknown[] | null;
 
@@ -71,6 +89,23 @@ function send(res: ServerResponse, status: number, body?: Json, headers: Record<
 
 function fail(res: ServerResponse, status: number, message: string) {
   send(res, status, { error: message, message });
+}
+
+function reply(res: ServerResponse, { status, body, headers }: MockReply) {
+  send(res, status, body, headers);
+}
+
+function readCookies(req: IncomingMessage): Map<string, string> {
+  const cookies = new Map<string, string>();
+  for (const pair of (req.headers.cookie ?? "").split(/;\s*/)) {
+    const index = pair.indexOf("=");
+    if (index > 0) cookies.set(pair.slice(0, index), pair.slice(index + 1));
+  }
+  return cookies;
+}
+
+function sessionUser(overrides: Partial<typeof USER> = {}) {
+  return { ...USER, ...overrides, ...sessionFields(billing) };
 }
 
 async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -357,7 +392,9 @@ async function playground(req: IncomingMessage, res: ServerResponse) {
   if ("status" in parsed) return fail(res, parsed.status, parsed.message);
   const saved = parsed.agentId ? state.agents.find((a) => a.id === parsed.agentId) : undefined;
   if (parsed.agentId && !saved) return fail(res, 404, "Agent not found");
-  if (state.playgroundRuns >= Math.min(state.playgroundLimit, PLAYGROUND_RUNS_PER_HOUR)) {
+  const gate = agentGate(billing, "playground", state.agents);
+  if (gate) return reply(res, gate);
+  if (state.playgroundRuns >= Math.min(state.playgroundLimit, PLAYGROUND_RUNS_PER_HOUR, playgroundLimit(billing))) {
     return fail(res, 429, "Too many test runs, try again in a while");
   }
   state.playgroundRuns += 1;
@@ -394,8 +431,20 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const body = await readBody(req);
     const scenario = (body.scenario as Scenario | undefined) ?? "default";
     setClock(typeof body.now === "string" ? body.now : null);
-    state = scenario === "showcase" ? buildShowcase() : buildState(scenario);
+    state =
+      scenario === "showcase"
+        ? buildShowcase()
+        : isBillingScenario(scenario)
+          ? withPlanAgents(buildState("agents"))
+          : buildState(scenario);
+    billing = buildBilling(scenario, {
+      pendingLegal: body.pendingLegal === true,
+      entitlementsUnavailable: body.entitlementsUnavailable === true,
+    });
     return send(res, 200, { scenario });
+  }
+  if (path === "/__billing/checkout-result" && method === "POST") {
+    return reply(res, settleCheckout(billing, (await readBody(req)).status));
   }
   if (parts[0] === "__img") {
     const svg = PRODUCT_IMAGES[(parts[1] ?? "").replace(/\.svg$/, "")];
@@ -411,25 +460,44 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/auth/login" && method === "POST") {
     const body = await readBody(req);
     if (body.password !== DEMO_PASSWORD) return fail(res, 401, "Invalid email or password");
-    return send(res, 200, USER, { "Set-Cookie": sessionCookie("valid", 86400) });
+    return send(res, 200, sessionUser(), { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/register" && method === "POST") {
-    return send(res, 201, USER, { "Set-Cookie": sessionCookie("valid", 86400) });
+    const body = await readBody(req);
+    const legal = missingLegal(billing, body);
+    if (legal) return reply(res, legal);
+    if (typeof body.email === "string") startInvitedDemo(billing, readCookies(req), body.email);
+    return send(res, 201, sessionUser(), { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/social" && method === "POST") {
-    const claims = socialClaims((await readBody(req)).idToken);
+    const body = await readBody(req);
+    const legal = missingLegal(billing, body);
+    if (legal) return reply(res, legal);
+    const claims = socialClaims(body.idToken);
     if (!claims) return fail(res, 401, "Invalid social login");
     if (claims.email_verified !== true || typeof claims.email !== "string") {
       return fail(res, 403, "A verified email is required");
     }
     const name = typeof claims.name === "string" ? claims.name : USER.name;
-    return send(res, 200, { ...USER, email: claims.email, name }, { "Set-Cookie": sessionCookie("valid", 86400) });
+    return send(res, 200, sessionUser({ email: claims.email, name }), { "Set-Cookie": sessionCookie("valid", 86400) });
   }
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });
   }
+  const billingReply = await billingRoute(billing, {
+    method,
+    path,
+    parts,
+    query: url.searchParams,
+    cookies: readCookies(req),
+    authed: isAuthed(req),
+    userEmail: USER.email,
+    readBody: () => readBody(req),
+  });
+  if (billingReply) return reply(res, billingReply);
+
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
-  if (path === "/auth/me") return send(res, 200, USER);
+  if (path === "/auth/me") return send(res, 200, sessionUser());
 
   if (parts[0] === "metrics") {
     if (parts.length === 1 && method === "GET") {
@@ -438,6 +506,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const timezone = url.searchParams.get("timezone");
       const invalid = validateRange(from, to, timezone);
       if (invalid) return fail(res, invalid.status, invalid.message);
+      const limited = metricsGate(billing, from);
+      if (limited) return reply(res, limited);
       return send(res, 200, buildMetricsReport(state, from as string, to as string, timezone as string));
     }
     if (parts[1] === "settings" && parts.length === 2) {
@@ -472,13 +542,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 200, state.activity.details[agent.id] ?? emptyActivityDetail());
     }
     if (parts.length === 1 && method === "GET") {
-      return send(res, 200, [...state.agents].sort((a, b) => a.position - b.position));
+      return send(res, 200, markOverPlanLimit(billing, state.agents));
     }
     if (parts.length === 1 && method === "POST") {
       const input = parseAgentBody(await readBody(req));
       if (!input) return fail(res, 422, "Validation failed");
       const unknown = unknownCategories(input.scopes, state.categories.map((c) => c.id));
       if (unknown.length > 0) return fail(res, 422, `Unknown categories: ${unknown.join(", ")}`);
+      const gate = agentGate(billing, "create", state.agents);
+      if (gate) return reply(res, gate);
       const created = toAgentResponse(input, state.agents.length);
       state.agents.push(created);
       return send(res, 201, created);
@@ -490,6 +562,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       if (!input) return fail(res, 422, "Validation failed");
       const unknown = unknownCategories(input.scopes, state.categories.map((c) => c.id));
       if (unknown.length > 0) return fail(res, 422, `Unknown categories: ${unknown.join(", ")}`);
+      const gate = input.enabled && !agent.enabled ? agentGate(billing, "enable", state.agents) : null;
+      if (gate) return reply(res, gate);
       const saved = toAgentResponse(input, agent.position, agent);
       state.agents = state.agents.map((a) => (a.id === agent.id ? saved : a));
       return send(res, 200, saved);
@@ -700,6 +774,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (parts[2] === "messages" && method === "POST") {
       const body = await readBody(req);
       const content = typeof body.content === "string" ? body.content : "";
+      const restricted = body.direction === "OUTBOUND" ? manualSendGate(billing) : null;
+      if (restricted) return reply(res, restricted);
       if (body.direction === "OUTBOUND" && conversation.platform === "MELI" && !content.trim()) {
         return fail(res, 400, "MELI message cannot be empty");
       }
