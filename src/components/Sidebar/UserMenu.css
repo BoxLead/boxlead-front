@@ -111,6 +111,29 @@
   background: var(--signal-hover);
 }
 
+a.account-menu-action,
+a.account-menu-action:hover {
+  text-decoration: none;
+}
+
+.account-menu-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  padding: 10px 12px 4px;
+  border-top: 1px solid var(--signal-border);
+}
+
+.account-menu-legal-link {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
+
+.account-menu-legal-link:hover {
+  color: var(--signal-heading);
+}
+
 .theme-switch {
   position: relative;
   display: inline-flex;

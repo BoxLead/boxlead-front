@@ -1,7 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AuthUser } from "../../api/types";
+import type { AuthUser, SessionFlags } from "../../api/types";
 import { AuthContext, SESSION_FLAGS_OFF, sessionFlags, type AuthContextValue } from "../../context/auth";
 import { THEME_KEY } from "../../theme/theme";
 import { UserMenu } from "./UserMenu";
@@ -22,9 +23,11 @@ function renderMenu(user: AuthUser | null = named) {
     clearError: vi.fn(),
   };
   render(
-    <AuthContext.Provider value={value}>
-      <UserMenu />
-    </AuthContext.Provider>,
+    <MemoryRouter>
+      <AuthContext.Provider value={value}>
+        <UserMenu />
+      </AuthContext.Provider>
+    </MemoryRouter>,
   );
   return { logout };
 }
@@ -77,6 +80,27 @@ describe("UserMenu", () => {
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(account).toHaveFocus();
+  });
+
+  it("keeps the menu as today while billing is off", async () => {
+    renderMenu();
+    await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
+    const dialog = screen.getByRole("dialog", { name: "Cuenta" });
+    expect(within(dialog).queryAllByRole("link")).toEqual([]);
+  });
+
+  it("links billing, the reseller page and the consumer pages when core enables them", async () => {
+    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: true, referrals: true }, isReseller: true };
+    renderMenu({ ...named, ...flags });
+    await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
+    const dialog = screen.getByRole("dialog", { name: "Cuenta" });
+    expect(within(dialog).getByRole("link", { name: "Facturación" })).toHaveAttribute("href", "/app/billing");
+    expect(within(dialog).getByRole("link", { name: "Revendedor" })).toHaveAttribute("href", "/app/reseller");
+    expect(within(dialog).getByRole("link", { name: "Botón de arrepentimiento" })).toHaveAttribute("href", "/arrepentimiento");
+    expect(within(dialog).getByRole("link", { name: "Botón de baja de servicio" })).toHaveAttribute("href", "/baja");
+
+    await userEvent.click(within(dialog).getByRole("link", { name: "Facturación" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("closes when clicking outside", async () => {

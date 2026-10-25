@@ -336,3 +336,23 @@ export function SunIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function CardIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="M3 10h18M7 14.5h3" />
+    </Icon>
+  );
+}
+
+export function ShareIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="17.5" cy="5.5" r="2.5" />
+      <circle cx="6.5" cy="12" r="2.5" />
+      <circle cx="17.5" cy="18.5" r="2.5" />
+      <path d="m8.7 10.7 6.6-3.9M8.7 13.3l6.6 3.9" />
+    </Icon>
+  );
+}
