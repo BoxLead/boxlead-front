@@ -123,6 +123,15 @@ describe("agentErrorMessage", () => {
     expect(agentErrorMessage(new ApiError(message, status), "fallback")).toBe(expected);
   });
 
+  it("keeps the plan message the client already wrote", () => {
+    const limit = new ApiError("Llegaste al límite de tu plan.", 402, { code: "PLAN_LIMIT_REACHED" });
+    const required = new ApiError("Necesitás un plan activo para hacer esto.", 402, { code: "PLAN_REQUIRED" });
+    const unavailable = new ApiError("No pudimos revisar tu plan.", 503, { code: "ENTITLEMENTS_UNAVAILABLE" });
+    expect(agentErrorMessage(limit, "fallback")).toBe("Llegaste al límite de tu plan.");
+    expect(agentErrorMessage(required, "fallback")).toBe("Necesitás un plan activo para hacer esto.");
+    expect(agentErrorMessage(unavailable, "fallback")).toBe("No pudimos revisar tu plan.");
+  });
+
   it("uses the fallback for anything else", () => {
     expect(agentErrorMessage(new ApiError("boom", 500), "fallback")).toBe("fallback");
     expect(agentErrorMessage(new Error("network"), "fallback")).toBe("fallback");
@@ -205,6 +214,9 @@ describe("activity labels", () => {
     expect(activityOutcomeLabel("SUPERSEDED")).toBe("Omitió");
     expect(activityReasonLabel("public_comments_disabled")).toBe("Este agente no responde comentarios públicos");
     expect(activityReasonLabel("a newer message arrived")).toBe("Llegó un mensaje más nuevo");
+    expect(activityReasonLabel("plan")).toBe("Tu cuenta no tiene un plan activo");
+    expect(activityReasonLabel("plan_limit")).toBe("Se alcanzó el límite del plan");
+    expect(activityReasonLabel("public_comments_not_in_plan")).toBe("Tu plan no incluye respuestas públicas en comentarios");
     expect(activityReasonLabel("El cliente pidió una persona.")).toBe("El cliente pidió una persona.");
     expect(activityReasonLabel(null)).toBeNull();
     expect(activityReasonLabel("x".repeat(200))).toBe(`${"x".repeat(179)}…`);

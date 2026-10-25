@@ -1,4 +1,5 @@
 import { ApiError } from "../api/client";
+import { apiErrorCode } from "../api/errors";
 import type {
   AgentActivitySummary,
   AgentRequest,
@@ -97,6 +98,8 @@ export function toAgentRequest(agent: AgentResponse, patch: Partial<AgentRequest
 
 export function agentErrorMessage(error: unknown, fallback: string): string {
   if (!(error instanceof ApiError)) return fallback;
+  const code = apiErrorCode(error);
+  if (code === "PLAN_REQUIRED" || code === "PLAN_LIMIT_REACHED" || code === "ENTITLEMENTS_UNAVAILABLE") return error.message;
   if (error.status === 429) return "Hiciste muchas pruebas seguidas. Probá de nuevo en un rato.";
   if (error.status === 503) return "No pudimos verificar tus categorías ahora. Probá de nuevo en unos minutos.";
   if (error.status === 422 && /unknown categories/i.test(error.message)) {
@@ -159,6 +162,9 @@ const REASON_LABELS: Record<string, string> = {
   public_comments_disabled: "Este agente no responde comentarios públicos",
   comments_not_supported: "El canal no permite responder comentarios",
   "a newer message arrived": "Llegó un mensaje más nuevo",
+  plan: "Tu cuenta no tiene un plan activo",
+  plan_limit: "Se alcanzó el límite del plan",
+  public_comments_not_in_plan: "Tu plan no incluye respuestas públicas en comentarios",
 };
 
 const REASON_LIMIT = 180;

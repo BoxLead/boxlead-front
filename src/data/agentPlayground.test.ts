@@ -123,10 +123,24 @@ describe("runPlayground", () => {
 
   it("turns an HTTP error into an ApiError with the server message", async () => {
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ error: "Too many", message: "Too many test runs" }), { status: 429 }),
+      new Response(JSON.stringify({ error: "Boom", message: "Agent unavailable" }), { status: 500 }),
     );
 
-    await expect(runPlayground(run)).rejects.toMatchObject({ status: 429, message: "Too many test runs" });
+    await expect(runPlayground(run)).rejects.toMatchObject({ status: 500, message: "Agent unavailable" });
+  });
+
+  it("keeps the code of a plan error", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "Payment Required", message: "A plan is required", code: "PLAN_REQUIRED" }), {
+        status: 402,
+      }),
+    );
+
+    await expect(runPlayground(run)).rejects.toMatchObject({
+      status: 402,
+      message: "Necesitás un plan activo para hacer esto.",
+      body: { code: "PLAN_REQUIRED" },
+    });
   });
 
   it("does not return a reply once the run has been aborted", async () => {

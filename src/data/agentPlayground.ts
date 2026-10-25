@@ -1,5 +1,5 @@
 import { HttpAgent, type Message } from "@ag-ui/client";
-import { agentApiUrl, ApiError, handleUnauthorized, REQUEST_HEADERS } from "../api/client";
+import { agentApiUrl, ApiError, errorFromResponse, handleUnauthorized, REQUEST_HEADERS } from "../api/client";
 import type { PlatformType, PlaygroundResult, SalesStage } from "../api/types";
 
 export type PlaygroundTurn = { role: "user" | "assistant"; content: string };
@@ -35,17 +35,7 @@ async function fetchWithSession(url: string, init: RequestInit): Promise<Respons
   const response = await fetch(url, { ...init, credentials: "include" });
   if (response.ok) return response;
   if (response.status === 401) handleUnauthorized();
-  const text = await response.text();
-  let message = `Request failed (${response.status})`;
-  try {
-    const parsed: unknown = JSON.parse(text);
-    if (parsed && typeof parsed === "object" && "message" in parsed && typeof parsed.message === "string") {
-      message = parsed.message;
-    }
-  } catch {
-    message = text || message;
-  }
-  throw new ApiError(message, response.status);
+  throw await errorFromResponse(response);
 }
 
 function isPlaygroundResult(value: unknown): value is PlaygroundResult {
