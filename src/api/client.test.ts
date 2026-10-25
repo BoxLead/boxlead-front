@@ -176,6 +176,18 @@ describe("rate limited answers", () => {
 });
 
 describe("coded errors", () => {
+  it("asks to accept the legal documents in Spanish", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+    fetchMock.mockResolvedValue(
+      json({ error: "Bad Request", message: "Legal documents not accepted", code: "LEGAL_ACCEPTANCE_REQUIRED" }, 400),
+    );
+
+    await expect(api.post("/auth/register", {})).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining("aceptar los términos"),
+    });
+  });
+
   it("explains a social login on a password account in Spanish", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
     fetchMock.mockResolvedValue(

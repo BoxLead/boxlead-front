@@ -143,6 +143,7 @@ const CODE_MESSAGES: Record<string, string> = {
   PLAN_REQUIRED: "Necesitás un plan activo para hacer esto.",
   PLAN_LIMIT_REACHED: "Llegaste al límite de tu plan.",
   ENTITLEMENTS_UNAVAILABLE: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
+  LEGAL_ACCEPTANCE_REQUIRED: "Para seguir tenés que aceptar los términos y la política de privacidad vigentes.",
 };
 
 export type PlanErrorCode = "PLAN_REQUIRED" | "PLAN_LIMIT_REACHED";
