@@ -7,6 +7,7 @@ import { Banner } from "../../components/ui/Banner";
 import { useToast } from "../../components/ui/toast";
 import { cx } from "../../util/classNames";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { usePlan } from "../../hooks/usePlan";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
 import { AttentionCard } from "./AttentionCard";
@@ -16,6 +17,7 @@ import { HoursCard } from "./HoursCard";
 import { MetricsHeader } from "./MetricsHeader";
 import type { MetricsFilters } from "./metricsModel";
 import { Performance } from "./Performance";
+import { allowedPeriods, fitPeriod, forecastAllowed, historyNote } from "./planPeriods";
 import { METRICS, type MetricKey } from "./series";
 import { SettingsDialog } from "./SettingsDialog";
 import { Signals } from "./Signals";
@@ -41,13 +43,19 @@ export function Metrics() {
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const period = parsePeriod(searchParams.get("period"));
+  const plan = usePlan();
+  const periods = allowedPeriods(plan.limits);
+  const period = fitPeriod(parsePeriod(searchParams.get("period")), periods);
+  const defaultPeriod = fitPeriod(DEFAULT_PERIOD, periods);
   const metric = parseMetric(searchParams.get("metric"));
   const filters: MetricsFilters = {
     platform: parseChannel(searchParams.get("channel")),
     category: searchParams.get("category") || null,
   };
-  const { view, updating, loading, error, reload } = useMetricsView(period, filters);
+  const { view, updating, loading, error, reload } = useMetricsView(period, filters, {
+    enabled: !(plan.billing && plan.loading),
+    forecast: forecastAllowed(plan.limits),
+  });
   const filtered = filters.platform !== "ALL" || filters.category !== null;
 
   function setParams(patch: Record<string, string | null>) {
@@ -72,11 +80,13 @@ export function Metrics() {
     <div className="page metrics">
       <MetricsHeader
         period={period}
+        periods={periods}
+        note={historyNote(plan.limits)}
         filters={filters}
         platforms={view?.platforms ?? []}
         categories={view?.categories ?? []}
         range={view}
-        onPeriodChange={(next) => setParams({ period: next === DEFAULT_PERIOD ? null : String(next) })}
+        onPeriodChange={(next) => setParams({ period: next === defaultPeriod ? null : String(next) })}
         onFiltersChange={changeFilters}
         onEditSettings={openSettings}
       />
