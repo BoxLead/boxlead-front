@@ -34,7 +34,8 @@ docker compose up --build   # Production image at localhost:3000
 - `src/data/metrics.ts` — metrics query keys and the settings mutation (data comes from `/metrics`)
 - `e2e/mock-api/` — mock backend used by Playwright and `npm run dev:mock`
 - `src/api/client.ts` — HTTP client with auto-auth headers
-- `src/api/types.ts` — All API type definitions
+- `src/api/types.ts` — All API type definitions, payments included
+- `e2e/mock-api/billing.ts` — Payments mock and its `billing-*` and `reseller` scenarios
 - `src/index.css` — Global design tokens (`--signal-*`)
 - `src/landing/` — Public landing page (isolated from app). Animations are CSS, and JS only passes the pointer position as CSS variables to elements with `data-glow`
 - `src/landing/flags.ts` — `BILLING_ENABLED` (plans section) and `REFERRALS_ENABLED` (`?ref=` capture in `util/referral.ts`), both `false` until payments go live
@@ -44,7 +45,9 @@ docker compose up --build   # Production image at localhost:3000
 /                 → Public landing page
 /login, /register → Auth
 /privacy-policy, /terms-of-service, /data-deletion → Legal
+/invitacion, /terminos, /privacidad, /contratos, /arrepentimiento, /baja → Payments placeholders, redirect to / for now
 /app/*            → Protected app (inbox, leads, metrics, categories, connections)
+/app/billing, /app/billing/return, /app/reseller → Only when /auth/me enables them (FeatureRoute)
 ```
 
 ### Patterns
@@ -59,7 +62,7 @@ docker compose up --build   # Production image at localhost:3000
 ### Auth Flow
 1. The session is an `httpOnly` cookie set by the API; the frontend never sees the token
 2. Nothing is kept in `localStorage`; the user lives in memory
-3. On `/app`, `/login` and `/register`, `AuthProvider` calls `GET /auth/me` and shows a loader until it answers; then `ProtectedRoute` redirects to `/login?next=<path>` if there is no user
+3. On `/app`, `/login`, `/register` and `/invitacion`, `AuthProvider` calls `GET /auth/me` and shows a loader until it answers; then `ProtectedRoute` redirects to `/login?next=<path>` if there is no user
 4. `api/client.ts` sends `credentials: "include"` and `X-Requested-With: boxlead-web` on every request
 5. 401 response → `clearAuthAndGoLogin()` → hard redirect to `/login?next=<path>`
 6. Post-login → navigate to the safe `next` path or `/app/inbox`; logout calls `POST /auth/logout` and clears the query cache
