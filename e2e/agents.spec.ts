@@ -12,6 +12,14 @@ async function expectNoHorizontalScroll(page: Page) {
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
+async function watchForText(page: Page, text: string) {
+  await page.evaluate((needle) => {
+    new MutationObserver(() => {
+      if (document.body.textContent?.includes(needle)) document.body.dataset.seen = needle;
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }, text);
+}
+
 async function showList(page: Page) {
   const back = page.getByRole("button", { name: "Volver" });
   const list = agentList(page);
@@ -192,10 +200,12 @@ test("deletes an agent after confirming", async ({ page }) => {
 
   await openAgent(page, "Postventa");
   await page.getByRole("button", { name: "Eliminar Postventa" }).click();
+  await watchForText(page, "No encontramos este agente");
   await dialog.getByRole("button", { name: "Eliminar" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Eliminaste Postventa." })).toBeVisible();
   await showList(page);
   await expect(agentList(page).getByRole("button")).toHaveCount(1);
+  await expect(page.locator("body")).not.toHaveAttribute("data-seen");
 });
 
 test("saves the business context", async ({ page }) => {
