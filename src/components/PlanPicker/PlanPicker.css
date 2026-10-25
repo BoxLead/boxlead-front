@@ -149,6 +149,12 @@
   color: var(--signal-text);
 }
 
+.plan-option-note a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .plan-option {
     transition: none;
