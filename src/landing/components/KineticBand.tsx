@@ -19,13 +19,16 @@ function Row({ words, hidden = false }: { words: string[]; hidden?: boolean }) {
 export function KineticBand() {
   return (
     <section className="kinetic" aria-label="Lo que hace tu agente en cada canal">
-      <p className="kinetic-row kinetic-row-main">
+      <p className="visually-hidden">
+        {actions.join(", ").toLocaleLowerCase("es-AR")} en {channels.join(", ")}.
+      </p>
+      <p className="kinetic-row kinetic-row-main" aria-hidden="true">
         <span className="kinetic-track">
           <Row words={actions} />
           <Row words={actions} hidden />
         </span>
       </p>
-      <p className="kinetic-row kinetic-row-sub">
+      <p className="kinetic-row kinetic-row-sub" aria-hidden="true">
         <span className="kinetic-track">
           <Row words={channels} />
           <Row words={channels} hidden />
