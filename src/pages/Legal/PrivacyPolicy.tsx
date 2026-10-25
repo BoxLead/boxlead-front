@@ -4,7 +4,20 @@ import { LegalLayout } from "./LegalLayout";
 
 export function PrivacyPolicy() {
   return (
-    <LegalLayout title="Privacy Policy" language="en" meta="Last updated: March 29, 2026">
+    <LegalLayout
+      title="Privacy Policy"
+      language="en"
+      meta="Last updated: March 29, 2026"
+      notice={
+        <p>
+          This English text is a translation for reference. The Spanish version, the{" "}
+          <Link to="/privacidad" lang="es">
+            Política de privacidad
+          </Link>
+          , is the one you accept and it prevails.
+        </p>
+      }
+    >
       <p>
         {LEGAL_ENTITY_NAME} ("we", "us", or "our") operates {PRODUCT_NAME}, a
         customer relationship management (CRM) platform that helps businesses
@@ -124,9 +137,9 @@ export function PrivacyPolicy() {
 
       <h2>6. Changes to This Policy</h2>
       <p>
-        We may update this Privacy Policy from time to time. When we do, we will
-        revise the "Last updated" date at the top of this page. Continued use of
-        BoxLead after changes constitutes acceptance of the updated policy.
+        If we change this Privacy Policy we will let you know by email and in
+        the app before it applies. A new version only binds you once you
+        expressly accept it.
       </p>
 
       <div className="legal-contact">

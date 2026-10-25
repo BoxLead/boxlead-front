@@ -50,3 +50,65 @@ test("the adhesion contracts page opens from the landing with the provider and t
   await screenshotThemes(page, "legal-contracts");
   expect(calls).toEqual([]);
 });
+
+for (const doc of [
+  {
+    path: "/terminos",
+    title: "Términos y condiciones",
+    english: "/terms-of-service",
+    englishTitle: "Terms of Service",
+    clauses: ["Pagos con Mercado Pago", "Baja", "Arrepentimiento", "Cambios en estos términos"],
+  },
+  {
+    path: "/privacidad",
+    title: "Política de privacidad",
+    english: "/privacy-policy",
+    englishTitle: "Privacy Policy",
+    clauses: ["Responsable", "Transferencias fuera de la Argentina", "Tus derechos"],
+  },
+]) {
+  test(`${doc.path} is the Spanish version and ${doc.english} says that Spanish prevails`, async ({ page }) => {
+    test.slow();
+    const calls = apiCalls(page);
+    await page.goto(doc.path);
+    const main = page.getByRole("main");
+    await expect(main.getByRole("heading", { level: 1, name: doc.title })).toBeVisible();
+    await expect(page.locator(".legal")).toHaveAttribute("lang", "es");
+    await expect(main).toContainText(/Versión \d{4}-\d{2}/);
+    for (const clause of doc.clauses) {
+      await expect(main.getByRole("heading", { level: 2, name: new RegExp(`^\\d+\\. ${clause}$`) })).toBeVisible();
+    }
+    await expect(main).not.toContainText(/continuar usando|seguir usando BoxLead (implica|significa)/i);
+    await expectNoHorizontalScroll(page);
+    await expectAccessible(page);
+    await screenshotThemes(page, `legal-${doc.path.slice(1)}`);
+
+    await main.getByRole("link", { name: "traducción al inglés" }).click();
+    await expect(page).toHaveURL(new RegExp(`${doc.english}$`));
+    const english = page.getByRole("main");
+    await expect(english.getByRole("heading", { level: 1, name: doc.englishTitle })).toBeVisible();
+    await expect(page.locator(".legal")).toHaveAttribute("lang", "en");
+    await expect(english).toContainText("translation for reference");
+    await expect(english).not.toContainText(/Continued use/);
+    await english.getByRole("link", { name: doc.title }).click();
+    await expect(page).toHaveURL(new RegExp(`${doc.path}$`));
+    expect(calls).toEqual([]);
+  });
+}
+
+test("the privacy policy shows the AAIP notice", async ({ page }) => {
+  await page.goto("/privacidad");
+  await expect(page.getByRole("main")).toContainText("Órgano de Control de la Ley Nº 25.326");
+  await expect(page.getByRole("link", { name: "AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA" })).toHaveAttribute(
+    "href",
+    "https://www.argentina.gob.ar/aaip",
+  );
+});
+
+test("the terms explain the full refund within ten days of the first charge", async ({ page }) => {
+  await page.goto("/terminos");
+  const main = page.getByRole("main");
+  await expect(main).toContainText("10 días corridos contados desde el primer cobro");
+  await expect(main).toContainText("Te devolvemos el total cobrado aunque ya hayas usado BoxLead");
+  await expect(main).toContainText("dólares estadounidenses e incluye el IVA");
+});
