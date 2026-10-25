@@ -76,8 +76,10 @@ const PROFILE_FIELDS: (keyof BillingProfile)[] = [
 ];
 
 const ars = (amountMinor: number): Money => ({ amountMinor, currency: "ARS" });
+const usd = (amountMinor: number): Money => ({ amountMinor, currency: "USD" });
+const FX_RATE = { day: "2026-10-24", source: "BNA_OFICIAL_VENDEDOR", rate: "1450.00" };
 
-const CATALOG: Record<PlanCode, BillingPlan> = {
+const CATALOG: Partial<Record<PlanCode, BillingPlan>> & Record<"DEMO" | PaidPlanCode, BillingPlan> = {
   DEMO: {
     code: "DEMO",
     name: "Beta",
@@ -100,10 +102,12 @@ const CATALOG: Record<PlanCode, BillingPlan> = {
     name: "Starter",
     versionId: "9a000000-0000-4000-8000-000000000002",
     inviteOnly: false,
-    price: ars(1234500),
+    price: usd(6000),
+    chargeToday: ars(8700000),
+    fxRate: FX_RATE,
     frequencyMonths: 1,
     priceIncludesVat: true,
-    priceWithoutNationalTaxes: ars(1020248),
+    priceWithoutNationalTaxes: ars(7190082),
     limits: {
       AGENT_REPLIES_PER_PERIOD: 1000,
       AGENTS_MAX: 3,
@@ -118,10 +122,12 @@ const CATALOG: Record<PlanCode, BillingPlan> = {
     name: "Business",
     versionId: "9a000000-0000-4000-8000-000000000003",
     inviteOnly: false,
-    price: ars(2469000),
+    price: usd(20000),
+    chargeToday: ars(29000000),
+    fxRate: FX_RATE,
     frequencyMonths: 1,
     priceIncludesVat: true,
-    priceWithoutNationalTaxes: ars(2040496),
+    priceWithoutNationalTaxes: ars(23966942),
     limits: {
       AGENT_REPLIES_PER_PERIOD: 5000,
       AGENTS_MAX: 10,
@@ -132,6 +138,20 @@ const CATALOG: Record<PlanCode, BillingPlan> = {
     },
   },
 };
+
+CATALOG.ENTERPRISE = {
+  code: "ENTERPRISE",
+  name: "Enterprise",
+  versionId: "9a000000-0000-4000-8000-000000000004",
+  inviteOnly: false,
+  contactOnly: true,
+  price: null,
+  frequencyMonths: null,
+  priceIncludesVat: null,
+  limits: {},
+};
+
+const chargeOf = (code: PaidPlanCode): Money => CATALOG[code].chargeToday ?? ars(0);
 
 const LEGAL_DOCUMENTS: LegalDocument[] = [
   { kind: "TERMS", version: LEGAL_VERSION, language: "es", url: "/terminos", requiresAcceptance: true },
@@ -237,7 +257,7 @@ function profile(): BillingProfile {
 }
 
 function subscription(planCode: PaidPlanCode, status: SubscriptionStatus): StoredSubscription {
-  const price = CATALOG[planCode].price ?? ars(0);
+  const price = chargeOf(planCode);
   return {
     preapprovalId: nextId("preappr").replace(/-/g, ""),
     planCode,
@@ -376,8 +396,8 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
   }
   if (scenario === "billing-downgrade-pending") {
     state.profile = profile();
-    state.subscription = { ...subscription("BUSINESS", "ACTIVE"), pendingPlanCode: "STARTER", price: CATALOG.STARTER.price ?? ars(0) };
-    state.payments = paymentHistory(CATALOG.BUSINESS.price ?? ars(0), 2);
+    state.subscription = { ...subscription("BUSINESS", "ACTIVE"), pendingPlanCode: "STARTER", price: chargeOf("STARTER") };
+    state.payments = paymentHistory(chargeOf("BUSINESS"), 2);
     state.agentReplies = 900;
   }
   if (scenario === "reseller") {
@@ -585,7 +605,7 @@ async function changePlan(state: BillingState, req: MockRequest): Promise<MockRe
   const sub = state.subscription;
   if (!sub || sub.status !== "ACTIVE") return error(409, "The subscription is not active", "SUBSCRIPTION_NOT_ACTIVE");
   if (sub.cancelAtPeriodEnd) return error(409, "The subscription is being canceled", "SUBSCRIPTION_CANCELING");
-  const priceOf = (code: PaidPlanCode) => CATALOG[code].price ?? ars(0);
+  const priceOf = chargeOf;
   if (planCode === sub.planCode) {
     if (!sub.pendingPlanCode) return error(409, "That is already the current plan", "SAME_PLAN");
     sub.pendingPlanCode = null;
@@ -670,7 +690,7 @@ export async function billingRoute(state: BillingState, req: MockRequest): Promi
 
   if (root === "billing" && second === "plans" && parts.length === 2 && method === "GET") {
     if (!state.billing) return NOT_FOUND;
-    return ok([CATALOG.STARTER, CATALOG.BUSINESS, CATALOG.DEMO]);
+    return ok([CATALOG.STARTER, CATALOG.BUSINESS, CATALOG.ENTERPRISE, CATALOG.DEMO]);
   }
 
   if (root === "invitations" && second === "current" && parts.length === 2 && method === "GET") {

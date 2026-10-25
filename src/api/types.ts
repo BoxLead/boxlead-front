@@ -426,9 +426,9 @@ export type Money = {
   currency: string;
 };
 
-export type PlanCode = "DEMO" | "STARTER" | "BUSINESS";
+export type PlanCode = "DEMO" | "STARTER" | "BUSINESS" | "ENTERPRISE";
 
-export type PaidPlanCode = Exclude<PlanCode, "DEMO">;
+export type PaidPlanCode = "STARTER" | "BUSINESS";
 
 export type EntitlementKey =
   | "AGENT_REPLIES_PER_PERIOD"
@@ -441,12 +441,21 @@ export type EntitlementKey =
 
 export type PlanLimits = Partial<Record<EntitlementKey, number | null>>;
 
+export type FxRate = {
+  day: string;
+  source: string;
+  rate: string;
+};
+
 export type BillingPlan = {
   code: PlanCode;
   name: string;
   versionId: string;
   inviteOnly: boolean;
+  contactOnly?: boolean;
   price: Money | null;
+  chargeToday?: Money | null;
+  fxRate?: FxRate | null;
   frequencyMonths: number | null;
   priceIncludesVat: boolean | null;
   priceWithoutNationalTaxes?: Money | null;
