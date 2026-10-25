@@ -1,0 +1,72 @@
+.temperature-select {
+  --temperature-color: var(--signal-text-muted);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--temperature-color);
+}
+
+.temperature-select::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+}
+
+.temperature-select-unset::before {
+  border: 1px dashed currentColor;
+  background: transparent;
+}
+
+.temperature-select select {
+  height: 30px;
+  padding: 0 28px 0 24px;
+  border: 1px solid color-mix(in srgb, var(--temperature-color) 35%, transparent);
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--temperature-color) 10%, transparent);
+  color: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+}
+
+.temperature-select select:hover:not(:disabled) {
+  border-color: var(--temperature-color);
+}
+
+.temperature-select select:disabled {
+  opacity: 0.6;
+}
+
+.temperature-select select option {
+  background: var(--signal-surface);
+  color: var(--signal-heading);
+}
+
+.temperature-select svg {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+}
+
+.temperature-select-md select {
+  height: 36px;
+  font-size: 0.875rem;
+}
+
+.temperature-select-cold {
+  --temperature-color: var(--signal-accent);
+}
+
+.temperature-select-warm {
+  --temperature-color: var(--signal-warning);
+}
+
+.temperature-select-hot {
+  --temperature-color: var(--signal-danger);
+}

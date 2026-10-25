@@ -101,7 +101,8 @@
   color: var(--signal-text-muted);
 }
 
-.leads-category-filter .select {
+.leads-category-filter .select,
+.leads-temperature-filter .select {
   width: auto;
   max-width: 240px;
   min-height: 38px;

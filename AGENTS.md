@@ -41,7 +41,7 @@ terraform/            # Infrastructure (do not modify without approval)
 *                                   Redirects to /
 ```
 
-Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>&temperature=<COLD, WARM, HOT or none>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
 
 ## Social login
 
@@ -50,6 +50,10 @@ Login and register offer "Continuar con Google" and "Continuar con Facebook" nex
 ## Categories
 
 Each lead belongs to at most one category (`categoryId`). Categories come from `GET /categories` (`data/categories.ts`), every account starts with four defaults, and colors are a fixed palette mapped to `category-color-*` classes in `index.css`. Assigning goes through `PUT /leads/{id}/category` with an optimistic update. Deleting a category leaves its leads without one.
+
+## Temperature
+
+Each lead has an optional temperature (`COLD`, `WARM`, `HOT`, or none when it is not evaluated yet). Agents set it from the conversation unless the business profile has `autoQualify` off. A person's choice (`TemperatureSelect` on Leads and LeadDetail, `PUT /leads/{id}/temperature` through `assignLeadTemperature`, `null` clears it) locks it, so agents and the silent lead job leave it alone. Leads filters it with `temperature=COLD|WARM|HOT|none`. A lead counts as qualified when it is `WARM` or `HOT`, or its status is `QUALIFIED` or `CLOSED`, and the funnel reads that from `totals.qualified`.
 
 ## Metrics
 

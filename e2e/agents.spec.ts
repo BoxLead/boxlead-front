@@ -209,6 +209,8 @@ test("saves the business context", async ({ page }) => {
 
   await description.fill("Vendemos parlantes. Horario de lunes a viernes de 9 a 18.");
   await panel.getByRole("switch", { name: "Categorizar leads automáticamente" }).uncheck();
+  await expect(panel.getByRole("switch", { name: "Calificar leads automáticamente" })).toBeChecked();
+  await panel.getByRole("switch", { name: "Calificar leads automáticamente" }).uncheck();
   await panel.getByRole("button", { name: "Guardar contexto" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Guardaste el contexto del negocio." })).toBeVisible();
   await expect(panel.getByRole("button", { name: "Guardar contexto" })).toBeDisabled();
@@ -216,6 +218,7 @@ test("saves the business context", async ({ page }) => {
   await page.reload();
   await expect(description).toHaveValue("Vendemos parlantes. Horario de lunes a viernes de 9 a 18.");
   await expect(panel.getByRole("switch", { name: "Categorizar leads automáticamente" })).not.toBeChecked();
+  await expect(panel.getByRole("switch", { name: "Calificar leads automáticamente" })).not.toBeChecked();
 });
 
 test("tests a saved agent as a customer and shows the mode that would apply", async ({ page }) => {

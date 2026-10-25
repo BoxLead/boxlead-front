@@ -9,6 +9,7 @@ import type {
 import { ArrowLeftIcon, ChatIcon, ExternalLinkIcon } from "../../components/icons/UiIcons";
 import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
+import { TemperatureSelect } from "../../components/TemperatureSelect/TemperatureSelect";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
@@ -129,6 +130,7 @@ export function LeadDetail() {
         </div>
         <div className="lead-detail-controls">
           <StatusSelect lead={current} size="md" />
+          <TemperatureSelect lead={current} size="md" />
           {categories.data ? <CategorySelect lead={current} categories={categories.data} size="md" /> : null}
           <button
             type="button"

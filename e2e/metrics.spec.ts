@@ -122,6 +122,7 @@ test("the funnel explains each step", async ({ page }) => {
   await stages.nth(2).hover();
   await expect(summary).toContainText("de los contactados avanzó");
   await expect(summary).toContainText("quedaron en el camino");
+  await expect(summary).toContainText("Tibio o Caliente, o marcados como calificados");
   await stages.nth(0).focus();
   await expect(summary).toContainText("en el anterior");
   await page.keyboard.press("Tab");

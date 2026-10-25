@@ -41,9 +41,9 @@ describe("breakdown", () => {
     expect(channelBreakdown([answered], [])[0].medianResponse).toBeCloseTo(30);
   });
 
-  it("builds the funnel from the current status of the period leads", () => {
-    const totals = { ...emptyTotals(), leads: 10, statuses: { ...emptyStatuses(), NEW: 1, QUALIFIED: 2, CLOSED: 1 } };
-    const previous = { ...emptyTotals(), leads: 8, statuses: { ...emptyStatuses(), NEW: 2, QUALIFIED: 2 } };
+  it("builds the funnel from the contacted and qualified leads of the period", () => {
+    const totals = { ...emptyTotals(), leads: 10, qualified: 3, statuses: { ...emptyStatuses(), NEW: 1, QUALIFIED: 2, CLOSED: 1 } };
+    const previous = { ...emptyTotals(), leads: 8, qualified: 2, statuses: { ...emptyStatuses(), NEW: 2, QUALIFIED: 2 } };
     const steps = funnelSteps(totals, previous);
     expect(steps.map((step) => [step.value, step.previous])).toEqual([
       [10, 8],

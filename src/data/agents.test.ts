@@ -84,7 +84,7 @@ describe("agent mutations", () => {
   });
 
   it("keeps the saved business profile in the cache", async () => {
-    const saved = { description: "Vendemos audio", tone: null, autoCategorize: false };
+    const saved = { description: "Vendemos audio", tone: null, autoCategorize: false, autoQualify: true };
     fetchMock.mockResolvedValue(json(saved));
 
     await saveBusinessProfile(saved);

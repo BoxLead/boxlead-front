@@ -643,6 +643,7 @@ export function buildShowcase(): MockState {
       "Tienda Norte vende audio y tecnología. Envíos a todo el país en 48 a 72 horas hábiles. Factura A y B. Hasta 6 cuotas sin interés y 10% de descuento por transferencia.",
     tone: "cercano y directo",
     autoCategorize: true,
+    autoQualify: true,
   };
   state.metricsSettings = { manualReplyMinutes: 4, businessHours: { weekdays: [0, 1, 2, 3, 4, 5], from: 9, to: 19 } };
   activity(state, roster);
