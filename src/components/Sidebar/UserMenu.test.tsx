@@ -2,15 +2,16 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../api/types";
-import { AuthContext, type AuthContextValue } from "../../context/auth";
+import { AuthContext, SESSION_FLAGS_OFF, sessionFlags, type AuthContextValue } from "../../context/auth";
 import { THEME_KEY } from "../../theme/theme";
 import { UserMenu } from "./UserMenu";
 
-const named: AuthUser = { userId: "u-1", email: "ana@example.com", name: "Ana Pérez" };
+const named: AuthUser = { ...SESSION_FLAGS_OFF, userId: "u-1", email: "ana@example.com", name: "Ana Pérez" };
 
 function renderMenu(user: AuthUser | null = named) {
   const logout = vi.fn();
   const value: AuthContextValue = {
+    ...sessionFlags(user),
     user,
     login: vi.fn(),
     register: vi.fn(),
@@ -44,7 +45,7 @@ describe("UserMenu", () => {
   });
 
   it("uses the email alone when there is no name", async () => {
-    renderMenu({ userId: "u-1", email: "ana@example.com", name: null });
+    renderMenu({ ...named, name: null });
     await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
     const dialog = screen.getByRole("dialog", { name: "Cuenta" });
     expect(within(dialog).getByText("ana@example.com")).toHaveClass("account-menu-name");

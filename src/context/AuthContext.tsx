@@ -12,7 +12,7 @@ import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
 import { clearQueryCache } from "../data/queryCache";
 import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
-import { AuthContext } from "./auth";
+import { AuthContext, sessionFlags } from "./auth";
 
 const SESSION_ROUTES = /^\/(app|login|register)(\/|$)/;
 
@@ -103,7 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   const value = useMemo(
-    () => ({ user, login, register, socialLogin, logout, isLoading, error, clearError }),
+    () => ({
+      ...sessionFlags(user),
+      user,
+      login,
+      register,
+      socialLogin,
+      logout,
+      isLoading,
+      error,
+      clearError,
+    }),
     [user, login, register, socialLogin, logout, isLoading, error, clearError],
   );
 

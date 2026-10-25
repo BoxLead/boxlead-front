@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
-import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
+import type { AuthUser, LoginRequest, RegisterRequest, SessionFlags } from "../api/types";
 
-export type AuthContextValue = {
+export type AuthContextValue = SessionFlags & {
   user: AuthUser | null;
   login: (body: LoginRequest, redirectTo?: string) => Promise<void>;
   register: (body: RegisterRequest, redirectTo?: string) => Promise<void>;
@@ -11,6 +11,19 @@ export type AuthContextValue = {
   error: string | null;
   clearError: () => void;
 };
+
+export const SESSION_FLAGS_OFF: SessionFlags = {
+  features: { billing: false, referrals: false },
+  access: "FULL",
+  isReseller: false,
+  pendingLegal: [],
+};
+
+export function sessionFlags(user: AuthUser | null): SessionFlags {
+  if (!user) return SESSION_FLAGS_OFF;
+  const { features, access, isReseller, pendingLegal } = user;
+  return { features, access, isReseller, pendingLegal };
+}
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
