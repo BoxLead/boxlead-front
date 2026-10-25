@@ -1,5 +1,14 @@
 import { loginPathFor } from "../util/redirect";
-import type { AuthUser, LoginRequest, RegisterRequest, SocialLoginRequest } from "./types";
+import type {
+  Access,
+  AuthUser,
+  Features,
+  LegalDocumentKind,
+  LegalVersion,
+  LoginRequest,
+  RegisterRequest,
+  SocialLoginRequest,
+} from "./types";
 
 const CSRF_HEADER = "X-Requested-With";
 const CSRF_HEADER_VALUE = "boxlead-web";
@@ -43,6 +52,45 @@ function readName(value: object): string | null {
   return trimmed === "" ? null : trimmed;
 }
 
+const LEGAL_KINDS: readonly LegalDocumentKind[] = [
+  "TERMS",
+  "PRIVACY",
+  "ADHESION_CONTRACT",
+  "RESELLER_AGREEMENT",
+  "DATA_PROCESSING",
+];
+
+function readFeatures(value: object): Features {
+  const features = "features" in value ? value.features : null;
+  if (!features || typeof features !== "object") return { billing: false, referrals: false };
+  return {
+    billing: "billing" in features && features.billing === true,
+    referrals: "referrals" in features && features.referrals === true,
+  };
+}
+
+function readAccess(value: object): Access {
+  return "access" in value && value.access === "RESTRICTED" ? "RESTRICTED" : "FULL";
+}
+
+function isLegalVersion(item: unknown): item is LegalVersion {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "kind" in item &&
+    "version" in item &&
+    LEGAL_KINDS.some((kind) => kind === item.kind) &&
+    typeof item.version === "string"
+  );
+}
+
+function readPendingLegal(value: object): LegalVersion[] {
+  if (!("pendingLegal" in value) || !Array.isArray(value.pendingLegal)) return [];
+  return value.pendingLegal
+    .filter(isLegalVersion)
+    .map(({ kind, version }) => ({ kind, version }));
+}
+
 function toAuthUser(value: unknown): AuthUser | null {
   if (
     value &&
@@ -52,7 +100,15 @@ function toAuthUser(value: unknown): AuthUser | null {
     typeof value.userId === "string" &&
     typeof value.email === "string"
   ) {
-    return { userId: value.userId, email: value.email, name: readName(value) };
+    return {
+      userId: value.userId,
+      email: value.email,
+      name: readName(value),
+      features: readFeatures(value),
+      access: readAccess(value),
+      isReseller: "isReseller" in value && value.isReseller === true,
+      pendingLegal: readPendingLegal(value),
+    };
   }
   return null;
 }

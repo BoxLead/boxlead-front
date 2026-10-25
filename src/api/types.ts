@@ -16,7 +16,33 @@ export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "LOST" | "CLOSED";
 
 export type LeadTemperature = "COLD" | "WARM" | "HOT";
 
-export type AuthUser = {
+export type Features = {
+  billing: boolean;
+  referrals: boolean;
+};
+
+export type Access = "FULL" | "RESTRICTED";
+
+export type LegalDocumentKind =
+  | "TERMS"
+  | "PRIVACY"
+  | "ADHESION_CONTRACT"
+  | "RESELLER_AGREEMENT"
+  | "DATA_PROCESSING";
+
+export type LegalVersion = {
+  kind: LegalDocumentKind;
+  version: string;
+};
+
+export type SessionFlags = {
+  features: Features;
+  access: Access;
+  isReseller: boolean;
+  pendingLegal: LegalVersion[];
+};
+
+export type AuthUser = SessionFlags & {
   userId: string;
   email: string;
   name: string | null;
@@ -26,6 +52,7 @@ export type RegisterRequest = {
   email: string;
   password: string;
   name?: string;
+  acceptedLegal?: LegalVersion[];
 };
 
 export type LoginRequest = {
@@ -35,6 +62,7 @@ export type LoginRequest = {
 
 export type SocialLoginRequest = {
   idToken: string;
+  acceptedLegal?: LegalVersion[];
 };
 
 export type ConversationResponse = {
@@ -296,6 +324,7 @@ export type AgentResponse = {
   publicCommentReplies: boolean;
   position: number;
   scopes: AgentScopeResponse[];
+  overPlanLimit?: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -362,4 +391,245 @@ export type PlaygroundResult = {
   replyMode: ReplyMode | null;
   channelRules: ChannelRules;
   violations: string[];
+};
+
+export type ApiErrorCode =
+  | "PLAN_REQUIRED"
+  | "PLAN_LIMIT_REACHED"
+  | "ENTITLEMENTS_UNAVAILABLE"
+  | "SUBSCRIPTION_EXISTS"
+  | "SAME_PLAN"
+  | "SUBSCRIPTION_NOT_ACTIVE"
+  | "SUBSCRIPTION_CANCELING"
+  | "DEMO_ALREADY_USED"
+  | "INVITATION_INVALID"
+  | "INVITATION_EMAIL_MISMATCH"
+  | "LEGAL_ACCEPTANCE_REQUIRED"
+  | "ACCOUNT_EXISTS_WITH_PASSWORD"
+  | "BILLING_PROFILE_REQUIRED"
+  | "PROVIDER_UNAVAILABLE";
+
+export type FieldError = {
+  field: string;
+  message: string;
+};
+
+export type ApiErrorBody = {
+  error: string;
+  message: string;
+  code?: ApiErrorCode;
+  fields?: FieldError[];
+};
+
+export type Money = {
+  amountMinor: number;
+  currency: string;
+};
+
+export type PlanCode = "DEMO" | "STARTER" | "BUSINESS";
+
+export type PaidPlanCode = Exclude<PlanCode, "DEMO">;
+
+export type EntitlementKey =
+  | "AGENT_REPLIES_PER_PERIOD"
+  | "AGENTS_MAX"
+  | "PLAYGROUND_RUNS_PER_HOUR"
+  | "METRICS_HISTORY_DAYS"
+  | "PUBLIC_COMMENT_REPLIES"
+  | "AUTO_CATEGORIZE"
+  | "DEMO_DURATION_DAYS";
+
+export type PlanLimits = Partial<Record<EntitlementKey, number | null>>;
+
+export type BillingPlan = {
+  code: PlanCode;
+  name: string;
+  versionId: string;
+  inviteOnly: boolean;
+  price: Money | null;
+  frequencyMonths: number | null;
+  priceIncludesVat: boolean | null;
+  priceWithoutNationalTaxes?: Money | null;
+  limits: PlanLimits;
+};
+
+export type SubscriptionStatus =
+  | "INCOMPLETE"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "SUSPENDED"
+  | "PAUSED"
+  | "CANCELED";
+
+export type CheckoutStatus = "WAITING" | "PENDING" | "REJECTED";
+
+export type PlanSource = "SUBSCRIPTION" | "DEMO";
+
+export type CurrentPlan = {
+  code: PlanCode;
+  name: string;
+  source: PlanSource;
+};
+
+export type SubscriptionSummary = {
+  status: SubscriptionStatus;
+  price: Money;
+  currentPeriodEnd: string;
+  graceUntil: string | null;
+  cancelAtPeriodEnd: boolean;
+  pendingPlanCode: PaidPlanCode | null;
+  updatePaymentUrl: string | null;
+};
+
+export type DemoSummary = {
+  endsAt: string;
+};
+
+export type CheckoutSummary = {
+  planCode: PaidPlanCode;
+  status: CheckoutStatus;
+};
+
+export type UsageCounter = {
+  used: number;
+  limit: number | null;
+};
+
+export type BillingUsage = {
+  agentReplies: UsageCounter;
+  periodEnd: string;
+};
+
+export type BillingSummary = {
+  access: Access;
+  plan: CurrentPlan | null;
+  subscription: SubscriptionSummary | null;
+  demo: DemoSummary | null;
+  checkout: CheckoutSummary | null;
+  usage: BillingUsage;
+  limits: PlanLimits;
+  billingProfileComplete: boolean;
+};
+
+export type CheckoutRequest = {
+  planCode: PaidPlanCode;
+  payerEmail: string;
+  acceptedLegal?: LegalVersion[];
+};
+
+export type CheckoutResponse = {
+  checkoutUrl: string;
+};
+
+export type ChangePlanRequest = {
+  planCode: PaidPlanCode;
+};
+
+export type PaymentStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "REFUNDED"
+  | "PARTIALLY_REFUNDED"
+  | "CHARGED_BACK"
+  | "IN_MEDIATION"
+  | "CANCELLED";
+
+export type BillingPayment = {
+  date: string;
+  amount: Money;
+  status: PaymentStatus;
+  invoiceNumber: string | null;
+};
+
+export type BillingProfile = {
+  country: string;
+  taxIdType: string;
+  taxId: string;
+  legalName: string;
+  vatCondition: string;
+  addressLine: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  billingEmail: string;
+};
+
+export type InvitationPreviewRequest = {
+  token: string;
+};
+
+export type Invitation = {
+  email: string;
+  expiresAt: string;
+};
+
+export type ReferralCodeStatus = "ACTIVE" | "DISABLED";
+
+export type ReferralCode = {
+  code: string;
+  link: string;
+  status: ReferralCodeStatus;
+};
+
+export type ReferralStats = {
+  clicksLast30Days: number;
+  registrations: number;
+  activeCustomers: number;
+};
+
+export type ReferredCustomer = {
+  label: string;
+  cycle: number;
+  maxCycles: number;
+  subscriptionStatus: SubscriptionStatus;
+};
+
+export type CommissionStatus = "ACCRUED" | "APPROVED" | "PAID" | "REVERSED" | "HELD";
+
+export type CommissionTotal = {
+  status: CommissionStatus;
+  amount: Money;
+};
+
+export type CommissionEntry = {
+  date: string;
+  customerLabel: string;
+  cycle: number;
+  amount: Money;
+  status: CommissionStatus;
+  releaseAt: string | null;
+};
+
+export type ReferralsResponse = {
+  codes: ReferralCode[];
+  stats: ReferralStats;
+  customers: ReferredCustomer[];
+  totals: CommissionTotal[];
+  entries: CommissionEntry[];
+};
+
+export type LegalDocument = {
+  kind: LegalDocumentKind;
+  version: string;
+  language: string;
+  url: string;
+  requiresAcceptance: boolean;
+};
+
+export type LegalAcceptanceRequest = {
+  acceptedLegal: LegalVersion[];
+};
+
+export type ConsumerRequestKind = "WITHDRAWAL" | "CANCELLATION";
+
+export type ConsumerRequest = {
+  kind: ConsumerRequestKind;
+  email: string;
+  details?: string;
+};
+
+export type ConsumerRequestReceipt = {
+  code: string;
+  createdAt: string;
 };

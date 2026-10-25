@@ -2,12 +2,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { AuthContext, type AuthContextValue } from "../../context/auth";
+import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
 import { SIDEBAR_KEY } from "../../theme/theme";
 import { Sidebar } from "./Sidebar";
 
 const auth: AuthContextValue = {
-  user: { userId: "u-1", email: "ana@example.com", name: "Ana Pérez" },
+  ...SESSION_FLAGS_OFF,
+  user: { ...SESSION_FLAGS_OFF, userId: "u-1", email: "ana@example.com", name: "Ana Pérez" },
   login: vi.fn(),
   register: vi.fn(),
   socialLogin: vi.fn(),

@@ -26,7 +26,7 @@ The dev server runs on `http://localhost:5173` and proxies `/api` to the API.
 | `npm run dev:mock`   | Dev server against the mock API                  |
 | `npm run preview`    | Serve `dist/` locally                            |
 
-The first run of the end-to-end suite needs a browser: `npx playwright install chromium`. The mock API signs in with any email and the password `demo1234`, and `POST /__reset` with `{"scenario":"empty"}` or `{"scenario":"meli-reconnect"}` switches its data.
+The first run of the end-to-end suite needs a browser: `npx playwright install chromium`. The mock API signs in with any email and the password `demo1234`, and `POST /__reset` with `{"scenario":"empty"}` or `{"scenario":"meli-reconnect"}` switches its data. The `billing-*` and `reseller` scenarios turn on the payments endpoints, which answer 404 everywhere else.
 
 ## Docker
 

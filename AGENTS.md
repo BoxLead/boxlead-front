@@ -24,7 +24,7 @@ src/
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
 ├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
-├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal
+├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
 ├── landing/          # Public landing: LandingPage and its sections
 └── util/             # classNames, company, dates, format, labels, links, metrics, oauth, redirect, referral, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
@@ -36,7 +36,10 @@ terraform/            # Infrastructure (do not modify without approval)
 /                                   Landing (public)
 /login, /register                   Auth (public)
 /privacy-policy, /terms-of-service, /data-deletion   Legal (public)
+/invitacion, /terminos, /privacidad, /contratos, /arrepentimiento, /baja   Payments placeholders (public, redirect to / for now)
 /app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
+/app/billing, /app/billing/return   Protected, only with features.billing
+/app/reseller                       Protected, only with isReseller
 /app/oauth/callback/:platform       Protected
 *                                   Redirects to /
 ```
@@ -46,6 +49,12 @@ Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=
 ## Social login
 
 Login and register offer "Continuar con Google" and "Continuar con Facebook" next to the email and password form, which stays as it was. The buttons use the Auth0 React SDK (`context/SocialAuthProvider.tsx`, `hooks/useSocialLogin.ts`) and only appear when `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` are set. The SDK never owns the session: it sends the visitor to Auth0, `/social/callback` (`pages/SocialCallback`) completes the redirect by hand, takes the ID token and posts it to `POST /auth/social`, and the API answers with the same `httpOnly` cookie as the password login. The SDK keeps nothing after that (`logout({ openUrl: false })`). Providers live in `util/social.ts`. Auth0 must list `<origin>/social/callback` as a callback URL. The e2e specs answer for Auth0 with `routeAuth0` in `e2e/support.ts`.
+
+## Payments
+
+Billing, invitations, referrals and the legal pages are built behind the flags core sends in `GET /auth/me`. `toAuthUser` keeps `features`, `access`, `isReseller` and `pendingLegal`, and anything missing or unexpected reads as off, with `access` as `FULL`. `useAuth()` exposes the same four values. `FeatureRoute` sends `/app/billing` and `/app/reseller` to `/` when their flag is off, and the account menu only links Facturación, Revendedor and the consumer pages when core enables them. The pages are placeholders that later steps fill in. The contract lives in `boxlead-core/payments-plan/contracts/api-customer.md` and the types in `api/types.ts`. `api/errors.ts` reads the stable `code` and the `fields` of an error.
+
+The mock API answers every endpoint of that contract from `e2e/mock-api/billing.ts`. The scenarios `billing-none`, `billing-demo`, `billing-active`, `billing-past-due`, `billing-suspended`, `billing-checkout-pending`, `billing-checkout-rejected`, `billing-downgrade-pending`, `billing-invited` and `reseller` turn billing and legal on and give the agents page two enabled agents. Every other scenario keeps the flags off and the new endpoints answer 404. `resetApi(scenario, now, { pendingLegal, entitlementsUnavailable })` adds pending legal versions or makes the agent answer 503, and `settleCheckout(status)` decides the open checkout as the Mercado Pago return would. The checkout URL always points to `www.mercadopago.com.ar`, so specs intercept it with `page.route`. Invitation tokens live in `INVITATION_TOKENS` and `billing-invited` behaves as if the invitation cookie of another email were already set. Prices and limits in the mock are made up for tests and are not the real catalog.
 
 ## Categories
 
@@ -106,7 +115,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 ## Security
 
 - The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage`; the user lives in memory and comes from `GET /auth/me`.
-- `AuthProvider` asks `GET /auth/me` only on `/app`, `/login` and `/register`, and shows a loader there until it answers, so the landing never calls the API.
+- `AuthProvider` asks `GET /auth/me` only on `/app`, `/login`, `/register` and `/invitacion`, and shows a loader there until it answers, so the landing never calls the API.
 - Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
 - Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked.
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.

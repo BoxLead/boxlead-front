@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/auth";
 import { setTheme, useTheme } from "../../theme/theme";
 import { Avatar } from "../ui/Avatar";
 import { LogoutIcon, MoonIcon, SunIcon } from "../icons/UiIcons";
+import { accountLinks, consumerLinks } from "./accountLinks";
 import "./UserMenu.css";
 
 function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
@@ -25,7 +27,9 @@ function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (check
 }
 
 export function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, features, isReseller } = useAuth();
+  const links = accountLinks({ features, isReseller });
+  const legalLinks = consumerLinks({ features });
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -96,6 +100,12 @@ export function UserMenu() {
               <p className={name ? "account-menu-email" : "account-menu-name"}>{email}</p>
             </div>
           </div>
+          {links.map(({ to, label, icon }) => (
+            <Link key={to} to={to} className="account-menu-action" onClick={() => setOpen(false)}>
+              {icon}
+              <span>{label}</span>
+            </Link>
+          ))}
           <div className="account-menu-row">
             {theme === "light" ? <SunIcon /> : <MoonIcon />}
             <span>Tema</span>
@@ -105,6 +115,15 @@ export function UserMenu() {
             <LogoutIcon />
             <span>Cerrar sesión</span>
           </button>
+          {legalLinks.length > 0 ? (
+            <nav className="account-menu-legal" aria-label="Defensa del consumidor">
+              {legalLinks.map(({ to, label }) => (
+                <Link key={to} to={to} className="account-menu-legal-link" onClick={() => setOpen(false)}>
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          ) : null}
         </div>
       ) : null}
     </div>

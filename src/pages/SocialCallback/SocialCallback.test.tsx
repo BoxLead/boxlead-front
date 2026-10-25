@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthContext, type AuthContextValue } from "../../context/auth";
+import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
 import { SocialCallback } from "./SocialCallback";
 
 const auth0 = vi.hoisted(() => ({
@@ -24,6 +24,7 @@ class ProviderError extends Error {
 function renderCallback(sessionError: string | null = null) {
   const socialLogin = vi.fn().mockResolvedValue(undefined);
   const value: AuthContextValue = {
+    ...SESSION_FLAGS_OFF,
     user: null,
     login: vi.fn(),
     register: vi.fn(),

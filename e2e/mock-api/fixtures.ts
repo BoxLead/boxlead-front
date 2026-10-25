@@ -16,8 +16,16 @@ import type {
   ReplyMode,
   SalesStage,
 } from "../../src/api/types.ts";
+import type { BillingScenario } from "./billing.ts";
 
-export type Scenario = "default" | "empty" | "meli-reconnect" | "agents" | "agents-limited" | "showcase";
+export type Scenario =
+  | "default"
+  | "empty"
+  | "meli-reconnect"
+  | "agents"
+  | "agents-limited"
+  | "showcase"
+  | BillingScenario;
 
 export type StoredConversation = Omit<
   ConversationResponse,
