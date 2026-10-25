@@ -13,6 +13,7 @@ const auth: AuthContextValue = {
   register: vi.fn(),
   socialLogin: vi.fn(),
   logout: vi.fn(),
+  refreshUser: vi.fn(),
   isLoading: false,
   error: null,
   clearError: vi.fn(),

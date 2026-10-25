@@ -12,6 +12,8 @@ import "./MetricsHeader.css";
 
 type MetricsHeaderProps = {
   period: MetricsPeriod;
+  periods?: readonly MetricsPeriod[];
+  note?: string | null;
   filters: MetricsFilters;
   platforms: PlatformType[];
   categories: CategoryResponse[];
@@ -23,6 +25,8 @@ type MetricsHeaderProps = {
 
 export function MetricsHeader({
   period,
+  periods = PERIODS,
+  note = null,
   filters,
   platforms,
   categories,
@@ -52,6 +56,7 @@ export function MetricsHeader({
             </span>
           </p>
         ) : null}
+        {note ? <p className="m-header-note">{note}</p> : null}
       </div>
 
       <div className="m-header-actions">
@@ -83,7 +88,7 @@ export function MetricsHeader({
           variant="segmented"
           value={String(period)}
           onChange={(value) => onPeriodChange(Number(value) as MetricsPeriod)}
-          choices={PERIODS.map((days) => ({ value: String(days), label: `${days} días` }))}
+          choices={periods.map((days) => ({ value: String(days), label: `${days} días` }))}
         />
         <label className="m-filter">
           <span className="visually-hidden">Canal</span>

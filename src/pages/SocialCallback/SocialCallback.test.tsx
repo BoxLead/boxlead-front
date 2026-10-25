@@ -30,6 +30,7 @@ function renderCallback(sessionError: string | null = null) {
     register: vi.fn(),
     socialLogin,
     logout: vi.fn(),
+    refreshUser: vi.fn(),
     isLoading: false,
     error: sessionError,
     clearError: vi.fn(),

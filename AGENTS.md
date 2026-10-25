@@ -22,7 +22,7 @@ src/
 ├── data/             # queryCache (shared request cache behind useApiQuery), lead and category mutations, metrics source and demo data, sign up plans
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
-├── components/       # ProtectedRoute, Layout, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
+├── components/       # ProtectedRoute, Layout, PlanBanner, LegalDialog, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
 ├── landing/          # Public landing: LandingPage and its sections
@@ -36,7 +36,8 @@ terraform/            # Infrastructure (do not modify without approval)
 /                                   Landing (public)
 /login, /register                   Auth (public)
 /privacy-policy, /terms-of-service, /data-deletion   Legal (public)
-/invitacion, /terminos, /privacidad, /contratos, /arrepentimiento, /baja   Payments placeholders (public, redirect to / for now)
+/invitacion                         Demo invitation (public, token in the fragment)
+/terminos, /privacidad, /contratos, /arrepentimiento, /baja   Payments placeholders (public, redirect to / for now)
 /app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
 /app/billing, /app/billing/return   Protected, only with features.billing
 /app/reseller                       Protected, only with isReseller
@@ -57,6 +58,10 @@ Billing, invitations, referrals and the legal pages are built behind the flags c
 `/register` loads `GET /billing/plans`, `GET /invitations/current` and `GET /legal/documents` together and shows the loader until they answer or 5 seconds pass (`data/plans.ts`). Any answer but a 200 from the plans leaves the sign up as it was. With plans the visitor picks Starter or Business in `PlanPicker`, which leads with today's charge in pesos, the price without national taxes under its legend and the dollar reference (`util/planPrice.ts`). Enterprise only links to a conversation. The Beta is enabled only when the invitation answers, and then its email fills the form and cannot be changed. `?plan=` preselects a plan. The chosen plan travels only in the destination, `/app/billing?checkout=STARTER` or `BUSINESS` for a paid plan and `next` otherwise, always through `safeAppPath`. When the legal documents answer, a checkbox sends the terms and privacy versions as `acceptedLegal` in the sign up, and for Google or Facebook inside `appState` next to `next`, which `SocialCallback` passes on to `POST /auth/social`. Nothing about the plan goes to browser storage. Core answers the sign up and the social login before it accepts the invitation, so `AuthProvider` asks `GET /auth/me` again after both and only then navigates, keeping the first answer if that call fails.
 
 The mock API answers every endpoint of that contract from `e2e/mock-api/billing.ts`. The scenarios `billing-none`, `billing-demo`, `billing-active`, `billing-past-due`, `billing-suspended`, `billing-checkout-pending`, `billing-checkout-rejected`, `billing-downgrade-pending`, `billing-invited` and `reseller` turn billing and legal on and give the agents page two enabled agents. Every other scenario keeps the flags off and the new endpoints answer 404. `resetApi(scenario, now, { pendingLegal, entitlementsUnavailable })` adds pending legal versions or makes the agent answer 503, and `settleCheckout(status)` decides the open checkout as the Mercado Pago return would. The checkout URL always points to `www.mercadopago.com.ar`, so specs intercept it with `page.route`. Invitation tokens live in `INVITATION_TOKENS` and `billing-invited` behaves as if the invitation cookie of another email were already set. A social login with the demo user's email answers 409 `ACCOUNT_EXISTS_WITH_PASSWORD`, as core does for an account with a password. Paid plans carry a USD `price`, the ARS `chargeToday` and a fixed `fxRate`, and `ENTERPRISE` is `contactOnly` with no price. Prices, rates and limits in the mock are made up for tests and are not the real catalog.
+
+With `features.billing` on, `Layout` shows `PlanBanner` from `GET /billing/summary` (`usePlan`). It covers suspended, paused, no plan, past due with the Mercado Pago link to change the payment method, replies used up and a Demo that ends within a week (`planNotice.ts`). Any 402 with `PLAN_REQUIRED` or `PLAN_LIMIT_REACHED`, from core or the agent, gets a Spanish message in `api/client.ts`, refreshes the summary and adds a dismissable notice with a link to billing (`data/planErrors.ts`). Without a plan the playground and the composer say why they are off and creating or enabling an agent is disabled, and agents with `overPlanLimit` are marked. Metrics only offer a period of P days if 2P fit in `METRICS_HISTORY_DAYS` and skip the forecast with less than 84 days. When `GET /invitations/current` answers and the account has no Demo, a notice offers `POST /invitations/accept` and shows its error. A non empty `pendingLegal` opens `LegalAcceptanceDialog`, which only closes after `POST /legal/acceptances` or logging out.
+
+`/invitacion` reads the token from the fragment, removes it from the URL with `history.replaceState`, keeps it only in memory and sends it to `POST /invitations/preview`. Without a session it offers `/register?plan=DEMO` or `/login`, and with one it accepts on purpose through `POST /invitations/accept`. `resetApi(scenario, now, { agentReplies })` sets the replies used in the period.
 
 ## Categories
 

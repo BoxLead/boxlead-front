@@ -140,19 +140,50 @@ const TOO_MANY_REQUESTS_MESSAGE = "Hiciste demasiados intentos seguidos. Probá 
 const CODE_MESSAGES: Record<string, string> = {
   ACCOUNT_EXISTS_WITH_PASSWORD:
     "Ya tenés una cuenta con este email. Entrá con tu email y contraseña.",
+  PLAN_REQUIRED: "Necesitás un plan activo para hacer esto.",
+  PLAN_LIMIT_REACHED: "Llegaste al límite de tu plan.",
+  ENTITLEMENTS_UNAVAILABLE: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
+  LEGAL_ACCEPTANCE_REQUIRED: "Para seguir tenés que aceptar los términos y la política de privacidad vigentes.",
 };
+
+export type PlanErrorCode = "PLAN_REQUIRED" | "PLAN_LIMIT_REACHED";
+
+const planErrorListeners = new Set<(code: PlanErrorCode) => void>();
+
+export function onPlanError(listener: (code: PlanErrorCode) => void): () => void {
+  planErrorListeners.add(listener);
+  return () => {
+    planErrorListeners.delete(listener);
+  };
+}
+
+function codeOf(data: unknown): string | null {
+  if (!data || typeof data !== "object" || !("code" in data)) return null;
+  const code = (data as { code: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
 
 function errorMessage(status: number, data: unknown): string {
   if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
-  if (data && typeof data === "object" && "code" in data) {
-    const code = (data as { code: unknown }).code;
-    if (typeof code === "string" && code in CODE_MESSAGES) return CODE_MESSAGES[code];
-  }
+  const code = codeOf(data);
+  if (code && code in CODE_MESSAGES) return CODE_MESSAGES[code];
   if (data && typeof data === "object" && "message" in data) {
     const m = (data as { message: unknown }).message;
     if (typeof m === "string") return m;
   }
   return `Request failed (${status})`;
+}
+
+export function toApiError(status: number, data: unknown): ApiError {
+  const code = codeOf(data);
+  if (status === 402 && (code === "PLAN_REQUIRED" || code === "PLAN_LIMIT_REACHED")) {
+    planErrorListeners.forEach((listener) => listener(code));
+  }
+  return new ApiError(errorMessage(status, data), status, data);
+}
+
+export async function errorFromResponse(res: Response): Promise<ApiError> {
+  return toApiError(res.status, await parseBody(res));
 }
 
 type UrlBuilder = (path: string) => string;
@@ -194,7 +225,7 @@ async function send<T>(
   }
 
   if (!res.ok) {
-    throw new ApiError(errorMessage(res.status, data), res.status, data);
+    throw toApiError(res.status, data);
   }
 
   return data as T;

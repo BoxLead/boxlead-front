@@ -36,6 +36,7 @@ docker compose up --build   # Production image at localhost:3000
 - `src/api/client.ts` — HTTP client with auto-auth headers
 - `src/api/types.ts` — All API type definitions, payments included
 - `e2e/mock-api/billing.ts` — Payments mock and its `billing-*` and `reseller` scenarios
+- `src/components/PlanBanner/` — Plan notices in `Layout`, fed by `usePlan` and the 402 errors of `api/client.ts`
 - `src/index.css` — Global design tokens (`--signal-*`)
 - `src/landing/` — Public landing page (isolated from app). Animations are CSS, and JS only passes the pointer position as CSS variables to elements with `data-glow`
 - `src/landing/flags.ts` — `BILLING_ENABLED` (plans section) and `REFERRALS_ENABLED` (`?ref=` capture in `util/referral.ts`), both `false` until payments go live
@@ -45,7 +46,8 @@ docker compose up --build   # Production image at localhost:3000
 /                 → Public landing page
 /login, /register → Auth
 /privacy-policy, /terms-of-service, /data-deletion → Legal
-/invitacion, /terminos, /privacidad, /contratos, /arrepentimiento, /baja → Payments placeholders, redirect to / for now
+/invitacion       → Demo invitation, token in the fragment and only in memory
+/terminos, /privacidad, /contratos, /arrepentimiento, /baja → Payments placeholders, redirect to / for now
 /app/*            → Protected app (inbox, leads, metrics, categories, connections)
 /app/billing, /app/billing/return, /app/reseller → Only when /auth/me enables them (FeatureRoute)
 ```

@@ -454,6 +454,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     billing = buildBilling(scenario, {
       pendingLegal: body.pendingLegal === true,
       entitlementsUnavailable: body.entitlementsUnavailable === true,
+      agentReplies: typeof body.agentReplies === "number" ? body.agentReplies : undefined,
     });
     return send(res, 200, { scenario });
   }

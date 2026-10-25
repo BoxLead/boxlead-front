@@ -8,18 +8,24 @@ import type { MetricsPeriod } from "../../util/metrics";
 import type { MetricsFilters } from "./metricsModel";
 import { periodRange } from "./metricsModel";
 import { buildMetricsView, type MetricsView } from "./metricsView";
+import { FORECAST_HISTORY_DAYS } from "./planPeriods";
 
-const HISTORY_DAYS = 84;
+type Options = {
+  enabled?: boolean;
+  forecast?: boolean;
+};
 
-export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters) {
+export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters, options: Options = {}) {
+  const { enabled = true, forecast = true } = options;
   const today = isoDate(new Date());
   const timezone = localTimezone();
   const range = useMemo(() => periodRange(period, today), [period, today]);
   const historyTo = addDays(today, -1);
 
-  const current = useApiQuery<MetricsReport>(metricsKey(range.from, range.to, timezone));
-  const previous = useApiQuery<MetricsReport>(metricsKey(range.previousFrom, range.previousTo, timezone));
-  const history = useApiQuery<MetricsReport>(metricsKey(addDays(historyTo, -(HISTORY_DAYS - 1)), historyTo, timezone));
+  const historyFrom = addDays(historyTo, -(FORECAST_HISTORY_DAYS - 1));
+  const current = useApiQuery<MetricsReport>(enabled ? metricsKey(range.from, range.to, timezone) : null);
+  const previous = useApiQuery<MetricsReport>(enabled ? metricsKey(range.previousFrom, range.previousTo, timezone) : null);
+  const history = useApiQuery<MetricsReport>(enabled && forecast ? metricsKey(historyFrom, historyTo, timezone) : null);
   const settings = useApiQuery<MetricsSettings>(METRICS_SETTINGS_KEY);
   const categories = useApiQuery<CategoryResponse[]>(CATEGORIES_KEY);
 
@@ -33,12 +39,12 @@ export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters) {
             range,
             current: current.data,
             previous: previous.data,
-            history: history.data,
+            history: forecast ? history.data : undefined,
             settings: settings.data,
             categories: categories.data,
           })
         : null,
-    [period, platform, category, range, current.data, previous.data, history.data, settings.data, categories.data],
+    [period, platform, category, range, current.data, previous.data, forecast, history.data, settings.data, categories.data],
   );
 
   const [shown, setShown] = useState<MetricsView | null>(null);

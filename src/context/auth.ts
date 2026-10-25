@@ -7,6 +7,7 @@ export type AuthContextValue = SessionFlags & {
   register: (body: RegisterRequest, redirectTo?: string) => Promise<void>;
   socialLogin: (idToken: string, redirectTo?: string, acceptedLegal?: LegalVersion[]) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
   clearError: () => void;

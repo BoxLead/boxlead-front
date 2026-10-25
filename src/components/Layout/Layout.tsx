@@ -1,6 +1,9 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { dismissPlanError } from "../../data/planErrors";
+import { LegalAcceptanceDialog } from "../LegalDialog/LegalAcceptanceDialog";
 import { Loading } from "../Loading";
+import { PlanBanner } from "../PlanBanner/PlanBanner";
 import { Sidebar } from "../Sidebar/Sidebar";
 import "./Layout.css";
 
@@ -10,16 +13,19 @@ export function Layout() {
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    dismissPlanError();
   }, [pathname]);
 
   return (
     <div className="layout">
       <Sidebar />
       <main className="layout-content" ref={contentRef}>
+        <PlanBanner />
         <Suspense fallback={<Loading inline />}>
           <Outlet />
         </Suspense>
       </main>
+      <LegalAcceptanceDialog />
     </div>
   );
 }

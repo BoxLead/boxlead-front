@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { agentApi, agentApiUrl, api, apiUrl } from "./client";
+import { agentApi, agentApiUrl, api, apiUrl, onPlanError } from "./client";
 import { clearQueryCache, fetchQuery, getQueryState } from "../data/queryCache";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -176,6 +176,18 @@ describe("rate limited answers", () => {
 });
 
 describe("coded errors", () => {
+  it("asks to accept the legal documents in Spanish", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+    fetchMock.mockResolvedValue(
+      json({ error: "Bad Request", message: "Legal documents not accepted", code: "LEGAL_ACCEPTANCE_REQUIRED" }, 400),
+    );
+
+    await expect(api.post("/auth/register", {})).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining("aceptar los términos"),
+    });
+  });
+
   it("explains a social login on a password account in Spanish", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
     fetchMock.mockResolvedValue(
@@ -193,5 +205,41 @@ describe("coded errors", () => {
       status: 409,
       message: "Ya tenés una cuenta con este email. Entrá con tu email y contraseña.",
     });
+  });
+});
+
+describe("plan errors", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+    vi.stubEnv("VITE_AGENT_API_BASE_URL", "https://agent.example.com");
+  });
+
+  it("explains a 402 in Spanish and tells the listeners which limit it was", async () => {
+    const listener = vi.fn();
+    const stop = onPlanError(listener);
+    fetchMock.mockResolvedValue(json({ error: "Payment Required", message: "Limit", code: "PLAN_LIMIT_REACHED" }, 402));
+
+    await expect(agentApi.post("/agents", {})).rejects.toMatchObject({ status: 402, message: "Llegaste al límite de tu plan." });
+    expect(listener).toHaveBeenCalledWith("PLAN_LIMIT_REACHED");
+
+    stop();
+    fetchMock.mockResolvedValue(json({ error: "Payment Required", message: "Plan", code: "PLAN_REQUIRED" }, 402));
+    await expect(api.post("/conversations/c-1/messages", {})).rejects.toMatchObject({
+      message: "Necesitás un plan activo para hacer esto.",
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not report other errors as plan errors", async () => {
+    const listener = vi.fn();
+    const stop = onPlanError(listener);
+    fetchMock.mockResolvedValue(json({ error: "Unavailable", message: "Down", code: "ENTITLEMENTS_UNAVAILABLE" }, 503));
+
+    await expect(agentApi.post("/agents", {})).rejects.toMatchObject({
+      status: 503,
+      message: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
+    });
+    expect(listener).not.toHaveBeenCalled();
+    stop();
   });
 });
