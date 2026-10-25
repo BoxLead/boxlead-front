@@ -1,0 +1,45 @@
+.legal-accept-list {
+  display: grid;
+  gap: var(--signal-space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legal-accept-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px var(--signal-space-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle);
+}
+
+.legal-accept-list a {
+  color: var(--signal-accent);
+  font-weight: 600;
+}
+
+.legal-accept-version {
+  color: var(--signal-text-muted);
+  font-size: 0.8125rem;
+}
+
+.legal-accept-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.legal-accept-check input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--signal-accent);
+}

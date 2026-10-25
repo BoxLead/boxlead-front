@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { dismissPlanError } from "../../data/planErrors";
+import { LegalAcceptanceDialog } from "../LegalDialog/LegalAcceptanceDialog";
 import { Loading } from "../Loading";
 import { PlanBanner } from "../PlanBanner/PlanBanner";
 import { Sidebar } from "../Sidebar/Sidebar";
@@ -24,6 +25,7 @@ export function Layout() {
           <Outlet />
         </Suspense>
       </main>
+      <LegalAcceptanceDialog />
     </div>
   );
 }
