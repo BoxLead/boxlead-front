@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError, clearAuth } from "../api/client";
-import type { AuthUser, LoginRequest, RegisterRequest } from "../api/types";
+import type { AuthUser, LegalVersion, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
 import { clearQueryCache } from "../data/queryCache";
 import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
@@ -83,9 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const socialLogin = useCallback(
-    (idToken: string, redirectTo?: string) =>
+    (idToken: string, redirectTo?: string, acceptedLegal?: LegalVersion[]) =>
       authenticate(
-        () => api.socialLogin({ idToken }),
+        () => api.socialLogin(acceptedLegal ? { idToken, acceptedLegal } : { idToken }),
         "No pudimos iniciar sesión.",
         redirectTo,
       ),
