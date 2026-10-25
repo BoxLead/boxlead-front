@@ -54,11 +54,13 @@ export function Agents() {
   const [toggling, setToggling] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AgentResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deletedId, setDeletedId] = useState<string | null>(null);
 
   const section = sectionFrom(searchParams);
   const tab = tabFrom(searchParams);
-  const paramId = searchParams.get("id");
   const list = agents.data ?? [];
+  const requestedId = searchParams.get("id");
+  const paramId = requestedId === deletedId && !list.some((agent) => agent.id === requestedId) ? null : requestedId;
   const creating = paramId === NEW_AGENT;
   const explicit = paramId && !creating ? (list.find((agent) => agent.id === paramId) ?? null) : null;
   const missing = Boolean(paramId && !creating && agents.data && !explicit);
@@ -141,12 +143,14 @@ export function Agents() {
     if (!pendingDelete) return;
     const removedId = pendingDelete.id;
     setDeleting(true);
+    setDeletedId(removedId);
     try {
       await deleteAgent(removedId);
       toast({ tone: "info", message: `Eliminaste ${pendingDelete.name}.` });
       setPendingDelete(null);
-      if (paramId === removedId) write({ kind: "close" });
+      if (requestedId === removedId) write({ kind: "close" });
     } catch (error) {
+      setDeletedId(null);
       toast({
         tone: "danger",
         message: error instanceof ApiError ? agentErrorMessage(error, "No pudimos eliminar el agente.") : "No pudimos eliminar el agente.",
