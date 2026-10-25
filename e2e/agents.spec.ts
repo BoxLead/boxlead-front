@@ -6,6 +6,7 @@ const agentButton = (page: Page, name: string) => agentList(page).getByRole("but
 const editor = (page: Page) => page.getByRole("form", { name: "Configuración del agente" });
 const rule = (page: Page, index: number) => editor(page).getByRole("group", { name: `Regla ${index}` });
 const playground = (page: Page) => page.locator(".playground");
+const detailBack = (page: Page) => page.getByRole("region", { name: "Detalle del agente" }).getByRole("button", { name: "Volver" });
 
 async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -21,7 +22,7 @@ async function watchForText(page: Page, text: string) {
 }
 
 async function showList(page: Page) {
-  const back = page.getByRole("button", { name: "Volver" });
+  const back = detailBack(page);
   const list = agentList(page);
   await expect(back.or(list)).toBeVisible();
   if (await back.isVisible()) await back.click();
@@ -30,7 +31,7 @@ async function showList(page: Page) {
 
 async function openAgent(page: Page, name: string) {
   const row = agentButton(page, name);
-  await expect(row.or(page.getByRole("button", { name: "Volver" }))).toBeVisible();
+  await expect(row.or(detailBack(page))).toBeVisible();
   if (!(await row.isVisible())) await showList(page);
   await row.click();
   await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
