@@ -53,6 +53,24 @@ function update(entry: Entry, patch: Partial<QueryState<unknown>>) {
   entry.listeners.forEach((listener) => listener());
 }
 
+export function sameData(previous: unknown, next: unknown): boolean {
+  if (Object.is(previous, next)) return true;
+  if (typeof previous !== "object" || typeof next !== "object" || previous === null || next === null) return false;
+  if (Array.isArray(previous) !== Array.isArray(next)) return false;
+  if (Array.isArray(previous) && Array.isArray(next)) {
+    return previous.length === next.length && previous.every((item, index) => sameData(item, next[index]));
+  }
+  const left = previous as Record<string, unknown>;
+  const right = next as Record<string, unknown>;
+  const keys = Object.keys(left);
+  if (keys.length !== Object.keys(right).length) return false;
+  return keys.every((key) => key in right && sameData(left[key], right[key]));
+}
+
+function keepStable(previous: unknown, next: unknown): unknown {
+  return previous !== undefined && sameData(previous, next) ? previous : next;
+}
+
 function messageOf(error: unknown): string {
   return error instanceof ApiError ? error.message : FALLBACK_ERROR;
 }
@@ -76,7 +94,7 @@ export function fetchQuery(key: string): Promise<void> {
         return;
       }
       update(entry, {
-        data,
+        data: keepStable(entry.state.data, data),
         error: null,
         status: "success",
         fetching: false,

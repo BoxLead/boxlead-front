@@ -42,6 +42,33 @@
   color: var(--signal-text-muted);
 }
 
+.conversation-search-key {
+  display: none;
+  padding: 1px 6px;
+  border: 1px solid var(--signal-border);
+  border-radius: 5px;
+  color: var(--signal-text-muted);
+  font-family: var(--signal-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .conversation-search-key {
+    display: inline-block;
+  }
+
+  .conversation-search:focus-within .conversation-search-key {
+    display: none;
+  }
+}
+
+.conversation-items-more {
+  display: flex;
+  justify-content: center;
+  padding: 12px var(--signal-space-md) 16px;
+}
+
 @media (max-width: 760px) {
   .conversation-channels {
     flex-wrap: nowrap;

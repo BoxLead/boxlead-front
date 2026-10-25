@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { ConversationResponse, LeadResponse, PlatformType, SalesStage } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -6,6 +6,7 @@ import { InboxIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { useUrlQuery } from "../../hooks/useUrlQuery";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
 import { ConversationList } from "./ConversationList";
 import { ConversationView } from "./ConversationView";
@@ -17,6 +18,7 @@ import {
   type InboxFilters,
 } from "./inboxModel";
 import { CONVERSATIONS_KEY } from "./useConversationSender";
+import { useInboxShortcuts } from "./useInboxShortcuts";
 import "./Inbox.css";
 
 const LIST_REFRESH_MS = 5_000;
@@ -34,14 +36,14 @@ export function Inbox() {
   useDocumentTitle("Bandeja");
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useUrlQuery(searchParams, setSearchParams);
+  const deferredQuery = useDeferredValue(query);
+  const searchRef = useRef<HTMLInputElement>(null);
   const selectedId = searchParams.get("id");
-  const filters: InboxFilters = {
-    channel: parseChannel(searchParams.get("channel")),
-    stage: parseStage(searchParams.get("stage")),
-    unreadOnly: searchParams.get("unread") === "1",
-    query,
-  };
+  const channel = parseChannel(searchParams.get("channel"));
+  const stage = parseStage(searchParams.get("stage"));
+  const unreadOnly = searchParams.get("unread") === "1";
+  const filters: InboxFilters = { channel, stage, unreadOnly, query };
 
   const conversations = useApiQuery<ConversationResponse[]>(CONVERSATIONS_KEY, {
     refreshInterval: LIST_REFRESH_MS,
@@ -54,8 +56,12 @@ export function Inbox() {
     [leads.data],
   );
   const rows = useMemo(() => toRows(conversations.data ?? [], leadsById), [conversations.data, leadsById]);
-  const visible = filterRows(rows, filters);
-  const channels = channelsIn(rows, CONNECTABLE_PLATFORMS.map((p) => p.id));
+  const visible = useMemo(
+    () => filterRows(rows, { channel, stage, unreadOnly, query: deferredQuery }),
+    [rows, channel, stage, unreadOnly, deferredQuery],
+  );
+  const visibleIds = useMemo(() => visible.map((row) => row.id), [visible]);
+  const channels = useMemo(() => channelsIn(rows, CONNECTABLE_PLATFORMS.map((p) => p.id)), [rows]);
   const selectedRow = rows.find((row) => row.id === selectedId);
 
   const linkWith = useCallback(
@@ -91,6 +97,8 @@ export function Inbox() {
 
   const isOpen = Boolean(selectedId);
   const backTo = linkWith({ id: null });
+  const linkFor = useCallback((id: string) => linkWith({ id }), [linkWith]);
+  useInboxShortcuts({ ids: visibleIds, selectedId, linkFor, backTo, searchRef });
 
   return (
     <div className={`inbox${isOpen ? " inbox-open" : ""}`}>
@@ -133,7 +141,9 @@ export function Inbox() {
               channels={channels}
               filters={filters}
               selectedId={selectedId}
-              linkFor={(id) => linkWith({ id })}
+              searchRef={searchRef}
+              windowKey={`${channel}|${stage ?? ""}|${unreadOnly ? 1 : 0}|${deferredQuery}`}
+              linkFor={linkFor}
               onFiltersChange={updateFilters}
             />
           )}

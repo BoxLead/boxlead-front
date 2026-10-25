@@ -271,3 +271,10 @@
     transition: none;
   }
 }
+
+.leads-table-more {
+  display: flex;
+  justify-content: center;
+  padding: 12px var(--signal-space-md) 16px;
+  border-top: 1px solid var(--signal-hairline);
+}

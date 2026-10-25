@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { CategoryResponse, LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -14,6 +14,8 @@ import { CATEGORIES_KEY } from "../../data/categories";
 import { ALL_LEADS_KEY } from "../../data/leads";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { useRenderWindow } from "../../hooks/useRenderWindow";
+import { useUrlQuery } from "../../hooks/useUrlQuery";
 import { CONNECTABLE_PLATFORMS, getPlatform } from "../../platforms";
 import { UNCATEGORIZED } from "../../util/categories";
 import { formatRelative } from "../../util/format";
@@ -44,25 +46,31 @@ export function Leads() {
   useDocumentTitle("Leads");
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useUrlQuery(searchParams, setSearchParams);
+  const deferredQuery = useDeferredValue(query);
   const leads = useApiQuery<LeadResponse[]>(ALL_LEADS_KEY);
   const categories = useApiQuery<CategoryResponse[]>(CATEGORIES_KEY);
   const categoryList = categories.data ?? [];
-  const filters: LeadFilters = {
-    status: parseStatus(searchParams.get("status")),
-    channel: parseChannel(searchParams.get("channel")),
-    includeBuyers: searchParams.get("buyers") === "1",
-    category: searchParams.get("category"),
-    temperature: parseTemperature(searchParams.get("temperature")),
-    query,
-  };
+  const filters: LeadFilters = useMemo(
+    () => ({
+      status: parseStatus(searchParams.get("status")),
+      channel: parseChannel(searchParams.get("channel")),
+      includeBuyers: searchParams.get("buyers") === "1",
+      category: searchParams.get("category"),
+      temperature: parseTemperature(searchParams.get("temperature")),
+      query: deferredQuery,
+    }),
+    [searchParams, deferredQuery],
+  );
 
   const all = useMemo(() => leads.data ?? [], [leads.data]);
-  const scoped = filterLeads(all, { ...filters, status: null });
-  const visible = filterLeads(all, filters);
-  const counts = statusCounts(scoped);
-  const buyers = all.filter((lead) => lead.postSaleOnly).length;
-  const channels = CONNECTABLE_PLATFORMS.filter((p) => all.some((lead) => lead.platform === p.id));
+  const scoped = useMemo(() => filterLeads(all, { ...filters, status: null }), [all, filters]);
+  const visible = useMemo(() => filterLeads(all, filters), [all, filters]);
+  const counts = useMemo(() => statusCounts(scoped), [scoped]);
+  const buyers = useMemo(() => all.filter((lead) => lead.postSaleOnly).length, [all]);
+  const channels = useMemo(() => CONNECTABLE_PLATFORMS.filter((p) => all.some((lead) => lead.platform === p.id)), [all]);
+  const windowKey = `${searchParams.toString()}|${deferredQuery}`;
+  const { shown, remaining, showMore, sentinelRef } = useRenderWindow(visible, windowKey);
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(searchParams);
@@ -235,7 +243,7 @@ export function Leads() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((lead) => {
+              {shown.map((lead) => {
                 const name = leadDisplayName(lead);
                 const platform = getPlatform(lead.platform);
                 return (
@@ -281,6 +289,13 @@ export function Leads() {
               })}
             </tbody>
           </table>
+          {remaining > 0 ? (
+            <div className="leads-table-more">
+              <button type="button" className="btn btn-secondary btn-sm" ref={sentinelRef} onClick={showMore}>
+                Mostrar más ({remaining})
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
