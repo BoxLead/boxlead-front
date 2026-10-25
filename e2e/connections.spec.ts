@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { expectAccessible, login, resetApi, routeOAuthProvider, screenshot } from "./support.ts";
+import { expect, expectAccessible, login, mockApiUrl, resetApi, routeOAuthProvider, screenshot, test } from "./support.ts";
 
 const MELI_AUTH = "auth.mercadolibre.test";
 
@@ -69,7 +68,7 @@ test("a callback that this browser did not start is rejected", async ({ page }) 
   await resetApi("empty");
   await login(page, "/app/oauth/callback/MELI?code=abc&state=forged");
   await expect(page.getByRole("alert")).toContainText("No pudimos verificar");
-  const connections = await page.request.get("http://localhost:8090/oauth/connections");
+  const connections = await page.request.get(`${mockApiUrl()}/oauth/connections`);
   expect(await connections.json()).toEqual([]);
 });
 

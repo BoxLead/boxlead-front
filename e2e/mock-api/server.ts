@@ -15,11 +15,13 @@ import {
   emptyActivityDetail,
   MELI_SELLER_ID,
   nextId,
+  setClock,
   type MockState,
   type Scenario,
   type StoredConversation,
   WHATSAPP_TEMPLATES,
 } from "./fixtures.ts";
+import { buildMetricsReport, parseMetricsSettings, validateRange } from "./metrics.ts";
 import { buildShowcase } from "./showcase.ts";
 import {
   encodeEvents,
@@ -389,6 +391,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/__reset" && method === "POST") {
     const body = await readBody(req);
     const scenario = (body.scenario as Scenario | undefined) ?? "default";
+    setClock(typeof body.now === "string" ? body.now : null);
     state = scenario === "showcase" ? buildShowcase() : buildState(scenario);
     return send(res, 200, { scenario });
   }
@@ -425,6 +428,26 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   }
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, USER);
+
+  if (parts[0] === "metrics") {
+    if (parts.length === 1 && method === "GET") {
+      const from = url.searchParams.get("from");
+      const to = url.searchParams.get("to");
+      const timezone = url.searchParams.get("timezone");
+      const invalid = validateRange(from, to, timezone);
+      if (invalid) return fail(res, invalid.status, invalid.message);
+      return send(res, 200, buildMetricsReport(state, from as string, to as string, timezone as string));
+    }
+    if (parts[1] === "settings" && parts.length === 2) {
+      if (method === "GET") return send(res, 200, state.metricsSettings);
+      if (method === "PUT") {
+        const settings = parseMetricsSettings(await readBody(req));
+        if (!settings) return fail(res, 400, "Validation failed");
+        state.metricsSettings = settings;
+        return send(res, 200, settings);
+      }
+    }
+  }
 
   if (parts[0] === "business-profile" && parts.length === 1) {
     if (method === "GET") return send(res, 200, state.businessProfile);
@@ -690,6 +713,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       state.messages.push(created);
       conversation.updatedAt = created.createdAt;
       if (created.direction === "OUTBOUND") {
+        const contacted = state.leads.find((l) => l.id === conversation.leadId);
+        if (contacted?.status === "NEW") contacted.status = "CONTACTED";
         state.drafts = state.drafts.filter((d) => d.conversationId !== conversation.id);
         conversation.needsAttention = false;
         conversation.attentionReason = null;

@@ -31,7 +31,7 @@ docker compose up --build   # Production image at localhost:3000
 - `src/hooks/` — `useApiQuery` (cached data loading), `useConnectPlatform`, `useDocumentTitle`
 - `src/data/queryCache.ts` — shared request cache, invalidation and optimistic updates
 - `src/platforms/` — per-channel definitions and registry
-- `src/data/metrics.ts` — metrics source (`METRICS_DEMO` serves demo data until the backend has `/metrics`)
+- `src/data/metrics.ts` — metrics query keys and the settings mutation (data comes from `/metrics`)
 - `e2e/mock-api/` — mock backend used by Playwright and `npm run dev:mock`
 - `src/api/client.ts` — HTTP client with auto-auth headers
 - `src/api/types.ts` — All API type definitions

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { expectAccessible, GOOGLE_IDENTITY, resetApi, routeAuth0 } from "./support.ts";
+import { expect, expectAccessible, GOOGLE_IDENTITY, resetApi, routeAuth0, test } from "./support.ts";
 
 test.beforeEach(async () => {
   await resetApi();

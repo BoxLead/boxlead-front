@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { expectAccessible, login, resetApi, screenshot } from "./support.ts";
+import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
 
 const funnel = (page: import("@playwright/test").Page) => page.getByRole("group", { name: "Filtrar por estado" });
 const rows = (page: import("@playwright/test").Page) => page.locator("tbody tr");

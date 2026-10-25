@@ -11,7 +11,6 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import "./MetricsHeader.css";
 
 type MetricsHeaderProps = {
-  demo: boolean;
   period: MetricsPeriod;
   filters: MetricsFilters;
   platforms: PlatformType[];
@@ -23,7 +22,6 @@ type MetricsHeaderProps = {
 };
 
 export function MetricsHeader({
-  demo,
   period,
   filters,
   platforms,
@@ -44,7 +42,6 @@ export function MetricsHeader({
       <div className="m-header-title">
         <div className="m-header-name">
           <h1 className="page-title">Métricas</h1>
-          {demo ? <span className="m-header-demo">Datos de ejemplo</span> : null}
         </div>
         {range ? (
           <p className="m-header-range">

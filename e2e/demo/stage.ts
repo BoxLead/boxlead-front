@@ -12,15 +12,17 @@ export type Effect =
   | { kind: "typing"; layer: Layer; at: number; until: number }
   | { kind: "reveal"; layer: Layer; selector: string; at: number }
   | { kind: "pin-bottom"; layer: Layer; at: number; until: number };
-export type Notice = { platform: Platform; name: string; text: string };
+export type Notice = { platform: Platform; name: string; text: string; time?: string };
 export type StreamItem = { platform: Platform; name: string; state: string };
+export type Gauge = { kind: "clock" | "duration"; from: number; to: number; until: number };
+export type Problem = { at: number; until: number; tidyAt: number; gauge: Gauge; label: string; doneLabel: string; doneValue?: string };
 export type Script = {
   lines: Line[];
   shots: Shot[];
   chips: Chip[];
   effects: Effect[];
   notices: Notice[];
-  problem: { at: number; until: number; tidyAt: number; clockFrom: number; clockTo: number; clockUntil: number };
+  problem: Problem;
   turn: { at: number; until: number };
   arrival: { at: number; until: number; notice: Notice; time: string };
   channels: { at: number; until: number };
@@ -316,9 +318,19 @@ export function stageRuntime() {
     return `${String(hours).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
   }
 
-  function clockAt(t: number) {
-    const { clockFrom, clockTo, clockUntil, at } = script.problem;
-    return clockFrom + (clockTo - clockFrom) * inOutCubic(prog(t, at, clockUntil - at));
+  function formatDuration(minutes: number) {
+    if (minutes < 60) return `${Math.round(minutes)} min`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)} h`;
+    return "+1 día";
+  }
+
+  function gaugeAt(t: number) {
+    const { gauge, at } = script.problem;
+    return gauge.from + (gauge.to - gauge.from) * inOutCubic(prog(t, at, gauge.until - at));
+  }
+
+  function formatGauge(minutes: number) {
+    return script.problem.gauge.kind === "clock" ? formatClock(minutes) : formatDuration(minutes);
   }
 
   const noticeArrival = (index: number) => script.problem.at + 0.25 + index * 0.52;
@@ -332,10 +344,11 @@ export function stageRuntime() {
     const dim = t >= script.turn.at ? 1 - 0.65 * outCubic(prog(t, script.turn.at, 0.5)) + 0.65 * outCubic(prog(t, tidyAt, 0.3)) : 1;
     const leave = prog(t, until - 0.3, 0.3);
     panel.style.opacity = String(dim * (1 - leave));
-    query<HTMLElement>(".clock-value").textContent = formatClock(clockAt(t));
+    const solved = t >= tidyAt + 0.12;
+    query<HTMLElement>(".clock-value").textContent = solved && script.problem.doneValue ? script.problem.doneValue : formatGauge(gaugeAt(t));
     const label = query<HTMLElement>(".clock small");
-    label.textContent = t >= tidyAt + 0.12 ? "Respondido" : "Sin responder";
-    label.dataset.tone = t >= tidyAt + 0.12 ? "green" : "";
+    label.textContent = solved ? script.problem.doneLabel : script.problem.label;
+    label.dataset.tone = solved ? "green" : "";
     const tidy = outCubic(prog(t, tidyAt, 0.4));
     const arrived = noticeElements.filter((_, index) => t >= noticeArrival(index)).length;
     noticeElements.forEach((element, index) => {
@@ -359,7 +372,7 @@ export function stageRuntime() {
       const done = t >= tidyAt + 0.12 + index * 0.05;
       state.dataset.tone = done ? "green" : "amber";
       state.textContent = done ? "Respondido" : "Sin responder";
-      element.querySelector<HTMLElement>(".notice-time")!.textContent = formatClock(clockAt(arrival));
+      element.querySelector<HTMLElement>(".notice-time")!.textContent = element.dataset.time || formatGauge(gaugeAt(arrival));
     });
   }
 
@@ -692,6 +705,7 @@ export function stageRuntime() {
         const element = document.createElement("div");
         element.className = "notice";
         element.innerHTML = noticeMarkup(notice, "", "Sin responder", "amber");
+        element.dataset.time = notice.time ?? "";
         fillNotice(element, notice);
         notices.prepend(element);
         noticeElements.push(element);
