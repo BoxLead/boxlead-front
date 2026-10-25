@@ -492,6 +492,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (claims.email_verified !== true || typeof claims.email !== "string") {
       return fail(res, 403, "A verified email is required");
     }
+    if (claims.email.toLowerCase() === USER.email) {
+      return reply(res, {
+        status: 409,
+        body: { error: "Conflict", message: "An account with a password exists", code: "ACCOUNT_EXISTS_WITH_PASSWORD" },
+      });
+    }
     const name = typeof claims.name === "string" ? claims.name : USER.name;
     return send(res, 200, sessionUser({ email: claims.email, name }), { "Set-Cookie": sessionCookie("valid", 86400) });
   }
