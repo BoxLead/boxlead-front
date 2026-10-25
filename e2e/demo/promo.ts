@@ -13,6 +13,7 @@ import {
   type Line,
   type Notice,
   type Platform,
+  type Problem,
   type Script,
   type Shot,
   type StreamItem,
@@ -40,21 +41,91 @@ const STREAM_STATES = ["Respondido", "Calificado", "Respondido", "Lead creado"];
 const PREVIEW = process.env.PROMO_TIMES?.split(",").map(Number) ?? null;
 const FORMATS = (process.env.PROMO_FORMATS?.split(",") as Format[] | undefined) ?? ["vertical", "square"];
 
+type Scenario = {
+  opening: Line[];
+  result: string;
+  metrics: { line: string; path: string; selector: string; chip: string };
+  replyChip: string;
+  heroTimes: [string, string];
+  notices: Notice[];
+  problem: Problem;
+};
+
+const SCENARIOS: Record<string, Scenario> = {
+  night: {
+    opening: [
+      { at: 0.15, until: 1.95, text: "Tu cliente escribe a las *3* *AM.*", kind: "hero" },
+      { at: 2.15, until: 4.5, text: "Vos, durmiendo.", kind: "title" },
+      { at: 4.7, until: 6.95, text: "Ya le compró a otro.", kind: "title" },
+      { at: 9.4, until: 11.3, text: "Mismo cliente, *3* *AM.*", kind: "title" },
+      { at: 11.6, until: 13.55, text: "Tu agente ya le respondió.", kind: "title" },
+      { at: 13.8, until: 16.85, text: "En automático, las 24 horas.", kind: "title" },
+    ],
+    result: "Más ventas con el *mismo* *equipo.*",
+    metrics: { line: "Sabé qué canal vende más.", path: "/app/metrics", selector: ".breakdown-table", chip: "Por canal" },
+    replyChip: "Respondido solo",
+    heroTimes: ["03:01", "03:02"],
+    notices: [
+      { platform: "whatsapp", name: "Carla Méndez", text: "¿Hay stock en negro? ¿Envían a Córdoba?" },
+      { platform: "instagram", name: "tomas.rios", text: "¿Precio? ¿Tienen cuotas?" },
+      { platform: "meli", name: "Pregunta nueva", text: "Buenas, ¿hacen factura A?" },
+      { platform: "messenger", name: "Lucía Pereyra", text: "¿Hacen envíos a Mendoza?" },
+      { platform: "whatsapp", name: "Nico Álvarez", text: "¿Sigue disponible?" },
+      { platform: "instagram", name: "sofi.ok", text: "¿Cuánto sale el combo?" },
+      { platform: "meli", name: "Pregunta nueva", text: "¿Tiene garantía oficial?" },
+      { platform: "whatsapp", name: "Romina G.", text: "Hola, ¿están?" },
+    ],
+    problem: { at: 2, until: 9, tidyAt: 8.35, gauge: { kind: "clock", from: 180, to: 460, until: 4.6 }, label: "Sin responder", doneLabel: "Respondido" },
+  },
+  overflow: {
+    opening: [
+      { at: 0.15, until: 1.95, text: "Demasiados mensajes, *una* *sola* *persona.*", kind: "hero" },
+      { at: 2.15, until: 4.5, text: "Algunos quedan colgados.", kind: "title" },
+      { at: 4.7, until: 6.95, text: "Respondés *un* *día* *después.*", kind: "title" },
+      { at: 9.4, until: 11.3, text: "Mismo mensaje, *con* *tu* *agente.*", kind: "title" },
+      { at: 11.6, until: 13.55, text: "Respondido en menos de *5* *minutos.*", kind: "title" },
+      { at: 13.8, until: 16.85, text: "Ninguno queda colgado.", kind: "title" },
+    ],
+    result: "De *un* *día* a *minutos.*",
+    metrics: { line: "Medí cuánto tardás en responder.", path: "/app/metrics?metric=response", selector: ".attention-headline", chip: "Primera respuesta" },
+    replyChip: "Respondido en 1 min",
+    heroTimes: ["14:05", "14:06"],
+    notices: [
+      { platform: "whatsapp", name: "Carla Méndez", text: "¿Hay stock en negro? ¿Envían a Córdoba?", time: "hace 2 días" },
+      { platform: "instagram", name: "tomas.rios", text: "¿Precio? ¿Tienen cuotas?", time: "hace 1 día" },
+      { platform: "meli", name: "Pregunta nueva", text: "Buenas, ¿hacen factura A?", time: "hace 1 día" },
+      { platform: "messenger", name: "Lucía Pereyra", text: "¿Hacen envíos a Mendoza?", time: "hace 20 h" },
+      { platform: "whatsapp", name: "Nico Álvarez", text: "¿Sigue disponible?", time: "hace 9 h" },
+      { platform: "instagram", name: "sofi.ok", text: "¿Cuánto sale el combo?", time: "hace 5 h" },
+      { platform: "meli", name: "Pregunta nueva", text: "¿Tiene garantía oficial?", time: "hace 2 h" },
+      { platform: "whatsapp", name: "Romina G.", text: "Hola, ¿están?", time: "hace 40 min" },
+    ],
+    problem: {
+      at: 2,
+      until: 9,
+      tidyAt: 8.35,
+      gauge: { kind: "duration", from: 20, to: 1500, until: 6.2 },
+      label: "Tiempo de respuesta",
+      doneLabel: "Respondido",
+      doneValue: "< 5 min",
+    },
+  },
+};
+
+const SCENARIO = process.env.PROMO_SCENARIO ?? "night";
+const scenario = SCENARIOS[SCENARIO];
+if (!scenario) throw new Error(`promo: unknown scenario ${SCENARIO}, use ${Object.keys(SCENARIOS).join(" or ")}`);
+
 const lines: Line[] = [
-  { at: 0.15, until: 1.95, text: "Tu cliente escribe a las *3* *AM.*", kind: "hero" },
-  { at: 2.15, until: 4.5, text: "Vos, durmiendo.", kind: "title" },
-  { at: 4.7, until: 6.95, text: "Ya le compró a otro.", kind: "title" },
-  { at: 9.4, until: 11.3, text: "Mismo cliente, *3* *AM.*", kind: "title" },
-  { at: 11.6, until: 13.55, text: "Tu agente ya le respondió.", kind: "title" },
-  { at: 13.8, until: 16.85, text: "En automático, las 24 horas.", kind: "title" },
+  ...scenario.opening,
   { at: 17.15, until: 19.4, text: "Todos tus canales, una bandeja.", kind: "title", fast: true, kicker: "Bandeja" },
   { at: 19.65, until: 21.9, text: "Responde y califica a cada cliente.", kind: "title", fast: true, kicker: "Leads" },
   { at: 22.15, until: 24.4, text: "Te deja el borrador listo.", kind: "title", fast: true, kicker: "Borradores" },
   { at: 24.65, until: 26.9, text: "¿Hace falta una persona? Te avisa.", kind: "title", fast: true, kicker: "Derivación" },
   { at: 27.15, until: 29.4, text: "Responde comentarios de Instagram.", kind: "title", fast: true, kicker: "Instagram" },
   { at: 29.65, until: 31.9, text: "Tu agente, con tus reglas.", kind: "title", fast: true, kicker: "Agentes" },
-  { at: 32.15, until: 34.4, text: "Sabé qué canal vende más.", kind: "title", fast: true, kicker: "Métricas" },
-  { at: 34.9, until: 39.25, text: "Más ventas con el *mismo* *equipo.*", kind: "title" },
+  { at: 32.15, until: 34.4, text: scenario.metrics.line, kind: "title", fast: true, kicker: "Métricas" },
+  { at: 34.9, until: 39.25, text: scenario.result, kind: "title" },
 ];
 
 const shots: Shot[] = [
@@ -65,28 +136,17 @@ const shots: Shot[] = [
   { at: 24.5, until: 27, layer: "a", enter: "wipe-up", focus: { selector: ".banner", zoom: 1.8, ring: true } },
   { at: 27, until: 29.5, layer: "b", enter: "wipe-right", focus: { selector: ".comment-event-outbound", zoom: 1.65, ring: true } },
   { at: 29.5, until: 32, layer: "a", enter: "wipe-up", focus: { selector: ".agent-textarea", zoom: 1.6, ring: true } },
-  { at: 32, until: 34.5, layer: "b", enter: "wipe-left", focus: { selector: ".breakdown-table", ring: true } },
+  { at: 32, until: 34.5, layer: "b", enter: "wipe-left", focus: { selector: scenario.metrics.selector, ring: true } },
 ];
 
 const chips: Chip[] = [
-  { at: 11.9, until: 16.75, text: "Respondido solo", tone: "green", anchor: { layer: "a", selector: "[data-promo-reply]", dx: -4, dy: -26 } },
+  { at: 11.9, until: 16.75, text: scenario.replyChip, tone: "green", anchor: { layer: "a", selector: "[data-promo-reply]", dx: -4, dy: -26 } },
   { at: 20.1, until: 21.85, text: "Calificado", tone: "green", anchor: { layer: "a", selector: ".leads-row", dx: -20, dy: -14 } },
   { at: 22.6, until: 24.35, text: "Borrador listo", tone: "blue", anchor: { layer: "b", selector: ".draft-banner", dx: -16, dy: -16 } },
   { at: 25.1, until: 26.85, text: "Pidió una persona", tone: "amber", anchor: { layer: "a", selector: ".banner", dx: -16, dy: -16 } },
   { at: 27.6, until: 29.35, text: "Respondido en público", tone: "green", anchor: { layer: "b", selector: ".comment-event-outbound", dx: -16, dy: -16 } },
   { at: 30.1, until: 31.85, text: "Tus reglas", tone: "blue", anchor: { layer: "a", selector: ".agent-textarea", dx: -16, dy: -16 } },
-  { at: 32.6, until: 34.35, text: "Por canal", tone: "blue", anchor: { layer: "b", selector: ".breakdown-table", dx: -16, dy: -16 } },
-];
-
-const notices: Notice[] = [
-  { platform: "whatsapp", name: "Carla Méndez", text: "¿Hay stock en negro? ¿Envían a Córdoba?" },
-  { platform: "instagram", name: "tomas.rios", text: "¿Precio? ¿Tienen cuotas?" },
-  { platform: "meli", name: "Pregunta nueva", text: "Buenas, ¿hacen factura A?" },
-  { platform: "messenger", name: "Lucía Pereyra", text: "¿Hacen envíos a Mendoza?" },
-  { platform: "whatsapp", name: "Nico Álvarez", text: "¿Sigue disponible?" },
-  { platform: "instagram", name: "sofi.ok", text: "¿Cuánto sale el combo?" },
-  { platform: "meli", name: "Pregunta nueva", text: "¿Tiene garantía oficial?" },
-  { platform: "whatsapp", name: "Romina G.", text: "Hola, ¿están?" },
+  { at: 32.6, until: 34.35, text: scenario.metrics.chip, tone: "blue", anchor: { layer: "b", selector: scenario.metrics.selector, dx: -16, dy: -16 } },
 ];
 
 function buildScript(hero: Hero, stream: StreamItem[]): Script {
@@ -94,15 +154,15 @@ function buildScript(hero: Hero, stream: StreamItem[]): Script {
     lines,
     shots,
     chips,
-    notices,
+    notices: scenario.notices,
     effects: [
       { kind: "pin-bottom", layer: "a", at: 8.5, until: 17 },
       { kind: "typing", layer: "a", at: 10.3, until: 11.4 },
       { kind: "reveal", layer: "a", selector: "[data-promo-reply]", at: 11.4 },
     ],
-    problem: { at: 2, until: 9, tidyAt: 8.35, clockFrom: 180, clockTo: 460, clockUntil: 4.6 },
+    problem: scenario.problem,
     turn: { at: 7, until: 9 },
-    arrival: { at: 9.25, until: 10.5, notice: { platform: "whatsapp", name: hero.name, text: hero.question }, time: "03:01" },
+    arrival: { at: 9.25, until: 10.5, notice: { platform: "whatsapp", name: hero.name, text: hero.question }, time: scenario.heroTimes[0] },
     channels: { at: 14.2, until: 16.85 },
     pulses: [{ at: 11.45, tone: "green" }],
     stream: { at: 34.5, until: 39.5, items: stream },
@@ -247,11 +307,11 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
           .frame("a")
           .locator(".bubble-outbound")
           .last()
-          .evaluate((bubble) => {
+          .evaluate((bubble, heroTimes) => {
             bubble.setAttribute("data-promo-reply", "");
             const times = Array.from(bubble.closest(".chat-thread")!.querySelectorAll(".bubble-time")).slice(-2);
-            times.forEach((time, index) => (time.textContent = index === 0 ? "03:01" : "03:02"));
-          });
+            times.forEach((time, index) => (time.textContent = heroTimes[index]));
+          }, scenario.heroTimes);
       },
     },
     {
@@ -318,10 +378,10 @@ function steps(stage: Stage, ids: Awaited<ReturnType<typeof conversations>>): St
     {
       at: 29.7,
       run: async () => {
-        await stage.open("b", "/app/metrics");
-        await stage.frame("b").locator(".breakdown-table").waitFor();
+        await stage.open("b", scenario.metrics.path);
+        await stage.frame("b").locator(scenario.metrics.selector).waitFor();
         await page.waitForTimeout(900);
-        await stage.center("b", ".breakdown-table");
+        await stage.center("b", scenario.metrics.selector);
       },
     },
   ];
@@ -379,19 +439,20 @@ function encode(frames: string, file: string) {
 
 function deliver() {
   const frames = framesDir("vertical");
-  if (existsSync(frames)) encode(frames, join(OUT, "boxlead-promo-9x16.mp4"));
-  if (existsSync(framesDir("square"))) encode(framesDir("square"), join(OUT, "boxlead-promo-1x1.mp4"));
+  const output = (name: string) => join(OUT, `boxlead-promo-${SCENARIO}-${name}`);
+  if (existsSync(frames)) encode(frames, output("9x16.mp4"));
+  if (existsSync(framesDir("square"))) encode(framesDir("square"), output("1x1.mp4"));
   if (!existsSync(frames)) return;
-  copyFileSync(join(frames, frameName(Math.round(POSTER_AT * FPS))), join(OUT, "boxlead-promo-poster.png"));
-  const stills = join(OUT, "stills");
+  copyFileSync(join(frames, frameName(Math.round(POSTER_AT * FPS))), output("poster.png"));
+  const stills = join(OUT, "stills", SCENARIO);
   mkdirSync(stills, { recursive: true });
   STILLS.forEach((at, index) => {
     copyFileSync(join(frames, frameName(Math.round(at * FPS))), join(stills, `scene-${String(index + 1).padStart(2, "0")}-${at.toFixed(1)}s.png`));
   });
-  console.log(`promo: ${TOTAL_FRAMES} frames, ${DURATION} s, videos and poster at ${OUT}`);
+  console.log(`promo: ${SCENARIO}, ${TOTAL_FRAMES} frames, ${DURATION} s, videos and poster at ${OUT}`);
 }
 
-const framesDir = (format: Format) => join(OUT, "frames", format);
+const framesDir = (format: Format) => join(OUT, "frames", SCENARIO, format);
 if (!process.argv.includes("--encode-only")) {
   for (const format of PREVIEW ? FORMATS.slice(0, 1) : FORMATS) {
     rmSync(framesDir(format), { recursive: true, force: true });
