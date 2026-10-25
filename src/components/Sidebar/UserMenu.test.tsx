@@ -90,7 +90,7 @@ describe("UserMenu", () => {
   });
 
   it("links billing, the reseller page and the consumer pages when core enables them", async () => {
-    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: true, referrals: true }, isReseller: true };
+    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: true, referrals: true, legal: true }, isReseller: true };
     renderMenu({ ...named, ...flags });
     await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
     const dialog = screen.getByRole("dialog", { name: "Cuenta" });
@@ -101,6 +101,16 @@ describe("UserMenu", () => {
 
     await userEvent.click(within(dialog).getByRole("link", { name: "Facturación" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("links the consumer pages with legal on and billing off", async () => {
+    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: false, referrals: false, legal: true } };
+    renderMenu({ ...named, ...flags });
+    await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
+    const dialog = screen.getByRole("dialog", { name: "Cuenta" });
+    expect(within(dialog).queryByRole("link", { name: "Facturación" })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: "Botón de arrepentimiento" })).toHaveAttribute("href", "/arrepentimiento");
+    expect(within(dialog).getByRole("link", { name: "Botón de baja de servicio" })).toHaveAttribute("href", "/baja");
   });
 
   it("closes when clicking outside", async () => {

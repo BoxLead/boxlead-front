@@ -19,7 +19,7 @@ export function accountLinks({ features, isReseller }: Pick<SessionFlags, "featu
 }
 
 export function consumerLinks({ features }: Pick<SessionFlags, "features">): ConsumerLink[] {
-  if (!features.billing) return [];
+  if (!features.legal) return [];
   return [
     { to: "/arrepentimiento", label: "Botón de arrepentimiento" },
     { to: "/baja", label: "Botón de baja de servicio" },

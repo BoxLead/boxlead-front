@@ -19,6 +19,7 @@ export type LeadTemperature = "COLD" | "WARM" | "HOT";
 export type Features = {
   billing: boolean;
   referrals: boolean;
+  legal: boolean;
 };
 
 export type Access = "FULL" | "RESTRICTED";
