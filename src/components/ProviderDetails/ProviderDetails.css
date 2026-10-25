@@ -1,0 +1,23 @@
+.provider-details {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.provider-details-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.provider-details dt {
+  opacity: 0.72;
+}
+
+.provider-details dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

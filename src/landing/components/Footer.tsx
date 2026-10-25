@@ -5,7 +5,9 @@ import {
   SUPPORT_EMAIL,
 } from "../../util/company";
 import { Logo } from "../../components/Logo/Logo";
+import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
 import { BILLING_ENABLED } from "../flags";
+import { DataFiscal } from "./DataFiscal";
 import "./Footer.css";
 
 export function Footer() {
@@ -68,6 +70,16 @@ export function Footer() {
           </a>
         </div>
       </div>
+
+      <section className="footer-provider" aria-labelledby="footer-provider-heading">
+        <div className="footer-provider-body">
+          <h2 className="footer-heading" id="footer-provider-heading">
+            Datos del proveedor
+          </h2>
+          <ProviderDetails className="footer-provider-details" />
+        </div>
+        <DataFiscal />
+      </section>
 
       <div className="footer-bottom">
         <p>

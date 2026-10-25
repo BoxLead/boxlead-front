@@ -159,3 +159,49 @@
     transform: none;
   }
 }
+
+.footer-provider {
+  max-width: var(--landing-content-max);
+  margin: 40px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--landing-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.footer-provider-body {
+  min-width: 0;
+}
+
+.footer-provider-details {
+  margin-top: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
+  gap: 6px 32px;
+  color: var(--landing-text);
+}
+
+.footer-provider-details dt {
+  color: var(--landing-text-muted);
+  opacity: 1;
+}
+
+.footer-provider-details a {
+  color: var(--landing-text);
+}
+
+.footer-data-fiscal {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+.footer-data-fiscal img {
+  display: block;
+  width: auto;
+  height: 72px;
+}
+
+.footer-provider + .footer-bottom {
+  margin-top: 24px;
+}
