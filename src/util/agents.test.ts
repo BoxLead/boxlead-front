@@ -5,6 +5,8 @@ import {
   activityFor,
   activityOutcomeLabel,
   activityReasonLabel,
+  overPlanLimitLine,
+  agentStatusLabel,
   agentErrorMessage,
   answeredByLabel,
   describeChannelRules,
@@ -123,6 +125,15 @@ describe("agentErrorMessage", () => {
     expect(agentErrorMessage(new ApiError(message, status), "fallback")).toBe(expected);
   });
 
+  it("keeps the plan message the client already wrote", () => {
+    const limit = new ApiError("Llegaste al límite de tu plan.", 402, { code: "PLAN_LIMIT_REACHED" });
+    const required = new ApiError("Necesitás un plan activo para hacer esto.", 402, { code: "PLAN_REQUIRED" });
+    const unavailable = new ApiError("No pudimos revisar tu plan.", 503, { code: "ENTITLEMENTS_UNAVAILABLE" });
+    expect(agentErrorMessage(limit, "fallback")).toBe("Llegaste al límite de tu plan.");
+    expect(agentErrorMessage(required, "fallback")).toBe("Necesitás un plan activo para hacer esto.");
+    expect(agentErrorMessage(unavailable, "fallback")).toBe("No pudimos revisar tu plan.");
+  });
+
   it("uses the fallback for anything else", () => {
     expect(agentErrorMessage(new ApiError("boom", 500), "fallback")).toBe("fallback");
     expect(agentErrorMessage(new Error("network"), "fallback")).toBe("fallback");
@@ -205,6 +216,9 @@ describe("activity labels", () => {
     expect(activityOutcomeLabel("SUPERSEDED")).toBe("Omitió");
     expect(activityReasonLabel("public_comments_disabled")).toBe("Este agente no responde comentarios públicos");
     expect(activityReasonLabel("a newer message arrived")).toBe("Llegó un mensaje más nuevo");
+    expect(activityReasonLabel("plan")).toBe("Tu cuenta no tiene un plan activo");
+    expect(activityReasonLabel("plan_limit")).toBe("Se alcanzó el límite del plan");
+    expect(activityReasonLabel("public_comments_not_in_plan")).toBe("Tu plan no incluye respuestas públicas en comentarios");
     expect(activityReasonLabel("El cliente pidió una persona.")).toBe("El cliente pidió una persona.");
     expect(activityReasonLabel(null)).toBeNull();
     expect(activityReasonLabel("x".repeat(200))).toBe(`${"x".repeat(179)}…`);
@@ -224,5 +238,29 @@ describe("activity labels", () => {
       "4 mensajes no llegaron a ningún agente y 1 lead se etiquetó sin agente.",
     );
     expect(unassignedActivityLine({ skipped: 0, labeled: 2 })).toBe("2 leads se etiquetaron sin agente.");
+  });
+});
+
+describe("overPlanLimitLine", () => {
+  const agent = (name: string, overPlanLimit = false): AgentResponse => ({ id: name, name, instructions: "", enabled: true, publicCommentReplies: false, position: 0, scopes: [], overPlanLimit, createdAt: null, updatedAt: null });
+
+  it("labels an enabled agent left out of the plan", () => {
+    expect(agentStatusLabel(agent("Ventas"))).toBe("Activo");
+    expect(agentStatusLabel(agent("Postventa", true))).toBe("Fuera del plan");
+    expect(agentStatusLabel({ ...agent("Pausado"), enabled: false })).toBe("Pausado");
+  });
+
+  it("says nothing when every agent fits", () => {
+    expect(overPlanLimitLine([agent("Ventas"), agent("Postventa", false)], 3)).toBeNull();
+  });
+
+  it("names the agents left out and the plan maximum", () => {
+    expect(overPlanLimitLine([agent("Ventas"), agent("Postventa", true)], 1)).toBe(
+      "Tu plan permite 1 agente activo. Postventa no responde hasta que pauses otro agente o cambies de plan.",
+    );
+    expect(overPlanLimitLine([agent("A", true), agent("B", true), agent("C", true)], 2)).toBe(
+      "Tu plan permite 2 agentes activos. A, B y C no responden hasta que pauses otro agente o cambies de plan.",
+    );
+    expect(overPlanLimitLine([agent("A", true)], undefined)).toBe("A no responde hasta que pauses otro agente o cambies de plan.");
   });
 });

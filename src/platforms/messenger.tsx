@@ -28,6 +28,14 @@ export const messenger: PlatformDefinition = {
     const reconnect = reconnectError("Messenger", message);
     if (reconnect) return reconnect;
     if (status === 400 && /limited to/i.test(message)) return lengthError(MESSENGER_TEXT_LIMIT);
+    if (status === 409 && /reply window/i.test(message)) {
+      return {
+        title: "Pasaron más de 24 horas",
+        detail:
+          "Messenger solo deja responder dentro de las 24 horas del último mensaje de la persona. Podés escribirle cuando vuelva a escribir a tu página.",
+        action: null,
+      };
+    }
     return null;
   },
   contactFields: emailAndPhone,

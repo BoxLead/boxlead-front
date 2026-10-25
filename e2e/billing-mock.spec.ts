@@ -93,8 +93,14 @@ test("each scenario tells its own state", async () => {
 test("plans are public and include the invite only Beta", async () => {
   await resetApi("billing-none");
   const plans = (await (await api.get("/billing/plans")).json()) as { code: string; inviteOnly: boolean; price: unknown }[];
-  expect(plans.map((plan) => plan.code)).toEqual(["STARTER", "BUSINESS", "DEMO"]);
+  expect(plans.map((plan) => plan.code)).toEqual(["STARTER", "BUSINESS", "ENTERPRISE", "DEMO"]);
   expect(plans.find((plan) => plan.code === "DEMO")).toMatchObject({ inviteOnly: true, price: null });
+  expect(plans.find((plan) => plan.code === "ENTERPRISE")).toMatchObject({ contactOnly: true, price: null });
+  expect(plans.find((plan) => plan.code === "STARTER")).toMatchObject({
+    price: { currency: "USD" },
+    chargeToday: { currency: "ARS" },
+    fxRate: { source: "BNA_OFICIAL_VENDEDOR" },
+  });
   expect((await api.get("/billing/summary")).status()).toBe(401);
 });
 
@@ -130,7 +136,7 @@ test("plan changes follow the contract", async () => {
   await signIn("billing-downgrade-pending");
   const change = (planCode: string) => api.post("/billing/subscription/plan", { data: { planCode } });
   const undone = (await (await change("BUSINESS")).json()) as BillingSummary;
-  expect(undone.subscription).toMatchObject({ pendingPlanCode: null, price: { amountMinor: 2469000 } });
+  expect(undone.subscription).toMatchObject({ pendingPlanCode: null, price: { amountMinor: 29000000, currency: "ARS" } });
   await expectCode(change("BUSINESS"), 409, "SAME_PLAN");
   const downgraded = (await (await change("STARTER")).json()) as BillingSummary;
   expect(downgraded).toMatchObject({ plan: { code: "BUSINESS" }, subscription: { pendingPlanCode: "STARTER" } });

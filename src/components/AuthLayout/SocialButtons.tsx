@@ -1,11 +1,18 @@
 import { useState } from "react";
+import type { LegalVersion } from "../../api/types";
 import { useSocialLogin } from "../../hooks/useSocialLogin";
 import type { SocialProvider } from "../../util/social";
 import { SocialIcon } from "../icons/SocialIcons";
 
 const START_ERROR = "No pudimos abrir el inicio de sesión. Probá de nuevo.";
 
-export function SocialButtons({ next }: { next: string }) {
+type SocialButtonsProps = {
+  next: string;
+  acceptedLegal?: LegalVersion[];
+  canStart?: () => boolean;
+};
+
+export function SocialButtons({ next, acceptedLegal, canStart }: SocialButtonsProps) {
   const { enabled, providers, start } = useSocialLogin();
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,9 +21,10 @@ export function SocialButtons({ next }: { next: string }) {
 
   async function handleClick(provider: SocialProvider) {
     setError(null);
+    if (canStart && !canStart()) return;
     setStarting(provider.id);
     try {
-      await start(provider, next);
+      await start(provider, next, acceptedLegal);
     } catch {
       setStarting(null);
       setError(START_ERROR);

@@ -1,0 +1,62 @@
+.invitation-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--signal-space-md);
+}
+
+.invitation-body .auth-footer {
+  margin-top: var(--signal-space-xs);
+}
+
+.invitation-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.invitation-action:hover {
+  text-decoration: none;
+}
+
+.invitation-email {
+  color: var(--signal-heading);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.invitation-session {
+  margin: 0;
+  color: var(--signal-text);
+}
+
+.invitation-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--signal-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invitation-link:hover {
+  text-decoration: underline;
+}
+
+.invitation-loading {
+  display: grid;
+  gap: var(--signal-space-sm);
+}
+
+.invitation-loading .skeleton {
+  height: 50px;
+  border-radius: var(--signal-radius-sm);
+}
+
+.invitation-loading .skeleton:first-child {
+  height: 20px;
+  width: 70%;
+}

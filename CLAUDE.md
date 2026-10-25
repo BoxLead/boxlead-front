@@ -36,6 +36,7 @@ docker compose up --build   # Production image at localhost:3000
 - `src/api/client.ts` — HTTP client with auto-auth headers
 - `src/api/types.ts` — All API type definitions, payments included
 - `e2e/mock-api/billing.ts` — Payments mock and its `billing-*` and `reseller` scenarios
+- `src/components/PlanBanner/` — Plan notices in `Layout`, fed by `usePlan` and the 402 errors of `api/client.ts`
 - `src/index.css` — Global design tokens (`--signal-*`)
 - `src/landing/` — Public landing page (isolated from app). Animations are CSS, and JS only passes the pointer position as CSS variables to elements with `data-glow`
 - `src/util/company.ts` — Catvin SRL details for the provider block and the Data Fiscal badge, empty fields stay hidden
@@ -48,7 +49,7 @@ docker compose up --build   # Production image at localhost:3000
 /terminos, /privacidad, /contratos → Legal texts in Spanish, the version that prevails
 /terms-of-service, /privacy-policy, /data-deletion → English translations and data deletion
 /arrepentimiento, /baja → Withdrawal and cancellation requests without login
-/invitacion       → Payments placeholder, redirects to / for now
+/invitacion       → Demo invitation, token in the fragment and only in memory
 /app/*            → Protected app (inbox, leads, metrics, categories, connections)
 /app/billing, /app/billing/return, /app/reseller → Only when /auth/me enables them (FeatureRoute)
 ```
@@ -69,3 +70,4 @@ docker compose up --build   # Production image at localhost:3000
 4. `api/client.ts` sends `credentials: "include"` and `X-Requested-With: boxlead-web` on every request
 5. 401 response → `clearAuthAndGoLogin()` → hard redirect to `/login?next=<path>`
 6. Post-login → navigate to the safe `next` path or `/app/inbox`; logout calls `POST /auth/logout` and clears the query cache
+7. Sign up with plans → a paid plan goes to `/app/billing?checkout=<plan>` and the Beta to `next` (`data/plans.ts`). Social login carries the accepted legal versions in `appState`, and both sign up paths read `/auth/me` again before navigating

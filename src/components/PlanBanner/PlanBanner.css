@@ -1,0 +1,28 @@
+.plan-banners {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--signal-space-sm);
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--signal-space-md) var(--signal-space-lg) 0;
+}
+
+.plan-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--signal-space-xs);
+}
+
+@media (max-width: 760px) {
+  .plan-banners {
+    padding: var(--signal-space-sm) var(--signal-space-md) 0;
+  }
+}
+
+@media print {
+  .plan-banners {
+    display: none;
+  }
+}
