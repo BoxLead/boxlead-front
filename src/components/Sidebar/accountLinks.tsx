@@ -1,13 +1,9 @@
 import type { ReactNode } from "react";
 import type { SessionFlags } from "../../api/types";
+import { CONSUMER_PAGES, type ConsumerPage } from "../../util/consumerPages";
 import { CardIcon, ShareIcon } from "../icons/UiIcons";
 
-export type ConsumerLink = {
-  to: string;
-  label: string;
-};
-
-export type AccountLink = ConsumerLink & {
+export type AccountLink = ConsumerPage & {
   icon: ReactNode;
 };
 
@@ -18,10 +14,6 @@ export function accountLinks({ features, isReseller }: Pick<SessionFlags, "featu
   return links;
 }
 
-export function consumerLinks({ features }: Pick<SessionFlags, "features">): ConsumerLink[] {
-  if (!features.legal) return [];
-  return [
-    { to: "/arrepentimiento", label: "Botón de arrepentimiento" },
-    { to: "/baja", label: "Botón de baja de servicio" },
-  ];
+export function consumerLinks({ features }: Pick<SessionFlags, "features">): readonly ConsumerPage[] {
+  return features.legal ? CONSUMER_PAGES : [];
 }

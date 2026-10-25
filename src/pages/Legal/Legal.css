@@ -189,3 +189,30 @@
     animation: none;
   }
 }
+
+.legal-notice {
+  margin-bottom: var(--signal-space-xl);
+  padding: 14px var(--signal-space-md);
+  border: 1px solid var(--signal-border);
+  border-left: 3px solid var(--signal-accent);
+  border-radius: var(--signal-radius-sm);
+  background: var(--signal-surface);
+  font-size: 0.9375rem;
+}
+
+.legal-page .legal-notice p {
+  margin: 0;
+}
+
+.legal-footer-provider {
+  flex-basis: 100%;
+  font-size: 0.8125rem;
+}
+
+.legal-footer-provider a {
+  color: var(--signal-text);
+}
+
+.legal-page > h1 + :not(.legal-updated) {
+  margin-top: var(--signal-space-lg);
+}

@@ -4,7 +4,7 @@ import { LegalLayout } from "./LegalLayout";
 
 export function PrivacyPolicy() {
   return (
-    <LegalLayout title="Privacy Policy" updated="March 29, 2026">
+    <LegalLayout title="Privacy Policy" language="en" meta="Last updated: March 29, 2026">
       <p>
         {LEGAL_ENTITY_NAME} ("we", "us", or "our") operates {PRODUCT_NAME}, a
         customer relationship management (CRM) platform that helps businesses

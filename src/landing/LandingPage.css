@@ -27,6 +27,7 @@
   --landing-content-narrow: 760px;
   --landing-content-padding: clamp(20px, 5vw, 40px);
   --landing-header-height: 76px;
+  --landing-consumer-height: 32px;
 
   --landing-font:
     "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -138,7 +139,7 @@ html[data-theme="light"]:has(.landing) {
   width: 100%;
   padding: var(--landing-section-gap) var(--landing-content-padding);
   position: relative;
-  scroll-margin-top: var(--landing-header-height);
+  scroll-margin-top: calc(var(--landing-consumer-height) + var(--landing-header-height));
 }
 
 .landing-section-alt {

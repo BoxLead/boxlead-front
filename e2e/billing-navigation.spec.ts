@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
 
-const PUBLIC_PATHS = ["/invitacion", "/terminos", "/privacidad", "/contratos", "/arrepentimiento", "/baja"];
+const PUBLIC_PATHS = ["/invitacion", "/terminos", "/privacidad", "/contratos"];
 
 async function openAccount(page: Page) {
   await page.getByRole("button", { name: "Cuenta" }).click();

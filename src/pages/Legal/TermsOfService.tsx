@@ -4,7 +4,7 @@ import { LegalLayout } from "./LegalLayout";
 
 export function TermsOfService() {
   return (
-    <LegalLayout title="Terms of Service" updated="March 29, 2026">
+    <LegalLayout title="Terms of Service" language="en" meta="Last updated: March 29, 2026">
       <p>
         These Terms of Service ("Terms") govern your access to and use of the{" "}
         {PRODUCT_NAME} platform and services, operated by {LEGAL_ENTITY_NAME}.

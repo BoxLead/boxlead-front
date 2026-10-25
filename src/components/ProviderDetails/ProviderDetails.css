@@ -13,7 +13,7 @@
 }
 
 .provider-details dt {
-  opacity: 0.72;
+  font-weight: 600;
 }
 
 .provider-details dd {
