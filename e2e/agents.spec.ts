@@ -15,14 +15,14 @@ async function expectNoHorizontalScroll(page: Page) {
 async function showList(page: Page) {
   const back = page.getByRole("button", { name: "Volver" });
   const list = agentList(page);
-  await expect(back.or(list)).toBeVisible();
-  if (await back.isVisible()) await back.click();
+  await expect(back.or(list).first()).toBeVisible();
+  if (!(await list.isVisible())) await back.click();
   await expect(list).toBeVisible();
 }
 
 async function openAgent(page: Page, name: string) {
   const row = agentButton(page, name);
-  await expect(row.or(page.getByRole("button", { name: "Volver" }))).toBeVisible();
+  await expect(row.or(page.getByRole("button", { name: "Volver" })).first()).toBeVisible();
   if (!(await row.isVisible())) await showList(page);
   await row.click();
   await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
