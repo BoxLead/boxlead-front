@@ -1,3 +1,4 @@
+import { BILLING_ENABLED } from "../src/landing/flags.ts";
 import { expect, test } from "./support.ts";
 
 test("the landing shows the demo video and starts it on request", async ({ page }) => {
@@ -44,4 +45,20 @@ test("the footer wordmark fits inside the footer", async ({ page }) => {
     return footer !== undefined && mark !== undefined && mark.bottom <= footer.bottom + 0.5;
   });
   expect(fits).toBe(true);
+});
+
+test("the plans section shows no amounts and leads to the register", async ({ page }) => {
+  await page.goto("/");
+  const plans = page.locator("#planes");
+  if (!BILLING_ENABLED) {
+    await expect(plans).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Planes" })).toHaveCount(0);
+    return;
+  }
+  await plans.scrollIntoViewIfNeeded();
+  await expect(plans.getByRole("heading", { name: "Elegí cómo empezar" })).toBeVisible();
+  await expect(plans.getByRole("heading", { level: 3 })).toHaveText(["Beta", "Starter", "Business"]);
+  await expect(plans.getByRole("link", { name: "Elegir Starter" })).toHaveAttribute("href", "/register?plan=STARTER");
+  await expect(plans.getByRole("link", { name: "Elegir Business" })).toHaveAttribute("href", "/register?plan=BUSINESS");
+  expect(await plans.innerText()).not.toMatch(/[\d$]/);
 });

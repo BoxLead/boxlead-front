@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../../components/Logo/Logo";
+import { BILLING_ENABLED } from "../flags";
 import { RollText } from "./RollText";
 import "./Header.css";
 
@@ -10,6 +11,7 @@ const NAV_LINKS = [
   { href: "#demo", label: "Demo" },
   { href: "#como-funciona", label: "Cómo funciona" },
   { href: "#agente", label: "El agente" },
+  ...(BILLING_ENABLED ? [{ href: "#planes", label: "Planes" }] : []),
   { href: "#faq", label: "Preguntas" },
 ];
 

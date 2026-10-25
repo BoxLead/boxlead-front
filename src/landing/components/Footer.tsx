@@ -5,6 +5,7 @@ import {
   SUPPORT_EMAIL,
 } from "../../util/company";
 import { Logo } from "../../components/Logo/Logo";
+import { BILLING_ENABLED } from "../flags";
 import "./Footer.css";
 
 export function Footer() {
@@ -34,6 +35,11 @@ export function Footer() {
           <a href="#agente" className="footer-link">
             El agente
           </a>
+          {BILLING_ENABLED && (
+            <a href="#planes" className="footer-link">
+              Planes
+            </a>
+          )}
           <a href="#faq" className="footer-link">
             Preguntas frecuentes
           </a>

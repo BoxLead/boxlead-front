@@ -8,9 +8,11 @@ import { ProductOverview } from "./components/ProductOverview";
 import { KineticBand } from "./components/KineticBand";
 import { HowItWorks } from "./components/HowItWorks";
 import { AgentFlow } from "./components/AgentFlow";
+import { PlansSection } from "./components/PlansSection";
 import { FaqSection } from "./components/FaqSection";
 import { CtaSection } from "./components/CtaSection";
 import { Footer } from "./components/Footer";
+import { BILLING_ENABLED } from "./flags";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -86,6 +88,7 @@ export function LandingPage() {
         <KineticBand />
         <HowItWorks />
         <AgentFlow />
+        {BILLING_ENABLED && <PlansSection />}
         <FaqSection />
         <CtaSection />
       </main>
