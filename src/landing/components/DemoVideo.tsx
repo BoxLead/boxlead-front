@@ -4,7 +4,7 @@ import "./DemoVideo.css";
 
 const VIDEO_SRC = "/demo/boxlead-demo.mp4";
 const POSTER_SRC = "/demo/boxlead-demo-poster.jpg";
-const DURATION_LABEL = "2:26";
+const DURATION_LABEL = "2:27";
 
 export function DemoVideo() {
   const video = useRef<HTMLVideoElement>(null);
