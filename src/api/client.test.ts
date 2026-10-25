@@ -119,3 +119,24 @@ describe("rate limited answers", () => {
     });
   });
 });
+
+describe("coded errors", () => {
+  it("explains a social login on a password account in Spanish", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+    fetchMock.mockResolvedValue(
+      json(
+        {
+          error: "Conflict",
+          message: "An account with a password already uses this email",
+          code: "ACCOUNT_EXISTS_WITH_PASSWORD",
+        },
+        409,
+      ),
+    );
+
+    await expect(api.post("/auth/social", {})).rejects.toMatchObject({
+      status: 409,
+      message: "Ya tenés una cuenta con este email. Entrá con tu email y contraseña.",
+    });
+  });
+});

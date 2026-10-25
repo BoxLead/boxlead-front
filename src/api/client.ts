@@ -81,8 +81,17 @@ async function parseBody(res: Response): Promise<unknown> {
 
 const TOO_MANY_REQUESTS_MESSAGE = "Hiciste demasiados intentos seguidos. Probá de nuevo en un rato.";
 
+const CODE_MESSAGES: Record<string, string> = {
+  ACCOUNT_EXISTS_WITH_PASSWORD:
+    "Ya tenés una cuenta con este email. Entrá con tu email y contraseña.",
+};
+
 function errorMessage(status: number, data: unknown): string {
   if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
+  if (data && typeof data === "object" && "code" in data) {
+    const code = (data as { code: unknown }).code;
+    if (typeof code === "string" && code in CODE_MESSAGES) return CODE_MESSAGES[code];
+  }
   if (data && typeof data === "object" && "message" in data) {
     const m = (data as { message: unknown }).message;
     if (typeof m === "string") return m;
