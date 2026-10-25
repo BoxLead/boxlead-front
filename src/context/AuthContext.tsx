@@ -52,11 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       request: () => Promise<AuthUser>,
       fallbackError: string,
       redirectTo?: string,
+      reloadSession = false,
     ) => {
       setError(null);
       setIsLoading(true);
       try {
-        const current = await request();
+        const created = await request();
+        const current = reloadSession ? await api.me().catch(() => created) : created;
         clearQueryCache();
         setUser(current);
         setSessionChecked(true);
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     (body: RegisterRequest, redirectTo?: string) =>
-      authenticate(() => api.register(body), "No pudimos crear la cuenta.", redirectTo),
+      authenticate(() => api.register(body), "No pudimos crear la cuenta.", redirectTo, true),
     [authenticate],
   );
 
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         () => api.socialLogin(acceptedLegal ? { idToken, acceptedLegal } : { idToken }),
         "No pudimos iniciar sesión.",
         redirectTo,
+        true,
       ),
     [authenticate],
   );
