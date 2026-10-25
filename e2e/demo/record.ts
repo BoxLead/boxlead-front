@@ -194,48 +194,58 @@ async function opening(d: Director) {
 async function agents(d: Director) {
   const page = d.page;
   await sidebar(d, "Agentes");
+  const list = page.getByRole("list", { name: "Agentes", exact: true });
+  await list.waitFor();
   await d.chapter("01", "Agentes de IA", "Atienden a tus clientes por vos, con tus reglas");
 
-  d.caption("Contexto del negocio", "Le contás tu negocio y todos tus agentes lo usan");
-  await d.spotlight(page.getByRole("region", { name: /Contexto del negocio/i }));
+  const sections = page.getByRole("group", { name: "Sección" });
+  await d.click(sections.getByRole("button", { name: "Contexto del negocio" }));
+  const profile = page.getByRole("region", { name: "Contexto del negocio" });
+  await profile.getByLabel("Tono").waitFor();
+  d.caption("Contexto del negocio", "Le contás tu negocio y todos tus agentes lo usan", "top");
+  await d.spotlight(profile);
   await sleep(1600);
-  await d.point(page.getByRole("switch", { name: /Categorizar leads/ }), 700);
-  d.caption("Contexto del negocio", "Y etiquetan cada lead con su categoría");
+  await d.point(profile.getByRole("switch", { name: /Categorizar leads/ }), 700);
+  d.caption("Contexto del negocio", "Y etiquetan cada lead con su categoría", "top");
   await sleep(2000);
   await d.clearSpotlight();
+  d.endCaption();
+  await sleep(400);
 
-  await d.scroll(page.locator("main"), 700, 900);
+  await d.click(sections.getByRole("button", { name: "Agentes" }));
+  await list.waitFor();
   await sleep(300);
   d.caption("Tus agentes", "Cada agente con su rol y sus reglas");
-  await d.spotlight(page.getByRole("list", { name: "Agentes", exact: true }));
-  await sleep(2600);
-  await d.spotlight(page.getByRole("region", { name: /Actividad de Ventas/ }).first());
-  d.caption("Actividad", "Respuestas, borradores y derivaciones del último mes");
+  await d.spotlight(list);
   await sleep(2600);
   await d.clearSpotlight();
 
-  await d.click(page.getByRole("button", { name: "Ver actividad de Ventas" }));
-  const activity = page.getByRole("dialog", { name: "Actividad de Ventas" });
+  await d.click(page.getByRole("button", { name: "Actividad" }));
+  const stats = page.getByRole("region", { name: /Actividad de Ventas/ });
+  await stats.waitFor();
+  d.caption("Actividad", "Respuestas, borradores y derivaciones del último mes", "top");
+  await d.spotlight(stats);
+  await sleep(2600);
+  await d.clearSpotlight();
+  const activity = page.getByRole("list", { name: "Actividad de Ventas" });
   await activity.waitFor();
   d.caption("Actividad", "Cada decisión, con un clic a la conversación", "top");
   await sleep(1300);
-  await d.scroll(activity.getByRole("list"), 420, 1100);
+  await d.scroll(activity, 420, 1100);
   await sleep(1200);
-  await d.click(activity.getByRole("button", { name: "Cerrar" }));
-  await sleep(400);
 
   await d.click(page.getByRole("button", { name: "Nuevo agente" }));
-  const dialog = page.getByRole("dialog", { name: "Nuevo agente" });
-  await dialog.waitFor();
+  await page.getByRole("heading", { level: 2, name: "Nuevo agente" }).waitFor();
+  const form = page.getByRole("form", { name: "Configuración del agente" });
   d.caption("Nuevo agente", "Creás un agente nuevo con tus propias instrucciones", "top");
-  await d.type(dialog.getByLabel("Nombre"), "Mayoristas", 45);
+  await d.type(form.getByLabel("Nombre"), "Mayoristas", 45);
   await d.type(
-    dialog.getByLabel("Instrucciones"),
+    form.getByLabel("Instrucciones"),
     "Atendé a comercios y revendedores. Pasá la lista mayorista y pedí el CUIT.",
     22,
   );
   await sleep(500);
-  const rule = dialog.locator(".scopes-editor");
+  const rule = form.locator(".scopes-editor");
   d.caption("Reglas", "Dónde trabaja y si responde solo o deja un borrador", "top");
   await d.spotlight(rule);
   await d.choose(rule.getByLabel("Canal").first(), "WhatsApp");
@@ -243,32 +253,38 @@ async function agents(d: Director) {
   await d.choose(rule.getByLabel("Modo").first(), "Automático");
   await sleep(900);
   await d.clearSpotlight();
-  await d.click(dialog.getByRole("button", { name: "Crear agente" }));
-  await page.getByRole("button", { name: "Probar Mayoristas" }).waitFor();
+  await d.click(form.getByRole("button", { name: "Crear agente" }));
+  const created = list.getByRole("button", { name: /^Mayoristas/ });
+  await created.waitFor();
+  await page.getByRole("heading", { level: 2, name: "Mayoristas", exact: true }).waitFor();
   await sleep(600);
-  await d.spotlight(page.getByRole("button", { name: "Probar Mayoristas" }).locator("xpath=ancestor::li[1]"));
-  d.caption("Nuevo agente", "Listo, ya está trabajando en tus conversaciones");
+  await d.spotlight(created);
+  d.caption("Nuevo agente", "Listo, ya está trabajando en tus conversaciones", "top");
   await sleep(2200);
   await d.clearSpotlight();
 
-  await d.click(page.getByRole("button", { name: "Probar Mayoristas" }));
-  const trial = page.getByRole("dialog", { name: /Probar Mayoristas/ });
-  await trial.waitFor();
+  await d.click(page.getByRole("button", { name: "Probar" }));
+  const trial = page.locator(".playground");
+  await trial.getByText("Escribí el primer mensaje del cliente para empezar.").waitFor();
   d.caption("Playground", "Lo probás como un cliente antes de activarlo", "top");
   await d.choose(trial.getByLabel("Canal"), "WhatsApp");
   await d.choose(trial.getByLabel("Categoría del lead"), "Mayorista");
   await d.type(trial.getByLabel("Mensaje del cliente"), "Tengo un local en Rosario, ¿venden por mayor?", 34);
   await d.click(trial.getByRole("button", { name: "Enviar" }));
   await trial.locator(".playground-turn-agent").filter({ hasText: "CUIT" }).waitFor();
-  await sleep(2400);
+  await sleep(600);
+  await d.scroll(trial.locator(".playground-thread"), 260, 700);
+  await d.point(trial.getByLabel("Mensaje del cliente"), 400);
+  await sleep(1800);
   await d.type(trial.getByLabel("Mensaje del cliente"), "Prefiero hablar con una persona", 34);
   await d.click(trial.getByRole("button", { name: "Enviar" }));
   await trial.getByText(/derivaría a una persona/).waitFor();
+  await d.scroll(trial.locator(".playground-thread"), 260, 600);
+  await d.point(trial.getByLabel("Mensaje del cliente"), 400);
   d.caption("Derivación", "Y sabe cuándo pasarle la conversación a una persona", "top");
   await d.spotlight(trial.getByRole("region", { name: "Resultado de la prueba" }));
   await sleep(3000);
   await d.clearSpotlight();
-  await d.click(trial.getByRole("button", { name: "Cerrar" }));
   await sleep(300);
 }
 
@@ -445,7 +461,7 @@ async function record(dir: string): Promise<Recorded> {
   mkdirSync(dir, { recursive: true });
 
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: SCALE, locale: "es-AR" });
+  const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: SCALE, locale: "es-AR", colorScheme: "dark" });
   await context.addInitScript(installOverlay);
   const page = await context.newPage();
   await login(page);
