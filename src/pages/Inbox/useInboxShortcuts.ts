@@ -33,6 +33,7 @@ export function useInboxShortcuts({ ids, selectedId, linkFor, backTo, searchRef,
     if (!enabled) return;
     function onKey(event: KeyboardEvent) {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      const currentId = new URLSearchParams(window.location.search).get("id") ?? selectedId;
       const typing = isTypingTarget(event.target);
       if (event.key === "/" && !typing) {
         event.preventDefault();
@@ -45,7 +46,7 @@ export function useInboxShortcuts({ ids, selectedId, linkFor, backTo, searchRef,
           event.target.blur();
           return;
         }
-        if (!typing && selectedId) {
+        if (!typing && currentId) {
           event.preventDefault();
           navigate(backTo);
         }
@@ -54,10 +55,10 @@ export function useInboxShortcuts({ ids, selectedId, linkFor, backTo, searchRef,
       if (typing) return;
       const step = event.key === "j" || event.key === "ArrowDown" ? 1 : event.key === "k" || event.key === "ArrowUp" ? -1 : 0;
       if (step === 0) return;
-      const target = nextId(ids, selectedId, step);
+      const target = nextId(ids, currentId, step);
       if (!target) return;
       event.preventDefault();
-      navigate(linkFor(target), { replace: selectedId !== null });
+      navigate(linkFor(target), { replace: currentId !== null });
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
