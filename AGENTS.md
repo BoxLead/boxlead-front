@@ -14,15 +14,16 @@ docker-compose.yml    # Runs the production image locally
 public/               # favicon, og-image, robots.txt, sitemap.xml
 e2e/                  # Playwright specs and mock-api/ (stateful mock of the backend contract)
 src/
-├── main.tsx          # BrowserRouter > AuthProvider > ToastProvider > App
-├── App.tsx           # Routes (everything but the landing is lazy-loaded)
+├── main.tsx          # BrowserRouter > SocialAuthProvider > AuthProvider > ToastProvider > App
+├── App.tsx           # Routes (every page is lazy-loaded through routing/lazyRoute)
+├── routing/          # lazyRoute with chunk retry, route preload, RouteErrorBoundary, NotFound, ScrollRestoration, RouteAnnouncer
 ├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
 ├── api/              # HTTP client and API types
 ├── context/          # AuthProvider (AuthContext.tsx) and useAuth (auth.ts)
-├── data/             # queryCache (shared request cache behind useApiQuery), lead and category mutations, metrics source and demo data, sign up plans
-├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
+├── data/             # queryCache (shared request cache behind useApiQuery), agui (AG-UI event stream reader), lead and category mutations, metrics source and demo data, sign up plans
+├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle, useUrlQuery, useRenderWindow
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
-├── components/       # ProtectedRoute, Layout, PlanBanner, LegalDialog, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
+├── components/       # ProtectedRoute, Layout, PlanBanner, LegalDialog, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading
 │   ├── ProviderDetails/ # Catvin SRL details from util/company.ts, only the fields that have a value
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
@@ -44,14 +45,21 @@ terraform/            # Infrastructure (do not modify without approval)
 /app/billing, /app/billing/return   Protected, only with features.billing
 /app/reseller                       Protected, only with isReseller
 /app/oauth/callback/:platform       Protected
-*                                   Redirects to /
+/app/*                              404 inside the app shell
+*                                   404 page
 ```
 
-Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>&temperature=<COLD, WARM, HOT or none>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=PRE_SALE&unread=1&q=<search>&id=<id>`, `/app/leads?status=NEW&channel=MELI&buyers=1&category=<id or none>&temperature=<COLD, WARM, HOT or none>&q=<search>` and `/app/metrics?period=7&metric=sales&channel=WHATSAPP&category=<id or none>` (the period is 7, 30 or 90 days and defaults to 30, the metric defaults to leads). Protected routes send anonymous visitors to `/login?next=<app path>`; only same-origin `/app` paths are accepted as `next` (`util/redirect.ts`).
+
+### Routing
+
+Every page is declared with `lazyRoute` in `App.tsx`. It wraps `React.lazy`, exposes `preload()` and reloads the page once when a chunk is missing after a deploy (`routing/chunkRetry.ts`, the mark lives in `sessionStorage`). `registerRoutePreload` maps a path prefix to the chunks it needs, the sidebar warms the route and its first query on hover, focus or touch, and the current route is warmed on idle at startup. The production `index.html` also gets a hashed inline script from `vite.config.ts` that adds `modulepreload` hints for the chunks of the current path and a preload for the latin Inter font. `RouteErrorBoundary` wraps the whole tree and each app page, it shows a retry and explains a missing chunk. `ScrollRestoration` keeps the scroll position per history entry and restores it on back and forward, `RouteAnnouncer` announces the new title and moves the focus to the page heading, and sidebar links navigate with a view transition that is disabled under `prefers-reduced-motion`. `RouteErrorBoundary` is the one class component in the codebase because React only exposes error boundaries as classes.
+
+The inbox has keyboard shortcuts (`useInboxShortcuts`): `/` focuses the search, `j`, `k` and the arrows move between the visible conversations and `Escape` goes back to the list. Long lists render sixty rows at a time (`useRenderWindow`) and load more when the sentinel button scrolls into view. The search text of the inbox and leads is kept in the URL as `q` (`useUrlQuery`). `queryCache` keeps the previous reference when a poll returns the same data, so unchanged polls do not re-render. The agent playground posts a standard AG-UI `RunAgentInput` and reads the JSON event stream with `data/agui.ts`, there is no AG-UI client dependency.
 
 ## Social login
 
-Login and register offer "Continuar con Google" and "Continuar con Facebook" next to the email and password form, which stays as it was. The buttons use the Auth0 React SDK (`context/SocialAuthProvider.tsx`, `hooks/useSocialLogin.ts`) and only appear when `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` are set. The SDK never owns the session: it sends the visitor to Auth0, `/social/callback` (`pages/SocialCallback`) completes the redirect by hand, takes the ID token and posts it to `POST /auth/social`, and the API answers with the same `httpOnly` cookie as the password login. The SDK keeps nothing after that (`logout({ openUrl: false })`). Providers live in `util/social.ts`. Auth0 must list `<origin>/social/callback` as a callback URL. The e2e specs answer for Auth0 with `routeAuth0` in `e2e/support.ts`.
+Login and register offer "Continuar con Google" and "Continuar con Facebook" next to the email and password form, which stays as it was. The buttons use the Auth0 React SDK (`context/SocialAuthProvider.tsx`, `hooks/useSocialLogin.ts`) and only appear when `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` are set. The SDK ships in its own chunk (`context/Auth0Boundary.tsx`) that `SocialAuthProvider` mounts the first time the visitor reaches login, register, the invitation or the social callback, so the landing and the app never download it. The SDK never owns the session: it sends the visitor to Auth0, `/social/callback` (`pages/SocialCallback`) completes the redirect by hand, takes the ID token and posts it to `POST /auth/social`, and the API answers with the same `httpOnly` cookie as the password login. The SDK keeps nothing after that (`logout({ openUrl: false })`). Providers live in `util/social.ts`. Auth0 must list `<origin>/social/callback` as a callback URL. The e2e specs answer for Auth0 with `routeAuth0` in `e2e/support.ts`.
 
 ## Payments
 
@@ -142,7 +150,8 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
 - OAuth redirects go through `beginOAuthRedirect` and are checked on return with `consumeOAuthSession` (`state` validation).
 - Never render API or user content as HTML, and never accept `postMessage` data without an exact origin check.
-- Response headers that a `<meta>` tag cannot set (HSTS, `frame-ancestors`) come from the nginx image and, in production, from the CloudFront response headers policy in `terraform/cloudfront.tf`. Change both together.
+- Response headers that a `<meta>` tag cannot set (HSTS, `frame-ancestors`, COOP, CORP, `Permissions-Policy`) come from the nginx image (`docker/security-headers.conf`, included in every location) and, in production, from the CloudFront response headers policy in `terraform/cloudfront.tf`. Change both together and keep the values identical.
+- The CI and deploy workflows pin every action to a commit SHA with the tag in a comment. Bump the SHA and the comment together.
 
 ## Safety
 

@@ -8,13 +8,13 @@ import "./index.css";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <SocialAuthProvider>
-    <BrowserRouter>
+  <BrowserRouter>
+    <SocialAuthProvider>
       <AuthProvider>
         <ToastProvider>
           <App />
         </ToastProvider>
       </AuthProvider>
-    </BrowserRouter>
-  </SocialAuthProvider>,
+    </SocialAuthProvider>
+  </BrowserRouter>,
 );

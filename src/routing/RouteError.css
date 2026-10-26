@@ -1,0 +1,49 @@
+.route-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--signal-space-sm);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--signal-space-xl) var(--signal-space-lg);
+  text-align: center;
+  background: var(--signal-bg);
+}
+
+.route-error-inline {
+  flex: 1;
+  min-height: 320px;
+}
+
+.route-error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--signal-space-sm);
+  border-radius: var(--signal-radius-md);
+  border: 1px solid color-mix(in srgb, var(--signal-warning) 30%, transparent);
+  background: var(--signal-warning-muted);
+  color: var(--signal-warning);
+}
+
+.route-error-title {
+  font-size: 1.25rem;
+  outline: none;
+}
+
+.route-error-hint {
+  max-width: 400px;
+  margin: 0;
+  color: var(--signal-text-muted);
+}
+
+.route-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--signal-space-sm);
+  margin-top: var(--signal-space-sm);
+}

@@ -1,6 +1,8 @@
+import type { RefObject } from "react";
 import type { PlatformType, SalesStage } from "../../api/types";
 import { SearchIcon } from "../../components/icons/UiIcons";
 import { ChoiceGroup, type Choice } from "../../components/ui/ChoiceGroup";
+import { useRenderWindow } from "../../hooks/useRenderWindow";
 import { getPlatform, hasStages, stageLabel } from "../../platforms";
 import { ConversationItem } from "./ConversationItem";
 import type { ChannelFilter, ConversationRow, InboxFilters } from "./inboxModel";
@@ -13,6 +15,8 @@ type ConversationListProps = {
   channels: PlatformType[];
   filters: InboxFilters;
   selectedId: string | null;
+  searchRef?: RefObject<HTMLInputElement | null>;
+  windowKey?: string;
   linkFor: (id: string) => string;
   onFiltersChange: (patch: Partial<InboxFilters>) => void;
 };
@@ -25,9 +29,12 @@ export function ConversationList({
   channels,
   filters,
   selectedId,
+  searchRef,
+  windowKey = "",
   linkFor,
   onFiltersChange,
 }: ConversationListProps) {
+  const { shown, remaining, showMore, sentinelRef } = useRenderWindow(visible, windowKey);
   const unreadByChannel = unreadBy(rows, (row) => row.platform);
   const channelRows = filters.channel === "ALL" ? rows : rows.filter((row) => row.platform === filters.channel);
   const unreadByStage = unreadBy(channelRows, (row) => row.salesStage);
@@ -51,11 +58,16 @@ export function ConversationList({
           <SearchIcon width={18} height={18} />
           <span className="visually-hidden">Buscar conversaciones</span>
           <input
+            ref={searchRef}
             type="search"
             placeholder="Buscar por nombre o mensaje"
             value={filters.query}
+            aria-keyshortcuts="/"
             onChange={(event) => onFiltersChange({ query: event.target.value })}
           />
+          <kbd className="conversation-search-key" aria-hidden="true">
+            /
+          </kbd>
         </label>
         {channels.length > 1 ? (
           <ChoiceGroup
@@ -98,9 +110,16 @@ export function ConversationList({
         </p>
       ) : (
         <ul className="conversation-items" aria-label="Conversaciones">
-          {visible.map((row) => (
+          {shown.map((row) => (
             <ConversationItem key={row.id} row={row} to={linkFor(row.id)} selected={row.id === selectedId} />
           ))}
+          {remaining > 0 ? (
+            <li className="conversation-items-more">
+              <button type="button" className="btn btn-secondary btn-sm" ref={sentinelRef} onClick={showMore}>
+                Mostrar más ({remaining})
+              </button>
+            </li>
+          ) : null}
         </ul>
       )}
     </div>

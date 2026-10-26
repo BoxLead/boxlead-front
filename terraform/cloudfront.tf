@@ -41,13 +41,19 @@ resource "aws_cloudfront_response_headers_policy" "site" {
   custom_headers_config {
     items {
       header   = "Permissions-Policy"
-      value    = "camera=(), microphone=(), geolocation=()"
+      value    = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()"
       override = true
     }
 
     items {
       header   = "Cross-Origin-Opener-Policy"
       value    = "same-origin-allow-popups"
+      override = true
+    }
+
+    items {
+      header   = "Cross-Origin-Resource-Policy"
+      value    = "same-origin"
       override = true
     }
   }

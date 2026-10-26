@@ -98,3 +98,24 @@ describe("query cache", () => {
     unsubscribe();
   });
 });
+
+describe("structural sharing", () => {
+  it("keeps the previous reference when a poll returns the same data", async () => {
+    fetcher.mockResolvedValueOnce([{ id: "a", unread: 1, tags: ["x"] }]);
+    await fetchQuery("/same");
+    const first = getQueryState("/same").data;
+    fetcher.mockResolvedValueOnce([{ id: "a", unread: 1, tags: ["x"] }]);
+    await fetchQuery("/same");
+    expect(getQueryState("/same").data).toBe(first);
+  });
+
+  it("replaces the data when something changed", async () => {
+    fetcher.mockResolvedValueOnce([{ id: "a", unread: 1 }]);
+    await fetchQuery("/changed");
+    const first = getQueryState("/changed").data;
+    fetcher.mockResolvedValueOnce([{ id: "a", unread: 2 }]);
+    await fetchQuery("/changed");
+    expect(getQueryState("/changed").data).not.toBe(first);
+    expect(getQueryState("/changed").data).toEqual([{ id: "a", unread: 2 }]);
+  });
+});

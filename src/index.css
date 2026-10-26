@@ -229,6 +229,10 @@ button {
   text-decoration: none;
 }
 
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 .btn:disabled {
   opacity: 0.55;
 }
@@ -512,6 +516,20 @@ button {
   }
 }
 
+@media (pointer: coarse) {
+  .btn,
+  .btn-sm,
+  .btn-icon,
+  .select,
+  .input {
+    min-height: 44px;
+  }
+
+  .btn-icon {
+    width: 44px;
+  }
+}
+
 @media (max-width: 760px) {
   .page {
     padding: var(--signal-space-lg) var(--signal-space-md);
@@ -522,7 +540,18 @@ button {
   }
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.18s;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
   .page,
   .skeleton {
     animation: none;
@@ -536,6 +565,10 @@ button {
   .input,
   .select {
     transition: none;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: none;
   }
 }
 

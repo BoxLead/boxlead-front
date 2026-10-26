@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRightIcon } from "../../components/icons/UiIcons";
+import { preloadRoute } from "../../routing/routePreload";
 import { AgentDemo } from "./AgentDemo";
 import { RollText } from "./RollText";
 import "./HeroSection.css";
@@ -33,7 +34,13 @@ export function HeroSection() {
             En automático, las 24 horas.
           </p>
           <div className="hero-actions">
-            <Link to="/register" className="landing-btn landing-btn-primary">
+            <Link
+              to="/register"
+              className="landing-btn landing-btn-primary"
+              onPointerEnter={() => void preloadRoute("/register")}
+              onFocus={() => void preloadRoute("/register")}
+              onTouchStart={() => void preloadRoute("/register")}
+            >
               <RollText>Empezar ahora</RollText>
               <ArrowRightIcon width={18} height={18} />
             </Link>

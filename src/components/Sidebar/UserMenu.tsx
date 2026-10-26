@@ -9,12 +9,12 @@ import "./UserMenu.css";
 
 function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
   return (
-    <label className="theme-switch">
-      <span className="visually-hidden">Modo claro</span>
+    <span className="theme-switch">
       <input
         type="checkbox"
         role="switch"
         className="theme-switch-input"
+        aria-label="Modo claro"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
       />
@@ -22,7 +22,7 @@ function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (check
         <MoonIcon width={14} height={14} className="theme-switch-moon" />
         <SunIcon width={14} height={14} className="theme-switch-sun" />
       </span>
-    </label>
+    </span>
   );
 }
 
@@ -106,11 +106,11 @@ export function UserMenu() {
               <span>{label}</span>
             </Link>
           ))}
-          <div className="account-menu-row">
+          <label className="account-menu-row account-menu-theme">
             {theme === "light" ? <SunIcon /> : <MoonIcon />}
-            <span>Tema</span>
+            <span aria-hidden="true">Tema</span>
             <ThemeSwitch checked={theme === "light"} onChange={(light) => setTheme(light ? "light" : "dark")} />
-          </div>
+          </label>
           <button type="button" className="account-menu-action" onClick={closeAndLogout}>
             <LogoutIcon />
             <span>Cerrar sesión</span>

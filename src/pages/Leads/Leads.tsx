@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { CategoryResponse, LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -14,6 +14,8 @@ import { CATEGORIES_KEY } from "../../data/categories";
 import { ALL_LEADS_KEY } from "../../data/leads";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { useRenderWindow } from "../../hooks/useRenderWindow";
+import { useUrlQuery } from "../../hooks/useUrlQuery";
 import { CONNECTABLE_PLATFORMS, getPlatform } from "../../platforms";
 import { UNCATEGORIZED } from "../../util/categories";
 import { formatRelative } from "../../util/format";
@@ -44,25 +46,31 @@ export function Leads() {
   useDocumentTitle("Leads");
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useUrlQuery(searchParams, setSearchParams);
+  const deferredQuery = useDeferredValue(query);
   const leads = useApiQuery<LeadResponse[]>(ALL_LEADS_KEY);
   const categories = useApiQuery<CategoryResponse[]>(CATEGORIES_KEY);
   const categoryList = categories.data ?? [];
-  const filters: LeadFilters = {
-    status: parseStatus(searchParams.get("status")),
-    channel: parseChannel(searchParams.get("channel")),
-    includeBuyers: searchParams.get("buyers") === "1",
-    category: searchParams.get("category"),
-    temperature: parseTemperature(searchParams.get("temperature")),
-    query,
-  };
+  const filters: LeadFilters = useMemo(
+    () => ({
+      status: parseStatus(searchParams.get("status")),
+      channel: parseChannel(searchParams.get("channel")),
+      includeBuyers: searchParams.get("buyers") === "1",
+      category: searchParams.get("category"),
+      temperature: parseTemperature(searchParams.get("temperature")),
+      query: deferredQuery,
+    }),
+    [searchParams, deferredQuery],
+  );
 
   const all = useMemo(() => leads.data ?? [], [leads.data]);
-  const scoped = filterLeads(all, { ...filters, status: null });
-  const visible = filterLeads(all, filters);
-  const counts = statusCounts(scoped);
-  const buyers = all.filter((lead) => lead.postSaleOnly).length;
-  const channels = CONNECTABLE_PLATFORMS.filter((p) => all.some((lead) => lead.platform === p.id));
+  const scoped = useMemo(() => filterLeads(all, { ...filters, status: null }), [all, filters]);
+  const visible = useMemo(() => filterLeads(all, filters), [all, filters]);
+  const counts = useMemo(() => statusCounts(scoped), [scoped]);
+  const buyers = useMemo(() => all.filter((lead) => lead.postSaleOnly).length, [all]);
+  const channels = useMemo(() => CONNECTABLE_PLATFORMS.filter((p) => all.some((lead) => lead.platform === p.id)), [all]);
+  const windowKey = `${searchParams.toString()}|${deferredQuery}`;
+  const { shown, remaining, showMore, sentinelRef } = useRenderWindow(visible, windowKey);
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(searchParams);
@@ -114,7 +122,13 @@ export function Leads() {
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        {channels.length > 1 ? (
+        {leads.loading ? (
+          <div className="leads-toolbar-placeholder" aria-hidden="true">
+            <span className="skeleton leads-chip-skeleton" />
+            <span className="skeleton leads-chip-skeleton" />
+            <span className="skeleton leads-chip-skeleton" />
+          </div>
+        ) : channels.length > 1 ? (
           <ChoiceGroup
             label="Canal"
             choices={channelChoices}
@@ -122,24 +136,23 @@ export function Leads() {
             onChange={(channel) => setParam("channel", channel === "ALL" ? null : channel)}
           />
         ) : null}
-        {categoryList.length > 0 ? (
-          <label className="leads-category-filter">
-            <span className="visually-hidden">Filtrar por categoría</span>
-            <select
-              className="select"
-              value={filters.category ?? ""}
-              onChange={(event) => setParam("category", event.target.value || null)}
-            >
-              <option value="">Todas las categorías</option>
-              {categoryList.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-              <option value={UNCATEGORIZED}>Sin categoría</option>
-            </select>
-          </label>
-        ) : null}
+        <label className="leads-category-filter">
+          <span className="visually-hidden">Filtrar por categoría</span>
+          <select
+            className="select"
+            value={filters.category ?? ""}
+            disabled={!categories.data}
+            onChange={(event) => setParam("category", event.target.value || null)}
+          >
+            <option value="">Todas las categorías</option>
+            {categoryList.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+            <option value={UNCATEGORIZED}>Sin categoría</option>
+          </select>
+        </label>
         <label className="leads-temperature-filter">
           <span className="visually-hidden">Filtrar por temperatura</span>
           <select
@@ -156,7 +169,9 @@ export function Leads() {
             <option value={UNEVALUATED}>Sin evaluar</option>
           </select>
         </label>
-        {buyers > 0 ? (
+        {leads.loading ? (
+          <span className="skeleton leads-toggle-skeleton" aria-hidden="true" />
+        ) : buyers > 0 ? (
           <label className="leads-buyers-toggle">
             <input
               type="checkbox"
@@ -181,9 +196,19 @@ export function Leads() {
           {leads.error}
         </Banner>
       ) : leads.loading ? (
-        <div className="leads-skeleton" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((row) => (
-            <div className="leads-skeleton-row skeleton" key={row} />
+        <div className="panel leads-table-wrap leads-skeleton" aria-hidden="true">
+          <div className="leads-skeleton-head">
+            <span className="skeleton" />
+            <span className="skeleton" />
+            <span className="skeleton" />
+          </div>
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((row) => (
+            <div className="leads-skeleton-row" key={row}>
+              <span className="skeleton leads-skeleton-avatar" />
+              <span className="skeleton leads-skeleton-name" />
+              <span className="skeleton leads-skeleton-pill" />
+              <span className="skeleton leads-skeleton-pill" />
+            </div>
           ))}
         </div>
       ) : all.length === 0 ? (
@@ -235,7 +260,7 @@ export function Leads() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((lead) => {
+              {shown.map((lead) => {
                 const name = leadDisplayName(lead);
                 const platform = getPlatform(lead.platform);
                 return (
@@ -281,6 +306,13 @@ export function Leads() {
               })}
             </tbody>
           </table>
+          {remaining > 0 ? (
+            <div className="leads-table-more">
+              <button type="button" className="btn btn-secondary btn-sm" ref={sentinelRef} onClick={showMore}>
+                Mostrar más ({remaining})
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

@@ -1,153 +1,111 @@
-import { lazy, Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { Loading } from "./components/Loading";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { ScrollToTop } from "./components/ScrollToTop";
-import { LandingPage } from "./landing/LandingPage";
+import { preloadSocialAuth } from "./context/socialRoutes";
+import {
+  lazyRoute,
+  NotFound,
+  preloadOnIdle,
+  registerRoutePreload,
+  RouteAnnouncer,
+  RouteErrorBoundary,
+  ScrollRestoration,
+} from "./routing";
 
-const Layout = lazy(() =>
-  import("./components/Layout/Layout").then((m) => ({ default: m.Layout })),
-);
-const Connections = lazy(() =>
-  import("./pages/Connections/Connections").then((m) => ({
-    default: m.Connections,
-  })),
-);
-const Inbox = lazy(() =>
-  import("./pages/Inbox/Inbox").then((m) => ({ default: m.Inbox })),
-);
-const LeadDetail = lazy(() =>
-  import("./pages/LeadDetail/LeadDetail").then((m) => ({
-    default: m.LeadDetail,
-  })),
-);
-const Categories = lazy(() =>
-  import("./pages/Categories/Categories").then((m) => ({
-    default: m.Categories,
-  })),
-);
-const Agents = lazy(() =>
-  import("./pages/Agents/Agents").then((m) => ({ default: m.Agents })),
-);
-const Metrics = lazy(() =>
-  import("./pages/Metrics/Metrics").then((m) => ({ default: m.Metrics })),
-);
-const Leads = lazy(() =>
-  import("./pages/Leads/Leads").then((m) => ({ default: m.Leads })),
-);
-const Login = lazy(() =>
-  import("./pages/Login/Login").then((m) => ({ default: m.Login })),
-);
-const OAuthCallback = lazy(() =>
-  import("./pages/OAuthCallback/OAuthCallback").then((m) => ({
-    default: m.OAuthCallback,
-  })),
-);
-const SocialCallback = lazy(() =>
-  import("./pages/SocialCallback/SocialCallback").then((m) => ({
-    default: m.SocialCallback,
-  })),
-);
-const DataDeletion = lazy(() =>
-  import("./pages/Legal/DataDeletion").then((m) => ({
-    default: m.DataDeletion,
-  })),
-);
-const PrivacyPolicy = lazy(() =>
-  import("./pages/Legal/PrivacyPolicy").then((m) => ({
-    default: m.PrivacyPolicy,
-  })),
-);
-const TermsOfService = lazy(() =>
-  import("./pages/Legal/TermsOfService").then((m) => ({
-    default: m.TermsOfService,
-  })),
-);
-const Register = lazy(() =>
-  import("./pages/Register/Register").then((m) => ({ default: m.Register })),
-);
-const Billing = lazy(() =>
-  import("./pages/Billing/Billing").then((m) => ({ default: m.Billing })),
-);
-const BillingReturn = lazy(() =>
-  import("./pages/Billing/BillingReturn").then((m) => ({
-    default: m.BillingReturn,
-  })),
-);
-const Reseller = lazy(() =>
-  import("./pages/Reseller/Reseller").then((m) => ({ default: m.Reseller })),
-);
-const Invitation = lazy(() =>
-  import("./pages/Invitation/Invitation").then((m) => ({
-    default: m.Invitation,
-  })),
-);
-const Terms = lazy(() =>
-  import("./pages/Legal/Terms").then((m) => ({ default: m.Terms })),
-);
-const Privacy = lazy(() =>
-  import("./pages/Legal/Privacy").then((m) => ({ default: m.Privacy })),
-);
-const AdhesionContracts = lazy(() =>
-  import("./pages/Legal/AdhesionContracts").then((m) => ({
-    default: m.AdhesionContracts,
-  })),
-);
-const Withdrawal = lazy(() =>
-  import("./pages/ConsumerRequest/Withdrawal").then((m) => ({
-    default: m.Withdrawal,
-  })),
-);
-const Cancellation = lazy(() =>
-  import("./pages/ConsumerRequest/Cancellation").then((m) => ({
-    default: m.Cancellation,
-  })),
-);
+const LandingPage = lazyRoute(() => import("./landing/LandingPage"), "LandingPage");
+const Layout = lazyRoute(() => import("./components/Layout/Layout"), "Layout");
+const Connections = lazyRoute(() => import("./pages/Connections/Connections"), "Connections");
+const Inbox = lazyRoute(() => import("./pages/Inbox/Inbox"), "Inbox");
+const LeadDetail = lazyRoute(() => import("./pages/LeadDetail/LeadDetail"), "LeadDetail");
+const Categories = lazyRoute(() => import("./pages/Categories/Categories"), "Categories");
+const Agents = lazyRoute(() => import("./pages/Agents/Agents"), "Agents");
+const Metrics = lazyRoute(() => import("./pages/Metrics/Metrics"), "Metrics");
+const Leads = lazyRoute(() => import("./pages/Leads/Leads"), "Leads");
+const Login = lazyRoute(() => import("./pages/Login/Login"), "Login");
+const OAuthCallback = lazyRoute(() => import("./pages/OAuthCallback/OAuthCallback"), "OAuthCallback");
+const SocialCallback = lazyRoute(() => import("./pages/SocialCallback/SocialCallback"), "SocialCallback");
+const DataDeletion = lazyRoute(() => import("./pages/Legal/DataDeletion"), "DataDeletion");
+const PrivacyPolicy = lazyRoute(() => import("./pages/Legal/PrivacyPolicy"), "PrivacyPolicy");
+const TermsOfService = lazyRoute(() => import("./pages/Legal/TermsOfService"), "TermsOfService");
+const Register = lazyRoute(() => import("./pages/Register/Register"), "Register");
+const Billing = lazyRoute(() => import("./pages/Billing/Billing"), "Billing");
+const BillingReturn = lazyRoute(() => import("./pages/Billing/BillingReturn"), "BillingReturn");
+const Reseller = lazyRoute(() => import("./pages/Reseller/Reseller"), "Reseller");
+const Invitation = lazyRoute(() => import("./pages/Invitation/Invitation"), "Invitation");
+const Terms = lazyRoute(() => import("./pages/Legal/Terms"), "Terms");
+const Privacy = lazyRoute(() => import("./pages/Legal/Privacy"), "Privacy");
+const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContracts"), "AdhesionContracts");
+const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
+const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
+
+registerRoutePreload("/", [LandingPage]);
+const socialAuth = { preload: preloadSocialAuth };
+registerRoutePreload("/login", [Login, socialAuth]);
+registerRoutePreload("/register", [Register, socialAuth]);
+registerRoutePreload("/app", [Layout, Inbox]);
+registerRoutePreload("/app/inbox", [Layout, Inbox]);
+registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);
+registerRoutePreload("/app/metrics", [Layout, Metrics]);
+registerRoutePreload("/app/categories", [Layout, Categories]);
+registerRoutePreload("/app/agents", [Layout, Agents]);
+registerRoutePreload("/app/connections", [Layout, Connections]);
+registerRoutePreload("/app/billing", [Layout, Billing]);
+registerRoutePreload("/app/reseller", [Layout, Reseller]);
+preloadOnIdle(window.location.pathname);
+
+function Page({ children }: { children: ReactNode }) {
+  return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;
+}
 
 export default function App() {
   return (
-    <Suspense fallback={<Loading />}>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/social/callback" element={<SocialCallback />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/data-deletion" element={<DataDeletion />} />
-        <Route path="/invitacion" element={<Invitation />} />
-        <Route path="/terminos" element={<Terms />} />
-        <Route path="/privacidad" element={<Privacy />} />
-        <Route path="/contratos" element={<AdhesionContracts />} />
-        <Route path="/arrepentimiento" element={<Withdrawal />} />
-        <Route path="/baja" element={<Cancellation />} />
-        <Route element={<ProtectedRoute />}>
-          <Route
-            path="/app/oauth/callback/:platform"
-            element={<OAuthCallback />}
-          />
-          <Route path="/app" element={<Layout />}>
-            <Route index element={<Navigate to="/app/inbox" replace />} />
-            <Route path="inbox" element={<Inbox />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="leads/:leadId" element={<LeadDetail />} />
-            <Route path="metrics" element={<Metrics />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="agents" element={<Agents />} />
-            <Route path="connections" element={<Connections />} />
-            <Route element={<FeatureRoute feature="billing" />}>
-              <Route path="billing" element={<Billing />} />
-              <Route path="billing/return" element={<BillingReturn />} />
-            </Route>
-            <Route element={<FeatureRoute feature="reseller" />}>
-              <Route path="reseller" element={<Reseller />} />
+    <RouteErrorBoundary>
+      <Suspense fallback={<Loading />}>
+        <ScrollRestoration />
+        <RouteAnnouncer />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/social/callback" element={<SocialCallback />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/data-deletion" element={<DataDeletion />} />
+          <Route path="/invitacion" element={<Invitation />} />
+          <Route path="/terminos" element={<Terms />} />
+          <Route path="/privacidad" element={<Privacy />} />
+          <Route path="/contratos" element={<AdhesionContracts />} />
+          <Route path="/arrepentimiento" element={<Withdrawal />} />
+          <Route path="/baja" element={<Cancellation />} />
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/app/oauth/callback/:platform"
+              element={<OAuthCallback />}
+            />
+            <Route path="/app" element={<Layout />}>
+              <Route index element={<Navigate to="/app/inbox" replace />} />
+              <Route path="inbox" element={<Page><Inbox /></Page>} />
+              <Route path="leads" element={<Page><Leads /></Page>} />
+              <Route path="leads/:leadId" element={<Page><LeadDetail /></Page>} />
+              <Route path="metrics" element={<Page><Metrics /></Page>} />
+              <Route path="categories" element={<Page><Categories /></Page>} />
+              <Route path="agents" element={<Page><Agents /></Page>} />
+              <Route path="connections" element={<Page><Connections /></Page>} />
+              <Route element={<FeatureRoute feature="billing" />}>
+                <Route path="billing" element={<Billing />} />
+                <Route path="billing/return" element={<BillingReturn />} />
+              </Route>
+              <Route element={<FeatureRoute feature="reseller" />}>
+                <Route path="reseller" element={<Reseller />} />
+              </Route>
+              <Route path="*" element={<NotFound inApp />} />
             </Route>
           </Route>
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
   );
 }

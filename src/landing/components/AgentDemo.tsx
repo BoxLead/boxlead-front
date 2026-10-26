@@ -95,13 +95,14 @@ export function AgentDemo() {
             role="tab"
             key={item.channel}
             aria-selected={index === step.scene}
+            aria-label={item.channel}
             className={`agent-demo-tab${index === step.scene ? " is-active" : ""}`}
             onClick={() =>
               setStep({ scene: index, phase: autoplay ? 0 : LAST_PHASE })
             }
           >
             {item.icon}
-            <span>{item.channel}</span>
+            <span aria-hidden="true">{item.channel}</span>
           </button>
         ))}
       </div>

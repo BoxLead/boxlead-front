@@ -5,7 +5,6 @@ import type {
   ContextItem,
   ConversationContextResponse,
   ConversationResponse,
-  MessageResponse,
   ReplyDraft,
 } from "../../api/types";
 import { PlanLink } from "../../components/PlanBanner/PlanLink";
@@ -29,11 +28,10 @@ import { OrderSummary } from "./OrderSummary";
 import { TemplateDialog } from "./TemplateDialog";
 import { QuestionThread } from "./QuestionThread";
 import { useMissingPostRefresh } from "./useMissingPostRefresh";
-import { CONVERSATIONS_KEY, messagesKey, useConversationSender } from "./useConversationSender";
+import { MESSAGES_REFRESH_MS, useConversationMessages } from "./useConversationMessages";
+import { CONVERSATIONS_KEY, useConversationSender } from "./useConversationSender";
 import { WorkingNotice } from "./WorkingNotice";
 import "./ConversationView.css";
-
-const MESSAGES_REFRESH_MS = 10_000;
 
 type ConversationViewProps = {
   row: ConversationRow;
@@ -44,9 +42,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
   const navigate = useNavigate();
   const platform = getPlatform(row.platform);
   const policy = platform.reply(row.salesStage);
-  const messages = useApiQuery<MessageResponse[]>(messagesKey(row.id), {
-    refreshInterval: MESSAGES_REFRESH_MS,
-  });
+  const messages = useConversationMessages(row.id);
   const context = useApiQuery<ConversationContextResponse>(
     platform.hasContext ? `/conversations/${row.id}/context` : null,
   );

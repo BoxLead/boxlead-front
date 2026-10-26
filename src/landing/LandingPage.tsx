@@ -14,6 +14,9 @@ import { CtaSection } from "./components/CtaSection";
 import { Footer } from "./components/Footer";
 import { BILLING_ENABLED, REFERRALS_ENABLED } from "./flags";
 import { captureReferral } from "../util/referral";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+
+const LANDING_TITLE = "Agentes de IA que automatizan y escalan tus ventas";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -79,6 +82,7 @@ function useReferralCapture() {
 }
 
 export function LandingPage() {
+  useDocumentTitle(LANDING_TITLE);
   useReferralCapture();
   useScrollReveal();
   usePointerGlow();
