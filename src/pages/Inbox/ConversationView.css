@@ -44,7 +44,9 @@
 .conversation-header-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
   margin: 2px 0 0;
   color: var(--signal-text-muted);
   font-size: 0.8125rem;
@@ -649,8 +651,23 @@
 }
 
 @media (max-width: 480px) {
-  .conversation-lead-link {
-    display: none;
+  .conversation-header {
+    gap: 8px;
+  }
+
+  .conversation-action {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+  }
+
+  .conversation-action-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
 
   .composer-hint-default {

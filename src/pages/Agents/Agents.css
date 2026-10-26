@@ -694,7 +694,7 @@
   margin-right: auto;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1400px) {
   .scope-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

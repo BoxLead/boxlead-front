@@ -793,7 +793,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 200, conversation.platform === "WHATSAPP" ? WHATSAPP_TEMPLATES : []);
     }
     if (parts[2] === "messages" && method === "GET") {
-      return send(res, 200, messagesOf(conversation.id));
+      const after = url.searchParams.get("after");
+      const all = messagesOf(conversation.id);
+      return send(res, 200, after ? all.filter((m) => m.createdAt > after) : all);
     }
     if (parts[2] === "messages" && method === "POST") {
       const body = await readBody(req);

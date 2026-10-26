@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeftIcon } from "../../components/icons/UiIcons";
+import { ArrowLeftIcon, TrashIcon, UserIcon } from "../../components/icons/UiIcons";
 import { Avatar } from "../../components/ui/Avatar";
 import { Banner } from "../../components/ui/Banner";
 import { Tag } from "../../components/ui/Tag";
@@ -33,14 +33,20 @@ export function ConversationHeader({ row, backTo, onDelete }: ConversationHeader
         <div className="conversation-header-actions">
           <button
             type="button"
-            className="btn btn-danger btn-sm"
+            className="btn btn-danger btn-sm conversation-action"
             onClick={onDelete}
             aria-label={`Eliminar conversación con ${row.displayName}`}
           >
-            Eliminar
+            <TrashIcon width={16} height={16} />
+            <span className="conversation-action-label">Eliminar</span>
           </button>
-          <Link to={`/app/leads/${row.leadId}`} className="btn btn-secondary btn-sm conversation-lead-link">
-            Ver lead
+          <Link
+            to={`/app/leads/${row.leadId}`}
+            className="btn btn-secondary btn-sm conversation-action conversation-lead-link"
+            aria-label={`Ver el lead ${row.displayName}`}
+          >
+            <UserIcon width={16} height={16} />
+            <span className="conversation-action-label">Ver lead</span>
           </Link>
         </div>
       </header>
