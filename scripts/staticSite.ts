@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { brotliCompressSync, gzipSync } from 'node:zlib'
 
 export const APP_PREFIX = '/app'
 export const APP_SHELL_FILE = 'app.html'
@@ -41,10 +42,16 @@ export function staticSiteMiddleware(outDir: string) {
       res.end()
       return
     }
-    const body = readFileSync(join(outDir, resolution.file))
+    const accepted = String(req.headers['accept-encoding'] ?? '')
+    const raw = readFileSync(join(outDir, resolution.file))
+    const encoding = /\bbr\b/.test(accepted) ? 'br' : /\bgzip\b/.test(accepted) ? 'gzip' : null
+    const body = encoding === 'br' ? brotliCompressSync(raw) : encoding === 'gzip' ? gzipSync(raw) : raw
     res.statusCode = resolution.status
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Vary', 'Accept-Encoding')
+    if (encoding) res.setHeader('Content-Encoding', encoding)
+    res.setHeader('Content-Length', body.length)
     res.end(req.method === 'HEAD' ? undefined : body)
   }
 }
