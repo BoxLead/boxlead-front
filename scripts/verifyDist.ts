@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import { preview } from 'vite'
 
 type Check = { name: string; ok: boolean; detail?: string }
@@ -19,6 +19,14 @@ function attr(html: string, pattern: RegExp): string | null {
   return match ? match[1] : null
 }
 
+function scripts(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) return scripts(path)
+    return entry.name.endsWith('.js') ? [path] : []
+  })
+}
+
 async function main() {
   const root = process.cwd()
   const server = await preview({ root, preview: { port: 0, strictPort: false, open: false }, logLevel: 'silent' })
@@ -30,6 +38,8 @@ async function main() {
   const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
   check('sitemap lists pages with lastmod', sitemapUrls.length > 0 && count(sitemap, /<lastmod>\d{4}-\d{2}-\d{2}/g) === sitemapUrls.length)
   check('robots blocks the app and points to the sitemap', /Disallow: \/app/.test(readFileSync(resolve(root, 'dist/robots.txt'), 'utf8')) && /Sitemap: https:\/\/boxlead\.app\/sitemap\.xml/.test(readFileSync(resolve(root, 'dist/robots.txt'), 'utf8')))
+  const backoffice = scripts(resolve(root, 'dist')).filter((file) => /\/admin\/mfa\/|ADMIN_SESSION_REQUIRED/.test(readFileSync(file, 'utf8')))
+  check('the customer bundle carries no backoffice code', backoffice.length === 0, backoffice.join(', '))
   check('llms.txt exists', readFileSync(resolve(root, 'dist/llms.txt'), 'utf8').startsWith('# BoxLead'))
 
   const seen = new Map<string, string>()

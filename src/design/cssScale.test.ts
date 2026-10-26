@@ -55,4 +55,10 @@ describe("design scale guardian", () => {
     const report = findings.map((f) => `${f.file}:${f.line} ${f.property}: ${f.value} (${f.reason})`);
     expect(report).toEqual([]);
   });
+
+  it("keeps every stylesheet of the backoffice on the scale", () => {
+    const findings = auditTree(resolve(REPO, "admin"), REPO);
+    const report = findings.map((f) => `${f.file}:${f.line} ${f.property}: ${f.value} (${f.reason})`);
+    expect(report).toEqual([]);
+  });
 });
