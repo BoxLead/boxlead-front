@@ -62,10 +62,11 @@ const LEGAL_KINDS: readonly LegalDocumentKind[] = [
 
 function readFeatures(value: object): Features {
   const features = "features" in value ? value.features : null;
-  if (!features || typeof features !== "object") return { billing: false, referrals: false };
+  if (!features || typeof features !== "object") return { billing: false, referrals: false, legal: false };
   return {
     billing: "billing" in features && features.billing === true,
     referrals: "referrals" in features && features.referrals === true,
+    legal: "legal" in features && features.legal === true,
   };
 }
 

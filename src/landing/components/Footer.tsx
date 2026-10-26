@@ -5,7 +5,10 @@ import {
   SUPPORT_EMAIL,
 } from "../../util/company";
 import { Logo } from "../../components/Logo/Logo";
+import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
+import { CONSUMER_PAGES } from "../../util/consumerPages";
 import { BILLING_ENABLED } from "../flags";
+import { DataFiscal } from "./DataFiscal";
 import "./Footer.css";
 
 export function Footer() {
@@ -50,24 +53,50 @@ export function Footer() {
 
         <nav className="footer-column" aria-label="Legal">
           <h2 className="footer-heading">Legal</h2>
-          <Link to="/privacy-policy" className="footer-link">
+          <Link to="/terminos" className="footer-link">
+            Términos y condiciones
+          </Link>
+          <Link to="/privacidad" className="footer-link">
             Política de privacidad
           </Link>
-          <Link to="/terms-of-service" className="footer-link">
-            Términos de servicio
+          <Link to="/contratos" className="footer-link">
+            Contratos de adhesión Ley N° 24.240 de Defensa del Consumidor
           </Link>
           <Link to="/data-deletion" className="footer-link">
             Eliminación de datos
           </Link>
+          <Link to="/terms-of-service" className="footer-link" lang="en">
+            Terms of Service
+          </Link>
+          <Link to="/privacy-policy" className="footer-link" lang="en">
+            Privacy Policy
+          </Link>
         </nav>
 
         <div className="footer-column">
-          <h2 className="footer-heading">Contacto</h2>
+          <h2 className="footer-heading">Atención al cliente</h2>
           <a href={`mailto:${SUPPORT_EMAIL}`} className="footer-link">
             {SUPPORT_EMAIL}
           </a>
+          <nav className="footer-consumer" aria-label="Defensa del consumidor">
+            {CONSUMER_PAGES.map((page) => (
+              <Link to={page.to} className="footer-consumer-link" key={page.to}>
+                {page.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </div>
+
+      <section className="footer-provider" aria-labelledby="footer-provider-heading">
+        <div className="footer-provider-body">
+          <h2 className="footer-heading" id="footer-provider-heading">
+            Datos del proveedor
+          </h2>
+          <ProviderDetails className="footer-provider-details" />
+        </div>
+        <DataFiscal />
+      </section>
 
       <div className="footer-bottom">
         <p>

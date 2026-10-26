@@ -1,0 +1,83 @@
+.consumer-form {
+  display: grid;
+  gap: var(--signal-space-md);
+  margin-top: var(--signal-space-lg);
+  padding: var(--signal-space-lg);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-surface);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.consumer-form .banner p {
+  margin: 0;
+}
+
+.consumer-form-details {
+  min-height: 112px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.consumer-form-hint {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--signal-space-sm);
+}
+
+.consumer-form-submit {
+  justify-self: start;
+  padding-block: 8px;
+  white-space: normal;
+  text-align: center;
+}
+
+.consumer-receipt {
+  margin-top: var(--signal-space-lg);
+  padding: var(--signal-space-lg);
+  border: 1px solid color-mix(in srgb, var(--signal-success) 35%, transparent);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-success-muted);
+  animation: page-enter 0.35s var(--signal-ease) both;
+}
+
+.legal-page .consumer-receipt h2 {
+  margin-top: 0;
+}
+
+.legal-page .consumer-receipt p {
+  margin-bottom: var(--signal-space-sm);
+}
+
+.legal-page .consumer-receipt p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-page .consumer-receipt-code {
+  margin: 0 0 var(--signal-space-md);
+  color: var(--signal-heading);
+  font-family: ui-monospace, monospace;
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .consumer-form,
+  .consumer-receipt {
+    padding: var(--signal-space-md);
+  }
+
+  .consumer-form-submit {
+    justify-self: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consumer-receipt {
+    animation: none;
+  }
+}

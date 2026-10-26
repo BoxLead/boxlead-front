@@ -447,7 +447,7 @@ function limitOf(limits: PlanLimits, key: EntitlementKey): number {
 
 export function sessionFields(state: BillingState): SessionFlags {
   return {
-    features: { billing: state.billing, referrals: state.referrals },
+    features: { billing: state.billing, referrals: state.referrals, legal: state.legal },
     access: state.billing ? entitlements(state).access : "FULL",
     isReseller: state.referrals && state.reseller,
     pendingLegal: state.legal ? state.pendingLegal : [],

@@ -23,10 +23,11 @@ src/
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
 ├── components/       # ProtectedRoute, Layout, PlanBanner, LegalDialog, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading, ScrollToTop
+│   ├── ProviderDetails/ # Catvin SRL details from util/company.ts, only the fields that have a value
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
 ├── landing/          # Public landing: LandingPage and its sections
-└── util/             # classNames, company, dates, format, labels, legalAcceptance, links, metrics, oauth, planPrice, redirect, referral, facebook-sdk
+└── util/             # classNames, company, consumerPages, dates, format, labels, legalAcceptance, links, metrics, oauth, planPrice, redirect, referral, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
 
@@ -35,9 +36,10 @@ terraform/            # Infrastructure (do not modify without approval)
 ```
 /                                   Landing (public)
 /login, /register                   Auth (public)
-/privacy-policy, /terms-of-service, /data-deletion   Legal (public)
+/terminos, /privacidad, /contratos  Legal texts in Spanish, the version that prevails (public)
+/terms-of-service, /privacy-policy  English translations, plus /data-deletion (public)
+/arrepentimiento, /baja             Withdrawal and cancellation requests without login (public)
 /invitacion                         Demo invitation (public, token in the fragment)
-/terminos, /privacidad, /contratos, /arrepentimiento, /baja   Payments placeholders (public, redirect to / for now)
 /app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
 /app/billing, /app/billing/return   Protected, only with features.billing
 /app/reseller                       Protected, only with isReseller
@@ -53,7 +55,7 @@ Login and register offer "Continuar con Google" and "Continuar con Facebook" nex
 
 ## Payments
 
-Billing, invitations, referrals and the legal pages are built behind the flags core sends in `GET /auth/me`. `toAuthUser` keeps `features`, `access`, `isReseller` and `pendingLegal`, and anything missing or unexpected reads as off, with `access` as `FULL`. `useAuth()` exposes the same four values. `FeatureRoute` sends `/app/billing` and `/app/reseller` to `/` when their flag is off, and the account menu only links Facturación, Revendedor and the consumer pages when core enables them. The public legal and consumer pages are still placeholders that a later step fills in. The contract lives in `boxlead-core/payments-plan/contracts/api-customer.md` and the types in `api/types.ts`. `api/errors.ts` reads the stable `code` and the `fields` of an error.
+Billing, invitations, referrals and the legal pages are built behind the flags core sends in `GET /auth/me`. `toAuthUser` keeps `features`, `access`, `isReseller` and `pendingLegal`, and anything missing or unexpected reads as off, with `access` as `FULL`. `useAuth()` exposes the same four values. `FeatureRoute` sends `/app/billing` and `/app/reseller` to `/` when their flag is off, and the account menu links Facturación with `features.billing`, Revendedor with `isReseller` and the consumer pages with `features.legal`. The contract lives in `boxlead-core/payments-plan/contracts/api-customer.md` and the types in `api/types.ts`. `api/errors.ts` reads the stable `code` and the `fields` of an error.
 
 `/register` loads `GET /billing/plans`, `GET /invitations/current` and `GET /legal/documents` together and shows the loader until they answer or 5 seconds pass (`data/plans.ts`). Any answer but a 200 from the plans leaves the sign up as it was. With plans the visitor picks Starter or Business in `PlanPicker`, which leads with today's charge in pesos, the price without national taxes under its legend and the dollar reference (`util/planPrice.ts`). Enterprise only links to a conversation. The Beta is enabled only when the invitation answers, and then its email fills the form and cannot be changed. `?plan=` preselects a plan. The chosen plan travels only in the destination, `/app/billing?checkout=STARTER` or `BUSINESS` for a paid plan and `next` otherwise, always through `safeAppPath`. When the legal documents answer, a checkbox sends the terms and privacy versions as `acceptedLegal` in the sign up, and for Google or Facebook inside `appState` next to `next`, which `SocialCallback` passes on to `POST /auth/social`. Nothing about the plan goes to browser storage. Core answers the sign up and the social login before it accepts the invitation, so `AuthProvider` asks `GET /auth/me` again after both and only then navigates, keeping the first answer if that call fails.
 
@@ -62,6 +64,10 @@ The mock API answers every endpoint of that contract from `e2e/mock-api/billing.
 With `features.billing` on, `Layout` shows `PlanBanner` from `GET /billing/summary` (`usePlan`). It covers suspended, paused, no plan, past due with the Mercado Pago link to change the payment method, replies used up and a Demo that ends within a week (`planNotice.ts`). Any 402 with `PLAN_REQUIRED` or `PLAN_LIMIT_REACHED`, from core or the agent, gets a Spanish message in `api/client.ts`, refreshes the summary and adds a dismissable notice with a link to billing (`data/planErrors.ts`). Without a plan the playground and the composer say why they are off and creating or enabling an agent is disabled, and agents with `overPlanLimit` are marked. Metrics only offer a period of P days if 2P fit in `METRICS_HISTORY_DAYS` and skip the forecast with less than 84 days. When `GET /invitations/current` answers and the account has no Demo, a notice offers `POST /invitations/accept` and shows its error. A non empty `pendingLegal` opens `LegalAcceptanceDialog`, which only closes after `POST /legal/acceptances` or logging out.
 
 `/invitacion` reads the token from the fragment, removes it from the URL with `history.replaceState`, keeps it only in memory and sends it to `POST /invitations/preview`. Without a session it offers `/register?plan=DEMO` or `/login`, and with one it accepts on purpose through `POST /invitations/accept`. `resetApi(scenario, now, { agentReplies })` sets the replies used in the period.
+
+## Legal and consumer
+
+The landing shows the Botón de arrepentimiento and the Botón de baja de servicio in the header and the footer on first access, without login and without calling the API (Disposición 954/2025). `/arrepentimiento` and `/baja` post `POST /consumer-requests` with the kind, the email and an optional detail of up to 500 characters and show the code. If the API fails or answers 404 they point to the support email with a prefilled subject. The footer and the Spanish legal pages show the provider block from `util/company.ts`. CUIT, address and support hours stay empty until Matías confirms them and `ProviderDetails` leaves out every empty field. The ARCA Data Fiscal badge appears in the footer only when `DATA_FISCAL_URL` and `DATA_FISCAL_IMAGE` are set, with the image served from `public/`. `/contratos` publishes the adhesion contract and is linked from the landing with the name that Resolución 271/2020 asks for. The texts of `/terminos`, `/privacidad` and `/contratos` are drafts for the lawyer, share their clauses through `pages/Legal/clauses` and show the version from `pages/Legal/legalVersion.ts`, which has to match the one core publishes.
 
 ## Billing
 
@@ -104,7 +110,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - No inline styles and no CSS frameworks. Tokens: `--signal-*` for the app, `--landing-*` for the landing. Derive tints from a token with `color-mix` instead of writing a new color.
 - Shared primitives live in `index.css` (`.btn`, `.btn-icon`, `.panel`, `.field`, `.input`, `.select`, `.form-error`) and in `components/ui` (`Dialog` for every modal). Compose conditional classes with `cx` from `util/classNames`.
 - No comments in code.
-- UI copy is in Spanish; the legal pages stay in English.
+- UI copy is in Spanish. Legal texts are written in Spanish, which prevails, and the English pages are translations that say so.
 - Load data with `useApiQuery` (shared cache, `refreshInterval` polls only while the tab is visible); mutations call `api` and then `invalidateQueries` or `setQueryData`.
 - Every page sets its tab title with `useDocumentTitle`.
 - Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
@@ -115,7 +121,7 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 
 - Lives in `src/landing/`. Dark by default; `html[data-theme="light"] .landing` in `LandingPage.css` overrides the `--landing-*` tokens, so components must use tokens (or `color-mix` on them) and never hard-coded colors.
 - `[data-reveal]` elements are revealed by the observer in `LandingPage.tsx`; scroll-driven effects sit behind `@supports (animation-timeline: view())`.
-- Keep the legal entity, the legal page links and the support email in the footer (required for Meta app review).
+- Keep the legal entity, the legal page links, the support email and the provider block in the footer (required for Meta app review and consumer law), and the withdrawal and cancellation buttons in the header and the footer.
 - `BILLING_ENABLED` and `REFERRALS_ENABLED` in `src/landing/flags.ts` stay `false` until payments go live, and with both off the landing looks as it does today. The payments plan in `boxlead-core` turns them on in its step 23.
 - `BILLING_ENABLED` shows the plans section (`PlansSection`, also linked from the header and footer). It lists Beta by invitation, Starter and Business with their capabilities, never amounts or limits, and leads to `/register?plan=STARTER` or `BUSINESS`. The price comes from the API inside the app.
 - `REFERRALS_ENABLED` turns on `captureReferral` (`util/referral.ts`). A `?ref=` code in the referral format (10 Crockford base32 characters) goes into the `boxlead_ref` cookie for `ATTRIBUTION_WINDOW_DAYS`, `Secure` and `SameSite=Lax`, on `.boxlead.app` there and with no domain on other hosts. An existing cookie is never replaced (first touch), and `ref` leaves the URL through `history.replaceState` whether it was valid or not.

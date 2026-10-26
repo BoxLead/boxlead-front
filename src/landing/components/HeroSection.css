@@ -3,7 +3,7 @@
   flex-direction: column;
   justify-content: center;
   min-height: min(100svh, 940px);
-  padding-top: calc(var(--landing-header-height) + clamp(32px, 6vw, 72px));
+  padding-top: calc(var(--landing-consumer-height) + var(--landing-header-height) + clamp(32px, 6vw, 72px));
   padding-bottom: clamp(72px, 9vw, 120px);
   overflow: hidden;
 }

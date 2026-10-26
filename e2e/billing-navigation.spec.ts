@@ -1,8 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
 
-const PUBLIC_PATHS = ["/terminos", "/privacidad", "/contratos", "/arrepentimiento", "/baja"];
-
 async function openAccount(page: Page) {
   await page.getByRole("button", { name: "Cuenta" }).click();
   return page.getByRole("dialog", { name: "Cuenta" });
@@ -34,13 +32,6 @@ test("without billing the account menu and the routes stay as today", async ({ p
   await screenshotThemes(page, "billing-off-menu", "Bandeja", true);
 
   for (const path of ["/app/billing", "/app/billing/return", "/app/reseller"]) {
-    await page.goto(path);
-    await expect(page).toHaveURL(/\/$/);
-  }
-});
-
-test("the new public pages keep sending visitors to the landing", async ({ page }) => {
-  for (const path of PUBLIC_PATHS) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/$/);
   }

@@ -4,7 +4,20 @@ import { LegalLayout } from "./LegalLayout";
 
 export function TermsOfService() {
   return (
-    <LegalLayout title="Terms of Service" updated="March 29, 2026">
+    <LegalLayout
+      title="Terms of Service"
+      language="en"
+      meta="Last updated: March 29, 2026"
+      notice={
+        <p>
+          This English text is a translation for reference. The Spanish version, the{" "}
+          <Link to="/terminos" lang="es">
+            Términos y condiciones
+          </Link>
+          , is the one you accept and it prevails.
+        </p>
+      }
+    >
       <p>
         These Terms of Service ("Terms") govern your access to and use of the{" "}
         {PRODUCT_NAME} platform and services, operated by {LEGAL_ENTITY_NAME}.
@@ -92,13 +105,12 @@ export function TermsOfService() {
         platform.
       </p>
 
-      <h2>6. Limitation of Liability</h2>
+      <h2>6. Liability</h2>
       <p>
-        To the maximum extent permitted by law, BoxLead shall not be liable for
-        any indirect, incidental, special, consequential, or punitive damages,
-        including loss of profits, data, or business opportunities, arising from
-        your use of the platform. BoxLead is provided on an "as is" and "as
-        available" basis without warranties of any kind.
+        {LEGAL_ENTITY_NAME} is liable for the damages it causes as provided by
+        the applicable law. Nothing in these Terms limits the rights granted by
+        Argentine Consumer Protection Law 24,240 or any rule that cannot be
+        waived by contract.
       </p>
 
       <h2>7. Termination</h2>
@@ -113,9 +125,9 @@ export function TermsOfService() {
 
       <h2>8. Changes to These Terms</h2>
       <p>
-        We may update these Terms from time to time. When we do, we will revise
-        the "Last updated" date at the top of this page. Continued use of
-        BoxLead after changes constitutes acceptance of the updated Terms.
+        If we change these Terms we will let you know by email and in the app
+        before they apply. A new version only binds you once you expressly
+        accept it, and if you do not accept it you can cancel at no cost.
       </p>
 
       <div className="legal-contact">

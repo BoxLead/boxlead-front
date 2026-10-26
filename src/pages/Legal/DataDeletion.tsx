@@ -4,7 +4,7 @@ import { LegalLayout } from "./LegalLayout";
 
 export function DataDeletion() {
   return (
-    <LegalLayout title="Data Deletion Instructions" updated="March 29, 2026">
+    <LegalLayout title="Data Deletion Instructions" language="en" meta="Last updated: March 29, 2026">
       <p>
         If you no longer wish to use {PRODUCT_NAME} and want all your data
         permanently removed from our systems, follow the steps below.{" "}
