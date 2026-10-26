@@ -35,6 +35,14 @@ RUN npm run build && npm run test:dist
 FROM scratch AS export
 COPY --from=build /app/dist /
 
+FROM source AS admin-build
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+RUN npm run build:admin
+
+FROM scratch AS admin-export
+COPY --from=admin-build /app/dist-admin /
+
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS runtime
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/security-headers.conf /etc/nginx/conf.d/security-headers.conf
