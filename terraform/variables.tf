@@ -75,3 +75,49 @@ variable "price_class" {
   description = "CloudFront price class (e.g. PriceClass_100 for US/EU only — lowest cost)."
   default     = "PriceClass_100"
 }
+
+variable "admin_domain_name" {
+  type        = string
+  description = "Custom domain for the backoffice (CloudFront alternate domain name of the admin distribution)."
+  default     = "admin.boxlead.app"
+}
+
+variable "admin_bucket_name" {
+  type        = string
+  description = "Globally unique S3 bucket name for the backoffice. Empty uses bucket_name with an -admin suffix."
+  default     = ""
+}
+
+variable "admin_origin_header_name" {
+  type        = string
+  description = "Name of the header the Cloudflare transform rule adds toward the admin distribution. Requests without it get 403."
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9-]{8,64}$", var.admin_origin_header_name))
+    error_message = "admin_origin_header_name has 8 to 64 letters, digits or dashes."
+  }
+}
+
+variable "admin_origin_header_value" {
+  type        = string
+  description = "Secret value of the Cloudflare origin header (e.g. openssl rand -hex 32)."
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_-]{32,128}$", var.admin_origin_header_value))
+    error_message = "admin_origin_header_value has 32 to 128 letters, digits, dashes or underscores."
+  }
+}
+
+variable "admin_origin_header_previous_value" {
+  type        = string
+  description = "Previous value of the Cloudflare origin header, still accepted while a rotation is in progress. Empty outside a rotation."
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = var.admin_origin_header_previous_value == "" || can(regex("^[A-Za-z0-9_-]{32,128}$", var.admin_origin_header_previous_value))
+    error_message = "admin_origin_header_previous_value is empty or has 32 to 128 letters, digits, dashes or underscores."
+  }
+}

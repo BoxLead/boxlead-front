@@ -25,3 +25,14 @@ auth0_client_id = "your-auth0-application-client-id"
 
 # Search Console verification token for a meta tag — written to SSM as VITE_GOOGLE_SITE_VERIFICATION. Prefer the DNS record.
 # google_site_verification = ""
+
+# Backoffice on its own bucket and CloudFront distribution, behind Cloudflare Access.
+# admin_domain_name = "admin.boxlead.app"
+# admin_bucket_name = ""
+
+# Header the Cloudflare transform rule adds toward the admin distribution. Requests without it get 403.
+# Both are sensitive. Keep them in Terraform Cloud as sensitive variables, never in this file.
+admin_origin_header_name  = "x-origin-header-name"
+admin_origin_header_value = "replace-with-openssl-rand-hex-32-output"
+# Only during a rotation, see README.
+# admin_origin_header_previous_value = ""
