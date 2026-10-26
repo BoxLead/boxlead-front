@@ -160,13 +160,7 @@ export function Privacy() {
         protección de datos personales.
       </p>
 
-      <h2>10. Registro de bases de datos</h2>
-      <p>
-        {LEGAL_ENTITY_NAME} inscribe sus bases de datos en el Registro Nacional de Bases de Datos de la Agencia de Acceso
-        a la Información Pública.
-      </p>
-
-      <h2>11. Cookies y almacenamiento</h2>
+      <h2>10. Cookies y almacenamiento</h2>
       <ul>
         <li>Una cookie de sesión, que no se puede leer desde el navegador, para mantenerte conectado.</li>
         <li>Una cookie con el código del revendedor, si llegaste por su link.</li>
@@ -177,22 +171,22 @@ export function Privacy() {
         No usamos cookies de publicidad. Si conectás WhatsApp, el ingreso con Meta puede dejar sus propias cookies.
       </p>
 
-      <h2>12. Seguridad</h2>
+      <h2>11. Seguridad</h2>
       <p>
         Usamos conexiones cifradas, guardamos los permisos de acceso de forma segura y limitamos quién puede ver los
         datos.
       </p>
 
-      <h2>13. Menores</h2>
+      <h2>12. Menores</h2>
       <p>BoxLead es para mayores de 18 años y no tratamos a sabiendas datos de menores.</p>
 
-      <h2>14. Cambios en esta política</h2>
+      <h2>13. Cambios en esta política</h2>
       <p>
         Si cambiamos esta política te avisamos por email y en la app antes de que rija. La versión nueva solo te alcanza si
         la aceptás de forma expresa.
       </p>
 
-      <h2>15. Idioma</h2>
+      <h2>14. Idioma</h2>
       <p>
         La <Link to="/privacy-policy">traducción al inglés</Link> es solo de referencia y, si hay diferencias, prevalece el
         castellano.
