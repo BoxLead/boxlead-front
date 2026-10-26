@@ -37,7 +37,7 @@
   border: 1px solid var(--signal-border);
   border-radius: var(--signal-radius-lg);
   background: var(--signal-surface);
-  box-shadow: var(--signal-shadow);
+  box-shadow: var(--signal-edge), var(--signal-shadow-4);
   animation: auth-enter var(--signal-duration-reveal) var(--signal-ease-out) both;
 }
 

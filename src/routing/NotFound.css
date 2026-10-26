@@ -33,17 +33,9 @@
   user-select: none;
 }
 
-.not-found-icon {
+.not-found-art {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--signal-space-sm);
-  border-radius: var(--signal-radius-md);
-  border: 1px solid color-mix(in srgb, var(--signal-accent) 22%, transparent);
-  background: var(--signal-accent-muted);
   color: var(--signal-accent);
 }
 

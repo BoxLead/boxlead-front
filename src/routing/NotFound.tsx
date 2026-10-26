@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { SearchIcon } from "../components/icons/UiIcons";
+import { EmptyIllustration } from "../components/EmptyState/EmptyIllustration";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import "./NotFound.css";
 
@@ -17,8 +17,8 @@ export function NotFound({ inApp = false }: { inApp?: boolean }) {
       <span className="not-found-code" aria-hidden="true">
         404
       </span>
-      <span className="not-found-icon">
-        <SearchIcon />
+      <span className="not-found-art">
+        <EmptyIllustration kind="missing" />
       </span>
       <h1 className="not-found-title" tabIndex={-1} ref={heading}>
         No encontramos esta página
