@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { trackEvent } from "../../analytics/gtag";
 import { PlayIcon } from "../../components/icons/UiIcons";
 import { DURATION_LABEL, POSTER_SRC, VIDEO_SRC, VIDEO_TITLE } from "../demoVideo";
 import "./DemoVideo.css";
@@ -9,6 +10,7 @@ export function DemoVideo() {
 
   function play() {
     setStarted(true);
+    trackEvent("demo_play");
     void video.current?.play();
   }
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { CookiePreferences } from "../../analytics/CookiePreferences";
 import { Logo } from "../../components/Logo/Logo";
 import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
 import { cx } from "../../util/classNames";
@@ -84,6 +85,7 @@ export function LegalLayout({ title, language, meta, notice, children }: LegalLa
           ))}
         </nav>
         {language === "es" ? <ProviderDetails className="legal-footer-provider" /> : null}
+        <CookiePreferences className="legal-footer-preferences" />
         <p suppressHydrationWarning>
           © {new Date().getFullYear()} {LEGAL_ENTITY_NAME}
         </p>

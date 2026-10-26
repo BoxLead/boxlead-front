@@ -66,6 +66,10 @@ jobs:
           auth0_client_id=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_AUTH0_CLIENT_ID" --query Parameter.Value --output text 2>/dev/null || true)
           echo "auth0_domain=$auth0_domain" >> "$GITHUB_OUTPUT"
           echo "auth0_client_id=$auth0_client_id" >> "$GITHUB_OUTPUT"
+          ga_measurement_id=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_GA_MEASUREMENT_ID" --query Parameter.Value --output text 2>/dev/null || true)
+          site_verification=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_GOOGLE_SITE_VERIFICATION" --query Parameter.Value --output text 2>/dev/null || true)
+          echo "ga_measurement_id=$ga_measurement_id" >> "$GITHUB_OUTPUT"
+          echo "site_verification=$site_verification" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
@@ -82,6 +86,8 @@ jobs:
             VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url }}
             VITE_AUTH0_DOMAIN=${{ steps.config.outputs.auth0_domain }}
             VITE_AUTH0_CLIENT_ID=${{ steps.config.outputs.auth0_client_id }}
+            VITE_GA_MEASUREMENT_ID=${{ steps.config.outputs.ga_measurement_id }}
+            VITE_GOOGLE_SITE_VERIFICATION=${{ steps.config.outputs.site_verification }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -112,6 +118,8 @@ jobs:
             VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url }}
             VITE_AUTH0_DOMAIN=${{ steps.config.outputs.auth0_domain }}
             VITE_AUTH0_CLIENT_ID=${{ steps.config.outputs.auth0_client_id }}
+            VITE_GA_MEASUREMENT_ID=${{ steps.config.outputs.ga_measurement_id }}
+            VITE_GOOGLE_SITE_VERIFICATION=${{ steps.config.outputs.site_verification }}
           cache-from: type=gha
 
       - name: Upload dist

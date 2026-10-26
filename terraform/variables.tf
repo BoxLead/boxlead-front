@@ -52,6 +52,18 @@ variable "auth0_client_id" {
   default     = ""
 }
 
+variable "ga_measurement_id" {
+  type        = string
+  description = "Google Analytics 4 measurement id baked into the public pages (stored in SSM as VITE_GA_MEASUREMENT_ID). Empty ships no analytics."
+  default     = ""
+}
+
+variable "google_site_verification" {
+  type        = string
+  description = "Search Console verification token for a meta tag (stored in SSM as VITE_GOOGLE_SITE_VERIFICATION). Prefer the DNS record and leave it empty."
+  default     = ""
+}
+
 variable "project_name" {
   type        = string
   description = "Prefix for resource Name tags."

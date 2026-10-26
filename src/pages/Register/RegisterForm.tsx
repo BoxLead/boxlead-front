@@ -1,5 +1,6 @@
 import { type FormEvent, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { trackEvent } from "../../analytics/gtag";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { SocialButtons } from "../../components/AuthLayout/SocialButtons";
@@ -44,6 +45,13 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
   const legalRef = useRef<HTMLInputElement>(null);
   const legalErrorId = useId();
   const emailHintId = useId();
+  const started = useRef(false);
+
+  function handleStart() {
+    if (started.current) return;
+    started.current = true;
+    trackEvent("registro_inicio");
+  }
 
   const destination = signupDestination(choice, next);
   const acceptedLegal = mustAccept && accepted ? legal.versions : undefined;
@@ -137,7 +145,7 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
         </div>
       ) : null}
       <SocialButtons next={destination} acceptedLegal={acceptedLegal} canStart={canContinue} />
-      <form className="auth-form" onSubmit={handleSubmit}>
+      <form className="auth-form" onSubmit={handleSubmit} onFocusCapture={handleStart}>
         {error ? (
           <div className="auth-error" role="alert">
             {error}

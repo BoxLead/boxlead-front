@@ -4,6 +4,8 @@ import {
   PRODUCT_NAME,
   SUPPORT_EMAIL,
 } from "../../util/company";
+import { CookiePreferences } from "../../analytics/CookiePreferences";
+import { trackEvent } from "../../analytics/gtag";
 import { Logo } from "../../components/Logo/Logo";
 import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
 import { CONSUMER_PAGES } from "../../util/consumerPages";
@@ -85,7 +87,7 @@ export function Footer() {
 
         <div className="footer-column">
           <h2 className="footer-heading">Atención al cliente</h2>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="footer-link">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="footer-link" onClick={() => trackEvent("contacto", { ubicacion: "pie" })}>
             {SUPPORT_EMAIL}
           </a>
           <nav className="footer-consumer" aria-label="Defensa del consumidor">
@@ -116,6 +118,7 @@ export function Footer() {
           Las marcas y logotipos de terceros pertenecen a sus respectivos
           dueños.
         </p>
+        <CookiePreferences className="footer-preferences" />
       </div>
 
       <p className="footer-wordmark" aria-hidden="true">

@@ -82,6 +82,21 @@
   margin: 0;
 }
 
+.footer-preferences {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--landing-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.footer-preferences:hover {
+  color: var(--landing-heading);
+}
+
 @media (max-width: 820px) {
   .footer-inner {
     grid-template-columns: repeat(2, minmax(0, 1fr));

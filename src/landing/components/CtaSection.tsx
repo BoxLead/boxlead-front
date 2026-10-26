@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { trackEvent } from "../../analytics/gtag";
 import { SUPPORT_EMAIL } from "../../util/company";
 import {
   InstagramIcon,
@@ -81,6 +82,7 @@ export function CtaSection() {
               <Link
                 to="/register"
                 className="landing-btn landing-btn-primary landing-btn-lg"
+                onClick={() => trackEvent("cta_registro", { ubicacion: "cierre" })}
               >
                 <RollText>Empezar ahora</RollText>
                 <ArrowRightIcon width={18} height={18} />
@@ -88,6 +90,7 @@ export function CtaSection() {
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
                 className="landing-btn landing-btn-secondary landing-btn-lg"
+                onClick={() => trackEvent("contacto", { ubicacion: "cierre" })}
               >
                 <RollText>Hablar con nosotros</RollText>
               </a>

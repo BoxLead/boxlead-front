@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { trackEvent } from "../../analytics/gtag";
 import { SUPPORT_EMAIL } from "../../util/company";
 import { ChevronDownIcon } from "../../components/icons/UiIcons";
 import { LANDING_FAQS, type Faq } from "../faq";
@@ -47,7 +48,9 @@ export function FaqSection({ faqs = LANDING_FAQS }: FaqSectionProps) {
         </div>
         <p className="faq-more" data-reveal>
           ¿Te quedó otra duda? Escribinos a{" "}
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} onClick={() => trackEvent("contacto", { ubicacion: "preguntas" })}>
+            {SUPPORT_EMAIL}
+          </a>
         </p>
       </div>
     </section>

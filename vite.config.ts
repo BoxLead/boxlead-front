@@ -8,6 +8,8 @@ import { staticSiteMiddleware } from './scripts/staticSite'
 const FACEBOOK_SOURCES = 'https://*.facebook.com https://*.facebook.net https://*.fbcdn.net'
 const MERCADOLIBRE_IMAGES = 'https://*.mlstatic.com'
 const INSTAGRAM_IMAGES = 'https://*.cdninstagram.com'
+const ANALYTICS_TAG = 'https://www.googletagmanager.com'
+const ANALYTICS_COLLECT = 'https://*.google-analytics.com https://*.analytics.google.com'
 
 const ROUTE_ENTRIES: Record<string, string[]> = {
   '/': ['src/landing/LandingPage.tsx'],
@@ -58,18 +60,22 @@ export function contentSecurityPolicy(
   agentApiBaseUrl: string | undefined,
   auth0Domain: string | undefined,
   inlineScriptHashes: string[] = [],
+  analytics = false,
 ): string {
   const apiOrigin = originOf(apiBaseUrl)
   const agentApiOrigin = originOf(agentApiBaseUrl)
   const auth0Origin = auth0Domain ? `https://${auth0Domain}` : ''
   const hashes = inlineScriptHashes.map((hash) => `'sha256-${hash}'`).join(' ')
+  const analyticsScript = analytics ? ANALYTICS_TAG : ''
+  const analyticsConnect = analytics ? `${ANALYTICS_TAG} ${ANALYTICS_COLLECT}` : ''
+  const analyticsImages = analytics ? ANALYTICS_COLLECT : ''
   return [
     "default-src 'self'",
-    `script-src 'self' ${hashes} https://connect.facebook.net`,
+    `script-src 'self' ${hashes} https://connect.facebook.net ${analyticsScript}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
-    `img-src 'self' data: ${FACEBOOK_SOURCES} ${MERCADOLIBRE_IMAGES} ${INSTAGRAM_IMAGES}`,
-    `connect-src 'self' ${apiOrigin} ${agentApiOrigin} ${auth0Origin} ${FACEBOOK_SOURCES}`,
+    `img-src 'self' data: ${FACEBOOK_SOURCES} ${MERCADOLIBRE_IMAGES} ${INSTAGRAM_IMAGES} ${analyticsImages}`,
+    `connect-src 'self' ${apiOrigin} ${agentApiOrigin} ${auth0Origin} ${FACEBOOK_SOURCES} ${analyticsConnect}`,
     "media-src 'self'",
     "worker-src 'self'",
     "manifest-src 'self'",
@@ -134,7 +140,15 @@ function sha256(text: string): string {
 
 type HintState = { base: string; routes: Record<string, RouteFiles> }
 
-function htmlHints(apiBaseUrl: string | undefined, agentApiBaseUrl: string | undefined, auth0Domain: string | undefined, state: HintState): Plugin {
+type SiteEnv = {
+  apiBaseUrl: string | undefined
+  agentApiBaseUrl: string | undefined
+  auth0Domain: string | undefined
+  analytics: boolean
+  siteVerification: string | undefined
+}
+
+function htmlHints({ apiBaseUrl, agentApiBaseUrl, auth0Domain, analytics, siteVerification }: SiteEnv, state: HintState): Plugin {
   return {
     name: 'boxlead-html-hints',
     apply: 'build',
@@ -160,12 +174,15 @@ function htmlHints(apiBaseUrl: string | undefined, agentApiBaseUrl: string | und
             tag: 'meta',
             attrs: {
               'http-equiv': 'Content-Security-Policy',
-              content: contentSecurityPolicy(apiBaseUrl, agentApiBaseUrl, auth0Domain, [sha256(script)]),
+              content: contentSecurityPolicy(apiBaseUrl, agentApiBaseUrl, auth0Domain, [sha256(script)], analytics),
             },
             injectTo: 'head-prepend',
           },
           { tag: 'script', children: script, injectTo: 'head' },
         ]
+        if (siteVerification) {
+          tags.push({ tag: 'meta', attrs: { name: 'google-site-verification', content: siteVerification }, injectTo: 'head' })
+        }
         if (font) {
           tags.push({
             tag: 'link',
@@ -196,7 +213,20 @@ export default defineConfig(({ mode }) => {
   const serverDir = resolve(outDir, 'server')
 
   return {
-    plugins: [react(), htmlHints(env.VITE_API_BASE_URL, env.VITE_AGENT_API_BASE_URL, env.VITE_AUTH0_DOMAIN, hints), staticSite()],
+    plugins: [
+      react(),
+      htmlHints(
+        {
+          apiBaseUrl: env.VITE_API_BASE_URL,
+          agentApiBaseUrl: env.VITE_AGENT_API_BASE_URL,
+          auth0Domain: env.VITE_AUTH0_DOMAIN,
+          analytics: Boolean(env.VITE_GA_MEASUREMENT_ID),
+          siteVerification: env.VITE_GOOGLE_SITE_VERIFICATION,
+        },
+        hints,
+      ),
+      staticSite(),
+    ],
     build: {
       modulePreload: { polyfill: false },
     },

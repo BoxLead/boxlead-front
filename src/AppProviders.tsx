@@ -1,3 +1,4 @@
+import { Analytics } from "./analytics/Analytics";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { AuthProvider } from "./context/AuthContext";
 import { SocialAuthProvider } from "./context/SocialAuthProvider";
@@ -11,6 +12,7 @@ export function AppProviders() {
       <AuthProvider>
         <ToastProvider>
           <App />
+          <Analytics />
         </ToastProvider>
       </AuthProvider>
     </SocialAuthProvider>

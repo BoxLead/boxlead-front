@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { trackEvent } from "../../analytics/gtag";
 import { ArrowRightIcon } from "../../components/icons/UiIcons";
 import { preloadRoute } from "../../routing/routePreload";
 import { AgentDemo } from "./AgentDemo";
@@ -40,6 +41,7 @@ export function HeroSection() {
               onPointerEnter={() => void preloadRoute("/register")}
               onFocus={() => void preloadRoute("/register")}
               onTouchStart={() => void preloadRoute("/register")}
+              onClick={() => trackEvent("cta_registro", { ubicacion: "hero" })}
             >
               <RollText>Empezar ahora</RollText>
               <ArrowRightIcon width={18} height={18} />

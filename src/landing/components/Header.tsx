@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { trackEvent } from "../../analytics/gtag";
 import { Logo } from "../../components/Logo/Logo";
 import { CONSUMER_PAGES } from "../../util/consumerPages";
 import { BILLING_ENABLED } from "../flags";
@@ -90,6 +91,7 @@ export function Header() {
           <Link
             to="/register"
             className="landing-btn landing-btn-primary landing-btn-sm"
+            onClick={() => trackEvent("cta_registro", { ubicacion: "header" })}
           >
             <RollText>Empezar</RollText>
           </Link>

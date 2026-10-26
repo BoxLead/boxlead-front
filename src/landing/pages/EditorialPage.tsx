@@ -1,4 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { trackEvent } from "../../analytics/gtag";
 import { ArrowRightIcon, CheckIcon, HandoffIcon } from "../../components/icons/UiIcons";
 import { getPlatform } from "../../platforms";
 import { preloadRoute } from "../../routing/routePreload";
@@ -47,6 +49,10 @@ export function EditorialPage() {
   const page = editorialPage(pathname.replace(/\/+$/, "")) ?? EDITORIAL_PAGES[0];
   const platform = page.platform ? getPlatform(page.platform) : null;
 
+  useEffect(() => {
+    trackEvent("canal_visita", { canal: page.slug });
+  }, [page.slug]);
+
   return (
     <div className="landing editorial">
       <div className="landing-grain" aria-hidden="true" />
@@ -75,6 +81,7 @@ export function EditorialPage() {
                     className="landing-btn landing-btn-primary"
                     onPointerEnter={() => void preloadRoute("/register")}
                     onFocus={() => void preloadRoute("/register")}
+                    onClick={() => trackEvent("cta_registro", { ubicacion: page.slug })}
                   >
                     <RollText>Empezar ahora</RollText>
                     <ArrowRightIcon width={18} height={18} />

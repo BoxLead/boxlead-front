@@ -18,3 +18,10 @@ price_class = "PriceClass_100"
 # Both are public values. Leave empty to hide the social login buttons.
 auth0_domain    = "login.boxlead.app"
 auth0_client_id = "your-auth0-application-client-id"
+
+# Google Analytics 4 measurement id — written to SSM as VITE_GA_MEASUREMENT_ID for the CI build. Public value.
+# Leave empty to ship no analytics. The public pages ask for consent before loading the tag and /app never loads it.
+# ga_measurement_id = "G-XXXXXXXXXX"
+
+# Search Console verification token for a meta tag — written to SSM as VITE_GOOGLE_SITE_VERIFICATION. Prefer the DNS record.
+# google_site_verification = ""
