@@ -1,20 +1,20 @@
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ToastProvider } from "./components/ui/ToastProvider";
-import { AuthProvider } from "./context/AuthContext";
-import { SocialAuthProvider } from "./context/SocialAuthProvider";
 import "@fontsource-variable/inter";
 import "./index.css";
-import App from "./App.tsx";
+import { AppProviders } from "./AppProviders";
+import { preloadOnIdle, preloadRoute } from "./routing";
 
-createRoot(document.getElementById("root")!).render(
+const container = document.getElementById("root")!;
+const app = (
   <BrowserRouter>
-    <SocialAuthProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </AuthProvider>
-    </SocialAuthProvider>
-  </BrowserRouter>,
+    <AppProviders />
+  </BrowserRouter>
 );
+
+if (container.firstElementChild) {
+  void preloadRoute(window.location.pathname).then(() => hydrateRoot(container, app));
+} else {
+  createRoot(container).render(app);
+  preloadOnIdle(window.location.pathname);
+}

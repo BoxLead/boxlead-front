@@ -53,6 +53,30 @@ resource "aws_ssm_parameter" "vite_auth0_client_id" {
   }
 }
 
+resource "aws_ssm_parameter" "vite_ga_measurement_id" {
+  count = var.ga_measurement_id != "" ? 1 : 0
+
+  name  = "${local.ssm_dir}VITE_GA_MEASUREMENT_ID"
+  type  = "String"
+  value = var.ga_measurement_id
+
+  tags = {
+    Name = "${var.project_name}-vite-ga-measurement-id"
+  }
+}
+
+resource "aws_ssm_parameter" "vite_google_site_verification" {
+  count = var.google_site_verification != "" ? 1 : 0
+
+  name  = "${local.ssm_dir}VITE_GOOGLE_SITE_VERIFICATION"
+  type  = "String"
+  value = var.google_site_verification
+
+  tags = {
+    Name = "${var.project_name}-vite-google-site-verification"
+  }
+}
+
 resource "aws_ssm_parameter" "s3_bucket_name" {
   name  = "${local.ssm_dir}S3_BUCKET_NAME"
   type  = "String"

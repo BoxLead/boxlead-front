@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { CookiePreferences } from "../../analytics/CookiePreferences";
 import { Logo } from "../../components/Logo/Logo";
 import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
-import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { cx } from "../../util/classNames";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
 import { CONSUMER_PAGES, type ConsumerPage } from "../../util/consumerPages";
@@ -50,7 +50,6 @@ type LegalLayoutProps = {
 };
 
 export function LegalLayout({ title, language, meta, notice, children }: LegalLayoutProps) {
-  useDocumentTitle(title);
   const copy = COPY[language];
 
   return (
@@ -86,7 +85,8 @@ export function LegalLayout({ title, language, meta, notice, children }: LegalLa
           ))}
         </nav>
         {language === "es" ? <ProviderDetails className="legal-footer-provider" /> : null}
-        <p>
+        <CookiePreferences className="legal-footer-preferences" />
+        <p suppressHydrationWarning>
           © {new Date().getFullYear()} {LEGAL_ENTITY_NAME}
         </p>
       </footer>

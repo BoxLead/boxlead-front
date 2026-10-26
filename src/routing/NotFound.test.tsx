@@ -10,7 +10,6 @@ describe("NotFound", () => {
         <NotFound />
       </MemoryRouter>,
     );
-    expect(document.title).toBe("Página no encontrada · BoxLead");
     expect(screen.getByRole("heading", { level: 1, name: "No encontramos esta página" })).toHaveFocus();
     expect(screen.getByRole("link", { name: "Ir al inicio" })).toHaveAttribute("href", "/");
   });

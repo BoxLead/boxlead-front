@@ -1,10 +1,8 @@
 import { useRef, useState } from "react";
+import { trackEvent } from "../../analytics/gtag";
 import { PlayIcon } from "../../components/icons/UiIcons";
+import { DURATION_LABEL, POSTER_SRC, VIDEO_SRC, VIDEO_TITLE } from "../demoVideo";
 import "./DemoVideo.css";
-
-const VIDEO_SRC = "/demo/boxlead-demo.mp4";
-const POSTER_SRC = "/demo/boxlead-demo-poster.jpg";
-const DURATION_LABEL = "2:27";
 
 export function DemoVideo() {
   const video = useRef<HTMLVideoElement>(null);
@@ -12,6 +10,7 @@ export function DemoVideo() {
 
   function play() {
     setStarted(true);
+    trackEvent("demo_play");
     void video.current?.play();
   }
 
@@ -20,7 +19,7 @@ export function DemoVideo() {
       <div className="landing-container">
         <div className="landing-section-head" data-reveal>
           <span className="landing-section-label">Demo</span>
-          <h2 className="landing-section-title">Mirá a BoxLead en acción</h2>
+          <h2 className="landing-section-title">{VIDEO_TITLE}</h2>
           <p className="demo-video-lead">
             Tus agentes respondiendo, ordenando cada lead y mostrándote qué rinde.
           </p>

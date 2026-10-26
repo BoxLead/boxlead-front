@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { useAuth } from "../../context/auth";
-import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { readAcceptedLegal } from "../../util/legalAcceptance";
 import { safeAppPath } from "../../util/redirect";
 import "./SocialCallback.css";
@@ -17,8 +16,6 @@ function failureMessage(error: unknown): string {
 }
 
 export function SocialCallback() {
-  useDocumentTitle("Iniciando sesión");
-
   const { handleRedirectCallback, getIdTokenClaims, logout: clearProviderSession } = useAuth0();
   const { socialLogin, error: sessionError } = useAuth();
   const [failure, setFailure] = useState<string | null>(null);

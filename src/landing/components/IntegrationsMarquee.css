@@ -98,3 +98,15 @@
     display: none;
   }
 }
+
+.marquee-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--signal-space-3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.marquee-link:hover {
+  color: var(--landing-accent);
+}

@@ -1,12 +1,30 @@
-import { useEffect } from "react";
-import { PRODUCT_NAME } from "../util/company";
+import { useEffect, useSyncExternalStore } from "react";
+
+let current: string | null = null;
+const listeners = new Set<() => void>();
+
+function emit(): void {
+  for (const listener of listeners) listener();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
 
 export function useDocumentTitle(title: string) {
   useEffect(() => {
-    const previous = document.title;
-    document.title = `${title} · ${PRODUCT_NAME}`;
+    current = title;
+    emit();
     return () => {
-      document.title = previous;
+      if (current === title) {
+        current = null;
+        emit();
+      }
     };
   }, [title]);
+}
+
+export function useAppTitle(): string | null {
+  return useSyncExternalStore(subscribe, () => current, () => null);
 }

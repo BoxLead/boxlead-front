@@ -15,7 +15,9 @@
     "mock-api": "node e2e/mock-api/server.ts",
     "demo:video": "node e2e/demo/record.ts",
     "demo:promo": "node e2e/demo/promo.ts",
-    "dev:mock": "VITE_API_BASE_URL=http://localhost:8090 VITE_AGENT_API_BASE_URL=http://localhost:8090 vite"
+    "dev:mock": "VITE_API_BASE_URL=http://localhost:8090 VITE_AGENT_API_BASE_URL=http://localhost:8090 vite",
+    "test:dist": "node scripts/verifyDist.ts",
+    "seo:images": "node scripts/brandImages.ts"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.28.2",
