@@ -33,9 +33,9 @@ for (const { path, heading } of PAGES) {
 test("the landing links every channel page", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "WhatsApp" }).first()).toHaveAttribute("href", "/whatsapp");
-  await page.getByRole("link", { name: "MercadoLibre" }).first().click();
+  await page.getByRole("contentinfo").getByRole("navigation", { name: "Canales" }).getByRole("link", { name: "MercadoLibre" }).click();
   await expect(page).toHaveURL(/\/mercadolibre$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("MercadoLibre");
-  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Demo" }).click();
+  await page.getByRole("contentinfo").getByRole("navigation", { name: "Producto" }).getByRole("link", { name: "Demo" }).click();
   await expect(page).toHaveURL(/\/#demo$/);
 });

@@ -60,8 +60,11 @@ async function waitForEnterAnimations(page: Page) {
     Promise.all(
       document
         .getAnimations()
+        .filter((animation) => animation.timeline instanceof DocumentTimeline)
         .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
-        .map((animation) => animation.finished.catch(() => undefined)),
+        .map((animation) =>
+          Promise.race([animation.finished.catch(() => undefined), new Promise((settle) => setTimeout(settle, 3000))]),
+        ),
     ),
   );
 }
