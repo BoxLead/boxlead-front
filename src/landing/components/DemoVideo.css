@@ -1,7 +1,7 @@
 .demo-video-lead {
-  margin: 18px auto 0;
+  margin: var(--signal-space-5) auto 0;
   max-width: 560px;
-  font-size: 1.125rem;
+  font-size: var(--signal-text-xl);
   text-wrap: balance;
 }
 
@@ -20,7 +20,7 @@
   position: absolute;
   inset: 10% 6% -8%;
   z-index: -1;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: radial-gradient(closest-side, color-mix(in srgb, var(--landing-accent) 16%, transparent), transparent);
   filter: blur(40px);
   pointer-events: none;
@@ -37,7 +37,7 @@
 
 .demo-video:fullscreen {
   border-radius: 0;
-  background: #000000;
+  background: var(--signal-ink);
 }
 
 .demo-video-play {
@@ -48,27 +48,27 @@
   padding: 0;
   border: 0;
   border-radius: var(--landing-radius-md);
-  background: rgba(10, 21, 33, 0.38);
+  background: color-mix(in srgb, var(--signal-ink) 38%, transparent);
   color: var(--landing-heading);
   font-family: var(--landing-font);
   cursor: pointer;
-  transition: background-color 0.3s var(--landing-ease);
+  transition: background-color var(--signal-duration-slow) var(--landing-ease);
 }
 
 .demo-video-play-pill {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  padding: 7px 8px 7px 7px;
+  gap: var(--signal-space-4);
+  padding: var(--signal-space-2);
   border: 1px solid var(--landing-border-strong);
-  border-radius: 999px;
+  border-radius: var(--signal-radius-pill);
   background: color-mix(in srgb, var(--landing-bg) 78%, transparent);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow: var(--landing-shadow-lg);
   transition:
-    border-color 0.3s var(--landing-ease),
-    transform 0.3s var(--landing-ease);
+    border-color var(--signal-duration-slow) var(--landing-ease),
+    transform var(--signal-duration-slow) var(--landing-ease);
 }
 
 .demo-video-play-icon {
@@ -77,30 +77,30 @@
   justify-content: center;
   width: 46px;
   height: 46px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--landing-btn-bg);
   color: var(--landing-btn-text);
-  transition: transform 0.3s var(--landing-ease);
+  transition: transform var(--signal-duration-slow) var(--landing-ease);
 }
 
 .demo-video-play-label {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--signal-text-base);
+  font-weight: var(--signal-weight-semibold);
   white-space: nowrap;
 }
 
 .demo-video-play-time {
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: var(--signal-space-1) var(--signal-space-3);
+  border-radius: var(--signal-radius-pill);
   background: color-mix(in srgb, var(--landing-heading) 8%, transparent);
   color: var(--landing-text);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
 @media (hover: hover) {
   .demo-video-play:hover {
-    background-color: rgba(10, 21, 33, 0.24);
+    background-color: color-mix(in srgb, var(--signal-ink) 24%, transparent);
   }
 
   .demo-video-play:hover .demo-video-play-pill {
@@ -115,8 +115,8 @@
 
 @media (max-width: 420px) {
   .demo-video-play-pill {
-    gap: 10px;
-    padding: 5px 6px 5px 5px;
+    gap: var(--signal-space-3);
+    padding: var(--signal-space-1) var(--signal-space-2) var(--signal-space-1) var(--signal-space-1);
   }
 
   .demo-video-play-icon {
@@ -125,14 +125,14 @@
   }
 
   .demo-video-play-label {
-    font-size: 0.9375rem;
+    font-size: var(--signal-text-base);
   }
 }
 
 .demo-video-note {
-  margin: 16px 0 0;
+  margin: var(--signal-space-4) 0 0;
   color: var(--landing-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
   text-align: center;
 }
 
@@ -157,7 +157,7 @@
 @keyframes demo-video-grow {
   from {
     transform: scale(0.84) translateY(40px);
-    border-radius: 40px;
+    border-radius: var(--signal-radius-pill);
   }
   to {
     transform: none;

@@ -8,15 +8,15 @@
 
 .hours-grid {
   display: grid;
-  gap: 3px;
+  gap: var(--signal-space-1);
   touch-action: pan-y;
 }
 
 .hours-row {
   display: grid;
   grid-template-columns: 32px repeat(24, minmax(0, 1fr));
-  gap: 3px;
-  animation: hours-reveal 0.5s var(--signal-ease) both;
+  gap: var(--signal-space-1);
+  animation: hours-reveal var(--signal-duration-slower) var(--signal-ease-out) both;
 }
 
 .hours-row:nth-child(2) {
@@ -50,23 +50,23 @@
 .hours-day {
   align-self: center;
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
 }
 
 .hours-axis span {
   color: var(--signal-text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--signal-text-2xs);
   font-variant-numeric: tabular-nums;
 }
 
 .hours-cell {
   height: 22px;
-  border-radius: 3px;
+  border-radius: var(--signal-radius-2xs);
   background: var(--hours);
   cursor: crosshair;
   transition:
-    background-color 0.4s ease,
-    transform 0.15s var(--signal-ease);
+    background-color var(--signal-duration-slower) var(--signal-ease-out),
+    transform var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .hours-open {
@@ -107,26 +107,26 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 8px 16px;
+  gap: var(--signal-space-2) var(--signal-space-4);
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
 }
 
 .hours-scale {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--signal-space-1);
 }
 
 .hours-swatch {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: var(--signal-radius-2xs);
   background: var(--hours, transparent);
 }
 
 .hours-scale .hours-open {
-  margin-right: 4px;
+  margin-right: var(--signal-space-1);
 }
 
 @keyframes hours-reveal {
@@ -139,7 +139,7 @@
 @media (max-width: 520px) {
   .hours-grid,
   .hours-row {
-    gap: 2px;
+    gap: var(--signal-space-0-5);
   }
 
   .hours-row {
@@ -149,7 +149,7 @@
   .hours-cell {
     height: auto;
     aspect-ratio: 1;
-    border-radius: 2px;
+    border-radius: var(--signal-radius-2xs);
   }
 }
 

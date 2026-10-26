@@ -1,7 +1,7 @@
 .brand-logo {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   color: var(--signal-heading);
 }
 
@@ -12,12 +12,12 @@
 }
 
 .brand-logo-text {
-  font-size: 1.5rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  line-height: 1;
+  font-size: var(--signal-text-2xl);
+  font-weight: var(--signal-weight-regular);
+  letter-spacing: var(--signal-tracking-wide);
+  line-height: var(--signal-leading-none);
 }
 
 .brand-logo-bold {
-  font-weight: 700;
+  font-weight: var(--signal-weight-bold);
 }

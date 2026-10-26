@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { ChartIcon, SearchIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { useToast } from "../../components/ui/toast";
 import { cx } from "../../util/classNames";
@@ -117,7 +116,7 @@ export function Metrics() {
         <div className="panel metrics-empty">
           {filtered ? (
             <EmptyState
-              icon={<SearchIcon />}
+              illustration="search"
               title="No hay datos con estos filtros"
               action={
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => changeFilters({ platform: "ALL", category: null })}>
@@ -127,7 +126,7 @@ export function Metrics() {
             />
           ) : (
             <EmptyState
-              icon={<ChartIcon />}
+              illustration="metrics"
               title="Todavía no hay datos en este período"
               hint="Se completan solas con los leads que llegan por tus canales."
               action={

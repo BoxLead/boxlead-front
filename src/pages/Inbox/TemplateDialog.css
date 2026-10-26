@@ -10,9 +10,9 @@
 
 .template-option {
   display: grid;
-  gap: 4px;
+  gap: var(--signal-space-1);
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--signal-space-3) var(--signal-space-4);
   border: 1px solid var(--signal-border);
   border-radius: var(--signal-radius-md);
   background: var(--signal-bg-subtle);
@@ -21,8 +21,8 @@
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    background-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .template-option:hover {
@@ -32,8 +32,8 @@
 
 .template-option-name {
   color: var(--signal-heading);
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--signal-text-base);
+  font-weight: var(--signal-weight-semibold);
   text-transform: capitalize;
 }
 
@@ -41,8 +41,8 @@
   display: -webkit-box;
   overflow: hidden;
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: var(--signal-text-sm);
+  line-height: var(--signal-leading-normal);
   white-space: pre-line;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -52,7 +52,7 @@
 .template-empty {
   margin: 0;
   color: var(--signal-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .template-skeleton {
@@ -66,8 +66,8 @@
 
 .template-preview {
   display: grid;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: var(--signal-space-2);
+  padding: var(--signal-space-3) var(--signal-space-4);
   border: 1px dashed var(--signal-border);
   border-radius: var(--signal-radius-md);
   background: var(--signal-bg-subtle);
@@ -75,14 +75,14 @@
 
 .template-preview-label {
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
 }
 
 .template-preview-text {
   margin: 0;
   color: var(--signal-heading);
-  font-size: 0.9375rem;
-  line-height: 1.45;
+  font-size: var(--signal-text-base);
+  line-height: var(--signal-leading-normal);
   white-space: pre-line;
   overflow-wrap: anywhere;
 }

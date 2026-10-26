@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cx } from "../../util/classNames";
 import "./Dialog.css";
 
@@ -12,17 +12,41 @@ type DialogProps = {
   children: ReactNode;
 };
 
+const CLOSE_MS = 180;
+
+function reducedMotion(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function Dialog({ open, title, description, size = "md", busy = false, onClose, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const pressedOutside = useRef(false);
+  const [visible, setVisible] = useState(open);
+  if (open && !visible) setVisible(true);
   const titleId = useId();
   const descriptionId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal?.();
-    if (!open && dialog.open) dialog.close?.();
+    if (open) {
+      dialog.classList.remove("dialog-closing");
+      if (!dialog.open) dialog.showModal?.();
+      return;
+    }
+    if (!dialog.open) return;
+    const finish = () => {
+      dialog.classList.remove("dialog-closing");
+      dialog.close?.();
+      setVisible(false);
+    };
+    if (reducedMotion() || typeof dialog.getAnimations !== "function") {
+      finish();
+      return;
+    }
+    dialog.classList.add("dialog-closing");
+    const timer = window.setTimeout(finish, CLOSE_MS);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   return (
@@ -42,7 +66,7 @@ export function Dialog({ open, title, description, size = "md", busy = false, on
         if (event.target === event.currentTarget && pressedOutside.current && !busy) onClose();
       }}
     >
-      {open ? (
+      {visible ? (
         <div className="dialog-body">
           <header className="dialog-head">
             <h2 id={titleId} className="dialog-title">

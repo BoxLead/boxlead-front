@@ -1,6 +1,6 @@
 .change {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -15,5 +15,5 @@
 
 .change-flat {
   color: var(--signal-text-muted);
-  font-weight: 500;
+  font-weight: var(--signal-weight-medium);
 }

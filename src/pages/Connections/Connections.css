@@ -1,7 +1,7 @@
 .connections-count {
   margin: 0;
   color: var(--signal-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .connections-count strong {

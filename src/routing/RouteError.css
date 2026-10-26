@@ -30,7 +30,7 @@
 }
 
 .route-error-title {
-  font-size: 1.25rem;
+  font-size: var(--signal-text-xl);
   outline: none;
 }
 

@@ -3,14 +3,14 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   grid-template-areas: "title controls actions";
   align-items: end;
-  gap: 16px 8px;
+  gap: var(--signal-space-4) var(--signal-space-2);
   margin-bottom: var(--signal-space-lg);
 }
 
 .m-header-title {
   grid-area: title;
   display: grid;
-  gap: 6px;
+  gap: var(--signal-space-2);
   min-width: 0;
 }
 
@@ -18,13 +18,13 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
+  gap: var(--signal-space-2) var(--signal-space-3);
 }
 
 .m-header-range {
   margin: 0;
   color: var(--signal-text);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
   font-variant-numeric: tabular-nums;
 }
 
@@ -37,7 +37,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--signal-space-2);
 }
 
 .m-filter .select {
@@ -48,18 +48,18 @@
 
 .m-header-clear {
   min-height: 40px;
-  padding: 0 6px;
+  padding: 0 var(--signal-space-2);
   border: 0;
   background: none;
   color: var(--signal-accent);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
 }
 
 .m-header-actions {
   grid-area: actions;
   display: flex;
-  gap: 4px;
+  gap: var(--signal-space-1);
 }
 
 @media (max-width: 1080px) {
@@ -116,5 +116,5 @@
 .m-header-note {
   margin: 0;
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }

@@ -11,24 +11,24 @@
 .faq-question {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 24px 4px;
+  gap: var(--signal-space-5);
+  padding: var(--signal-space-6) var(--signal-space-1);
   cursor: pointer;
   list-style: none;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--signal-text-xl);
+  font-weight: var(--signal-weight-semibold);
   color: var(--landing-heading);
-  transition: color 0.2s ease;
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .faq-index {
   flex-shrink: 0;
   color: var(--landing-text-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
-  transition: color 0.2s ease;
+  letter-spacing: var(--signal-tracking-wide);
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .faq-question-text {
@@ -52,7 +52,7 @@
 .faq-chevron {
   flex-shrink: 0;
   color: var(--landing-text-muted);
-  transition: transform 0.25s var(--landing-ease);
+  transition: transform var(--signal-duration-slow) var(--landing-ease);
 }
 
 .faq-item[open] .faq-chevron {
@@ -61,15 +61,15 @@
 
 .faq-answer {
   margin: 0;
-  padding: 0 40px 26px 42px;
-  animation: faq-open 0.35s var(--landing-ease) both;
+  padding: 0 var(--signal-space-10) var(--signal-space-6) var(--signal-space-10);
+  animation: faq-open var(--signal-duration-slower) var(--landing-ease) both;
 }
 
 .faq-more {
   max-width: var(--landing-content-narrow);
-  margin: 28px auto 0;
+  margin: var(--signal-space-8) auto 0;
   color: var(--landing-text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--signal-text-base);
   text-align: center;
 }
 
@@ -78,7 +78,7 @@
   text-decoration: underline;
   text-decoration-color: var(--landing-accent-border);
   text-underline-offset: 4px;
-  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+  transition: text-decoration-color var(--signal-duration-base) var(--signal-ease-out), color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .landing .faq-more a:hover {
@@ -96,8 +96,8 @@
     block-size: 0;
     overflow: hidden;
     transition:
-      block-size 0.45s var(--landing-ease),
-      content-visibility 0.45s allow-discrete;
+      block-size var(--signal-duration-slower) var(--landing-ease),
+      content-visibility var(--signal-duration-slower) allow-discrete;
   }
 
   .faq-item[open]::details-content {
@@ -139,15 +139,15 @@
 
 @media (max-width: 480px) {
   .faq-question {
-    padding: 20px 2px;
-    font-size: 1.125rem;
+    padding: var(--signal-space-5) var(--signal-space-0-5);
+    font-size: var(--signal-text-xl);
   }
 
   .faq-question {
-    gap: 14px;
+    gap: var(--signal-space-4);
   }
 
   .faq-answer {
-    padding: 0 8px 22px 32px;
+    padding: 0 var(--signal-space-2) var(--signal-space-6) var(--signal-space-8);
   }
 }

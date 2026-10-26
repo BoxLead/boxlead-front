@@ -11,8 +11,8 @@
 
 .agent-demo-tabs {
   display: flex;
-  gap: 4px;
-  padding: 10px;
+  gap: var(--signal-space-1);
+  padding: var(--signal-space-3);
   border-bottom: 1px solid var(--landing-border);
   background: var(--landing-bg-subtle);
 }
@@ -22,19 +22,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--signal-space-2);
   min-width: 0;
-  padding: 9px 8px;
+  padding: var(--signal-space-2);
   border: 1px solid transparent;
   border-radius: var(--landing-radius-sm);
   background: transparent;
   color: var(--landing-text-muted);
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-medium);
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    color var(--signal-duration-base) var(--signal-ease-out),
+    border-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .agent-demo-tab svg {
@@ -60,28 +60,28 @@
 .agent-demo-thread {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--signal-space-3);
   min-height: 304px;
-  padding: 18px 18px 16px;
+  padding: var(--signal-space-5) var(--signal-space-5) var(--signal-space-4);
 }
 
 .agent-demo-meta {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 12px;
+  gap: var(--signal-space-3);
+  padding-bottom: var(--signal-space-3);
   border-bottom: 1px solid var(--landing-border);
 }
 
 .agent-demo-contact {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-semibold);
   color: var(--landing-heading);
 }
 
 .agent-demo-context {
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
   color: var(--landing-text-muted);
   text-align: right;
 }
@@ -89,11 +89,11 @@
 .agent-demo-bubble {
   max-width: 86%;
   margin: 0;
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  animation: agent-demo-pop 0.35s var(--landing-ease) both;
+  padding: var(--signal-space-3) var(--signal-space-4);
+  border-radius: var(--signal-radius-md);
+  font-size: var(--signal-text-base);
+  line-height: var(--signal-leading-normal);
+  animation: agent-demo-pop var(--signal-duration-slower) var(--landing-ease) both;
 }
 
 .agent-demo-bubble-in {
@@ -113,16 +113,16 @@
 .agent-demo-typing {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 14px;
+  gap: var(--signal-space-1);
+  padding: var(--signal-space-4);
 }
 
 .agent-demo-typing span {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--landing-navy);
-  animation: agent-demo-blink 1s ease-in-out infinite;
+  animation: agent-demo-blink var(--signal-duration-crawl) var(--signal-ease-in-out) infinite;
 }
 
 .agent-demo-typing span:nth-child(2) {
@@ -137,7 +137,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--signal-space-2);
   list-style: none;
   margin: auto 0 0;
   padding: 0;
@@ -146,15 +146,15 @@
 .agent-demo-outcome {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 100px;
+  gap: var(--signal-space-2);
+  padding: var(--signal-space-2) var(--signal-space-3);
+  border-radius: var(--signal-radius-pill);
   background: var(--landing-success-soft);
   border: 1px solid color-mix(in srgb, var(--landing-success) 25%, transparent);
   color: var(--landing-success);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  animation: agent-demo-pop 0.35s var(--landing-ease) both;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
+  animation: agent-demo-pop var(--signal-duration-slower) var(--landing-ease) both;
 }
 
 .agent-demo-outcome:nth-child(2) {
@@ -165,19 +165,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 18px;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-3) var(--signal-space-5);
   border-top: 1px solid var(--landing-border);
   background: var(--landing-bg-subtle);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }
 
 .agent-demo-agent {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--signal-space-3);
   color: var(--landing-heading);
-  font-weight: 600;
+  font-weight: var(--signal-weight-semibold);
 }
 
 .agent-demo-agent-avatar {
@@ -186,7 +186,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--signal-radius-sm);
   background: var(--landing-cream);
   color: var(--landing-navy);
 }
@@ -199,16 +199,16 @@
 .agent-demo-status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--signal-space-2);
   color: var(--landing-text);
 }
 
 .agent-demo-status-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--landing-accent);
-  animation: agent-demo-blink 1s ease-in-out infinite;
+  animation: agent-demo-blink var(--signal-duration-crawl) var(--signal-ease-in-out) infinite;
 }
 
 .agent-demo-status.is-done {
@@ -250,7 +250,7 @@
   .agent-demo-tab {
     flex: 0 0 auto;
     min-height: 42px;
-    padding-inline: 16px;
+    padding-inline: var(--signal-space-4);
   }
 
   .agent-demo-tab span {
@@ -267,7 +267,7 @@
 
   .agent-demo-thread {
     min-height: 348px;
-    padding-inline: 14px;
+    padding-inline: var(--signal-space-4);
   }
 
   .agent-demo-bubble {
@@ -275,7 +275,7 @@
   }
 
   .agent-demo-footer {
-    padding-inline: 14px;
+    padding-inline: var(--signal-space-4);
   }
 }
 
@@ -285,11 +285,11 @@
   }
 
   .agent-demo-footer {
-    font-size: 0.75rem;
+    font-size: var(--signal-text-xs);
   }
 
   .agent-demo-agent {
-    gap: 8px;
+    gap: var(--signal-space-2);
   }
 }
 

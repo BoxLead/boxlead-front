@@ -1,13 +1,13 @@
 .funnel-chart {
   display: grid;
-  gap: 12px;
+  gap: var(--signal-space-3);
 }
 
 .funnel-chart-readout {
   min-height: 1.5em;
   margin: 0;
   color: var(--signal-text);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
   font-variant-numeric: tabular-nums;
 }
 
@@ -19,17 +19,17 @@
 .funnel-chart-stage {
   display: grid;
   justify-items: center;
-  gap: 2px;
+  gap: var(--signal-space-0-5);
   min-width: 0;
-  padding: 8px 4px;
+  padding: var(--signal-space-2) var(--signal-space-1);
   border: 0;
   border-radius: var(--signal-radius-sm);
   background: transparent;
   color: inherit;
   text-align: center;
   transition:
-    background-color 0.2s ease,
-    opacity 0.25s ease;
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    opacity var(--signal-duration-slow) var(--signal-ease-out);
 }
 
 .funnel-chart-stage:hover,
@@ -39,20 +39,20 @@
 
 .funnel-chart-label {
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }
 
 .funnel-chart-value {
   color: var(--signal-heading);
-  font-size: 1.5rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-size: var(--signal-text-2xl);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-tight);
   font-variant-numeric: tabular-nums;
 }
 
 .funnel-chart-share {
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
   font-variant-numeric: tabular-nums;
 }
 
@@ -71,17 +71,17 @@
 .funnel-chart-band,
 .funnel-chart-flow {
   transition:
-    opacity 0.25s ease,
-    y 0.5s var(--signal-ease),
-    height 0.5s var(--signal-ease),
-    d 0.5s var(--signal-ease);
+    opacity var(--signal-duration-slow) var(--signal-ease-out),
+    y var(--signal-duration-slower) var(--signal-ease-out),
+    height var(--signal-duration-slower) var(--signal-ease-out),
+    d var(--signal-duration-slower) var(--signal-ease-out);
 }
 
 .funnel-chart-bar {
   fill: var(--signal-accent);
   transform-box: fill-box;
   transform-origin: center;
-  animation: funnel-chart-grow 0.7s var(--signal-ease) both;
+  animation: funnel-chart-grow var(--signal-duration-reveal) var(--signal-ease-out) both;
 }
 
 .funnel-chart-shapes > :nth-child(n + 2) .funnel-chart-bar {
@@ -100,15 +100,15 @@
 
 .funnel-chart-band {
   fill: color-mix(in srgb, var(--signal-accent) 16%, transparent);
-  animation: funnel-chart-fade 0.6s ease 0.35s both;
+  animation: funnel-chart-fade var(--signal-duration-reveal) var(--signal-ease-out) var(--signal-duration-slower) both;
 }
 
 .funnel-chart-rate {
   fill: var(--signal-heading);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
   font-variant-numeric: tabular-nums;
-  animation: funnel-chart-fade 0.6s ease 0.45s both;
+  animation: funnel-chart-fade var(--signal-duration-reveal) var(--signal-ease-out) var(--signal-duration-slower) both;
 }
 
 .funnel-chart-flow-active .funnel-chart-band {
@@ -127,24 +127,24 @@
 .funnel-chart-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: var(--signal-space-2) var(--signal-space-5);
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
 }
 
 .funnel-chart-legend li {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--signal-space-2);
 }
 
 .funnel-chart-swatch {
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: var(--signal-radius-2xs);
   background: var(--signal-accent);
 }
 
@@ -168,7 +168,7 @@
 
 @media (max-width: 520px) {
   .funnel-chart-value {
-    font-size: 1.25rem;
+    font-size: var(--signal-text-xl);
   }
 }
 

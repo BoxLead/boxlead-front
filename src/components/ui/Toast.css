@@ -1,12 +1,12 @@
 .toast-region {
   position: fixed;
-  right: var(--signal-space-lg);
-  bottom: var(--signal-space-lg);
-  z-index: 50;
+  right: var(--signal-space-6);
+  bottom: var(--signal-space-6);
+  z-index: var(--signal-z-toast);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--signal-space-sm);
+  gap: var(--signal-space-2);
   pointer-events: none;
 }
 
@@ -14,18 +14,17 @@
   --toast-color: var(--signal-success);
   display: flex;
   align-items: center;
-  gap: 10px;
-  max-width: min(420px, calc(100vw - 32px));
-  padding: 10px 10px 10px 14px;
+  gap: var(--signal-space-3);
+  max-width: min(420px, calc(100vw - var(--signal-space-8)));
+  padding: var(--signal-space-3) var(--signal-space-3) var(--signal-space-3) var(--signal-space-4);
   border: 1px solid var(--signal-border);
-  border-left: 3px solid var(--toast-color);
   border-radius: var(--signal-radius-md);
-  background: var(--signal-surface-elevated);
+  background: var(--signal-surface-overlay);
   color: var(--signal-heading);
-  font-size: 0.875rem;
-  box-shadow: var(--signal-shadow);
+  font-size: var(--signal-text-md);
+  box-shadow: var(--signal-edge), var(--signal-shadow-3);
   pointer-events: auto;
-  animation: toast-in 0.25s var(--signal-ease);
+  animation: toast-in var(--signal-duration-slow) var(--signal-ease-spring);
 }
 
 .toast-info {
@@ -38,12 +37,19 @@
 
 .toast-icon {
   display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--signal-icon-lg);
+  height: var(--signal-icon-lg);
+  border-radius: var(--signal-radius-full);
+  background: color-mix(in srgb, var(--toast-color) 16%, transparent);
   color: var(--toast-color);
 }
 
 .toast-icon svg {
-  width: 18px;
-  height: 18px;
+  width: var(--signal-icon-xs);
+  height: var(--signal-icon-xs);
 }
 
 .toast-message {
@@ -52,11 +58,12 @@
 
 .toast-close {
   display: flex;
-  padding: 4px;
+  padding: var(--signal-space-1);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--signal-radius-xs);
   background: transparent;
   color: var(--signal-text-muted);
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .toast-close:hover {
@@ -66,15 +73,15 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px) scale(0.96);
   }
 }
 
 @media (max-width: 760px) {
   .toast-region {
-    right: var(--signal-space-md);
+    right: var(--signal-space-4);
     bottom: calc(76px + env(safe-area-inset-bottom));
-    left: var(--signal-space-md);
+    left: var(--signal-space-4);
     align-items: stretch;
   }
 

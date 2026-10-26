@@ -22,23 +22,23 @@
   --landing-error: #f08a8a;
   --landing-error-soft: rgba(240, 138, 138, 0.08);
 
-  --landing-section-gap: clamp(64px, 8vw, 108px);
+  --landing-section-gap: clamp(var(--signal-space-16), 8vw, 112px);
   --landing-content-max: 1160px;
   --landing-content-narrow: 760px;
-  --landing-content-padding: clamp(20px, 5vw, 40px);
+  --landing-content-padding: clamp(var(--signal-space-5), 5vw, var(--signal-space-10));
   --landing-header-height: 76px;
   --landing-consumer-height: 32px;
 
   --landing-font:
     "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --landing-radius-sm: 8px;
-  --landing-radius-md: 12px;
-  --landing-radius-lg: 18px;
+  --landing-radius-sm: var(--signal-radius-sm);
+  --landing-radius-md: var(--signal-radius-md);
+  --landing-radius-lg: var(--signal-radius-lg);
 
-  --landing-shadow-lg: 0 24px 60px rgba(2, 8, 15, 0.55);
-  --landing-shadow-md: 0 10px 24px rgba(2, 8, 15, 0.35);
-  --landing-inset-highlight: rgba(234, 234, 220, 0.06);
+  --landing-shadow-lg: var(--signal-shadow-4);
+  --landing-shadow-md: var(--signal-shadow-3);
+  --landing-inset-highlight: var(--signal-highlight);
 
   --landing-on-accent: var(--landing-navy);
   --landing-btn-bg: var(--landing-cream);
@@ -50,8 +50,12 @@
   --landing-cta-glow: rgba(36, 82, 124, 0.5);
   --landing-grid-line: rgba(234, 234, 220, 0.025);
   --landing-ghost: color-mix(in srgb, var(--landing-accent) 60%, var(--landing-bg));
+  --landing-text-hero: clamp(2.375rem, 5.2vw, 4.5rem);
+  --landing-text-lead: clamp(1.125rem, 1.8vw, 1.375rem);
+  --landing-text-kinetic: clamp(3.5rem, 11vw, 9.5rem);
+  --landing-text-kinetic-sub: clamp(1.25rem, 3vw, 2.25rem);
 
-  --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --landing-ease: var(--signal-ease-out);
 
   background: var(--landing-bg);
   color: var(--landing-text);
@@ -84,9 +88,9 @@ html[data-theme="light"] .landing {
   --landing-error: #b23b3b;
   --landing-error-soft: rgba(178, 59, 59, 0.08);
 
-  --landing-shadow-lg: 0 24px 60px rgba(19, 44, 68, 0.14);
-  --landing-shadow-md: 0 10px 24px rgba(19, 44, 68, 0.1);
-  --landing-inset-highlight: rgba(255, 255, 255, 0.7);
+  --landing-shadow-lg: var(--signal-shadow-4);
+  --landing-shadow-md: var(--signal-shadow-3);
+  --landing-inset-highlight: var(--signal-highlight);
 
   --landing-on-accent: #ffffff;
   --landing-btn-bg: var(--landing-navy);
@@ -133,8 +137,8 @@ html[data-theme="light"]:has(.landing) {
 
 .landing :focus-visible {
   outline: 2px solid var(--landing-accent);
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline-offset: 2px;
+  border-radius: var(--signal-radius-2xs);
 }
 
 .landing-section {
@@ -157,7 +161,7 @@ html[data-theme="light"]:has(.landing) {
 
 .landing-section-head {
   max-width: var(--landing-content-narrow);
-  margin: 0 auto clamp(40px, 5vw, 64px);
+  margin: 0 auto clamp(var(--signal-space-10), 5vw, var(--signal-space-16));
   text-align: center;
 }
 
@@ -168,13 +172,13 @@ html[data-theme="light"]:has(.landing) {
 .landing-section-label {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  gap: var(--signal-space-3);
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-wider);
   text-transform: uppercase;
   color: var(--landing-accent);
-  margin-bottom: 18px;
+  margin-bottom: var(--signal-space-5);
   counter-increment: landing-section;
 }
 
@@ -182,14 +186,14 @@ html[data-theme="light"]:has(.landing) {
   content: "[ " counter(landing-section, decimal-leading-zero) " ]";
   color: var(--landing-text-muted);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--signal-tracking-wide);
 }
 
 .landing-section-title {
-  font-size: clamp(2rem, 5vw, 3.75rem);
-  font-weight: 700;
-  line-height: 1.04;
-  letter-spacing: -0.04em;
+  font-size: var(--signal-text-display);
+  font-weight: var(--signal-weight-bold);
+  line-height: var(--signal-leading-none);
+  letter-spacing: var(--signal-tracking-tighter);
   margin: 0;
   text-wrap: balance;
 }
@@ -199,8 +203,8 @@ html[data-theme="light"]:has(.landing) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: var(--signal-space-12);
+  height: var(--signal-space-12);
   border-radius: var(--landing-radius-md);
   background: var(--landing-surface-elevated);
   border: 1px solid var(--landing-accent-border);
@@ -211,25 +215,28 @@ html[data-theme="light"]:has(.landing) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 26px;
+  gap: var(--signal-space-2);
+  min-height: var(--signal-control-lg);
+  padding: 0 var(--signal-space-6);
   border: 1px solid transparent;
   border-radius: var(--landing-radius-sm);
   font-family: var(--landing-font);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: var(--signal-text-base);
+  font-weight: var(--signal-weight-semibold);
+  line-height: var(--signal-leading-snug);
   cursor: pointer;
   text-decoration: none;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s var(--landing-ease);
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    color var(--signal-duration-base) var(--signal-ease-out),
+    transform var(--signal-duration-base) var(--landing-ease);
 }
 
 .landing-btn svg {
-  transition: transform 0.2s var(--landing-ease);
+  width: var(--signal-icon-sm);
+  height: var(--signal-icon-sm);
+  transition: transform var(--signal-duration-base) var(--landing-ease);
 }
 
 .landing-btn:hover svg {
@@ -239,6 +246,12 @@ html[data-theme="light"]:has(.landing) {
 .landing-btn-primary {
   background: var(--landing-btn-bg);
   color: var(--landing-btn-text);
+  box-shadow: var(--signal-shadow-1);
+}
+
+.landing-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--signal-ring);
 }
 
 .landing-btn-primary:hover {
@@ -262,20 +275,22 @@ html[data-theme="light"]:has(.landing) {
 }
 
 .landing-btn-sm {
-  min-height: 40px;
-  padding: 9px 16px;
-  font-size: 0.875rem;
+  min-height: var(--signal-control-md);
+  padding: 0 var(--signal-space-4);
+  font-size: var(--signal-text-md);
 }
 
 .landing-btn-lg {
-  padding: 16px 30px;
-  font-size: 1rem;
+  min-height: var(--signal-space-12);
+  padding: 0 var(--signal-space-8);
+  font-size: var(--signal-text-lg);
 }
 
 .landing-card {
   border-radius: var(--landing-radius-lg);
   border: 1px solid var(--landing-border);
   background: var(--landing-surface);
+  box-shadow: inset 0 1px 0 var(--landing-inset-highlight);
 }
 
 @media (hover: hover) {
@@ -284,9 +299,9 @@ html[data-theme="light"]:has(.landing) {
   }
 
   .landing [data-reveal].landing-card.is-visible:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
     transition-delay: 0s;
-    transition-duration: 0.3s;
+    transition-duration: var(--signal-duration-slow);
   }
 }
 
@@ -297,7 +312,7 @@ html[data-theme="light"]:has(.landing) {
 .landing-grain {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: var(--signal-z-overlay);
   pointer-events: none;
   opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -320,7 +335,7 @@ html[data-theme="light"]:has(.landing) {
     transparent 60%
   );
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity var(--signal-duration-slower) var(--signal-ease-out);
   pointer-events: none;
 }
 
@@ -332,49 +347,49 @@ html[data-theme="light"]:has(.landing) {
 
 .landing [data-reveal] {
   opacity: 0;
-  transform: translateY(40px) scale(0.97);
+  transform: translateY(32px) scale(0.98);
   transition:
-    opacity 0.8s var(--landing-ease),
-    transform 0.8s var(--landing-ease),
-    border-color 0.25s ease;
+    opacity var(--signal-duration-reveal) var(--landing-ease),
+    transform var(--signal-duration-reveal) var(--landing-ease),
+    border-color var(--signal-duration-slow) var(--signal-ease-out);
 }
 
 .landing [data-reveal-from="left"] {
-  transform: translateX(-56px);
+  transform: translateX(calc(var(--signal-space-12) * -1));
 }
 
 .landing [data-reveal-from="right"] {
-  transform: translateX(56px);
+  transform: translateX(var(--signal-space-12));
 }
 
 @media (max-width: 760px) {
   .landing [data-reveal] {
-    transform: translateY(28px);
+    transform: translateY(var(--signal-space-6));
   }
 
   .landing [data-reveal-from="left"] {
-    transform: translateX(-24px);
+    transform: translateX(calc(var(--signal-space-6) * -1));
   }
 
   .landing [data-reveal-from="right"] {
-    transform: translateX(24px);
+    transform: translateX(var(--signal-space-6));
   }
 
   .landing-section-head {
-    margin-bottom: 32px;
+    margin-bottom: var(--signal-space-8);
   }
 }
 
 .landing [data-reveal="1"] {
-  transition-delay: 0.12s;
+  transition-delay: var(--signal-duration-fast);
 }
 
 .landing [data-reveal="2"] {
-  transition-delay: 0.24s;
+  transition-delay: calc(var(--signal-duration-fast) * 2);
 }
 
 .landing [data-reveal="3"] {
-  transition-delay: 0.36s;
+  transition-delay: calc(var(--signal-duration-fast) * 3);
 }
 
 .landing [data-reveal].is-visible {
@@ -384,10 +399,10 @@ html[data-theme="light"]:has(.landing) {
 
 .landing-section-head .landing-section-title {
   clip-path: inset(0 0 100% 0);
-  transform: translateY(32px);
+  transform: translateY(var(--signal-space-8));
   transition:
-    clip-path 1s var(--landing-ease) 0.1s,
-    transform 1s var(--landing-ease) 0.1s;
+    clip-path var(--signal-duration-crawl) var(--landing-ease) var(--signal-duration-fast),
+    transform var(--signal-duration-crawl) var(--landing-ease) var(--signal-duration-fast);
 }
 
 .landing-section-head.is-visible .landing-section-title {
@@ -403,7 +418,7 @@ html[data-theme="light"]:has(.landing) {
       top: 0;
       left: 0;
       right: 0;
-      z-index: 1001;
+      z-index: var(--signal-z-overlay);
       height: 2px;
       background: var(--landing-accent);
       transform-origin: 0 50%;

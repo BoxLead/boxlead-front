@@ -1,32 +1,32 @@
 .conversation-working {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--signal-space-2);
   margin: 0;
   color: var(--signal-accent);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
 }
 
 .conversation-working-dots {
   display: inline-flex;
-  gap: 3px;
+  gap: var(--signal-space-1);
 }
 
 .conversation-working-dots span {
   width: 5px;
   height: 5px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: currentColor;
-  animation: conversation-working-pulse 1.2s infinite ease-in-out;
+  animation: conversation-working-pulse var(--signal-duration-crawl) infinite var(--signal-ease-in-out);
 }
 
 .conversation-working-dots span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: var(--signal-duration-base);
 }
 
 .conversation-working-dots span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: var(--signal-duration-slower);
 }
 
 @keyframes conversation-working-pulse {

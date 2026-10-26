@@ -24,8 +24,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 18px 18px 16px;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-5) var(--signal-space-5) var(--signal-space-4);
   overflow: hidden;
 }
 
@@ -40,7 +40,7 @@
 .category-card-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--signal-space-3);
   min-width: 0;
 }
 
@@ -48,13 +48,13 @@
   flex-shrink: 0;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--category-color);
 }
 
 .category-card-name {
   overflow: hidden;
-  font-size: 1.0625rem;
+  font-size: var(--signal-text-lg);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -63,7 +63,7 @@
   flex: 1;
   margin: 0;
   color: var(--signal-text);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
   overflow-wrap: anywhere;
 }
 
@@ -77,18 +77,18 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--signal-space-3);
 }
 
 .category-card-count {
   color: var(--category-color);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-semibold);
 }
 
 .category-card-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--signal-space-2);
 }
 
 .category-textarea {
@@ -103,13 +103,13 @@
 }
 
 .color-picker .field-label {
-  margin-bottom: 8px;
+  margin-bottom: var(--signal-space-2);
 }
 
 .color-picker-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--signal-space-3);
 }
 
 .color-picker-option {
@@ -130,10 +130,10 @@
   width: 32px;
   height: 32px;
   border: 2px solid transparent;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--category-color);
   box-shadow: inset 0 0 0 3px var(--signal-surface);
-  transition: border-color 0.15s ease;
+  transition: border-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .color-picker-option input:checked + .color-picker-swatch {

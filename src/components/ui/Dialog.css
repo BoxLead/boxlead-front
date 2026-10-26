@@ -1,73 +1,92 @@
 .dialog {
-  max-height: calc(100dvh - 32px);
+  max-height: calc(100dvh - var(--signal-space-8));
   padding: 0;
   border: 1px solid var(--signal-border);
   border-radius: var(--signal-radius-lg);
-  background: var(--signal-surface);
+  background: var(--signal-surface-elevated);
   color: var(--signal-text);
-  box-shadow: var(--signal-shadow);
+  box-shadow: var(--signal-edge), var(--signal-shadow-4);
 }
 
 .dialog-sm {
-  width: min(440px, calc(100vw - 32px));
+  width: min(440px, calc(100vw - var(--signal-space-8)));
 }
 
 .dialog-md {
-  width: min(480px, calc(100vw - 32px));
+  width: min(480px, calc(100vw - var(--signal-space-8)));
 }
 
 .dialog-lg {
-  width: min(680px, calc(100vw - 32px));
+  width: min(680px, calc(100vw - var(--signal-space-8)));
 }
 
 .dialog::backdrop {
   background: var(--signal-backdrop);
+  backdrop-filter: blur(4px);
 }
 
 .dialog[open] {
-  animation: dialog-in 0.22s var(--signal-ease);
+  animation: dialog-in var(--signal-duration-slow) var(--signal-ease-out);
 }
 
 .dialog[open]::backdrop {
-  animation: dialog-backdrop-in 0.22s ease;
+  animation: dialog-backdrop-in var(--signal-duration-slow) var(--signal-ease-out);
+}
+
+.dialog-closing[open] {
+  animation: dialog-out var(--signal-duration-base) var(--signal-ease-in) forwards;
+}
+
+.dialog-closing[open]::backdrop {
+  animation: dialog-backdrop-out var(--signal-duration-base) var(--signal-ease-in) forwards;
 }
 
 .dialog-body {
   display: grid;
-  gap: var(--signal-space-md);
+  gap: var(--signal-space-4);
   min-width: 0;
-  padding: var(--signal-space-lg);
+  padding: var(--signal-space-6);
 }
 
 .dialog-head {
   display: grid;
-  gap: 6px;
+  gap: var(--signal-space-1);
 }
 
 .dialog-title {
-  font-size: 1.125rem;
+  font-size: var(--signal-text-xl);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-tight);
 }
 
 .dialog-description {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
+  color: var(--signal-text-muted);
 }
 
 .dialog-form {
   display: grid;
-  gap: 18px;
+  gap: var(--signal-space-5);
 }
 
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: var(--signal-space-sm);
-  margin-top: var(--signal-space-sm);
+  gap: var(--signal-space-2);
+  margin-top: var(--signal-space-2);
 }
 
 @keyframes dialog-in {
   from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+}
+
+@keyframes dialog-out {
+  to {
     opacity: 0;
     transform: translateY(8px) scale(0.98);
   }
@@ -79,9 +98,15 @@
   }
 }
 
+@keyframes dialog-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
 @media (max-width: 480px) {
   .dialog-body {
-    padding: var(--signal-space-md);
+    padding: var(--signal-space-4);
   }
 
   .dialog-actions .btn {
@@ -91,7 +116,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dialog[open],
-  .dialog[open]::backdrop {
+  .dialog[open]::backdrop,
+  .dialog-closing[open],
+  .dialog-closing[open]::backdrop {
     animation: none;
   }
 }

@@ -10,8 +10,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: 12px 14px;
+  gap: var(--signal-space-0-5);
+  padding: var(--signal-space-3) var(--signal-space-4);
   border: 1px solid var(--signal-border);
   border-top: 3px solid var(--step-color);
   border-radius: var(--signal-radius-md);
@@ -19,8 +19,8 @@
   color: var(--signal-text);
   text-align: left;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    background-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .leads-funnel-step:hover {
@@ -51,32 +51,32 @@
 
 .leads-funnel-count {
   color: var(--signal-heading);
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: var(--signal-text-2xl);
+  font-weight: var(--signal-weight-bold);
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  line-height: var(--signal-leading-tight);
 }
 
 .leads-funnel-label {
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }
 
 .leads-toolbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px var(--signal-space-md);
+  gap: var(--signal-space-3) var(--signal-space-md);
   margin-bottom: var(--signal-space-md);
 }
 
 .leads-search {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--signal-space-2);
   flex: 1 1 260px;
   max-width: 360px;
-  height: 38px;
-  padding: 0 12px;
+  height: var(--signal-control-sm);
+  padding: 0 var(--signal-space-3);
   border: 1px solid var(--signal-border);
   border-radius: var(--signal-radius-sm);
   background: var(--signal-bg-subtle);
@@ -94,7 +94,7 @@
   outline: none;
   background: transparent;
   color: var(--signal-heading);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .leads-search input::placeholder {
@@ -105,15 +105,16 @@
 .leads-temperature-filter .select {
   width: auto;
   max-width: 240px;
-  min-height: 38px;
+  min-height: var(--signal-control-sm);
+  font-size: var(--signal-text-sm);
 }
 
 .leads-buyers-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--signal-space-2);
   color: var(--signal-text);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
   cursor: pointer;
 }
 
@@ -131,22 +132,22 @@
 .leads-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .leads-table th {
-  padding: 10px var(--signal-space-md);
+  padding: var(--signal-space-3) var(--signal-space-md);
   border-bottom: 1px solid var(--signal-border);
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-wide);
   text-align: left;
   text-transform: uppercase;
 }
 
 .leads-table td {
-  padding: 12px var(--signal-space-md);
+  padding: var(--signal-space-3) var(--signal-space-md);
   border-bottom: 1px solid var(--signal-border);
   vertical-align: middle;
 }
@@ -162,21 +163,21 @@
 .leads-person {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   min-width: 0;
 }
 
 .leads-person-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--signal-space-0-5);
   min-width: 0;
 }
 
 .leads-name {
   overflow: hidden;
   color: var(--signal-heading);
-  font-weight: 600;
+  font-weight: var(--signal-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -184,9 +185,9 @@
 .leads-person-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--signal-space-2);
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }
 
 .leads-contact {
@@ -209,13 +210,13 @@
 
 .leads-toolbar-placeholder {
   display: flex;
-  gap: 8px;
+  gap: var(--signal-space-2);
 }
 
 .leads-chip-skeleton {
   width: 96px;
   height: 32px;
-  border-radius: 100px;
+  border-radius: var(--signal-radius-pill);
 }
 
 .leads-toggle-skeleton {
@@ -230,7 +231,7 @@
 .leads-skeleton-head {
   display: flex;
   gap: var(--signal-space-lg);
-  padding: 14px var(--signal-space-md);
+  padding: var(--signal-space-4) var(--signal-space-md);
   border-bottom: 1px solid var(--signal-border);
 }
 
@@ -242,7 +243,7 @@
 .leads-skeleton-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   height: 65px;
   padding: 0 var(--signal-space-md);
   border-bottom: 1px solid var(--signal-hairline);
@@ -251,7 +252,7 @@
 .leads-skeleton-avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
 }
 
 .leads-skeleton-name {
@@ -261,8 +262,8 @@
 
 .leads-skeleton-pill {
   width: 110px;
-  height: 30px;
-  border-radius: 100px;
+  height: var(--signal-control-sm);
+  border-radius: var(--signal-radius-pill);
 }
 
 @media (max-width: 900px) {
@@ -294,8 +295,8 @@
   .leads-table tr {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px 12px;
-    padding: 14px var(--signal-space-md);
+    gap: var(--signal-space-2) var(--signal-space-3);
+    padding: var(--signal-space-4) var(--signal-space-md);
     border-bottom: 1px solid var(--signal-border);
   }
 
@@ -310,8 +311,8 @@
 
   .leads-table td:nth-child(n + 3) {
     grid-column: 1 / -1;
-    padding-left: 44px;
-    font-size: 0.8125rem;
+    padding-left: calc(var(--signal-space-10) + var(--signal-space-1));
+    font-size: var(--signal-text-sm);
   }
 }
 
@@ -324,6 +325,6 @@
 .leads-table-more {
   display: flex;
   justify-content: center;
-  padding: 12px var(--signal-space-md) 16px;
+  padding: var(--signal-space-3) var(--signal-space-md) var(--signal-space-4);
   border-top: 1px solid var(--signal-hairline);
 }

@@ -16,31 +16,31 @@
 }
 
 .cta-title {
-  margin: 0 0 14px;
-  font-size: clamp(2.25rem, 5.2vw, 4.25rem);
-  font-weight: 700;
+  margin: 0 0 var(--signal-space-4);
+  font-size: var(--landing-text-hero);
+  font-weight: var(--signal-weight-bold);
   line-height: 1.02;
-  letter-spacing: -0.045em;
+  letter-spacing: var(--signal-tracking-tighter);
   text-wrap: balance;
 }
 
 .cta-subtitle {
   max-width: 440px;
-  margin: 0 0 28px;
-  font-size: clamp(1.0625rem, 1.7vw, 1.25rem);
+  margin: 0 0 var(--signal-space-8);
+  font-size: var(--landing-text-lead);
   text-wrap: pretty;
 }
 
 .cta-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   flex-wrap: wrap;
 }
 
 .cta-note {
-  margin: 18px 0 0;
-  font-size: 0.875rem;
+  margin: var(--signal-space-5) 0 0;
+  font-size: var(--signal-text-md);
   color: var(--landing-text-muted);
 }
 
@@ -55,11 +55,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-4) var(--signal-space-5);
   border-bottom: 1px solid var(--landing-border);
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--signal-text-base);
+  font-weight: var(--signal-weight-semibold);
   color: var(--landing-heading);
   white-space: nowrap;
 }
@@ -67,17 +67,17 @@
 .cta-feed-live {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.8125rem;
+  gap: var(--signal-space-2);
+  font-size: var(--signal-text-sm);
   color: var(--landing-success);
 }
 
 .cta-feed-live-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--landing-success);
-  animation: cta-feed-pulse 1.6s ease-in-out infinite;
+  animation: cta-feed-pulse 1.6s var(--signal-ease-in-out) infinite;
 }
 
 .cta-feed-viewport {
@@ -116,11 +116,11 @@
 .cta-feed-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   height: 58px;
-  padding: 0 18px;
+  padding: 0 var(--signal-space-5);
   border-bottom: 1px solid var(--landing-border);
-  font-size: 0.9375rem;
+  font-size: var(--signal-text-base);
 }
 
 .cta-feed-icon {
@@ -131,7 +131,7 @@
 .cta-feed-body {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   flex: 1;
   min-width: 0;
 }
@@ -148,10 +148,10 @@
 .cta-feed-result {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--signal-space-2);
   flex-shrink: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
   color: var(--landing-success);
 }
 
@@ -200,16 +200,16 @@
   }
 
   .cta-card {
-    padding: 24px 20px;
+    padding: var(--signal-space-6) var(--signal-space-5);
   }
 
   .cta-feed-head {
-    padding-inline: 14px;
-    font-size: 0.875rem;
+    padding-inline: var(--signal-space-4);
+    font-size: var(--signal-text-md);
   }
 
   .cta-feed-item {
-    padding-inline: 14px;
+    padding-inline: var(--signal-space-4);
   }
 
   .cta-feed-body {

@@ -1,34 +1,38 @@
 .metric-tabs {
+  position: relative;
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
-  gap: 1px;
+  gap: var(--signal-space-0-5);
   border-bottom: 1px solid var(--signal-border);
   background: var(--signal-border);
+}
+
+.metric-tabs-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: var(--signal-z-raised);
+  width: calc(100% / var(--tab-count, 4));
+  height: 2px;
+  background: var(--signal-accent);
+  transform: translateX(calc(var(--tab-index, 0) * 100%));
+  transition: transform var(--signal-duration-slow) var(--signal-ease-spring);
+  pointer-events: none;
 }
 
 .metric-tab {
   position: relative;
   display: grid;
   align-content: start;
-  gap: 4px;
+  gap: var(--signal-space-1);
   min-width: 0;
-  padding: 16px 20px 18px;
+  padding: var(--signal-space-4) var(--signal-space-5) var(--signal-space-5);
   border: 0;
   background: var(--signal-surface);
   color: inherit;
   text-align: left;
-  transition: background-color 0.2s ease;
-}
-
-.metric-tab::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: var(--signal-accent);
-  transform: scaleX(0);
-  transition: transform 0.35s var(--signal-ease);
+  transition: background-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .metric-tab:hover {
@@ -40,10 +44,6 @@
   background: color-mix(in srgb, var(--signal-surface) 94%, var(--signal-accent));
 }
 
-.metric-tab-selected::after {
-  transform: scaleX(1);
-}
-
 .metric-tab:focus-visible {
   outline-offset: -2px;
 }
@@ -51,10 +51,10 @@
 .metric-tab-label {
   overflow: hidden;
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color 0.2s ease;
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .metric-tab-selected .metric-tab-label {
@@ -63,20 +63,20 @@
 
 .metric-tab-value {
   color: var(--signal-heading);
-  font-size: 1.625rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: var(--signal-text-3xl);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-tight);
+  line-height: var(--signal-leading-tight);
   font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 1100px) {
   .metric-tab {
-    padding: 14px 14px 16px;
+    padding: var(--signal-space-4) var(--signal-space-4) var(--signal-space-4);
   }
 
   .metric-tab-value {
-    font-size: 1.375rem;
+    font-size: var(--signal-text-2xl);
   }
 }
 
@@ -92,6 +92,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .metric-tabs-indicator {
+    transition: none;
+  }
+
   .metric-tab,
   .metric-tab::after,
   .metric-tab-label {

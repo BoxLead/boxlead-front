@@ -38,9 +38,9 @@
 
 .kinetic-row-main .kinetic-word {
   color: var(--landing-heading);
-  font-size: clamp(3.5rem, 11vw, 9.5rem);
-  font-weight: 750;
-  line-height: 1;
+  font-size: var(--landing-text-kinetic);
+  font-weight: var(--signal-weight-bold);
+  line-height: var(--signal-leading-none);
   letter-spacing: -0.05em;
 }
 
@@ -50,15 +50,15 @@
 
 .kinetic-row-sub .kinetic-word {
   color: var(--landing-text-muted);
-  font-size: clamp(1.25rem, 3vw, 2.25rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-size: var(--landing-text-kinetic-sub);
+  font-weight: var(--signal-weight-medium);
+  letter-spacing: var(--signal-tracking-tight);
 }
 
 .kinetic-dot {
   width: 0.14em;
   height: 0.14em;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--landing-accent);
 }
 

@@ -54,8 +54,14 @@ function writeKey(key: string, value: string): void {
 }
 
 export function applyTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = theme;
+  const root = document.documentElement;
+  root.dataset.themeSwitching = "";
+  root.dataset.theme = theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+  void root.offsetHeight;
+  requestAnimationFrame(() => {
+    delete root.dataset.themeSwitching;
+  });
 }
 
 export function applySidebar(mode: SidebarMode): void {

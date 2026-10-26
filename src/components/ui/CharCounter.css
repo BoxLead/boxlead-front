@@ -1,6 +1,6 @@
 .char-counter {
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -11,7 +11,7 @@
 
 .char-counter-over {
   color: var(--signal-danger);
-  font-weight: 600;
+  font-weight: var(--signal-weight-semibold);
 }
 
 .field > .char-counter {

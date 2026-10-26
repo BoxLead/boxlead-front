@@ -1,18 +1,18 @@
 .funnel-meta {
   display: flex;
-  gap: 18px;
+  gap: var(--signal-space-5);
   margin: 0;
 }
 
 .funnel-meta div {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--signal-space-2);
 }
 
 .funnel-meta dd {
   margin: 0;
   color: var(--signal-heading);
-  font-weight: 600;
+  font-weight: var(--signal-weight-semibold);
   font-variant-numeric: tabular-nums;
 }

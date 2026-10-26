@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import type { CategoryResponse, LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { CategorySelect } from "../../components/CategorySelect/CategorySelect";
-import { SearchIcon, UsersIcon } from "../../components/icons/UiIcons";
+import { SearchIcon } from "../../components/icons/UiIcons";
 import { StatusSelect } from "../../components/StatusSelect/StatusSelect";
 import { TemperatureSelect } from "../../components/TemperatureSelect/TemperatureSelect";
 import { Avatar } from "../../components/ui/Avatar";
@@ -214,7 +214,7 @@ export function Leads() {
       ) : all.length === 0 ? (
         <div className="panel leads-empty">
           <EmptyState
-            icon={<UsersIcon />}
+            illustration="leads"
             title="Todavía no hay leads"
             hint="Se crean solos cuando alguien te escribe por un canal conectado."
             action={
@@ -227,7 +227,7 @@ export function Leads() {
       ) : visible.length === 0 ? (
         <div className="panel leads-empty">
           <EmptyState
-            icon={<SearchIcon />}
+            illustration="search"
             title="No hay leads con estos filtros"
             action={
               <button
@@ -244,7 +244,7 @@ export function Leads() {
           />
         </div>
       ) : (
-        <div className="panel leads-table-wrap">
+        <div className="panel leads-table-wrap rise">
           <table className="leads-table">
             <caption className="visually-hidden">
               {visible.length === 1 ? "1 lead" : `${visible.length} leads`}

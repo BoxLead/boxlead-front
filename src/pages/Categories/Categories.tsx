@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ApiError } from "../../api/client";
 import type { CategoryResponse } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { TagIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/toast";
@@ -98,14 +97,14 @@ export function Categories() {
       ) : list.length === 0 ? (
         <div className="panel categories-empty">
           <EmptyState
-            icon={<TagIcon />}
+            illustration="categories"
             title="Creá tu primera categoría"
             hint="Las categorías te ayudan a agrupar a tus leads según lo que necesitan."
             action={createButton}
           />
         </div>
       ) : (
-        <ul className="category-grid" aria-label="Categorías">
+        <ul className="category-grid rise-list" aria-label="Categorías">
           {list.map((category) => (
             <CategoryCard
               key={category.id}

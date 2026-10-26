@@ -24,32 +24,24 @@
   left: 50%;
   transform: translate(-50%, -58%);
   font-size: clamp(9rem, 32vw, 18rem);
-  font-weight: 700;
+  font-weight: var(--signal-weight-bold);
   letter-spacing: -0.06em;
-  line-height: 1;
+  line-height: var(--signal-leading-none);
   color: var(--signal-heading);
   opacity: 0.04;
   pointer-events: none;
   user-select: none;
 }
 
-.not-found-icon {
+.not-found-art {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--signal-space-sm);
-  border-radius: var(--signal-radius-md);
-  border: 1px solid color-mix(in srgb, var(--signal-accent) 22%, transparent);
-  background: var(--signal-accent-muted);
   color: var(--signal-accent);
 }
 
 .not-found-title {
   position: relative;
-  font-size: 1.375rem;
+  font-size: var(--signal-text-2xl);
   outline: none;
 }
 

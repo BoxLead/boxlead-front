@@ -109,7 +109,7 @@ export function ConversationList({
           {filters.query ? `No hay conversaciones que coincidan con “${filters.query}”.` : "No hay conversaciones con estos filtros."}
         </p>
       ) : (
-        <ul className="conversation-items" aria-label="Conversaciones">
+        <ul className="conversation-items rise" aria-label="Conversaciones">
           {shown.map((row) => (
             <ConversationItem key={row.id} row={row} to={linkFor(row.id)} selected={row.id === selectedId} />
           ))}

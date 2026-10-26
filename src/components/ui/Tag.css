@@ -1,14 +1,15 @@
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--signal-space-1);
   height: 22px;
-  padding: 0 8px;
+  padding: 0 var(--signal-space-2);
   border: 1px solid var(--signal-border);
-  border-radius: 6px;
+  border-radius: var(--signal-radius-xs);
   color: var(--signal-text);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+  line-height: var(--signal-leading-none);
   white-space: nowrap;
 }
 
@@ -17,30 +18,30 @@
 }
 
 .tag-icon svg {
-  width: 13px;
-  height: 13px;
+  width: var(--signal-icon-xs);
+  height: var(--signal-icon-xs);
 }
 
 .tag-accent {
-  border-color: rgba(143, 193, 238, 0.3);
+  border-color: var(--signal-accent-border);
   background: var(--signal-accent-muted);
   color: var(--signal-accent);
 }
 
 .tag-success {
-  border-color: rgba(95, 211, 160, 0.3);
+  border-color: var(--signal-success-border);
   background: var(--signal-success-muted);
   color: var(--signal-success);
 }
 
 .tag-warning {
-  border-color: rgba(240, 200, 120, 0.3);
+  border-color: var(--signal-warning-border);
   background: var(--signal-warning-muted);
   color: var(--signal-warning);
 }
 
 .tag-danger {
-  border-color: rgba(240, 138, 138, 0.3);
+  border-color: var(--signal-danger-border);
   background: var(--signal-danger-muted);
   color: var(--signal-danger);
 }
