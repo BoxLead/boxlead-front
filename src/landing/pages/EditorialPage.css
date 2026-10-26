@@ -1,5 +1,5 @@
 .editorial-hero {
-  padding-top: calc(var(--landing-consumer-height) + var(--landing-header-height) + clamp(var(--signal-space-8), 6vw, var(--signal-space-16)));
+  padding-top: calc(var(--landing-header-height) + clamp(var(--signal-space-8), 6vw, var(--signal-space-16)));
   overflow: hidden;
 }
 
