@@ -6,6 +6,8 @@
 !.env.example
 node_modules
 dist
+dist-admin
+dist-admin-e2e
 terraform
 docker-compose.yml
 Dockerfile

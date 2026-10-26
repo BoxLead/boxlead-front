@@ -1,0 +1,6 @@
+.auth-input.code-field {
+  font-family: var(--signal-mono);
+  font-size: var(--signal-text-xl);
+  letter-spacing: var(--signal-tracking-wider);
+  font-variant-numeric: tabular-nums;
+}

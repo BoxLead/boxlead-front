@@ -5,13 +5,13 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'admin/src/**/*.test.{ts,tsx}'],
     setupFiles: ['src/test/setup.ts'],
     restoreMocks: true,
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/landing/**', 'src/pages/Legal/**'],
+      include: ['src/**/*.{ts,tsx}', 'admin/src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'admin/src/**/*.test.{ts,tsx}', 'src/test/**', 'src/landing/**', 'src/pages/Legal/**'],
     },
   },
 })
