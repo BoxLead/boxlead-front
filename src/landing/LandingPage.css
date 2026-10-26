@@ -49,6 +49,7 @@
   --landing-backdrop-glow: rgba(36, 82, 124, 0.38);
   --landing-cta-glow: rgba(36, 82, 124, 0.5);
   --landing-grid-line: rgba(234, 234, 220, 0.025);
+  --landing-ghost: color-mix(in srgb, var(--landing-accent) 60%, var(--landing-bg));
 
   --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -96,6 +97,7 @@ html[data-theme="light"] .landing {
   --landing-backdrop-glow: rgba(47, 111, 174, 0.16);
   --landing-cta-glow: rgba(47, 111, 174, 0.16);
   --landing-grid-line: rgba(19, 44, 68, 0.06);
+  --landing-ghost: color-mix(in srgb, var(--landing-accent) 85%, var(--landing-bg));
 }
 
 html:has(.landing) {
