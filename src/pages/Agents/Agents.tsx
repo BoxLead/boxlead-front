@@ -5,7 +5,6 @@ import type { AgentActivitySummary, AgentResponse, CategoryResponse } from "../.
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { PlanLink } from "../../components/PlanBanner/PlanLink";
 import { SEE_PLANS } from "../../components/PlanBanner/planNotice";
-import { BotIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
@@ -265,7 +264,7 @@ export function Agents() {
       ) : agents.error && !agents.data ? null : list.length === 0 && !creating ? (
         <div className="agents-empty">
           <EmptyState
-            icon={<BotIcon />}
+            illustration="agents"
             title="Todavía no configuraste agentes"
             hint="Un agente responde por vos según las instrucciones y las reglas que definas."
             action={createButton}
@@ -285,7 +284,7 @@ export function Agents() {
           <div className="agents-main">
             {missing ? (
               <EmptyState
-                icon={<BotIcon />}
+                illustration="missing"
                 title="No encontramos este agente"
                 hint="Puede que se haya eliminado."
                 action={
@@ -323,7 +322,7 @@ export function Agents() {
               />
             ) : (
               <EmptyState
-                icon={<BotIcon />}
+                illustration="agents"
                 title="Elegí un agente"
                 hint="Configurá sus instrucciones, probalo o revisá qué hizo."
               />

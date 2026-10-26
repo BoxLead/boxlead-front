@@ -1,9 +1,9 @@
 .confirm-dialog-text {
-  font-size: 0.9375rem;
+  font-size: var(--signal-text-base);
 }
 
 .confirm-dialog-text p {
-  margin: 0 0 var(--signal-space-sm);
+  margin: 0 0 var(--signal-space-2);
 }
 
 .confirm-dialog-text p:last-child {

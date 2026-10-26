@@ -2,7 +2,6 @@ import { useCallback, useDeferredValue, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { ConversationResponse, LeadResponse, PlatformType, SalesStage } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
-import { InboxIcon } from "../../components/icons/UiIcons";
 import { Banner } from "../../components/ui/Banner";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -125,7 +124,7 @@ export function Inbox() {
             </ul>
           ) : rows.length === 0 ? (
             <EmptyState
-              icon={<InboxIcon />}
+              illustration="inbox"
               title="Tu bandeja está vacía"
               hint="Cuando alguien te escriba o comente en un canal conectado, la conversación aparece acá."
               action={
@@ -154,7 +153,7 @@ export function Inbox() {
             <ConversationView key={selectedRow.id} row={selectedRow} backTo={backTo} />
           ) : selectedId && !conversations.loading ? (
             <EmptyState
-              icon={<InboxIcon />}
+              illustration="missing"
               title="No encontramos esta conversación"
               hint="Puede que se haya eliminado o que el enlace sea de otra cuenta."
               action={
@@ -165,7 +164,7 @@ export function Inbox() {
             />
           ) : (
             <EmptyState
-              icon={<InboxIcon />}
+              illustration="inbox"
               title="Elegí una conversación"
               hint="Respondé desde acá y el mensaje sale por el canal de origen."
             />
