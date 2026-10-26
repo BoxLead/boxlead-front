@@ -4,6 +4,7 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { Loading } from "./components/Loading";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { preloadSocialAuth } from "./context/socialRoutes";
+import { EDITORIAL_PATHS } from "./landing/editorialPaths";
 import {
   lazyRoute,
   NotFound,
@@ -14,6 +15,7 @@ import {
 } from "./routing";
 
 const LandingPage = lazyRoute(() => import("./landing/LandingPage"), "LandingPage");
+const EditorialPage = lazyRoute(() => import("./landing/pages/EditorialPage"), "EditorialPage");
 const Layout = lazyRoute(() => import("./components/Layout/Layout"), "Layout");
 const Connections = lazyRoute(() => import("./pages/Connections/Connections"), "Connections");
 const Inbox = lazyRoute(() => import("./pages/Inbox/Inbox"), "Inbox");
@@ -41,6 +43,7 @@ const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellatio
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
+for (const path of EDITORIAL_PATHS) registerRoutePreload(path, [EditorialPage]);
 const socialAuth = { preload: preloadSocialAuth };
 registerRoutePreload("/login", [Login, socialAuth]);
 registerRoutePreload("/register", [Register, socialAuth]);
@@ -66,6 +69,9 @@ export default function App() {
         <RouteAnnouncer />
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          {EDITORIAL_PATHS.map((path) => (
+            <Route path={path} element={<EditorialPage />} key={path} />
+          ))}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/social/callback" element={<SocialCallback />} />

@@ -8,6 +8,7 @@ import { Logo } from "../../components/Logo/Logo";
 import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
 import { CONSUMER_PAGES } from "../../util/consumerPages";
 import { BILLING_ENABLED } from "../flags";
+import { EDITORIAL_PAGES } from "../editorial";
 import { DataFiscal } from "./DataFiscal";
 import "./Footer.css";
 
@@ -29,26 +30,35 @@ export function Footer() {
 
         <nav className="footer-column" aria-label="Producto">
           <h2 className="footer-heading">Producto</h2>
-          <a href="#demo" className="footer-link">
+          <a href="/#demo" className="footer-link">
             Demo
           </a>
-          <a href="#como-funciona" className="footer-link">
+          <a href="/#como-funciona" className="footer-link">
             Cómo funciona
           </a>
-          <a href="#agente" className="footer-link">
+          <a href="/#agente" className="footer-link">
             El agente
           </a>
           {BILLING_ENABLED && (
-            <a href="#planes" className="footer-link">
+            <a href="/#planes" className="footer-link">
               Planes
             </a>
           )}
-          <a href="#faq" className="footer-link">
+          <a href="/#faq" className="footer-link">
             Preguntas frecuentes
           </a>
           <Link to="/login" className="footer-link">
             Iniciar sesión
           </Link>
+        </nav>
+
+        <nav className="footer-column" aria-label="Canales">
+          <h2 className="footer-heading">Canales</h2>
+          {EDITORIAL_PAGES.map((page) => (
+            <Link to={page.path} className="footer-link" key={page.path}>
+              {page.label}
+            </Link>
+          ))}
         </nav>
 
         <nav className="footer-column" aria-label="Legal">

@@ -25,7 +25,7 @@ function meta(selector: string): string | null {
 describe("RouteMeta", () => {
   it("describes the landing with its canonical and its social card", () => {
     renderAt("/");
-    expect(document.title).toBe("Agentes de IA que automatizan y escalan tus ventas · BoxLead");
+    expect(document.title).toBe("Agente de IA que vende por WhatsApp, Instagram y MercadoLibre · BoxLead");
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe("https://boxlead.app/");
     expect(meta('meta[property="og:url"]')).toBe("https://boxlead.app/");
     expect(meta('meta[name="twitter:card"]')).toBe("summary_large_image");

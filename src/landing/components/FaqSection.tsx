@@ -29,7 +29,17 @@ export function FaqSection({ faqs = LANDING_FAQS }: FaqSectionProps) {
               </summary>
               <p className="faq-answer">
                 {faq.answer.map((part, partIndex) =>
-                  typeof part === "string" ? part : <Link to={part.to} key={partIndex}>{part.label}</Link>,
+                  typeof part === "string" ? (
+                    part
+                  ) : part.to.startsWith("mailto:") ? (
+                    <a href={part.to} key={partIndex}>
+                      {part.label}
+                    </a>
+                  ) : (
+                    <Link to={part.to} key={partIndex}>
+                      {part.label}
+                    </Link>
+                  ),
                 )}
               </p>
             </details>

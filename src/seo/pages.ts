@@ -1,3 +1,4 @@
+import { EDITORIAL_PAGES } from "../landing/editorial";
 import { LANDING_FAQS } from "../landing/faq";
 import { PRODUCT_NAME } from "../util/company";
 import { normalizePath } from "./site";
@@ -33,7 +34,25 @@ const LEGAL_ALTERNATES = {
   ],
 } satisfies Record<string, Alternate[]>;
 
-export const LANDING_TITLE = "Agentes de IA que automatizan y escalan tus ventas";
+export const LANDING_TITLE = "Agente de IA que vende por WhatsApp, Instagram y MercadoLibre";
+
+const editorialPages: PublicPage[] = EDITORIAL_PAGES.map((page) => ({
+  path: page.path,
+  title: page.title,
+  description: page.description,
+  lang: "es-AR",
+  index: true,
+  image: `/og/${page.slug}.png`,
+  imageAlt: page.heading,
+  changefreq: "monthly",
+  priority: 0.8,
+  source: "src/landing/editorial.ts",
+  jsonLd: () => [
+    webPage(page.path, page.title, page.description, "es-AR"),
+    breadcrumbs([{ name: "Inicio", path: "/" }, { name: page.label, path: page.path }]),
+    faqPage(page.faqs),
+  ],
+}));
 
 function legalPage(path: string, title: string, description: string, lang: PageLanguage): () => JsonLd[] {
   const home = lang === "en" ? "Home" : "Inicio";
@@ -57,6 +76,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
     priority: 1,
     source: "src/landing",
   },
+  ...editorialPages,
   page({
     path: "/terminos",
     title: "Términos y condiciones",

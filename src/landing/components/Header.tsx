@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Logo } from "../../components/Logo/Logo";
 import { CONSUMER_PAGES } from "../../util/consumerPages";
 import { BILLING_ENABLED } from "../flags";
@@ -20,6 +20,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
+  const onLanding = useLocation().pathname === "/";
 
   useEffect(() => {
     if (!("IntersectionObserver" in window)) return;
@@ -73,7 +74,7 @@ export function Header() {
         <nav className="header-nav" aria-label="Principal">
           {NAV_LINKS.map((link) => (
             <a
-              href={link.href}
+              href={onLanding ? link.href : `/${link.href}`}
               className={`header-nav-link${current === link.href ? " is-current" : ""}`}
               aria-current={current === link.href ? "location" : undefined}
               key={link.href}
