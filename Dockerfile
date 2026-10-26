@@ -26,7 +26,7 @@ ARG VITE_AUTH0_DOMAIN
 ENV VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
 ARG VITE_AUTH0_CLIENT_ID
 ENV VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
-RUN npm run build
+RUN npm run build && npm run test:dist
 
 FROM scratch AS export
 COPY --from=build /app/dist /

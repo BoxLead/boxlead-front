@@ -59,6 +59,14 @@ resource "aws_cloudfront_response_headers_policy" "site" {
   }
 }
 
+resource "aws_cloudfront_function" "router" {
+  name    = "${var.project_name}-router"
+  runtime = "cloudfront-js-2.0"
+  comment = "Clean URLs for the prerendered pages, the app shell under /app and a real 404"
+  publish = true
+  code    = file("${path.module}/functions/router.js")
+}
+
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -95,19 +103,27 @@ resource "aws_cloudfront_distribution" "site" {
     min_ttl     = 0
     default_ttl = 3600
     max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.router.arn
+    }
   }
 
-  # SPA: serve index.html for client-side routes
+  # Objects missing from the bucket answer with the prerendered 404 page and a 404 status.
+  # S3 answers 403 for a missing key because CloudFront cannot list the bucket.
   custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 60
   }
 
   custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 60
   }
 
   restrictions {

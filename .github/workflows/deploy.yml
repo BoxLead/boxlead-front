@@ -41,6 +41,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Record the last change of every page for the sitemap
+        run: scripts/lastmod.sh > lastmod.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
@@ -90,6 +95,9 @@ jobs:
           done
           curl -fsS http://localhost:8080/healthz > /dev/null
           curl -fsS http://localhost:8080/app/inbox | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/privacidad | grep -q '<h1'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/no-existe)" = "404"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/privacidad/)" = "301"
           docker rm -f smoke
 
       - name: Export static files
@@ -136,5 +144,7 @@ jobs:
           PREFIX="${SIGNAL_FRONT_SSM_PREFIX}"
           BUCKET=$(aws ssm get-parameter --name "${PREFIX}S3_BUCKET_NAME" --query Parameter.Value --output text)
           DIST_ID=$(aws ssm get-parameter --name "${PREFIX}CLOUDFRONT_DISTRIBUTION_ID" --query Parameter.Value --output text)
-          aws s3 sync dist/ "s3://$BUCKET" --delete
+          aws s3 sync dist/assets/ "s3://$BUCKET/assets/" --delete --cache-control "public, max-age=31536000, immutable"
+          aws s3 sync dist/ "s3://$BUCKET" --delete --exclude "assets/*" --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --cache-control "public, max-age=86400"
+          aws s3 sync dist/ "s3://$BUCKET" --exclude "*" --include "*.html" --include "*.xml" --include "*.txt" --cache-control "no-cache"
           aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
