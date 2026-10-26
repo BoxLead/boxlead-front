@@ -6,14 +6,23 @@ const agentButton = (page: Page, name: string) => agentList(page).getByRole("but
 const editor = (page: Page) => page.getByRole("form", { name: "Configuración del agente" });
 const rule = (page: Page, index: number) => editor(page).getByRole("group", { name: `Regla ${index}` });
 const playground = (page: Page) => page.locator(".playground");
+const detailBack = (page: Page) => page.getByRole("region", { name: "Detalle del agente" }).getByRole("button", { name: "Volver" });
 
 async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
+async function watchForText(page: Page, text: string) {
+  await page.evaluate((needle) => {
+    new MutationObserver(() => {
+      if (document.body.textContent?.includes(needle)) document.body.dataset.seen = needle;
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }, text);
+}
+
 async function showList(page: Page) {
-  const back = page.getByRole("button", { name: "Volver" });
+  const back = detailBack(page);
   const list = agentList(page);
   await expect(back.or(list)).toBeVisible();
   if (await back.isVisible()) await back.click();
@@ -22,7 +31,7 @@ async function showList(page: Page) {
 
 async function openAgent(page: Page, name: string) {
   const row = agentButton(page, name);
-  await expect(row.or(page.getByRole("button", { name: "Volver" }))).toBeVisible();
+  await expect(row.or(detailBack(page))).toBeVisible();
   if (!(await row.isVisible())) await showList(page);
   await row.click();
   await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
@@ -192,10 +201,12 @@ test("deletes an agent after confirming", async ({ page }) => {
 
   await openAgent(page, "Postventa");
   await page.getByRole("button", { name: "Eliminar Postventa" }).click();
+  await watchForText(page, "No encontramos este agente");
   await dialog.getByRole("button", { name: "Eliminar" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Eliminaste Postventa." })).toBeVisible();
   await showList(page);
   await expect(agentList(page).getByRole("button")).toHaveCount(1);
+  await expect(page.locator("body")).not.toHaveAttribute("data-seen");
 });
 
 test("saves the business context", async ({ page }) => {
