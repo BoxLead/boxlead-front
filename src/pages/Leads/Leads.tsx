@@ -122,7 +122,13 @@ export function Leads() {
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        {channels.length > 1 ? (
+        {leads.loading ? (
+          <div className="leads-toolbar-placeholder" aria-hidden="true">
+            <span className="skeleton leads-chip-skeleton" />
+            <span className="skeleton leads-chip-skeleton" />
+            <span className="skeleton leads-chip-skeleton" />
+          </div>
+        ) : channels.length > 1 ? (
           <ChoiceGroup
             label="Canal"
             choices={channelChoices}
@@ -130,24 +136,23 @@ export function Leads() {
             onChange={(channel) => setParam("channel", channel === "ALL" ? null : channel)}
           />
         ) : null}
-        {categoryList.length > 0 ? (
-          <label className="leads-category-filter">
-            <span className="visually-hidden">Filtrar por categoría</span>
-            <select
-              className="select"
-              value={filters.category ?? ""}
-              onChange={(event) => setParam("category", event.target.value || null)}
-            >
-              <option value="">Todas las categorías</option>
-              {categoryList.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-              <option value={UNCATEGORIZED}>Sin categoría</option>
-            </select>
-          </label>
-        ) : null}
+        <label className="leads-category-filter">
+          <span className="visually-hidden">Filtrar por categoría</span>
+          <select
+            className="select"
+            value={filters.category ?? ""}
+            disabled={!categories.data}
+            onChange={(event) => setParam("category", event.target.value || null)}
+          >
+            <option value="">Todas las categorías</option>
+            {categoryList.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+            <option value={UNCATEGORIZED}>Sin categoría</option>
+          </select>
+        </label>
         <label className="leads-temperature-filter">
           <span className="visually-hidden">Filtrar por temperatura</span>
           <select
@@ -164,7 +169,9 @@ export function Leads() {
             <option value={UNEVALUATED}>Sin evaluar</option>
           </select>
         </label>
-        {buyers > 0 ? (
+        {leads.loading ? (
+          <span className="skeleton leads-toggle-skeleton" aria-hidden="true" />
+        ) : buyers > 0 ? (
           <label className="leads-buyers-toggle">
             <input
               type="checkbox"
@@ -189,9 +196,19 @@ export function Leads() {
           {leads.error}
         </Banner>
       ) : leads.loading ? (
-        <div className="leads-skeleton" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((row) => (
-            <div className="leads-skeleton-row skeleton" key={row} />
+        <div className="panel leads-table-wrap leads-skeleton" aria-hidden="true">
+          <div className="leads-skeleton-head">
+            <span className="skeleton" />
+            <span className="skeleton" />
+            <span className="skeleton" />
+          </div>
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((row) => (
+            <div className="leads-skeleton-row" key={row}>
+              <span className="skeleton leads-skeleton-avatar" />
+              <span className="skeleton leads-skeleton-name" />
+              <span className="skeleton leads-skeleton-pill" />
+              <span className="skeleton leads-skeleton-pill" />
+            </div>
           ))}
         </div>
       ) : all.length === 0 ? (

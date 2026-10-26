@@ -207,13 +207,62 @@
   padding: var(--signal-space-xl) var(--signal-space-md);
 }
 
+.leads-toolbar-placeholder {
+  display: flex;
+  gap: 8px;
+}
+
+.leads-chip-skeleton {
+  width: 96px;
+  height: 32px;
+  border-radius: 100px;
+}
+
+.leads-toggle-skeleton {
+  width: 220px;
+  height: 20px;
+}
+
 .leads-skeleton {
-  display: grid;
-  gap: var(--signal-space-sm);
+  padding: 0;
+}
+
+.leads-skeleton-head {
+  display: flex;
+  gap: var(--signal-space-lg);
+  padding: 14px var(--signal-space-md);
+  border-bottom: 1px solid var(--signal-border);
+}
+
+.leads-skeleton-head .skeleton {
+  width: 72px;
+  height: 12px;
 }
 
 .leads-skeleton-row {
-  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 65px;
+  padding: 0 var(--signal-space-md);
+  border-bottom: 1px solid var(--signal-hairline);
+}
+
+.leads-skeleton-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.leads-skeleton-name {
+  width: 140px;
+  height: 14px;
+}
+
+.leads-skeleton-pill {
+  width: 110px;
+  height: 30px;
+  border-radius: 100px;
 }
 
 @media (max-width: 900px) {

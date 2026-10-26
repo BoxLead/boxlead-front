@@ -512,6 +512,20 @@ button {
   }
 }
 
+@media (pointer: coarse) {
+  .btn,
+  .btn-sm,
+  .btn-icon,
+  .select,
+  .input {
+    min-height: 44px;
+  }
+
+  .btn-icon {
+    width: 44px;
+  }
+}
+
 @media (max-width: 760px) {
   .page {
     padding: var(--signal-space-lg) var(--signal-space-md);
