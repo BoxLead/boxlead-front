@@ -730,6 +730,13 @@
   }
 }
 
+@media (min-width: 761px) and (max-width: 1024px) {
+  .agents-list {
+    flex-basis: 260px;
+    width: 260px;
+  }
+}
+
 @media (max-width: 760px) {
   .agents-header {
     padding: var(--signal-space-5) var(--signal-gutter-mobile) var(--signal-space-3);
