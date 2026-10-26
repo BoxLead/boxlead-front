@@ -1,0 +1,59 @@
+.entry-eyebrow {
+  margin: 0 0 var(--signal-space-2);
+  color: var(--signal-accent);
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-wider);
+  text-transform: uppercase;
+}
+
+.entry-body {
+  display: grid;
+  gap: var(--signal-space-5);
+}
+
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--signal-space-3);
+}
+
+.entry-link {
+  justify-self: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-md);
+  text-decoration: underline;
+  text-underline-offset: var(--signal-space-0-5);
+  cursor: pointer;
+}
+
+.entry-link:hover {
+  color: var(--signal-heading);
+}
+
+.entry-steps {
+  display: grid;
+  gap: var(--signal-space-2);
+  margin: 0;
+  padding-left: var(--signal-space-5);
+  color: var(--signal-text);
+  font-size: var(--signal-text-md);
+}
+
+.entry-secret {
+  display: grid;
+  gap: var(--signal-space-1);
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-sm);
+  text-align: center;
+}
+
+.entry-secret code {
+  color: var(--signal-heading);
+  font-family: var(--signal-mono);
+  font-size: var(--signal-text-sm);
+  overflow-wrap: anywhere;
+}

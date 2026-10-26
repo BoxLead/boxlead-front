@@ -30,6 +30,22 @@ The dev server runs on `http://localhost:5173` and proxies `/api` to the API.
 
 The first run of the end-to-end suite needs a browser: `npx playwright install chromium`. The mock API signs in with any email and the password `demo1234`, and `POST /__reset` with `{"scenario":"empty"}` or `{"scenario":"meli-reconnect"}` switches its data. The `billing-*` and `reseller` scenarios turn on the payments endpoints, which answer 404 everywhere else.
 
+## Backoffice
+
+The internal backoffice for `admin.boxlead.app` is a second Vite app in `admin/` with its own `index.html`, `vite.admin.config.ts` and output in `dist-admin`. It reuses `src/index.css`, `src/design` and the components of `src/components/ui`, and keeps its own HTTP client, session and routes. The customer app never imports `admin/`. A lint rule enforces it and `npm run test:dist` checks the built bundle.
+
+| Command                  | Description |
+| ------------------------ | ----------- |
+| `npm run dev:admin`      | Dev server on `http://localhost:5175` against `VITE_API_BASE_URL`, or `http://localhost:8080` without it |
+| `npm run build:admin`    | Typecheck and build into `dist-admin`. It needs `VITE_API_BASE_URL` |
+| `npm run preview:admin`  | Serve `dist-admin` |
+| `npm run admin-mock`     | Mock of the admin API on port 8100 |
+| `npm run dev:admin:mock` | Dev server against the admin mock |
+
+To try it against core, start core with `ADMIN_ENABLED=true`, `ADMIN_BOOTSTRAP_USER_ID` set to a local user that has a password, `ADMIN_TOTP_ENCRYPTION_KEY` from `openssl rand -base64 32` and `ADMIN_ALLOWED_ORIGINS=http://localhost:5175`. The mock signs in with any email and the password `demo1234` and accepts the code `123456`. `POST /__reset` with `roles`, `factor`, `enrollmentOpen` or `locked` changes the account.
+
+The build adds the Content Security Policy of the backoffice plan as a meta tag, the HTML carries `noindex` and `no-referrer`, and `robots.txt` disallows everything. The headers a meta tag can not set come from the CloudFront distribution of the backoffice. The Docker target `admin-export` exports `dist-admin`.
+
 ## Docker
 
 The image builds the app and serves it with nginx as a non-root user on port 8080.
@@ -63,6 +79,7 @@ Dockerfile targets:
 | --------- | --------------------------------------------------- |
 | `lint`    | Runs ESLint                                         |
 | `export`  | Only the static files (`--output type=local,dest=dist`) |
+| `admin-export` | Only the backoffice files from `dist-admin`, with `VITE_API_BASE_URL` as build argument |
 | `runtime` | nginx image (default), health check on `/healthz`   |
 
 ## SEO

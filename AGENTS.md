@@ -14,7 +14,8 @@ docker-compose.yml    # Runs the production image locally
 public/               # favicon.svg and .ico, apple-touch-icon, icons/, og/ (social cards), site.webmanifest, theme-init.js, demo video
 scripts/              # prerender.ts (build step), staticSite.ts (preview routing), verifyDist.ts (npm run test:dist), brandImages.ts (npm run seo:images), lastmod.sh
 terraform/functions/  # CloudFront Function with the same routing rules as nginx
-e2e/                  # Playwright specs and mock-api/ (stateful mock of the backend contract)
+e2e/                  # Playwright specs and mock-api/ (stateful mock of the backend contract), admin/ specs and admin-mock/ for the backoffice
+admin/                # Backoffice app for admin.boxlead.app, see Backoffice
 src/
 ├── main.tsx          # Hydrates the prerendered markup or creates the root, BrowserRouter > AppProviders
 ├── AppProviders.tsx  # SocialAuthProvider > RouteMeta > AuthProvider > ToastProvider > App + Analytics
@@ -156,6 +157,17 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 - Every screen needs loading, empty and error states, and must work from 320px wide.
 - Animations are CSS, except number tweens with `useAnimatedNumber`, and all of them respect `prefers-reduced-motion`.
 
+## Backoffice
+
+`admin/` is the internal backoffice, a second Vite app built by `vite.admin.config.ts` into `dist-admin`. It imports the tokens of `src/index.css`, `src/design` and the shared components of `src/components`, never `src/api`, `src/context`, `src/data`, `src/routing`, `src/theme`, `src/analytics`, `src/pages` or `src/landing`. The reverse is forbidden too. ESLint fails on both and `npm run test:dist` fails if the customer bundle carries backoffice code.
+
+- `admin/src/api/client.ts` sends `credentials: "include"` and `X-Requested-With: boxlead-web` to `VITE_API_BASE_URL` and turns `{error, message, code}` into Spanish messages from `api/errors.ts`. A 401 `ADMIN_SESSION_REQUIRED` asks for the code in a dialog and retries the request once. A request that fails without an answer shows the notice to reload, which is what happens when Cloudflare Access expires.
+- `admin/src/session/SessionProvider.tsx` runs the entry flow of the plan with `GET /auth/me`, `POST /auth/login`, `GET /admin/me`, enrollment with a QR drawn in the browser by `uqr`, and `POST /admin/session`. There is no sign up, password recovery or Auth0. Leaving calls `DELETE /admin/session` and `POST /auth/logout`.
+- `admin/src/nav.ts` lists every screen with its roles and `admin/src/routes.tsx` points each one to its component. Only step 10 touches them. Each later step fills its own folder under `admin/src/areas` and its own file under `e2e/admin-mock`. The menu hides what the role can not see and a direct address shows a screen without permission, but core always decides.
+- `admin/src/components` has `Screen`, `ReasonDialog` for every action that changes something, with a reason of 10 to 500 characters and the amount for money actions, and `list/` with `ListView`, `DataTable`, `Pagination`, filters and `useListQuery`, which keeps filters and page in the URL.
+- Nothing goes to `localStorage`, `sessionStorage`, IndexedDB or cookies from the code. The theme follows the system. `admin/src/isolation.test.ts` and `e2e/admin/storage.spec.ts` check it.
+- The admin mock answers the contract of `backoffice-plan/contracts/api-admin-backoffice.md` in core with empty pages, checks the session, the role and the admin session in the same order as core, signs in with `demo1234` and accepts the code `123456`. The Playwright projects `admin-desktop` and `admin-mobile` build the app and serve it on 5184 with the CSP meta, with one mock per worker on `8100 + parallelIndex`. Import `test` from `e2e/admin/support.ts`.
+
 ## Landing
 
 - Lives in `src/landing/`. Dark by default; `html[data-theme="light"] .landing` in `LandingPage.css` overrides the `--landing-*` tokens, so components must use tokens (or `color-mix` on them) and never hard-coded colors.
@@ -175,7 +187,7 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 
 ## Security
 
-- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage` for anything but the theme, the sidebar and the analytics consent; the user lives in memory and comes from `GET /auth/me`.
+- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage` for anything but the theme, the sidebar and the analytics consent; the user lives in memory and comes from `GET /auth/me`. The backoffice uses no browser storage at all.
 - `AuthProvider` asks `GET /auth/me` only on `/app`, `/login`, `/register` and `/invitacion`, and shows a loader there until it answers, so the landing never calls the API.
 - Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
 - Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked. The Google Analytics origins are only added when `VITE_GA_MEASUREMENT_ID` is set.

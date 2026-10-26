@@ -1,0 +1,14 @@
+.connection-lost {
+  position: fixed;
+  top: var(--signal-space-4);
+  left: 50%;
+  z-index: var(--signal-z-toast);
+  width: min(560px, calc(100vw - var(--signal-space-8)));
+  transform: translateX(-50%);
+  box-shadow: var(--signal-shadow-3);
+  border-radius: var(--signal-radius-md);
+}
+
+.connection-lost .banner {
+  background: color-mix(in srgb, var(--signal-danger) 12%, var(--signal-surface-elevated));
+}

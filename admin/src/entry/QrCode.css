@@ -1,0 +1,15 @@
+.qr-code {
+  display: block;
+  width: min(100%, 220px);
+  height: auto;
+  margin: 0 auto;
+  border-radius: var(--signal-radius-sm);
+}
+
+.qr-code-light {
+  fill: var(--signal-cream);
+}
+
+.qr-code-dark {
+  fill: var(--signal-ink);
+}

@@ -1,0 +1,27 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.screen-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--signal-space-1);
+  margin-bottom: var(--signal-space-4);
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
+}
+
+.screen-back:hover {
+  color: var(--signal-heading);
+}
+
+.screen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--signal-space-2);
+}
+
