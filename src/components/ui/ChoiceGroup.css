@@ -78,11 +78,33 @@
   color: var(--signal-heading);
 }
 
+.choice-group-segmented .choice {
+  position: relative;
+  z-index: var(--signal-z-raised);
+}
+
 .choice-group-segmented .choice-selected,
 .choice-group-segmented .choice-selected:hover:not(:disabled) {
-  background: var(--signal-surface-elevated);
+  border-color: transparent;
+  background: transparent;
   color: var(--signal-heading);
+}
+
+.choice-indicator {
+  position: absolute;
+  top: var(--signal-space-1);
+  bottom: var(--signal-space-1);
+  left: 0;
+  width: var(--indicator-w, 0px);
+  border-radius: var(--signal-radius-xs);
+  background: var(--signal-surface-elevated);
   box-shadow: var(--signal-shadow-1), var(--signal-edge);
+  opacity: var(--indicator-w, 0);
+  transform: translateX(var(--indicator-x, 0px));
+  transition:
+    transform var(--signal-duration-slow) var(--signal-ease-spring),
+    width var(--signal-duration-slow) var(--signal-ease-out);
+  pointer-events: none;
 }
 
 .choice-icon {
@@ -124,7 +146,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .choice {
+  .choice,
+  .choice-indicator {
     transition: none;
   }
 

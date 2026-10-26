@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, type KeyboardEvent } from "react";
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { cx } from "../../util/classNames";
 import { Change } from "./Change";
@@ -24,6 +24,11 @@ export function MetricTabs({ panelId, selected, current, previous, onSelect }: M
   const ref = useRef<HTMLDivElement>(null);
   const selectedIndex = Math.max(0, METRICS.findIndex((metric) => metric.key === selected));
 
+  useLayoutEffect(() => {
+    ref.current?.style.setProperty("--tab-index", String(selectedIndex));
+    ref.current?.style.setProperty("--tab-count", String(METRICS.length));
+  }, [selectedIndex]);
+
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const move = KEY_MOVES[event.key];
     if (!move) return;
@@ -35,6 +40,7 @@ export function MetricTabs({ panelId, selected, current, previous, onSelect }: M
 
   return (
     <div className="metric-tabs" role="tablist" aria-label="Indicadores" ref={ref} onKeyDown={onKeyDown}>
+      <span className="metric-tabs-indicator" aria-hidden="true" />
       {METRICS.map((metric) => {
         const active = metric.key === selected;
         return (

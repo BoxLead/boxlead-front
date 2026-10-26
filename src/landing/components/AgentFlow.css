@@ -8,7 +8,7 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
+  gap: var(--signal-space-6);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -42,7 +42,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: var(--signal-space-5);
   text-align: center;
 }
 
@@ -64,19 +64,19 @@
 
 .agent-flow-index {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: var(--signal-space-2);
   color: var(--landing-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--signal-tracking-wider);
 }
 
 .agent-flow-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0 0 6px;
+  font-size: var(--signal-text-2xl);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-tight);
+  margin: 0 0 var(--signal-space-2);
 }
 
 .agent-flow-desc {
@@ -88,16 +88,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--signal-space-3);
   width: fit-content;
   max-width: 100%;
   margin: clamp(36px, 5vw, 56px) auto 0;
-  padding: 12px 22px;
-  border-radius: 100px;
+  padding: var(--signal-space-3) var(--signal-space-6);
+  border-radius: var(--signal-radius-pill);
   border: 1px solid var(--landing-border-strong);
   background: var(--landing-surface);
   color: var(--landing-heading);
-  font-size: 1rem;
+  font-size: var(--signal-text-base);
 }
 
 .agent-flow-handoff svg {
@@ -142,7 +142,7 @@
 @media (max-width: 760px) {
   .agent-flow {
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    gap: var(--signal-space-8);
   }
 
   .agent-flow-line {

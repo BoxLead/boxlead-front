@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import "./ChoiceGroup.css";
 
 export type Choice<T extends string> = {
@@ -26,12 +26,35 @@ export function ChoiceGroup<T extends string>({
   variant = "chips",
   className,
 }: ChoiceGroupProps<T>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const segmented = variant === "segmented";
+
+  useLayoutEffect(() => {
+    const group = ref.current;
+    if (!segmented || !group) return;
+    const place = () => {
+      const selected = group.querySelector<HTMLElement>(".choice-selected");
+      if (!selected) {
+        group.style.removeProperty("--indicator-w");
+        return;
+      }
+      group.style.setProperty("--indicator-x", `${selected.offsetLeft}px`);
+      group.style.setProperty("--indicator-w", `${selected.offsetWidth}px`);
+    };
+    place();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    observer?.observe(group);
+    return () => observer?.disconnect();
+  }, [segmented, value, choices]);
+
   return (
     <div
+      ref={ref}
       role="group"
       aria-label={label}
       className={`choice-group choice-group-${variant}${className ? ` ${className}` : ""}`}
     >
+      {segmented ? <span className="choice-indicator" aria-hidden="true" /> : null}
       {choices.map((choice) => {
         const selected = choice.value === value;
         return (

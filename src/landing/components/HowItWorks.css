@@ -2,10 +2,10 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  gap: var(--signal-space-5);
   list-style: none;
   margin: 0;
-  padding: 28px 0 0;
+  padding: var(--signal-space-8) 0 0;
 }
 
 .how-steps::before,
@@ -38,22 +38,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: var(--signal-space-6);
 }
 
 .how-step-number {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: var(--signal-text-3xl);
+  font-weight: var(--signal-weight-bold);
+  letter-spacing: var(--signal-tracking-tight);
   color: var(--landing-border-strong);
   font-variant-numeric: tabular-nums;
 }
 
 .how-step-title {
   font-size: 1.3125rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  margin: 0 0 8px;
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-tight);
+  margin: 0 0 var(--signal-space-2);
 }
 
 .how-step-desc {
@@ -63,10 +63,10 @@
 .how-visual {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--signal-space-2);
   list-style: none;
   margin: auto 0 0;
-  padding: 24px 0 0;
+  padding: var(--signal-space-6) 0 0;
 }
 
 .how-visual-channels li {
@@ -83,13 +83,13 @@
 .how-visual-chips li {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 100px;
+  gap: var(--signal-space-2);
+  padding: 7px var(--signal-space-4);
+  border-radius: var(--signal-radius-pill);
   border: 1px solid var(--landing-border-strong);
   background: var(--landing-bg);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
   color: var(--landing-heading);
 }
 
@@ -132,7 +132,7 @@
 
 @media (min-width: 681px) and (max-width: 900px) {
   .how-step {
-    padding: 20px;
+    padding: var(--signal-space-5);
   }
 
   .how-visual-channels li {

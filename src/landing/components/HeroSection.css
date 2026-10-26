@@ -60,13 +60,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 24px;
+  gap: var(--signal-space-6);
 }
 
 .hero-badge,
 .hero-subtitle,
 .hero-actions {
-  animation: hero-enter 0.9s var(--landing-ease) both;
+  animation: hero-enter var(--signal-duration-reveal) var(--landing-ease) both;
 }
 
 .hero-subtitle {
@@ -80,7 +80,7 @@
 .hero-visual {
   display: flex;
   justify-content: center;
-  animation: hero-enter 1s var(--landing-ease) 0.25s both;
+  animation: hero-enter var(--signal-duration-reveal) var(--landing-ease) var(--signal-duration-slow) both;
 }
 
 @keyframes hero-enter {
@@ -97,22 +97,22 @@
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 14px;
-  border-radius: 100px;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-2) var(--signal-space-4);
+  border-radius: var(--signal-radius-pill);
   background: var(--landing-accent-soft);
   border: 1px solid var(--landing-accent-border);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
   color: var(--landing-accent);
 }
 
 .hero-badge-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--landing-success);
-  animation: hero-pulse 2s ease-in-out infinite;
+  animation: hero-pulse 2s var(--signal-ease-in-out) infinite;
 }
 
 @keyframes hero-pulse {
@@ -123,9 +123,9 @@
 
 .hero-title {
   font-size: clamp(2.375rem, 5.2vw, 4.5rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.045em;
+  font-weight: var(--signal-weight-bold);
+  line-height: var(--signal-leading-none);
+  letter-spacing: var(--signal-tracking-tighter);
   margin: 0;
 }
 
@@ -138,7 +138,7 @@
 
 .hero-line > span {
   display: inline-block;
-  animation: hero-line-rise 1.1s var(--landing-ease) both;
+  animation: hero-line-rise var(--signal-duration-crawl) var(--landing-ease) both;
 }
 
 .hero-line:nth-child(2) > span {
@@ -162,7 +162,7 @@
   width: 100%;
   max-width: 480px;
   transform: perspective(1400px) rotateY(calc(var(--glow-nx, 0) * 7deg)) rotateX(calc(var(--glow-ny, 0) * -7deg));
-  transition: transform 0.6s var(--landing-ease);
+  transition: transform var(--signal-duration-reveal) var(--landing-ease);
 }
 
 .hero-scroll {
@@ -172,15 +172,15 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   color: var(--landing-text-muted);
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: var(--signal-text-2xs);
+  font-weight: var(--signal-weight-semibold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   text-decoration: none;
   transform: translateX(-50%);
-  transition: color 0.2s ease;
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .hero-scroll:hover {
@@ -218,7 +218,7 @@
 
 .hero-subtitle {
   font-size: clamp(1.125rem, 1.8vw, 1.375rem);
-  line-height: 1.55;
+  line-height: var(--signal-leading-normal);
   max-width: 520px;
   margin: 0;
   text-wrap: pretty;
@@ -227,9 +227,9 @@
 .hero-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--signal-space-3);
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: var(--signal-space-2);
 }
 
 @media (max-width: 900px) {
@@ -264,7 +264,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .hero-visual .agent-demo {
-    animation: hero-float 7s ease-in-out infinite;
+    animation: hero-float 7s var(--signal-ease-in-out) infinite;
   }
 
   @supports (animation-timeline: view()) {

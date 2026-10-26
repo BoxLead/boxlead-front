@@ -2,14 +2,14 @@
   display: inline-block;
   height: 1.2em;
   overflow: hidden;
-  line-height: 1.2;
+  line-height: var(--signal-leading-tight);
   vertical-align: bottom;
 }
 
 .roll-text-track {
   display: flex;
   flex-direction: column;
-  transition: transform 0.5s var(--landing-ease);
+  transition: transform var(--signal-duration-slower) var(--landing-ease);
 }
 
 .roll-text-track > span {

@@ -1,10 +1,24 @@
 .metric-tabs {
+  position: relative;
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
   gap: var(--signal-space-0-5);
   border-bottom: 1px solid var(--signal-border);
   background: var(--signal-border);
+}
+
+.metric-tabs-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: var(--signal-z-raised);
+  width: calc(100% / var(--tab-count, 4));
+  height: 2px;
+  background: var(--signal-accent);
+  transform: translateX(calc(var(--tab-index, 0) * 100%));
+  transition: transform var(--signal-duration-slow) var(--signal-ease-spring);
+  pointer-events: none;
 }
 
 .metric-tab {
@@ -21,16 +35,6 @@
   transition: background-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
-.metric-tab::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: var(--signal-accent);
-  transform: scaleX(0);
-  transition: transform var(--signal-duration-slower) var(--signal-ease-out);
-}
-
 .metric-tab:hover {
   background: color-mix(in srgb, var(--signal-surface) 97%, var(--signal-cream));
 }
@@ -38,10 +42,6 @@
 .metric-tab-selected,
 .metric-tab-selected:hover {
   background: color-mix(in srgb, var(--signal-surface) 94%, var(--signal-accent));
-}
-
-.metric-tab-selected::after {
-  transform: scaleX(1);
 }
 
 .metric-tab:focus-visible {
@@ -92,6 +92,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .metric-tabs-indicator {
+    transition: none;
+  }
+
   .metric-tab,
   .metric-tab::after,
   .metric-tab-label {
