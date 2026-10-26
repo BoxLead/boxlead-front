@@ -150,7 +150,8 @@ Everything that differs between channels lives in `src/platforms/<channel>.tsx`:
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
 - OAuth redirects go through `beginOAuthRedirect` and are checked on return with `consumeOAuthSession` (`state` validation).
 - Never render API or user content as HTML, and never accept `postMessage` data without an exact origin check.
-- Response headers that a `<meta>` tag cannot set (HSTS, `frame-ancestors`) come from the nginx image and, in production, from the CloudFront response headers policy in `terraform/cloudfront.tf`. Change both together.
+- Response headers that a `<meta>` tag cannot set (HSTS, `frame-ancestors`, COOP, CORP, `Permissions-Policy`) come from the nginx image (`docker/security-headers.conf`, included in every location) and, in production, from the CloudFront response headers policy in `terraform/cloudfront.tf`. Change both together and keep the values identical.
+- The CI and deploy workflows pin every action to a commit SHA with the tag in a comment. Bump the SHA and the comment together.
 
 ## Safety
 
