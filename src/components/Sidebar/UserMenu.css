@@ -134,6 +134,11 @@ a.account-menu-action:hover {
   color: var(--signal-heading);
 }
 
+.account-menu-theme {
+  cursor: pointer;
+  user-select: none;
+}
+
 .theme-switch {
   position: relative;
   display: inline-flex;

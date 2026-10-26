@@ -229,6 +229,10 @@ button {
   text-decoration: none;
 }
 
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 .btn:disabled {
   opacity: 0.55;
 }
@@ -561,6 +565,10 @@ button {
   .input,
   .select {
     transition: none;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: none;
   }
 }
 
