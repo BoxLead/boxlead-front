@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { trackEvent } from "../../analytics/gtag";
 import { Logo } from "../../components/Logo/Logo";
-import { CONSUMER_PAGES } from "../../util/consumerPages";
 import { BILLING_ENABLED } from "../flags";
 import { RollText } from "./RollText";
 import "./Header.css";
@@ -61,13 +60,6 @@ export function Header() {
       className={`landing-header${scrolled ? " header-scrolled" : ""}${hidden ? " header-hidden" : ""}`}
       onFocus={() => setHidden(false)}
     >
-      <nav className="header-consumer" aria-label="Defensa del consumidor">
-        {CONSUMER_PAGES.map((page) => (
-          <Link to={page.to} className="header-consumer-link" key={page.to}>
-            {page.label}
-          </Link>
-        ))}
-      </nav>
       <div className="landing-header-inner">
         <Link to="/" className="header-logo" aria-label="BoxLead — inicio">
           <Logo />

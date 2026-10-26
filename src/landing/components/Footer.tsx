@@ -92,7 +92,7 @@ export function Footer() {
           </a>
           <nav className="footer-consumer" aria-label="Defensa del consumidor">
             {CONSUMER_PAGES.map((page) => (
-              <Link to={page.to} className="footer-consumer-link" key={page.to}>
+              <Link to={page.to} className="footer-link" key={page.to}>
                 {page.label}
               </Link>
             ))}
