@@ -245,7 +245,7 @@
 
 @media (max-width: 360px) {
   .sidebar-link {
-    font-size: 0.625rem;
+    font-size: var(--signal-text-3xs);
     letter-spacing: -0.01em;
   }
 }

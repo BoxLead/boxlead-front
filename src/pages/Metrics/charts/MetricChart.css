@@ -82,7 +82,7 @@
 }
 
 .metric-chart-area {
-  animation: metric-chart-fade 0.7s var(--signal-ease-out) both;
+  animation: metric-chart-fade var(--signal-duration-reveal) var(--signal-ease-out) both;
 }
 
 .metric-chart-line {
@@ -92,7 +92,7 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
-  animation: metric-chart-draw 0.9s var(--signal-ease-out) both;
+  animation: metric-chart-draw var(--signal-duration-reveal) var(--signal-ease-out) both;
 }
 
 .metric-chart-previous {
@@ -109,13 +109,13 @@
   stroke-dasharray: 2 5;
   stroke-linecap: round;
   opacity: 0.8;
-  animation: metric-chart-fade var(--signal-duration-slower) var(--signal-ease-out) 0.55s both;
+  animation: metric-chart-fade var(--signal-duration-slower) var(--signal-ease-out) var(--signal-duration-slower) both;
 }
 
 .metric-chart-band {
   fill: var(--signal-accent);
   opacity: 0.08;
-  animation: metric-chart-band var(--signal-duration-slower) var(--signal-ease-out) 0.55s both;
+  animation: metric-chart-band var(--signal-duration-slower) var(--signal-ease-out) var(--signal-duration-slower) both;
 }
 
 .metric-chart-live-dot {

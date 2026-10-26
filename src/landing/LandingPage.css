@@ -50,6 +50,10 @@
   --landing-cta-glow: rgba(36, 82, 124, 0.5);
   --landing-grid-line: rgba(234, 234, 220, 0.025);
   --landing-ghost: color-mix(in srgb, var(--landing-accent) 60%, var(--landing-bg));
+  --landing-text-hero: clamp(2.375rem, 5.2vw, 4.5rem);
+  --landing-text-lead: clamp(1.125rem, 1.8vw, 1.375rem);
+  --landing-text-kinetic: clamp(3.5rem, 11vw, 9.5rem);
+  --landing-text-kinetic-sub: clamp(1.25rem, 3vw, 2.25rem);
 
   --landing-ease: var(--signal-ease-out);
 

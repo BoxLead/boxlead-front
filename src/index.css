@@ -22,6 +22,7 @@
   --signal-space-lg: var(--signal-space-6);
   --signal-space-xl: var(--signal-space-8);
 
+  --signal-text-3xs: 0.625rem;
   --signal-text-2xs: 0.6875rem;
   --signal-text-xs: 0.75rem;
   --signal-text-sm: 0.8125rem;
@@ -713,7 +714,7 @@ textarea.input:focus {
   border: 2px solid var(--signal-border);
   border-top-color: var(--signal-accent);
   border-radius: var(--signal-radius-full);
-  animation: spinner-rotate 800ms linear infinite;
+  animation: spinner-rotate var(--signal-duration-reveal) linear infinite;
 }
 
 @keyframes page-enter {
@@ -833,5 +834,39 @@ textarea.input:focus {
     --signal-edge: none;
     background: var(--signal-bg);
     color-scheme: light;
+  }
+}
+
+.rise-list > * {
+  animation: rise-in var(--signal-duration-slower) var(--signal-ease-out) both;
+}
+
+.rise-list > :nth-child(2) {
+  animation-delay: calc(var(--signal-duration-fast) / 3);
+}
+
+.rise-list > :nth-child(3) {
+  animation-delay: calc(var(--signal-duration-fast) / 3 * 2);
+}
+
+.rise-list > :nth-child(4) {
+  animation-delay: var(--signal-duration-fast);
+}
+
+.rise-list > :nth-child(5) {
+  animation-delay: calc(var(--signal-duration-fast) / 3 * 4);
+}
+
+.rise-list > :nth-child(6) {
+  animation-delay: calc(var(--signal-duration-fast) / 3 * 5);
+}
+
+.rise-list > :nth-child(n + 7) {
+  animation-delay: calc(var(--signal-duration-fast) * 2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-list > * {
+    animation: none;
   }
 }

@@ -37,7 +37,7 @@
 
 .demo-video:fullscreen {
   border-radius: 0;
-  background: #000000;
+  background: var(--signal-ink);
 }
 
 .demo-video-play {
@@ -48,7 +48,7 @@
   padding: 0;
   border: 0;
   border-radius: var(--landing-radius-md);
-  background: rgba(10, 21, 33, 0.38);
+  background: color-mix(in srgb, var(--signal-ink) 38%, transparent);
   color: var(--landing-heading);
   font-family: var(--landing-font);
   cursor: pointer;
@@ -59,7 +59,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--signal-space-4);
-  padding: 7px var(--signal-space-2) 7px 7px;
+  padding: var(--signal-space-2);
   border: 1px solid var(--landing-border-strong);
   border-radius: var(--signal-radius-pill);
   background: color-mix(in srgb, var(--landing-bg) 78%, transparent);
@@ -100,7 +100,7 @@
 
 @media (hover: hover) {
   .demo-video-play:hover {
-    background-color: rgba(10, 21, 33, 0.24);
+    background-color: color-mix(in srgb, var(--signal-ink) 24%, transparent);
   }
 
   .demo-video-play:hover .demo-video-play-pill {
@@ -116,7 +116,7 @@
 @media (max-width: 420px) {
   .demo-video-play-pill {
     gap: var(--signal-space-3);
-    padding: 5px var(--signal-space-2) 5px 5px;
+    padding: var(--signal-space-1) var(--signal-space-2) var(--signal-space-1) var(--signal-space-1);
   }
 
   .demo-video-play-icon {
@@ -157,7 +157,7 @@
 @keyframes demo-video-grow {
   from {
     transform: scale(0.84) translateY(40px);
-    border-radius: 40px;
+    border-radius: var(--signal-radius-pill);
   }
   to {
     transform: none;

@@ -25,7 +25,7 @@
 .signal-dot {
   width: 6px;
   height: 6px;
-  margin-top: 7px;
+  margin-top: var(--signal-space-2);
   border-radius: var(--signal-radius-full);
   background: var(--signal-accent);
 }

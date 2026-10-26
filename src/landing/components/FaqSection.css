@@ -61,7 +61,7 @@
 
 .faq-answer {
   margin: 0;
-  padding: 0 var(--signal-space-10) 26px 42px;
+  padding: 0 var(--signal-space-10) var(--signal-space-6) var(--signal-space-10);
   animation: faq-open var(--signal-duration-slower) var(--landing-ease) both;
 }
 

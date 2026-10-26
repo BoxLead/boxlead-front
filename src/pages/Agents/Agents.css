@@ -12,8 +12,8 @@
   align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--signal-space-md);
-  padding: var(--signal-space-lg) var(--signal-space-lg) var(--signal-space-md);
+  gap: var(--signal-space-4);
+  padding: var(--signal-space-6) var(--signal-gutter) var(--signal-space-4);
 }
 
 .agents-heading {
@@ -30,8 +30,8 @@
 
 .agents-alerts {
   display: grid;
-  gap: var(--signal-space-sm);
-  padding: 0 var(--signal-space-lg) var(--signal-space-md);
+  gap: var(--signal-space-2);
+  padding: 0 var(--signal-gutter) var(--signal-space-4);
 }
 
 .agents-unassigned {
@@ -732,11 +732,11 @@
 
 @media (max-width: 760px) {
   .agents-header {
-    padding: var(--signal-space-md);
+    padding: var(--signal-space-5) var(--signal-gutter-mobile) var(--signal-space-3);
   }
 
   .agents-alerts {
-    padding: 0 var(--signal-space-md) var(--signal-space-md);
+    padding: 0 var(--signal-gutter-mobile) var(--signal-space-4);
   }
 
   .agents-open .agents-header {

@@ -19,6 +19,7 @@
 }
 
 .choice {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--signal-space-2);
@@ -66,7 +67,7 @@
 }
 
 .choice-group-segmented .choice {
-  min-height: calc(var(--signal-control-sm) - var(--signal-space-2));
+  min-height: calc(var(--signal-control-sm) - var(--signal-space-2) - 2px);
   border: none;
   border-radius: var(--signal-radius-xs);
   color: var(--signal-text-muted);
@@ -79,7 +80,6 @@
 }
 
 .choice-group-segmented .choice {
-  position: relative;
   z-index: var(--signal-z-raised);
 }
 
@@ -141,7 +141,7 @@
   }
 
   .choice-group-segmented .choice {
-    min-height: calc(var(--signal-control-touch) - var(--signal-space-2));
+    min-height: calc(var(--signal-control-touch) - var(--signal-space-2) - 2px);
   }
 }
 

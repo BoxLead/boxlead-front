@@ -17,7 +17,7 @@
 
 .cta-title {
   margin: 0 0 var(--signal-space-4);
-  font-size: clamp(2.25rem, 5.2vw, 4.25rem);
+  font-size: var(--landing-text-hero);
   font-weight: var(--signal-weight-bold);
   line-height: 1.02;
   letter-spacing: var(--signal-tracking-tighter);
@@ -27,7 +27,7 @@
 .cta-subtitle {
   max-width: 440px;
   margin: 0 0 var(--signal-space-8);
-  font-size: clamp(1.0625rem, 1.7vw, 1.25rem);
+  font-size: var(--landing-text-lead);
   text-wrap: pretty;
 }
 

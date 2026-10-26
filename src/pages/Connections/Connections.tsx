@@ -133,7 +133,7 @@ export function Connections() {
           <div className="skeleton channel-skeleton" />
         </div>
       ) : (
-        <ul className="channel-grid" aria-label="Canales">
+        <ul className="channel-grid rise-list" aria-label="Canales">
           {CONNECTABLE_PLATFORMS.map((platform) => (
             <ChannelCard
               key={platform.id}

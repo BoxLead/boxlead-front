@@ -38,7 +38,7 @@
   border-radius: var(--signal-radius-lg);
   background: var(--signal-surface);
   box-shadow: var(--signal-shadow);
-  animation: auth-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: auth-enter var(--signal-duration-reveal) var(--signal-ease-out) both;
 }
 
 .auth-legal {
@@ -88,8 +88,8 @@
   color: var(--signal-heading);
   font-size: var(--signal-text-base);
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    box-shadow var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .auth-input::placeholder {
@@ -112,7 +112,7 @@
 }
 
 .auth-password .auth-input {
-  padding-right: 88px;
+  padding-right: calc(var(--signal-space-20) + var(--signal-space-2));
 }
 
 .auth-password-toggle {
@@ -161,8 +161,8 @@
   font-size: var(--signal-text-base);
   font-weight: var(--signal-weight-semibold);
   transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    transform var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .auth-submit:hover:not(:disabled) {
@@ -255,8 +255,8 @@
   font-size: var(--signal-text-base);
   font-weight: var(--signal-weight-medium);
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    background-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .auth-social-btn:hover:not(:disabled) {
@@ -323,7 +323,7 @@
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  margin: 3px 0 0;
+  margin: var(--signal-space-1) 0 0;
   accent-color: var(--signal-accent);
 }
 

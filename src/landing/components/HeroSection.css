@@ -122,7 +122,7 @@
 }
 
 .hero-title {
-  font-size: clamp(2.375rem, 5.2vw, 4.5rem);
+  font-size: var(--landing-text-hero);
   font-weight: var(--signal-weight-bold);
   line-height: var(--signal-leading-none);
   letter-spacing: var(--signal-tracking-tighter);
@@ -217,7 +217,7 @@
 }
 
 .hero-subtitle {
-  font-size: clamp(1.125rem, 1.8vw, 1.375rem);
+  font-size: var(--landing-text-lead);
   line-height: var(--signal-leading-normal);
   max-width: 520px;
   margin: 0;

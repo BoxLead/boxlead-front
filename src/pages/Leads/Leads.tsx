@@ -244,7 +244,7 @@ export function Leads() {
           />
         </div>
       ) : (
-        <div className="panel leads-table-wrap">
+        <div className="panel leads-table-wrap rise">
           <table className="leads-table">
             <caption className="visually-hidden">
               {visible.length === 1 ? "1 lead" : `${visible.length} leads`}

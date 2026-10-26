@@ -17,7 +17,7 @@
 .problem-panel {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: var(--signal-space-6);
   min-width: 0;
   padding: clamp(18px, 2.6vw, 30px);
   border: 1px solid var(--landing-border);
@@ -121,7 +121,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--signal-space-3);
-  padding: 11px var(--signal-space-3);
+  padding: var(--signal-space-3);
   border: 1px solid var(--landing-border);
   border-radius: var(--landing-radius-md);
   background: var(--landing-surface);
@@ -215,7 +215,7 @@
 }
 
 .problem-note-state {
-  padding: 3px var(--signal-space-2);
+  padding: var(--signal-space-1) var(--signal-space-2);
   border-radius: var(--signal-radius-pill);
   background: var(--landing-error-soft);
   color: var(--landing-error);
@@ -286,7 +286,7 @@
 }
 
 .problem-row-outcome {
-  padding: 3px var(--signal-space-2);
+  padding: var(--signal-space-1) var(--signal-space-2);
   border: 1px solid var(--landing-accent-border);
   border-radius: var(--signal-radius-pill);
   background: var(--landing-accent-soft);
@@ -369,7 +369,7 @@
 
 .problem-point-desc {
   display: block;
-  margin-top: 3px;
+  margin-top: var(--signal-space-1);
   color: var(--landing-text-muted);
   font-size: var(--signal-text-base);
   line-height: var(--signal-leading-normal);

@@ -104,7 +104,7 @@ export function Categories() {
           />
         </div>
       ) : (
-        <ul className="category-grid" aria-label="Categorías">
+        <ul className="category-grid rise-list" aria-label="Categorías">
           {list.map((category) => (
             <CategoryCard
               key={category.id}

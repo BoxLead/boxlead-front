@@ -311,7 +311,7 @@
 
   .leads-table td:nth-child(n + 3) {
     grid-column: 1 / -1;
-    padding-left: 44px;
+    padding-left: calc(var(--signal-space-10) + var(--signal-space-1));
     font-size: var(--signal-text-sm);
   }
 }

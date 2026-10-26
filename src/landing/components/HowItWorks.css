@@ -16,7 +16,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  border-radius: 2px;
+  border-radius: var(--signal-radius-2xs);
 }
 
 .how-steps::before {
@@ -50,7 +50,7 @@
 }
 
 .how-step-title {
-  font-size: 1.3125rem;
+  font-size: var(--signal-text-xl);
   font-weight: var(--signal-weight-semibold);
   letter-spacing: var(--signal-tracking-tight);
   margin: 0 0 var(--signal-space-2);
@@ -84,7 +84,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--signal-space-2);
-  padding: 7px var(--signal-space-4);
+  padding: var(--signal-space-2) var(--signal-space-4);
   border-radius: var(--signal-radius-pill);
   border: 1px solid var(--landing-border-strong);
   background: var(--landing-bg);

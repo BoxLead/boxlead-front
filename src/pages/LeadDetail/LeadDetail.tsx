@@ -149,7 +149,7 @@ export function LeadDetail() {
         </Banner>
       ) : null}
 
-      <div className="lead-detail-grid">
+      <div className="lead-detail-grid rise-list">
         <section className="panel lead-detail-card" aria-labelledby="lead-contact">
           <h2 className="panel-title" id="lead-contact">
             Contacto

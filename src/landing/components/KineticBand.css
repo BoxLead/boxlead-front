@@ -38,7 +38,7 @@
 
 .kinetic-row-main .kinetic-word {
   color: var(--landing-heading);
-  font-size: clamp(3.5rem, 11vw, 9.5rem);
+  font-size: var(--landing-text-kinetic);
   font-weight: var(--signal-weight-bold);
   line-height: var(--signal-leading-none);
   letter-spacing: -0.05em;
@@ -50,7 +50,7 @@
 
 .kinetic-row-sub .kinetic-word {
   color: var(--landing-text-muted);
-  font-size: clamp(1.25rem, 3vw, 2.25rem);
+  font-size: var(--landing-text-kinetic-sub);
   font-weight: var(--signal-weight-medium);
   letter-spacing: var(--signal-tracking-tight);
 }
