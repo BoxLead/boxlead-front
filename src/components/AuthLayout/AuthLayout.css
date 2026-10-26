@@ -334,3 +334,10 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+@media (max-width: 360px) {
+  .auth-social-btn {
+    padding: 0 var(--signal-space-3);
+    white-space: nowrap;
+  }
+}
