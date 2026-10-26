@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto'
+import { resolve } from 'node:path'
 import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import { prerenderSite, type RouteFiles } from './scripts/prerender'
+import { staticSiteMiddleware } from './scripts/staticSite'
 
 const FACEBOOK_SOURCES = 'https://*.facebook.com https://*.facebook.net https://*.fbcdn.net'
 const MERCADOLIBRE_IMAGES = 'https://*.mlstatic.com'
@@ -10,6 +13,16 @@ const ROUTE_ENTRIES: Record<string, string[]> = {
   '/': ['src/landing/LandingPage.tsx'],
   '/login': ['src/pages/Login/Login.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/register': ['src/pages/Register/Register.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/invitacion': ['src/pages/Invitation/Invitation.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/social/callback': ['src/pages/SocialCallback/SocialCallback.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/terminos': ['src/pages/Legal/Terms.tsx'],
+  '/privacidad': ['src/pages/Legal/Privacy.tsx'],
+  '/contratos': ['src/pages/Legal/AdhesionContracts.tsx'],
+  '/terms-of-service': ['src/pages/Legal/TermsOfService.tsx'],
+  '/privacy-policy': ['src/pages/Legal/PrivacyPolicy.tsx'],
+  '/data-deletion': ['src/pages/Legal/DataDeletion.tsx'],
+  '/arrepentimiento': ['src/pages/ConsumerRequest/Withdrawal.tsx'],
+  '/baja': ['src/pages/ConsumerRequest/Cancellation.tsx'],
   '/app': ['src/components/Layout/Layout.tsx', 'src/pages/Inbox/Inbox.tsx'],
   '/app/leads': ['src/components/Layout/Layout.tsx', 'src/pages/Leads/Leads.tsx'],
   '/app/metrics': ['src/components/Layout/Layout.tsx', 'src/pages/Metrics/Metrics.tsx'],
@@ -114,24 +127,27 @@ function sha256(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('base64')
 }
 
-function htmlHints(apiBaseUrl: string | undefined, agentApiBaseUrl: string | undefined, auth0Domain: string | undefined): Plugin {
-  let base = '/'
+type HintState = { base: string; routes: Record<string, RouteFiles> }
+
+function htmlHints(apiBaseUrl: string | undefined, agentApiBaseUrl: string | undefined, auth0Domain: string | undefined, state: HintState): Plugin {
   return {
     name: 'boxlead-html-hints',
     apply: 'build',
     configResolved(config) {
-      base = config.base
+      state.base = config.base
     },
     transformIndexHtml: {
       order: 'post',
       handler(_html, context) {
         const bundle = (context.bundle ?? {}) as BundleLike
         const byFacade = chunksByFacade(bundle)
-        const routes: Record<string, { scripts: string[]; styles: string[] }> = {}
+        const routes: Record<string, RouteFiles> = {}
         for (const [route, entries] of Object.entries(ROUTE_ENTRIES)) {
           const files = filesFor(entries, byFacade, bundle)
           if (files.scripts.length > 0) routes[route] = files
         }
+        state.routes = routes
+        const base = state.base
         const script = routeHintsScript(base, routes)
         const font = Object.keys(bundle).find((file) => PRELOAD_FONT.test(file))
         const tags: HtmlTagDescriptor[] = [
@@ -158,13 +174,42 @@ function htmlHints(apiBaseUrl: string | undefined, agentApiBaseUrl: string | und
   }
 }
 
+function staticSite(): Plugin {
+  return {
+    name: 'boxlead-static-site',
+    configurePreviewServer(server) {
+      server.middlewares.use(staticSiteMiddleware(resolve(server.config.root, server.config.build.outDir)))
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const hints: HintState = { base: '/', routes: {} }
+  const root = process.cwd()
+  const outDir = resolve(root, 'dist')
+  const serverDir = resolve(outDir, 'server')
 
   return {
-    plugins: [react(), htmlHints(env.VITE_API_BASE_URL, env.VITE_AGENT_API_BASE_URL, env.VITE_AUTH0_DOMAIN)],
+    plugins: [react(), htmlHints(env.VITE_API_BASE_URL, env.VITE_AGENT_API_BASE_URL, env.VITE_AUTH0_DOMAIN, hints), staticSite()],
     build: {
       modulePreload: { polyfill: false },
+    },
+    environments: {
+      ssr: {
+        build: {
+          outDir: serverDir,
+          copyPublicDir: false,
+          rollupOptions: { input: 'src/entry-server.ts' },
+        },
+      },
+    },
+    builder: {
+      async buildApp(builder) {
+        await builder.build(builder.environments.client)
+        await builder.build(builder.environments.ssr)
+        await prerenderSite({ root, outDir, serverDir, base: hints.base, routes: hints.routes })
+      },
     },
     server: {
       proxy: {

@@ -99,7 +99,7 @@ export function Footer() {
       </section>
 
       <div className="footer-bottom">
-        <p>
+        <p suppressHydrationWarning>
           © {year} {LEGAL_ENTITY_NAME}. Todos los derechos reservados.
         </p>
         <p>

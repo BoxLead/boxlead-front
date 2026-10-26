@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { RouteMeta } from "../seo/RouteMeta";
 import { pageNameFrom } from "./pageName";
 import { RouteAnnouncer } from "./RouteAnnouncer";
 
@@ -35,6 +36,7 @@ describe("RouteAnnouncer", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     render(
       <MemoryRouter initialEntries={["/a"]}>
+        <RouteMeta />
         <RouteAnnouncer />
         <Routes>
           <Route path="/a" element={<PageA />} />

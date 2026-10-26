@@ -4,12 +4,9 @@ import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { SocialButtons } from "../../components/AuthLayout/SocialButtons";
 import { useAuth } from "../../context/auth";
-import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { DEFAULT_APP_PATH, NEXT_PARAM, safeAppPath } from "../../util/redirect";
 
 export function Login() {
-  useDocumentTitle("Iniciar sesión");
-
   const { user, login, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

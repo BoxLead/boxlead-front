@@ -1,11 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { EmptyIllustration } from "../components/EmptyState/EmptyIllustration";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import "./NotFound.css";
 
 export function NotFound({ inApp = false }: { inApp?: boolean }) {
-  useDocumentTitle("Página no encontrada");
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {

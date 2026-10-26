@@ -7,7 +7,6 @@ import { longDate } from "../../components/PlanBanner/planNotice";
 import { useToast } from "../../components/ui/toast";
 import { useAuth } from "../../context/auth";
 import { acceptInvitation, previewInvitation } from "../../data/billing";
-import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { acceptInvitationError, INVITATION_INVALID_MESSAGE, readInvitationToken } from "../../util/invitation";
 import "./Invitation.css";
 
@@ -26,7 +25,6 @@ function previewError(error: unknown): PreviewState {
 }
 
 export function Invitation() {
-  useDocumentTitle("Invitación");
   const { user, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();

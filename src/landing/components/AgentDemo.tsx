@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import {
   InstagramIcon,
   MercadoLibreMark,
@@ -58,16 +59,10 @@ const LAST_PHASE = PHASE_DURATIONS.length - 1;
 
 type Step = { scene: number; phase: number };
 
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 export function AgentDemo() {
-  const [autoplay] = useState(() => !prefersReducedMotion());
-  const [step, setStep] = useState<Step>(() => ({
-    scene: 0,
-    phase: autoplay ? 0 : LAST_PHASE,
-  }));
+  const autoplay = !useMediaQuery("(prefers-reduced-motion: reduce)");
+  const [played, setStep] = useState<Step>({ scene: 0, phase: 0 });
+  const step = autoplay ? played : { scene: played.scene, phase: LAST_PHASE };
 
   useEffect(() => {
     if (!autoplay) return;
@@ -77,9 +72,9 @@ export function AgentDemo() {
           ? { scene: current.scene, phase: current.phase + 1 }
           : { scene: (current.scene + 1) % scenes.length, phase: 0 },
       );
-    }, PHASE_DURATIONS[step.phase]);
+    }, PHASE_DURATIONS[played.phase]);
     return () => window.clearTimeout(timer);
-  }, [autoplay, step]);
+  }, [autoplay, played]);
 
   const scene = scenes[step.scene];
   const status = ["Leyendo", "Escribiendo", "Respondido", "Respondido solo"][

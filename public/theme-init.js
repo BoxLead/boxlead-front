@@ -10,6 +10,7 @@
     theme = "dark";
     sidebar = "expanded";
   }
+  document.documentElement.dataset.js = "";
   document.documentElement.dataset.theme = theme;
   document.documentElement.dataset.sidebar = sidebar;
   var meta = document.querySelector('meta[name="theme-color"]');

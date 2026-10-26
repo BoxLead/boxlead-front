@@ -7,7 +7,6 @@ import { preloadSocialAuth } from "./context/socialRoutes";
 import {
   lazyRoute,
   NotFound,
-  preloadOnIdle,
   registerRoutePreload,
   RouteAnnouncer,
   RouteErrorBoundary,
@@ -54,7 +53,6 @@ registerRoutePreload("/app/agents", [Layout, Agents]);
 registerRoutePreload("/app/connections", [Layout, Connections]);
 registerRoutePreload("/app/billing", [Layout, Billing]);
 registerRoutePreload("/app/reseller", [Layout, Reseller]);
-preloadOnIdle(window.location.pathname);
 
 function Page({ children }: { children: ReactNode }) {
   return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;
