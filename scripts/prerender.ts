@@ -15,12 +15,21 @@ type PublicPage = {
   priority?: number
 }
 
+type SitemapEntry = { page: PublicPage; lastmod: string }
+
 type ServerEntry = {
   render: (url: string) => Promise<string>
   PUBLIC_PAGES: PublicPage[]
   NOT_FOUND_PAGE: PublicPage
   APP_SHELL_PATH: string
+  indexablePages: () => PublicPage[]
+  buildSitemap: (entries: SitemapEntry[]) => string
+  buildRobots: () => string
+  buildLlms: () => string
 }
+
+const LASTMOD_FILE = 'lastmod.txt'
+
 
 type PrerenderOptions = {
   root: string
@@ -64,17 +73,35 @@ function assemble(template: string, head: string, body: string): string {
   return withHead.replace(ROOT_OPEN, `<div id="root">${body}</div>`)
 }
 
-export function lastModified(root: string, source: string): string {
-  if (!existsSync(join(root, '.git'))) return new Date().toISOString()
+function recordedDates(root: string): Map<string, string> {
+  const file = join(root, LASTMOD_FILE)
+  const dates = new Map<string, string>()
+  if (!existsSync(file)) return dates
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    const [stamp, path] = line.split('\t')
+    if (stamp && path) dates.set(path, stamp)
+  }
+  return dates
+}
+
+function gitDate(root: string, source: string): string | null {
+  if (!existsSync(join(root, '.git'))) return null
   try {
     const stamp = execFileSync('git', ['log', '-1', '--format=%cI', '--', source], { cwd: root, encoding: 'utf8' }).trim()
-    return stamp === '' ? new Date().toISOString() : stamp
+    return stamp === '' ? null : stamp
   } catch {
-    return new Date().toISOString()
+    return null
   }
 }
 
-export async function prerenderSite({ outDir, serverDir, base, routes }: PrerenderOptions): Promise<string[]> {
+export function lastModified(root: string, source: string, recorded = recordedDates(root)): string {
+  const prefix = source.endsWith('/') ? source : `${source}/`
+  const stamps = [...recorded.entries()].filter(([path]) => path === source || path.startsWith(prefix)).map(([, stamp]) => stamp)
+  if (stamps.length > 0) return stamps.sort().at(-1) as string
+  return gitDate(root, source) ?? new Date().toISOString()
+}
+
+export async function prerenderSite({ root, outDir, serverDir, base, routes }: PrerenderOptions): Promise<string[]> {
   const entry = (await import(pathToFileURL(join(serverDir, 'entry-server.js')).href)) as ServerEntry
   const template = readFileSync(join(outDir, 'index.html'), 'utf8')
   const written: string[] = []
@@ -99,6 +126,12 @@ export async function prerenderSite({ outDir, serverDir, base, routes }: Prerend
 
   const shell = splitRendered(await entry.render(entry.APP_SHELL_PATH))
   write(APP_SHELL_FILE, assemble(template, shell.head, shell.body))
+
+  const recorded = recordedDates(root)
+  const entries = entry.indexablePages().map((page) => ({ page, lastmod: lastModified(root, page.source, recorded) }))
+  write('sitemap.xml', entry.buildSitemap(entries))
+  write('robots.txt', entry.buildRobots())
+  write('llms.txt', entry.buildLlms())
 
   rmSync(serverDir, { recursive: true, force: true })
   return written

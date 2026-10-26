@@ -1,38 +1,14 @@
-import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { SUPPORT_EMAIL } from "../../util/company";
 import { ChevronDownIcon } from "../../components/icons/UiIcons";
+import { LANDING_FAQS, type Faq } from "../faq";
 import "./FaqSection.css";
 
-type Faq = {
-  question: string;
-  answer: ReactNode;
+type FaqSectionProps = {
+  faqs?: Faq[];
 };
 
-const faqs: Faq[] = [
-  {
-    question: "¿El agente responde solo?",
-    answer:
-      "Sí. Y vos elegís cuánto delegar: puede responder en automático o dejarte un borrador para aprobar.",
-  },
-  {
-    question: "¿Qué pasa con mis datos?",
-    answer: (
-      <>
-        Los usamos solo para prestarte el servicio y no los vendemos. Mirá la{" "}
-        <Link to="/privacy-policy">Política de privacidad</Link> o pedí la{" "}
-        <Link to="/data-deletion">eliminación de tus datos</Link> cuando
-        quieras.
-      </>
-    ),
-  },
-  {
-    question: "¿Cómo se paga?",
-    answer: "Con una suscripción mensual que incluye todos tus canales.",
-  },
-];
-
-export function FaqSection() {
+export function FaqSection({ faqs = LANDING_FAQS }: FaqSectionProps) {
   return (
     <section id="faq" className="landing-section landing-section-alt">
       <div className="landing-container">
@@ -51,7 +27,11 @@ export function FaqSection() {
                 <span className="faq-question-text">{faq.question}</span>
                 <ChevronDownIcon className="faq-chevron" />
               </summary>
-              <p className="faq-answer">{faq.answer}</p>
+              <p className="faq-answer">
+                {faq.answer.map((part, partIndex) =>
+                  typeof part === "string" ? part : <Link to={part.to} key={partIndex}>{part.label}</Link>,
+                )}
+              </p>
             </details>
           ))}
         </div>

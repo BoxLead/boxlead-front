@@ -3,6 +3,7 @@ import { prerender } from "react-dom/static";
 import { StaticRouter } from "react-router-dom";
 import { AppProviders } from "./AppProviders";
 
+export { buildLlms, buildRobots, buildSitemap, indexablePages } from "./seo/files";
 export { APP_SHELL_PATH, NOT_FOUND_PAGE, PUBLIC_PAGES } from "./seo/pages";
 
 export async function render(url: string): Promise<string> {

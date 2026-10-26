@@ -1,5 +1,7 @@
+import { LANDING_FAQS } from "../landing/faq";
 import { PRODUCT_NAME } from "../util/company";
 import { normalizePath } from "./site";
+import { breadcrumbs, demoVideo, faqPage, organization, softwareApplication, webPage, webSite, type JsonLd } from "./structuredData";
 
 export type PageLanguage = "es-AR" | "en";
 
@@ -33,8 +35,18 @@ const LEGAL_ALTERNATES = {
 
 export const LANDING_TITLE = "Agentes de IA que automatizan y escalan tus ventas";
 
+function legalPage(path: string, title: string, description: string, lang: PageLanguage): () => JsonLd[] {
+  const home = lang === "en" ? "Home" : "Inicio";
+  return () => [webPage(path, title, description, lang), breadcrumbs([{ name: home, path: "/" }, { name: title, path }])];
+}
+
+function page(definition: Omit<PublicPage, "jsonLd">): PublicPage {
+  return definition.index ? { ...definition, jsonLd: legalPage(definition.path, definition.title, definition.description, definition.lang) } : definition;
+}
+
 export const PUBLIC_PAGES: PublicPage[] = [
   {
+    jsonLd: () => [organization(), webSite(), softwareApplication(), demoVideo(), faqPage(LANDING_FAQS)],
     path: "/",
     title: LANDING_TITLE,
     description:
@@ -45,7 +57,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
     priority: 1,
     source: "src/landing",
   },
-  {
+  page({
     path: "/terminos",
     title: "Términos y condiciones",
     description: "Las condiciones de uso de BoxLead, el servicio de Catvin SRL. Planes, pagos, baja, arrepentimiento y tus derechos como consumidor.",
@@ -55,8 +67,8 @@ export const PUBLIC_PAGES: PublicPage[] = [
     changefreq: "monthly",
     priority: 0.3,
     source: "src/pages/Legal/Terms.tsx",
-  },
-  {
+  }),
+  page({
     path: "/privacidad",
     title: "Política de privacidad",
     description: "Qué datos personales trata BoxLead, para qué, con quién los comparte y cómo ejercer tus derechos según la Ley 25.326.",
@@ -66,8 +78,8 @@ export const PUBLIC_PAGES: PublicPage[] = [
     changefreq: "monthly",
     priority: 0.3,
     source: "src/pages/Legal/Privacy.tsx",
-  },
-  {
+  }),
+  page({
     path: "/contratos",
     title: "Contratos de adhesión Ley N° 24.240 de Defensa del Consumidor",
     description: "El modelo de contrato de adhesión para la suscripción a BoxLead, publicado según el artículo 38 de la Ley 24.240.",
@@ -76,8 +88,8 @@ export const PUBLIC_PAGES: PublicPage[] = [
     changefreq: "monthly",
     priority: 0.3,
     source: "src/pages/Legal/AdhesionContracts.tsx",
-  },
-  {
+  }),
+  page({
     path: "/terms-of-service",
     title: "Terms of Service",
     description: "The terms of use of BoxLead, the service provided by Catvin SRL. An English translation for reference, the Spanish version prevails.",
@@ -87,8 +99,8 @@ export const PUBLIC_PAGES: PublicPage[] = [
     changefreq: "monthly",
     priority: 0.2,
     source: "src/pages/Legal/TermsOfService.tsx",
-  },
-  {
+  }),
+  page({
     path: "/privacy-policy",
     title: "Privacy Policy",
     description: "What data BoxLead collects through the Meta Graph API, how it is used, shared and deleted. An English translation for reference.",
@@ -98,8 +110,8 @@ export const PUBLIC_PAGES: PublicPage[] = [
     changefreq: "monthly",
     priority: 0.2,
     source: "src/pages/Legal/PrivacyPolicy.tsx",
-  },
-  {
+  }),
+  page({
     path: "/data-deletion",
     title: "Data Deletion Instructions",
     description: "How to remove the BoxLead integration from Facebook and request the complete erasure of your leads, conversations and messages.",
@@ -108,55 +120,55 @@ export const PUBLIC_PAGES: PublicPage[] = [
     changefreq: "yearly",
     priority: 0.2,
     source: "src/pages/Legal/DataDeletion.tsx",
-  },
-  {
+  }),
+  page({
     path: "/arrepentimiento",
     title: "Botón de arrepentimiento",
     description: "Arrepentite de un plan pago de BoxLead dentro de los 10 días corridos del primer cobro y recibí la devolución total, sin iniciar sesión.",
     lang: "es-AR",
     index: false,
     source: "src/pages/ConsumerRequest/Withdrawal.tsx",
-  },
-  {
+  }),
+  page({
     path: "/baja",
     title: "Botón de baja de servicio",
     description: "Pedí la baja de tu suscripción a BoxLead sin iniciar sesión, sin costo y sin preaviso.",
     lang: "es-AR",
     index: false,
     source: "src/pages/ConsumerRequest/Cancellation.tsx",
-  },
-  {
+  }),
+  page({
     path: "/login",
     title: "Iniciar sesión",
     description: "Ingresá a tu cuenta de BoxLead.",
     lang: "es-AR",
     index: false,
     source: "src/pages/Login/Login.tsx",
-  },
-  {
+  }),
+  page({
     path: "/register",
     title: "Crear cuenta",
     description: "Creá tu cuenta de BoxLead y conectá tus canales en minutos.",
     lang: "es-AR",
     index: false,
     source: "src/pages/Register/Register.tsx",
-  },
-  {
+  }),
+  page({
     path: "/invitacion",
     title: "Invitación",
     description: "Activá tu invitación a la Beta de BoxLead.",
     lang: "es-AR",
     index: false,
     source: "src/pages/Invitation/Invitation.tsx",
-  },
-  {
+  }),
+  page({
     path: "/social/callback",
     title: "Iniciando sesión",
     description: "Estamos verificando tu cuenta.",
     lang: "es-AR",
     index: false,
     source: "src/pages/SocialCallback/SocialCallback.tsx",
-  },
+  }),
 ];
 
 export const NOT_FOUND_PAGE: PublicPage = {
