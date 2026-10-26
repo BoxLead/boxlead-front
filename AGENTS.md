@@ -1,20 +1,26 @@
 # BoxLead Frontend
 
-SPA for BoxLead: a public landing page plus the app (inbox, leads, metrics, categories, connections). Deployed as static assets to S3 + CloudFront.
+SPA for BoxLead: a public landing page plus the app (inbox, leads, metrics, categories, connections). The public pages are prerendered at build time and hydrated in the browser. Deployed as static assets to S3 + CloudFront.
 
 **Stack:** Node 24, Vite 8, React 19, TypeScript 6 (strict), react-router-dom 7, vanilla CSS, ESLint 10, Docker + nginx.
 
 ## Structure
 
 ```
-index.html            # Entry HTML, SEO metadata
-Dockerfile            # Multi-stage build: lint, test, build, export (static files), runtime (nginx)
-docker/nginx.conf     # SPA fallback, caching, security headers, /healthz
+index.html            # HTML shell shared by every page (charset, viewport, theme script, icons, manifest)
+Dockerfile            # Multi-stage build: lint, test, build + test:dist, export (static files), runtime (nginx)
+docker/nginx.conf     # Clean URLs for the prerendered pages, app shell under /app, real 404, caching, security headers, /healthz
 docker-compose.yml    # Runs the production image locally
-public/               # favicon, og-image, robots.txt, sitemap.xml
+public/               # favicon.svg and .ico, apple-touch-icon, icons/, og/ (social cards), site.webmanifest, theme-init.js, demo video
+scripts/              # prerender.ts (build step), staticSite.ts (preview routing), verifyDist.ts (npm run test:dist), brandImages.ts (npm run seo:images), lastmod.sh
+terraform/functions/  # CloudFront Function with the same routing rules as nginx
 e2e/                  # Playwright specs and mock-api/ (stateful mock of the backend contract)
 src/
-├── main.tsx          # BrowserRouter > SocialAuthProvider > AuthProvider > ToastProvider > App
+├── main.tsx          # Hydrates the prerendered markup or creates the root, BrowserRouter > AppProviders
+├── AppProviders.tsx  # SocialAuthProvider > RouteMeta > AuthProvider > ToastProvider > App + Analytics
+├── entry-server.ts   # Server entry used by the prerender, exports render() and the page table helpers
+├── seo/              # Page table (pages.ts), RouteMeta (head tags per route), structured data, sitemap, robots and llms generators
+├── analytics/        # Consent store, gtag loader, consent banner, cookie preferences link
 ├── App.tsx           # Routes (every page is lazy-loaded through routing/lazyRoute)
 ├── routing/          # lazyRoute with chunk retry, route preload, RouteErrorBoundary, NotFound, ScrollRestoration, RouteAnnouncer
 ├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
@@ -27,7 +33,7 @@ src/
 │   ├── ProviderDetails/ # Catvin SRL details from util/company.ts, only the fields that have a value
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
-├── landing/          # Public landing: LandingPage and its sections
+├── landing/          # Public landing: LandingPage and its sections, faq.ts and demoVideo.ts data, editorial.ts and pages/EditorialPage for the channel and agency pages
 └── util/             # classNames, company, consumerPages, dates, format, labels, legalAcceptance, links, metrics, oauth, planPrice, redirect, referral, facebook-sdk
 terraform/            # Infrastructure (do not modify without approval)
 ```
@@ -36,6 +42,7 @@ terraform/            # Infrastructure (do not modify without approval)
 
 ```
 /                                   Landing (public)
+/whatsapp, /instagram, /messenger, /mercadolibre, /agencias   Editorial pages per channel and for agencies (public)
 /login, /register                   Auth (public)
 /terminos, /privacidad, /contratos  Legal texts in Spanish, the version that prevails (public)
 /terms-of-service, /privacy-policy  English translations, plus /data-deletion (public)
@@ -56,6 +63,22 @@ Inbox, leads and metrics state lives in the URL: `/app/inbox?channel=MELI&stage=
 Every page is declared with `lazyRoute` in `App.tsx`. It wraps `React.lazy`, exposes `preload()` and reloads the page once when a chunk is missing after a deploy (`routing/chunkRetry.ts`, the mark lives in `sessionStorage`). `registerRoutePreload` maps a path prefix to the chunks it needs, the sidebar warms the route and its first query on hover, focus or touch, and the current route is warmed on idle at startup. The production `index.html` also gets a hashed inline script from `vite.config.ts` that adds `modulepreload` hints for the chunks of the current path and a preload for the latin Inter font. `RouteErrorBoundary` wraps the whole tree and each app page, it shows a retry and explains a missing chunk. `ScrollRestoration` keeps the scroll position per history entry and restores it on back and forward, `RouteAnnouncer` announces the new title and moves the focus to the page heading, and sidebar links navigate with a view transition that is disabled under `prefers-reduced-motion`. `RouteErrorBoundary` is the one class component in the codebase because React only exposes error boundaries as classes.
 
 The inbox has keyboard shortcuts (`useInboxShortcuts`): `/` focuses the search, `j`, `k` and the arrows move between the visible conversations and `Escape` goes back to the list. Long lists render sixty rows at a time (`useRenderWindow`) and load more when the sentinel button scrolls into view. The search text of the inbox and leads is kept in the URL as `q` (`useUrlQuery`). `queryCache` keeps the previous reference when a poll returns the same data, so unchanged polls do not re-render. The agent playground posts a standard AG-UI `RunAgentInput` and reads the JSON event stream with `data/agui.ts`, there is no AG-UI client dependency.
+
+## SEO and prerender
+
+Every public route is listed in `src/seo/pages.ts` with its path, title, description, language, whether it is indexable, its social card, its hreflang alternates, the source path used for the sitemap `lastmod` and a `jsonLd` builder. `RouteMeta` (`src/seo/RouteMeta.tsx`) reads that table for the current location and renders the `<title>`, description, canonical or `noindex`, Open Graph, Twitter, hreflang and JSON-LD tags with React 19 native head tags, so public pages never call `useDocumentTitle`. App pages keep `useDocumentTitle`, which now feeds a store that `RouteMeta` renders as the title and marks `noindex`. An unknown path outside `/app` gets the not found metadata.
+
+`npm run build` runs `tsc -b && vite build`. The Vite config builds the client, builds `src/entry-server.ts` for the server, and `scripts/prerender.ts` renders every page of the table with `prerender` from `react-dom/static` into `dist/<path>.html`, next to `dist/404.html` (the not found page) and `dist/app.html` (the shell for `/app`, rendered at `/app` so it only holds the loader). Each prerendered file links the stylesheets and preloads the chunks of its route from `ROUTE_ENTRIES` in `vite.config.ts`, so a new public page needs an entry there or it will flash unstyled. The same step writes `sitemap.xml` (indexable pages only, with `lastmod` from `lastmod.txt` when the deploy wrote it, else from git, else the build time), `robots.txt` and `llms.txt` from `src/seo/files.ts`. `main.tsx` hydrates when the root has children and creates the root otherwise, so the dev server keeps working without prerender.
+
+Clean URLs live in three places that must agree: `scripts/staticSite.ts` (vite preview), `docker/nginx.conf` and `terraform/functions/router.js` (CloudFront). The rules are one URL form without trailing slash and without `.html` (301 otherwise), `/app` and everything under it serve `app.html`, an extensionless path serves `<path>.html`, and anything missing answers the 404 page with status 404. `npm run test:dist` starts the preview over `dist/` and checks every page of the sitemap (status, single `h1`, own title and description, canonical, Open Graph, valid JSON-LD, not noindex), the private pages (noindex, out of the sitemap), the 404 status and the redirects. The Docker build runs it after the build.
+
+Components rendered on public pages run on the server too. Keep `window`, `document`, `localStorage` and `matchMedia` inside effects, event handlers or `useSyncExternalStore` with a server snapshot (`useMediaQuery` does this), and mark values that legitimately differ between build and browser, like the year in the footers, with `suppressHydrationWarning`. The landing reveal animations only hide content under `html[data-js]`, which `theme-init.js` sets, so the prerendered HTML is readable without JavaScript.
+
+To add a public page: create the component, add the route in `App.tsx` and `registerRoutePreload`, add the entry to `ROUTE_ENTRIES` in `vite.config.ts`, add the page to `src/seo/pages.ts` with a unique title and description, a social card if it matters (add it to `CARDS` in `scripts/brandImages.ts` and run `npm run seo:images`), and run `npm run build && npm run test:dist`. Channel and audience pages are data in `src/landing/editorial.ts` rendered by `landing/pages/EditorialPage.tsx`, their capabilities must match `src/platforms/` and must not carry figures, prices, testimonials or customers.
+
+## Analytics
+
+Google Analytics 4 runs only when `VITE_GA_MEASUREMENT_ID` is set at build time, and only on public pages. `src/analytics/gtag.ts` pushes the Consent Mode v2 defaults (everything denied) and loads `gtag.js` only after the visitor accepts in `ConsentBanner`, which `Analytics` renders in `AppProviders` outside `/app`. The choice lives in `localStorage` under `boxlead.consent`, the one documented exception to the no storage rule besides the theme, and `CookiePreferences` in the footers clears it so the banner asks again. Events are `cta_registro` (sign up buttons, with the place), `demo_play`, `contacto` (support email links), `canal_visita` (editorial pages) and `registro_inicio` (first focus on the sign up form), never with personal data, and `page_view` is sent by hand on every public route change. `/app` never loads the tag, and a tag already loaded on a public page sends nothing once the person enters the app. The CSP adds the Google origins only when the id is set.
 
 ## Social login
 
@@ -128,7 +151,7 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 - No comments in code.
 - UI copy is in Spanish. Legal texts are written in Spanish, which prevails, and the English pages are translations that say so.
 - Load data with `useApiQuery` (shared cache, `refreshInterval` polls only while the tab is visible); mutations call `api` and then `invalidateQueries` or `setQueryData`.
-- Every page sets its tab title with `useDocumentTitle`.
+- App pages set their tab title with `useDocumentTitle`. Public pages get it from `src/seo/pages.ts` through `RouteMeta`.
 - Styles used by more than one page belong in `index.css` or a shared component, never in a page stylesheet (pages are code-split).
 - Every screen needs loading, empty and error states, and must work from 320px wide.
 - Animations are CSS, except number tweens with `useAnimatedNumber`, and all of them respect `prefers-reduced-motion`.
@@ -145,16 +168,17 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 ## Build and deploy
 
 - The Dockerfile is the single source for the Node version; CI lints and builds through it.
-- `VITE_API_BASE_URL` is a build argument baked into the bundle.
-- CD builds and smoke-tests the image, then exports the static files to S3 + CloudFront.
+- `VITE_API_BASE_URL`, `VITE_AGENT_API_BASE_URL`, `VITE_AUTH0_*`, `VITE_GA_MEASUREMENT_ID` and `VITE_GOOGLE_SITE_VERIFICATION` are build arguments baked into the bundle, read from SSM by the deploy workflow.
+- CD records the last commit of every source file in `lastmod.txt` for the sitemap, builds and smoke-tests the image (health, app shell, a prerendered page, the 404 status and a redirect), then exports the static files to S3 with `Cache-Control` per kind (immutable for `/assets`, a day for media, no-cache for HTML, XML and text) and invalidates CloudFront.
+- CloudFront runs `terraform/functions/router.js` on every viewer request and maps missing objects to `/404.html` with status 404. Changing the routing rules means changing the function, nginx and `scripts/staticSite.ts` together.
 - TypeScript stays below 6.1 until `typescript-eslint` supports newer versions.
 
 ## Security
 
-- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage`; the user lives in memory and comes from `GET /auth/me`.
+- The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage` for anything but the theme, the sidebar and the analytics consent; the user lives in memory and comes from `GET /auth/me`.
 - `AuthProvider` asks `GET /auth/me` only on `/app`, `/login`, `/register` and `/invitacion`, and shows a loader there until it answers, so the landing never calls the API.
 - Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
-- Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked.
+- Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked. The Google Analytics origins are only added when `VITE_GA_MEASUREMENT_ID` is set.
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
 - OAuth redirects go through `beginOAuthRedirect` and are checked on return with `consumeOAuthSession` (`state` validation).
 - Never render API or user content as HTML, and never accept `postMessage` data without an exact origin check.
@@ -165,7 +189,7 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 
 Do not modify without explicit approval: `terraform/`, `.github/workflows/`, `.env.example`, or the behavior of `ProtectedRoute.tsx`.
 
-Run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before considering work complete. New behaviour gets unit tests next to the code (`*.test.ts(x)`) and an end-to-end spec in `e2e/`, with the mock API extended to match the backend contract.
+Run `npm run lint`, `npm run build`, `npm test`, `npm run test:dist` and `npm run test:e2e` before considering work complete. New behaviour gets unit tests next to the code (`*.test.ts(x)`) and an end-to-end spec in `e2e/`, with the mock API extended to match the backend contract.
 
 ### End-to-end isolation
 

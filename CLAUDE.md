@@ -7,8 +7,9 @@
 3. **NEVER** use `any` in TypeScript. Use `unknown` + type narrowing.
 4. **NEVER** use inline styles. Use CSS classes with custom properties.
 5. **NEVER** install CSS frameworks (Tailwind, styled-components, etc.). This project uses vanilla CSS.
-6. **ALWAYS** run `npm run lint`, `npm run build`, `npm test` and `npm run test:e2e` before considering work complete.
+6. **ALWAYS** run `npm run lint`, `npm run build`, `npm test`, `npm run test:dist` and `npm run test:e2e` before considering work complete.
 7. **NEVER** branch on a platform id in pages or components; add the difference to `src/platforms/`.
+8. **NEVER** touch `window`, `document` or storage during render in a component of a public page. They are prerendered on the server and hydrated.
 
 ## Quick Reference
 
@@ -16,17 +17,23 @@
 ```bash
 npm run dev        # Dev server at localhost:5173
 npm run dev:mock   # Dev server against the mock API (run `npm run mock-api` first)
-npm run build      # TypeScript check + production build
+npm run build      # TypeScript check + production build + prerender of the public pages, sitemap, robots and llms
 npm run lint       # ESLint
 npm test           # Vitest unit tests
+npm run test:dist  # Checks dist/ over vite preview: titles, canonical, JSON-LD, sitemap, 404 and redirects
 npm run test:e2e   # Playwright against the mock API, desktop and 320px
-npm run preview    # Serve dist/ locally
+npm run preview    # Serve dist/ locally with the same clean URLs and 404 as production
+npm run seo:images # Regenerate the social cards, icons and favicon.ico in public/
 docker compose up --build   # Production image at localhost:3000
 ```
 
 ### Key Files
 - `src/App.tsx` — All route definitions
-- `src/main.tsx` — React root (BrowserRouter > AuthProvider > ToastProvider > App)
+- `src/main.tsx` — Hydrates the prerendered markup or creates the root (BrowserRouter > AppProviders)
+- `src/seo/pages.ts` — Table of public pages: title, description, index, social card, hreflang, JSON-LD. `RouteMeta.tsx` renders it
+- `src/landing/editorial.ts` — Content of the channel and agency pages rendered by `landing/pages/EditorialPage.tsx`
+- `scripts/prerender.ts` — Build step that writes one HTML per public page, `404.html`, `app.html`, `sitemap.xml`, `robots.txt` and `llms.txt`
+- `src/analytics/` — Consent banner and GA4 loader, only with `VITE_GA_MEASUREMENT_ID` and only outside `/app`
 - `src/context/AuthContext.tsx` — `AuthProvider` (session state from `/auth/me`); `src/context/auth.ts` — `useAuth`
 - `src/hooks/` — `useApiQuery` (cached data loading), `useConnectPlatform`, `useDocumentTitle`
 - `src/data/queryCache.ts` — shared request cache, invalidation and optimistic updates
@@ -46,6 +53,7 @@ docker compose up --build   # Production image at localhost:3000
 ### Route Structure
 ```
 /                 → Public landing page
+/whatsapp, /instagram, /messenger, /mercadolibre, /agencias → Editorial pages, prerendered
 /login, /register → Auth
 /terminos, /privacidad, /contratos → Legal texts in Spanish, the version that prevails
 /terms-of-service, /privacy-policy, /data-deletion → English translations and data deletion
@@ -62,6 +70,7 @@ docker compose up --build   # Production image at localhost:3000
 - `--signal-*` tokens for app UI, `--landing-*` for landing page
 - `type` keyword for TypeScript type aliases
 - Type-only imports: `import type { X } from '...'`
+- Public pages take their title from `src/seo/pages.ts`, app pages use `useDocumentTitle`
 - No comments in code; UI copy in Spanish, legal texts in Spanish with English translations that say Spanish prevails
 
 ### Auth Flow
