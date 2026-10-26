@@ -17,6 +17,7 @@
 ```bash
 npm run dev        # Dev server at localhost:5173
 npm run dev:mock   # Dev server against the mock API (run `npm run mock-api` first)
+npm run dev:admin  # Backoffice dev server at localhost:5175, see Backoffice in AGENTS.md
 npm run build      # TypeScript check + production build + prerender of the public pages, sitemap, robots and llms
 npm run lint       # ESLint
 npm test           # Vitest unit tests
