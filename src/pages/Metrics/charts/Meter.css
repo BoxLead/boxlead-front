@@ -10,8 +10,8 @@
   fill: var(--signal-accent);
   transform-box: fill-box;
   transform-origin: left center;
-  transition: width 0.5s var(--signal-ease);
-  animation: meter-grow 0.8s var(--signal-ease) both;
+  transition: width var(--signal-duration-slower) var(--signal-ease-out);
+  animation: meter-grow var(--signal-duration-reveal) var(--signal-ease-out) both;
 }
 
 @keyframes meter-grow {

@@ -12,6 +12,8 @@ type DialogProps = {
   children: ReactNode;
 };
 
+const CLOSE_MS = 180;
+
 function reducedMotion(): boolean {
   return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
@@ -19,7 +21,8 @@ function reducedMotion(): boolean {
 export function Dialog({ open, title, description, size = "md", busy = false, onClose, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const pressedOutside = useRef(false);
-  const [closing, setClosing] = useState(false);
+  const [visible, setVisible] = useState(open);
+  if (open && !visible) setVisible(true);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -27,27 +30,29 @@ export function Dialog({ open, title, description, size = "md", busy = false, on
     const dialog = ref.current;
     if (!dialog) return;
     if (open) {
-      setClosing(false);
+      dialog.classList.remove("dialog-closing");
       if (!dialog.open) dialog.showModal?.();
       return;
     }
     if (!dialog.open) return;
-    if (reducedMotion() || typeof dialog.getAnimations !== "function") {
+    const finish = () => {
+      dialog.classList.remove("dialog-closing");
       dialog.close?.();
+      setVisible(false);
+    };
+    if (reducedMotion() || typeof dialog.getAnimations !== "function") {
+      finish();
       return;
     }
-    setClosing(true);
-    const timer = window.setTimeout(() => {
-      dialog.close?.();
-      setClosing(false);
-    }, 180);
+    dialog.classList.add("dialog-closing");
+    const timer = window.setTimeout(finish, CLOSE_MS);
     return () => window.clearTimeout(timer);
   }, [open]);
 
   return (
     <dialog
       ref={ref}
-      className={cx("dialog", `dialog-${size}`, closing && "dialog-closing")}
+      className={cx("dialog", `dialog-${size}`)}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onCancel={(event) => {
@@ -61,7 +66,7 @@ export function Dialog({ open, title, description, size = "md", busy = false, on
         if (event.target === event.currentTarget && pressedOutside.current && !busy) onClose();
       }}
     >
-      {open || closing ? (
+      {visible ? (
         <div className="dialog-body">
           <header className="dialog-head">
             <h2 id={titleId} className="dialog-title">

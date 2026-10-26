@@ -62,6 +62,7 @@
   --signal-duration-base: 180ms;
   --signal-duration-slow: 280ms;
   --signal-duration-slower: 420ms;
+  --signal-duration-reveal: 700ms;
   --signal-duration-crawl: 1400ms;
   --signal-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --signal-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);

@@ -13,7 +13,7 @@
   left: 10px;
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: currentColor;
   pointer-events: none;
 }
@@ -25,15 +25,15 @@
 
 .category-select select {
   max-width: 100%;
-  height: 30px;
-  padding: 0 28px 0 24px;
+  height: var(--signal-control-sm);
+  padding: 0 var(--signal-space-8) 0 var(--signal-space-6);
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--category-color) 35%, transparent);
-  border-radius: 100px;
+  border-radius: var(--signal-radius-pill);
   background: color-mix(in srgb, var(--category-color) 10%, transparent);
   color: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
   appearance: none;
@@ -60,6 +60,6 @@
 }
 
 .category-select-md select {
-  height: 36px;
-  font-size: 0.875rem;
+  height: var(--signal-control-md);
+  font-size: var(--signal-text-md);
 }

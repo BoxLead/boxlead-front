@@ -4,12 +4,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--signal-space-md);
-  padding: 20px;
+  padding: var(--signal-space-5);
   overflow: hidden;
-  scroll-margin: 96px;
+  scroll-margin: var(--signal-space-20);
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    box-shadow var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .channel-card::before {
@@ -57,7 +57,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   justify-items: start;
-  gap: 8px 14px;
+  gap: var(--signal-space-2) var(--signal-space-4);
 }
 
 .channel-card-featured .channel-card-head {
@@ -88,13 +88,13 @@
 }
 
 .channel-card-title h2 {
-  font-size: 1.0625rem;
+  font-size: var(--signal-text-lg);
 }
 
 .channel-card-title p {
-  margin: 2px 0 0;
+  margin: var(--signal-space-0-5) 0 0;
   color: var(--signal-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .channel-card-intro {
@@ -108,48 +108,48 @@
 }
 
 .channel-card-subtitle {
-  margin: 0 0 8px;
+  margin: 0 0 var(--signal-space-2);
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-wide);
   text-transform: uppercase;
 }
 
 .channel-card-syncs {
   display: grid;
-  gap: 6px;
+  gap: var(--signal-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .channel-card-syncs li {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--signal-space-2);
 }
 
 .channel-card-syncs svg {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: var(--signal-space-0-5);
   color: var(--signal-success);
 }
 
 .channel-card-steps {
   display: grid;
-  gap: 8px;
+  gap: var(--signal-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
   counter-reset: step;
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .channel-card-steps li {
   display: flex;
-  gap: 10px;
+  gap: var(--signal-space-3);
   counter-increment: step;
 }
 
@@ -161,11 +161,11 @@
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: var(--signal-radius-full);
   background: var(--channel-accent);
   color: var(--platform-meli-ink);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-bold);
 }
 
 .channel-card-accounts {
@@ -185,7 +185,7 @@
 
 @media (max-width: 480px) {
   .channel-card {
-    padding: 16px;
+    padding: var(--signal-space-4);
   }
 
   .channel-card-featured .channel-card-head {

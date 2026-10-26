@@ -6,11 +6,11 @@
 
 .breakdown-table th,
 .breakdown-table td {
-  padding: 12px 0 12px 16px;
+  padding: var(--signal-space-3) 0 var(--signal-space-3) var(--signal-space-4);
   border-top: 1px solid var(--signal-border);
   text-align: right;
   vertical-align: middle;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .breakdown-table th:first-child {
@@ -21,20 +21,20 @@
 
 .breakdown-table thead th {
   padding-top: 0;
-  padding-bottom: 10px;
+  padding-bottom: var(--signal-space-3);
   border-top: 0;
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-medium);
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .breakdown-table tbody th {
-  font-weight: 400;
+  font-weight: var(--signal-weight-regular);
 }
 
 .breakdown-table tbody tr {
-  transition: opacity 0.25s ease;
+  transition: opacity var(--signal-duration-slow) var(--signal-ease-out);
 }
 
 .breakdown-table tbody tr:hover {
@@ -47,7 +47,7 @@
 
 .breakdown-cell {
   display: grid;
-  gap: 8px;
+  gap: var(--signal-space-2);
 }
 
 .breakdown-cell .meter {
@@ -57,7 +57,7 @@
 .breakdown-name {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--signal-space-3);
   width: fit-content;
   max-width: 100%;
   overflow-wrap: anywhere;
@@ -65,10 +65,10 @@
   border: 0;
   background: none;
   color: var(--signal-heading);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
   text-align: left;
-  transition: color 0.2s ease;
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .breakdown-name:hover,
@@ -84,23 +84,23 @@
 .breakdown-dot {
   width: 8px;
   height: 8px;
-  margin: 0 4px;
-  border-radius: 50%;
+  margin: 0 var(--signal-space-1);
+  border-radius: var(--signal-radius-full);
   background: var(--category-color);
 }
 
 .breakdown-value {
   display: inline-block;
   color: var(--signal-heading);
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
+  transition: color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .breakdown-sub {
   display: block;
   color: var(--signal-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--signal-text-xs);
 }
 
 .breakdown-table thead th.breakdown-focus {
@@ -109,7 +109,7 @@
 
 .breakdown-table td.breakdown-focus .breakdown-value {
   color: var(--signal-accent);
-  font-weight: 600;
+  font-weight: var(--signal-weight-semibold);
 }
 
 .breakdown-dim {

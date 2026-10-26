@@ -222,10 +222,10 @@ html[data-theme="light"]:has(.landing) {
   cursor: pointer;
   text-decoration: none;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s var(--landing-ease);
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    color var(--signal-duration-base) var(--signal-ease-out),
+    transform var(--signal-duration-base) var(--landing-ease);
 }
 
 .landing-btn svg {
@@ -336,7 +336,7 @@ html[data-theme="light"]:has(.landing) {
   transition:
     opacity 0.8s var(--landing-ease),
     transform 0.8s var(--landing-ease),
-    border-color 0.25s ease;
+    border-color var(--signal-duration-slow) var(--signal-ease-out);
 }
 
 .landing [data-reveal-from="left"] {
@@ -386,8 +386,8 @@ html[data-theme="light"]:has(.landing) {
   clip-path: inset(0 0 100% 0);
   transform: translateY(32px);
   transition:
-    clip-path 1s var(--landing-ease) 0.1s,
-    transform 1s var(--landing-ease) 0.1s;
+    clip-path 1s var(--landing-ease) var(--signal-duration-fast),
+    transform 1s var(--landing-ease) var(--signal-duration-fast);
 }
 
 .landing-section-head.is-visible .landing-section-title {

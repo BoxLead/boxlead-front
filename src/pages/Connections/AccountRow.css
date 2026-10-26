@@ -3,8 +3,8 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  padding: 12px 14px;
+  gap: var(--signal-space-3) var(--signal-space-4);
+  padding: var(--signal-space-3) var(--signal-space-4);
 }
 
 .account-row + .account-row {
@@ -18,32 +18,32 @@
 .account-row-main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--signal-space-0-5);
   min-width: 0;
 }
 
 .account-row-name {
   overflow: hidden;
   color: var(--signal-heading);
-  font-weight: 600;
+  font-weight: var(--signal-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .account-row-meta {
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }
 
 .account-row-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  gap: var(--signal-space-2);
+  margin-top: var(--signal-space-1);
 }
 
 .account-row-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--signal-space-2);
 }

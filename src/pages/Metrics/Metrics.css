@@ -5,12 +5,12 @@
 
 .metrics-body {
   display: grid;
-  gap: 16px;
+  gap: var(--signal-space-4);
 }
 
 .metrics-body > * {
-  animation: metrics-rise 0.6s var(--signal-ease) both;
-  transition: opacity 0.25s ease;
+  animation: metrics-rise var(--signal-duration-reveal) var(--signal-ease-out) both;
+  transition: opacity var(--signal-duration-slow) var(--signal-ease-out);
 }
 
 .metrics-body > :nth-child(n + 2) {
@@ -32,7 +32,7 @@
 .metrics-grid {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--signal-space-4);
 }
 
 .metrics-progress {
@@ -41,7 +41,7 @@
   height: 2px;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .metrics-progress::after {
@@ -50,7 +50,7 @@
   inset: 0 auto 0 0;
   width: 30%;
   background: linear-gradient(90deg, transparent, var(--signal-accent), transparent);
-  animation: metrics-progress 1s ease-in-out infinite;
+  animation: metrics-progress 1s var(--signal-ease-in-out) infinite;
 }
 
 .metrics-progress-active {
@@ -63,7 +63,7 @@
 
 .metrics-skeleton {
   display: grid;
-  gap: 16px;
+  gap: var(--signal-space-4);
 }
 
 .metrics-skeleton-main {
@@ -74,7 +74,7 @@
 .metrics-skeleton-row {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 16px;
+  gap: var(--signal-space-4);
 }
 
 .metrics-skeleton-row .skeleton {

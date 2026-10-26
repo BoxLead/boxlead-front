@@ -1,7 +1,7 @@
 .settings-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  gap: var(--signal-space-1);
 }
 
 .settings-day {
@@ -20,16 +20,16 @@
 .settings-day span[aria-hidden="true"] {
   display: grid;
   place-items: center;
-  min-height: 36px;
+  min-height: var(--signal-control-md);
   border: 1px solid var(--signal-border);
   border-radius: var(--signal-radius-sm);
   color: var(--signal-text);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    border-color var(--signal-duration-base) var(--signal-ease-out),
+    color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .settings-day input:checked + span {
@@ -46,7 +46,7 @@
 .settings-range {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--signal-space-3);
 }
 
 @media (prefers-reduced-motion: reduce) {

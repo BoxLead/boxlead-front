@@ -32,9 +32,9 @@
   font-size: 0.8125rem;
   font-weight: 500;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+    background-color var(--signal-duration-base) var(--signal-ease-out),
+    color var(--signal-duration-base) var(--signal-ease-out),
+    border-color var(--signal-duration-base) var(--signal-ease-out);
 }
 
 .agent-demo-tab svg {

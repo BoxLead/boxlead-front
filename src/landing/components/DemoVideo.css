@@ -67,8 +67,8 @@
   backdrop-filter: blur(14px);
   box-shadow: var(--landing-shadow-lg);
   transition:
-    border-color 0.3s var(--landing-ease),
-    transform 0.3s var(--landing-ease);
+    border-color var(--signal-duration-slow) var(--landing-ease),
+    transform var(--signal-duration-slow) var(--landing-ease);
 }
 
 .demo-video-play-icon {

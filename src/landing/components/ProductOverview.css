@@ -240,8 +240,8 @@
   opacity: 0;
   transform: translateY(8px);
   transition:
-    opacity 0.5s var(--landing-ease),
-    transform 0.5s var(--landing-ease);
+    opacity var(--signal-duration-slower) var(--landing-ease),
+    transform var(--signal-duration-slower) var(--landing-ease);
 }
 
 .problem-row + .problem-row {
@@ -297,8 +297,8 @@
   opacity: 0;
   transform: scale(0.85);
   transition:
-    opacity 0.4s var(--landing-ease),
-    transform 0.4s var(--landing-ease);
+    opacity var(--signal-duration-slower) var(--landing-ease),
+    transform var(--signal-duration-slower) var(--landing-ease);
 }
 
 .problem-row:first-child .problem-row-outcome {

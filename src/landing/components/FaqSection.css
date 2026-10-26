@@ -96,8 +96,8 @@
     block-size: 0;
     overflow: hidden;
     transition:
-      block-size 0.45s var(--landing-ease),
-      content-visibility 0.45s allow-discrete;
+      block-size var(--signal-duration-slower) var(--landing-ease),
+      content-visibility var(--signal-duration-slower) allow-discrete;
   }
 
   .faq-item[open]::details-content {

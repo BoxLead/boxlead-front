@@ -1,22 +1,22 @@
 .attention-headline {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--signal-space-3);
 }
 
 .attention-big {
   display: block;
   color: var(--signal-heading);
-  font-size: 1.625rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: var(--signal-text-3xl);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-tight);
+  line-height: var(--signal-leading-tight);
   font-variant-numeric: tabular-nums;
 }
 
 .attention-caption {
   color: var(--signal-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--signal-text-sm);
 }
 
 .attention-rows {
@@ -27,10 +27,10 @@
 .attention-rows div {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-3) 0;
   border-top: 1px solid var(--signal-border);
-  font-size: 0.875rem;
+  font-size: var(--signal-text-md);
 }
 
 .attention-rows div:last-child {
@@ -44,6 +44,6 @@
 .attention-rows dd {
   margin: 0;
   color: var(--signal-heading);
-  font-weight: 500;
+  font-weight: var(--signal-weight-medium);
   font-variant-numeric: tabular-nums;
 }
