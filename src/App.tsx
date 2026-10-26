@@ -39,6 +39,7 @@ const Privacy = lazyRoute(() => import("./pages/Legal/Privacy"), "Privacy");
 const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContracts"), "AdhesionContracts");
 const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
+const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
 const socialAuth = { preload: preloadSocialAuth };
@@ -103,6 +104,7 @@ export default function App() {
               <Route path="*" element={<NotFound inApp />} />
             </Route>
           </Route>
+          {DesignSystem ? <Route path="/__ui" element={<DesignSystem />} /> : null}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
