@@ -386,6 +386,24 @@ describe("CustomerDetailScreen", () => {
     expect(within(revoke).queryByText(/La Demo termina ahora/)).toBeNull();
   });
 
+  it("corrects the attribution, says where the commissions go and loads the detail again", async () => {
+    const attribution = { id: "a1", userId: USER_ID, resellerId: "r1", referralCodeId: "c1", source: "COOKIE" as const, sequence: 1, reason: null, createdAt: "2026-06-01T15:00:00Z" };
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ attribution }));
+    await userEvent.click(await screen.findByRole("button", { name: "Corregir atribución" }));
+    const dialog = dialogOf("Corregir atribución");
+    expect(
+      within(dialog).getByText(/Las comisiones ya generadas quedan con el revendedor anterior\. Las próximas van al nuevo\./),
+    ).toBeInTheDocument();
+    await userEvent.selectOptions(await within(dialog).findByLabelText("Revendedor"), "r2");
+    const loads = detailLoads(calls);
+    await confirmIn("Corregir atribución", "Corregir");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/attribution`);
+    expect(JSON.parse(String(post?.init.body))).toEqual({ resellerId: "r2", reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Corregimos la atribución.")).toBeInTheDocument();
+    expect(detailLoads(calls)).toBe(loads + 1);
+  }, 15_000);
+
   it("shows the last day of the period instead of its exclusive end", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
     for (const title of ["Plan", "Uso"]) {
