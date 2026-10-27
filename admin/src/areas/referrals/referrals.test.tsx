@@ -173,13 +173,15 @@ describe("reseller detail", () => {
       billing: null,
       commissionTotals: null,
     };
-    renderAdmin(`/revendedores/${NORTH}`, ["SUPPORT"], (_method, url) => {
+    const calls = renderAdmin(`/revendedores/${NORTH}`, ["SUPPORT"], (_method, url) => {
       if (url.pathname === `/admin/resellers/${NORTH}`) return json(200, detail);
       if (url.pathname === `/admin/resellers/${NORTH}/customers`) return page([]);
       if (url.pathname === "/admin/resellers") return page([]);
       return json(404, { error: "Not found", message: "Not found" });
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Agencia Norte" }, { timeout: 5000 })).toBeInTheDocument();
+    const order = calls.map((call) => call.url.pathname);
+    expect(order.indexOf(`/admin/resellers/${NORTH}/customers`)).toBe(order.indexOf(`/admin/resellers/${NORTH}`) + 1);
     expect(screen.getByText("Los datos fiscales y de cobro los ve solo Finanzas.")).toBeInTheDocument();
     expect(screen.getByText("Los totales de comisión los ve solo Finanzas.")).toBeInTheDocument();
     expect(screen.getByText("No hubo clics en este período.")).toBeInTheDocument();

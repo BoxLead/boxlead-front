@@ -8,7 +8,7 @@ import { isUuid } from "../../components/list/filterRules";
 import { DataTable, type Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
-import { useAdminQuery } from "../../components/list/useAdminQuery";
+import { useAdminQuery, type QueryResult } from "../../components/list/useAdminQuery";
 import { Money } from "../../components/Money";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
@@ -76,12 +76,15 @@ function BillingFacts({ billing }: { billing: ResellerBilling }) {
   );
 }
 
+type Customers = QueryResult<AdminPage<ResellerCustomer>> & { reload: () => void };
+
 type ContentProps = {
   detail: ResellerDetail;
+  customers: Customers;
   reload: () => void;
 };
 
-function ResellerContent({ detail, reload }: ContentProps) {
+function ResellerContent({ detail, customers, reload }: ContentProps) {
   const { owner, finance } = useReferralRoles();
   const directory = useResellerDirectory();
   const [params, setParams] = useSearchParams();
@@ -89,11 +92,6 @@ function ResellerContent({ detail, reload }: ContentProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const { reseller } = detail;
-  const page = Math.max(0, Math.floor(Number(params.get(CUSTOMERS_PAGE)) || 0));
-  const customers = useAdminQuery<AdminPage<ResellerCustomer>>(
-    `/admin/resellers/${encodeURIComponent(reseller.id)}/customers`,
-    page > 0 ? `page=${page}` : "",
-  );
   const codeById = new Map(reseller.codes.map((code) => [code.id, code.code]));
   const codeClicks = clicksByCode(detail);
   const days = clicksByDay(detail);
@@ -385,8 +383,13 @@ function ResellerLoader({ resellerId }: { resellerId: string }) {
     if (value) range.set(key, value);
   }
   const query = useDetailQuery<ResellerDetail>(`/admin/resellers/${encodeURIComponent(resellerId)}`, range.toString());
+  const page = Math.max(0, Math.floor(Number(params.get(CUSTOMERS_PAGE)) || 0));
+  const customers = useAdminQuery<AdminPage<ResellerCustomer>>(
+    `/admin/resellers/${encodeURIComponent(resellerId)}/customers`,
+    page > 0 ? `page=${page}` : "",
+  );
 
-  if (query.status === "ready") return <ResellerContent detail={query.data} reload={query.reload} />;
+  if (query.status === "ready") return <ResellerContent detail={query.data} customers={customers} reload={query.reload} />;
   return (
     <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
       <DetailState query={query} notFound={NOT_FOUND} back={BACK}>
