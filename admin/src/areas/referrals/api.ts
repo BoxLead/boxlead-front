@@ -1,7 +1,7 @@
 import { adminApi } from "../../api/client";
 import { AdminApiError } from "../../api/errors";
 import type { AdminPage, Money } from "../../api/types";
-import type { Attribution, Commission, NewReseller, Payout, ReferralCode, Reseller } from "./types";
+import type { Attribution, Commission, CustomerMatch, NewReseller, Payout, ReferralCode, Reseller } from "./types";
 
 const NOT_RELEASABLE = "COMMISSION_NOT_RELEASABLE";
 
@@ -44,6 +44,8 @@ export const referralsApi = {
   exportPayout: (payoutId: string, reason: string) =>
     adminApi.blob(`/admin/payouts/${encodeURIComponent(payoutId)}/export`, { query: new URLSearchParams({ reason }) }),
   commissions: (query: URLSearchParams) => adminApi.get<AdminPage<Commission>>("/admin/commissions", { query }),
+  searchCustomers: (query: string, signal?: AbortSignal) =>
+    adminApi.get<AdminPage<CustomerMatch>>("/admin/customers", { query: new URLSearchParams({ query }), signal }),
 };
 
 export function payoutFileName(payout: Payout): string {

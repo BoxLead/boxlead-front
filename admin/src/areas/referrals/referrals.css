@@ -266,6 +266,83 @@ a.ref-sub {
   gap: var(--signal-space-3);
 }
 
+.ref-picker {
+  display: grid;
+  gap: var(--signal-space-3);
+  min-width: 0;
+}
+
+.ref-picker-row {
+  display: flex;
+  gap: var(--signal-space-2);
+}
+
+.ref-picker-row .btn-icon {
+  flex-shrink: 0;
+}
+
+.ref-results {
+  display: grid;
+  gap: var(--signal-space-2);
+  min-width: 0;
+  max-height: calc(var(--signal-control-lg) * 6);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow-y: auto;
+}
+
+.ref-result-skeleton {
+  display: block;
+  height: var(--signal-control-lg);
+}
+
+.ref-result {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-3);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-sm);
+  cursor: pointer;
+}
+
+.ref-result:hover {
+  background: var(--signal-hover);
+}
+
+.ref-result-selected {
+  border-color: var(--signal-accent-border);
+  background: var(--signal-accent-muted);
+}
+
+.ref-result input {
+  margin-top: var(--signal-space-1);
+  accent-color: var(--signal-accent);
+}
+
+.ref-result-body {
+  display: grid;
+  gap: var(--signal-space-0-5);
+  min-width: 0;
+}
+
+.ref-result-email {
+  color: var(--signal-heading);
+  font-weight: var(--signal-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.ref-picked {
+  display: grid;
+  gap: var(--signal-space-0-5);
+  padding: var(--signal-space-3) var(--signal-space-4);
+  border: 1px solid var(--signal-accent-border);
+  border-radius: var(--signal-radius-sm);
+  background: var(--signal-bg-subtle);
+  font-size: var(--signal-text-md);
+}
+
 @media (max-width: 760px) {
   .ref-summary,
   .ref-pad {

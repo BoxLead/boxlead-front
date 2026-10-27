@@ -4,11 +4,11 @@ import type { Money } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { formatDate, formatMoney } from "../../format";
 import { payableCommissions, referralsApi, totalsByCurrency, type CommissionAction } from "./api";
-import { COMMISSION_KIND, VAT_CONDITIONS } from "./labels";
+import { COMMISSION_KIND, customerName, VAT_CONDITIONS } from "./labels";
 import { SelectField, TextField } from "./parts";
-import type { Attribution, Commission, Payout, Reseller } from "./types";
+import type { Attribution, Commission, CustomerMatch, Payout, Reseller } from "./types";
+import { UserPicker } from "./UserPicker";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NAME_MAX = 200;
 const TAX_ID_MAX = 20;
 const TRANSFER_MAX = 200;
@@ -38,8 +38,9 @@ function Totals({ amounts }: { amounts: readonly Money[] }) {
 
 type Closable = { onClose: () => void };
 
+const PICK_USER = "Buscá y elegí un usuario.";
+
 const EMPTY_RESELLER = {
-  userId: "",
   displayName: "",
   legalName: "",
   taxId: "",
@@ -50,9 +51,11 @@ const EMPTY_RESELLER = {
 
 type ResellerDraft = typeof EMPTY_RESELLER;
 
-function resellerProblems(draft: ResellerDraft): Partial<Record<keyof ResellerDraft, string>> {
-  const problems: Partial<Record<keyof ResellerDraft, string>> = {};
-  if (!UUID.test(draft.userId.trim())) problems.userId = "Pegá el id del usuario, lo ves en su detalle.";
+type ResellerProblems = Partial<Record<keyof ResellerDraft | "user", string>>;
+
+function resellerProblems(user: CustomerMatch | null, draft: ResellerDraft): ResellerProblems {
+  const problems: ResellerProblems = {};
+  if (!user) problems.user = PICK_USER;
   if (!draft.displayName.trim()) problems.displayName = "Poné cómo lo va a ver el equipo.";
   if (!draft.legalName.trim()) problems.legalName = "Poné la razón social o el nombre fiscal.";
   if (!draft.taxId.trim()) problems.taxId = "Poné el CUIT.";
@@ -66,17 +69,27 @@ function optional(value: string): string | null {
 }
 
 export function CreateResellerDialog({ onClose, onCreated }: Closable & { onCreated: (reseller: Reseller) => void }) {
+  const [user, setUser] = useState<CustomerMatch | null>(null);
   const [draft, setDraft] = useState<ResellerDraft>(EMPTY_RESELLER);
   const [tried, setTried] = useState(false);
-  const problems = tried ? resellerProblems(draft) : {};
+  const problems = tried ? resellerProblems(user, draft) : {};
   const set = (key: keyof ResellerDraft) => (value: string) => setDraft((current) => ({ ...current, [key]: value }));
+
+  function pick(customer: CustomerMatch) {
+    setUser(customer);
+    setDraft((current) => ({
+      ...current,
+      displayName: current.displayName || (customer.name ?? ""),
+      legalName: current.legalName || (customerName(customer) ?? ""),
+    }));
+  }
 
   async function confirm(reason: string) {
     setTried(true);
-    if (Object.keys(resellerProblems(draft)).length > 0) refuse("Revisá los datos marcados.");
+    if (!user || Object.keys(resellerProblems(user, draft)).length > 0) refuse("Revisá los datos marcados.");
     const reseller = await referralsApi.createReseller(
       {
-        userId: draft.userId.trim(),
+        userId: user.id,
         displayName: draft.displayName.trim(),
         legalName: draft.legalName.trim(),
         taxId: draft.taxId.trim(),
@@ -93,7 +106,7 @@ export function CreateResellerDialog({ onClose, onCreated }: Closable & { onCrea
     <ReasonDialog open title="Nuevo revendedor" confirmLabel="Crear revendedor" onConfirm={confirm} onClose={onClose}>
       <p>El usuario pasa a ser revendedor con la tasa y los ciclos que fija BoxLead. Después le creás un código.</p>
       <div className="ref-form">
-        <TextField label="Id del usuario" value={draft.userId} onChange={set("userId")} error={problems.userId} maxLength={36} />
+        <UserPicker selected={user} onSelect={pick} error={problems.user} />
         <TextField label="Nombre visible" value={draft.displayName} onChange={set("displayName")} error={problems.displayName} maxLength={NAME_MAX} />
         <TextField label="Razón social" value={draft.legalName} onChange={set("legalName")} error={problems.legalName} maxLength={NAME_MAX} />
         <TextField label="CUIT" value={draft.taxId} onChange={set("taxId")} error={problems.taxId} maxLength={TAX_ID_MAX} />
@@ -120,10 +133,12 @@ type AttributionDialogProps = Closable & {
 };
 
 export function AttributionDialog({ resellers, fixedUser, fixedReseller, onClose, onDone }: AttributionDialogProps) {
-  const [userId, setUserId] = useState(fixedUser?.userId ?? "");
+  const [picked, setPicked] = useState<CustomerMatch | null>(null);
   const [resellerId, setResellerId] = useState(fixedReseller?.id ?? "");
   const [tried, setTried] = useState(false);
-  const userProblem = tried && !UUID.test(userId.trim()) ? "Pegá el id del usuario, lo ves en su detalle." : null;
+  const userId = fixedUser?.userId ?? picked?.id ?? "";
+  const email = fixedUser?.email ?? picked?.email;
+  const userProblem = tried && !userId ? PICK_USER : null;
   const resellerProblem = tried && !resellerId ? "Elegí a qué revendedor queda atribuido." : null;
   const options = resellers
     .filter((reseller) => reseller.id !== fixedUser?.resellerId)
@@ -132,18 +147,18 @@ export function AttributionDialog({ resellers, fixedUser, fixedReseller, onClose
 
   async function confirm(reason: string) {
     setTried(true);
-    if (!UUID.test(userId.trim()) || !resellerId) refuse("Revisá los datos marcados.");
-    onDone(await referralsApi.correctAttribution(userId.trim(), resellerId, reason));
+    if (!userId || !resellerId) refuse("Revisá los datos marcados.");
+    onDone(await referralsApi.correctAttribution(userId, resellerId, reason));
   }
 
   return (
     <ReasonDialog open title="Corregir atribución" confirmLabel="Corregir atribución" onConfirm={confirm} onClose={onClose}>
       <p>
-        {fixedUser ? `${fixedUser.email} pasa a estar atribuido` : "El cliente pasa a estar atribuido"}
+        {email ? `${email} pasa a estar atribuido` : "El cliente que elijas pasa a estar atribuido"}
         {target ? ` a ${target.displayName}` : " al revendedor que elijas"}. Las comisiones que ya existen no cambian y los ciclos siguen contando por cliente.
       </p>
       <div className="ref-form">
-        {fixedUser ? null : <TextField label="Id del usuario" value={userId} onChange={setUserId} error={userProblem} maxLength={36} />}
+        {fixedUser ? null : <UserPicker selected={picked} onSelect={setPicked} error={userProblem} />}
         {fixedReseller ? null : (
           <SelectField label="Revendedor" value={resellerId} options={options} placeholder="Elegí uno" onChange={setResellerId} error={resellerProblem} />
         )}

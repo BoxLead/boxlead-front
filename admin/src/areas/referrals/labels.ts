@@ -7,6 +7,7 @@ import type {
   PayoutStatus,
   ReferralCodeStatus,
   ResellerStatus,
+  CustomerMatch,
   SubscriptionStatus,
 } from "./types";
 
@@ -91,4 +92,8 @@ export const VAT_CONDITIONS: readonly FilterOption[] = [
 export function vatLabel(value: string | null): string {
   if (!value) return "—";
   return VAT_CONDITIONS.find((option) => option.value === value)?.label ?? value;
+}
+
+export function customerName(customer: CustomerMatch): string | null {
+  return customer.legalName ?? customer.name;
 }

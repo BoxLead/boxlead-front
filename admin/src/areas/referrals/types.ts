@@ -118,3 +118,13 @@ export type NewReseller = {
   payoutMethod: string | null;
   payoutReference: string | null;
 };
+
+export type CustomerMatch = {
+  id: string;
+  email: string;
+  name: string | null;
+  legalName: string | null;
+  createdAt: string;
+  planCode: string | null;
+  subscriptionStatus: SubscriptionStatus | null;
+};
