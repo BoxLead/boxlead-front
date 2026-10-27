@@ -1,18 +1,48 @@
-import { useId, type FormEvent, type ReactNode } from "react";
-import { SearchIcon } from "../../../../src/components/icons/UiIcons";
+import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { SearchIcon, SlidersIcon } from "../../../../src/components/icons/UiIcons";
+import { cx } from "../../../../src/util/classNames";
 import "./List.css";
 
 export type FilterOption = { value: string; label: string };
 
-export function FilterBar({ children, active, onClear }: { children: ReactNode; active: boolean; onClear: () => void }) {
+type FilterBarProps = {
+  children?: ReactNode;
+  active: boolean;
+  onClear: () => void;
+  lead?: ReactNode;
+  actions?: ReactNode;
+};
+
+export function FilterBar({ children, active, onClear, lead, actions }: FilterBarProps) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const expanded = open || active;
   return (
-    <div className="filter-bar" role="search" aria-label="Filtros">
-      {children}
-      {active ? (
-        <button type="button" className="btn btn-ghost filter-clear" onClick={onClear}>
-          Limpiar filtros
+    <div className={cx("toolbar", expanded && "toolbar-open")} role="search" aria-label="Filtros">
+      {lead ? <div className="toolbar-lead">{lead}</div> : null}
+      {children ? (
+        <button
+          type="button"
+          className="btn btn-secondary toolbar-toggle"
+          aria-expanded={expanded}
+          aria-controls={id}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <SlidersIcon width={16} height={16} />
+          {active ? "Filtros activos" : "Filtros"}
         </button>
       ) : null}
+      {children ? (
+        <div className="toolbar-filters" id={id}>
+          {children}
+          {active ? (
+            <button type="button" className="btn btn-ghost toolbar-clear" onClick={onClear}>
+              Limpiar
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {actions ? <div className="toolbar-actions">{actions}</div> : null}
     </div>
   );
 }

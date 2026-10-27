@@ -565,6 +565,11 @@ button {
   line-height: var(--signal-leading-normal);
 }
 
+input.input {
+  height: var(--signal-control-md);
+  padding-block: 0;
+}
+
 .input:hover:not(:disabled),
 .select:hover:not(:disabled) {
   border-color: var(--signal-border-strong);

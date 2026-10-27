@@ -97,7 +97,7 @@ describe("ListView", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("?status=APPROVED");
     expect(await screen.findByText("1 a 1 de 3")).toBeInTheDocument();
     expect(calls.at(-1)?.url.search).toBe("?status=APPROVED");
-    await userEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+    await userEvent.click(screen.getByRole("button", { name: "Limpiar" }));
     expect(screen.getByTestId("location")).toBeEmptyDOMElement();
   });
 

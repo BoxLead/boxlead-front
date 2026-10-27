@@ -71,7 +71,7 @@ test("subscriptions filter by status and plan through the URL", async ({ page })
   await page.getByLabel("Plan").selectOption("BUSINESS");
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await expect(row(page, "diego@example.com")).toContainText("Baja pedida");
-  await page.getByRole("button", { name: "Limpiar filtros" }).first().click();
+  await page.getByRole("button", { name: "Limpiar", exact: true }).first().click();
   await expect(page.locator("tbody tr")).toHaveCount(7);
 });
 
