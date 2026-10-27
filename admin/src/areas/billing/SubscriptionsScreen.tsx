@@ -9,6 +9,7 @@ import { ListView } from "../../components/list/ListView";
 import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
+import { formatMoney } from "../../format";
 import { navItem } from "../../nav";
 import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
@@ -31,25 +32,26 @@ type Pending = { row: SubscriptionRow; action: SubscriptionAction };
 
 function Explanation({ pending }: { pending: Pending }) {
   const who = pending.row.email ?? "este cliente";
+  const fee = `${formatMoney(pending.row.charge)} ${pending.row.charge.currency}`;
   switch (pending.action) {
     case "pause":
       return (
         <>
-          <p>Mercado Pago deja de cobrarle la cuota a {who} y la suscripción queda pausada hasta que la reanudes.</p>
+          <p>Mercado Pago deja de cobrarle la cuota de {fee} a {who} y la suscripción queda pausada hasta que la reanudes.</p>
           <p>Primero cambia en Mercado Pago. Si no responde, no cambia nada.</p>
         </>
       );
     case "resume":
       return (
         <>
-          <p>Mercado Pago vuelve a cobrarle la cuota a {who} y la suscripción pasa a activa.</p>
+          <p>Mercado Pago vuelve a cobrarle la cuota de {fee} a {who} y la suscripción pasa a activa.</p>
           <p>Primero cambia en Mercado Pago. Si no responde, no cambia nada.</p>
         </>
       );
     case "cancel":
       return (
         <>
-          <p>La suscripción de {who} se cancela ahora en Mercado Pago y no se le vuelve a cobrar.</p>
+          <p>La suscripción de {who} se cancela ahora en Mercado Pago y no se le vuelve a cobrar la cuota de {fee}.</p>
           <p>No devuelve plata. Si corresponde, reembolsá el pago desde Pagos.</p>
         </>
       );
@@ -179,7 +181,6 @@ export function SubscriptionsScreen() {
         title={pending ? ACTIONS[pending.action].title : ""}
         confirmLabel={pending ? ACTIONS[pending.action].confirm : ""}
         tone={pending ? ACTIONS[pending.action].tone : "primary"}
-        amount={pending?.row.charge}
         onConfirm={confirm}
         onClose={() => setOpen(false)}
         onSettled={(failure) => {

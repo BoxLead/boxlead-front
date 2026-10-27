@@ -50,4 +50,4 @@ export const REFUND_STATUS_OPTIONS = options(REFUND_STATUS).map((option) =>
   option.value === "REQUESTED" ? { ...option, label: "Sin respuesta o en proceso" } : option,
 );
 export const INVOICE_STATUS_OPTIONS = options(INVOICE_STATUS);
-export const PLAN_OPTIONS = options(PLAN_LABELS);
+export const PLAN_OPTIONS = options(PLAN_LABELS).filter((option) => option.value !== "DEMO");

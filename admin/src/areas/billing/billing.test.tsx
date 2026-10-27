@@ -322,6 +322,19 @@ describe("buttons by role", () => {
     expect(await screen.findByText("Pausamos la suscripción.")).toBeInTheDocument();
   });
 
+  it("offers only paid plans in the plan filter and shows the fee as a fee, not as money that moves", async () => {
+    mockFetch(() => page([SUBSCRIPTION]));
+    renderAs(["OWNER"], <SubscriptionsScreen />, "/suscripciones");
+    const row = (await screen.findByText("Renueva el 20 nov 2026")).closest("tr");
+    if (!row) throw new Error("missing row");
+    const plans = within(screen.getByLabelText("Plan", { selector: "select" })).getAllByRole("option").map((option) => option.textContent);
+    expect(plans).not.toContain("Demo");
+    expect(plans).toContain("Starter");
+    await userEvent.click(within(row).getByRole("button", { name: /Cancelar la suscripción/ }));
+    expect(screen.getByText(/no se le vuelve a cobrar la cuota de \$\s87\.000,00 ARS/)).toBeInTheDocument();
+    expect(screen.queryByText("Monto")).not.toBeInTheDocument();
+  });
+
   it("explains that the subscription changed and reloads the list on close", async () => {
     const calls = mockFetch((method) =>
       method === "POST" ? json(409, { error: "Conflict", message: "changed", code: "SUBSCRIPTION_CHANGED" }) : page([SUBSCRIPTION]),
