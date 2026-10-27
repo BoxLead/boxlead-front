@@ -3,10 +3,12 @@ import { useToast } from "../../../../src/components/ui/toast";
 import { SearchIcon } from "../../../../src/components/icons/UiIcons";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { errorText } from "../../api/errors";
+import { planLabel, SUBSCRIPTION_STATUS, type SubscriptionStatus } from "../../status";
 import type { AdminPage } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { grantDemo, searchCustomers } from "./api";
 import { Field, FormDialog, Summary } from "./FormDialog";
+import { whileHeld, type Hold } from "./hold";
 import { MAX_DEMO_DAYS, type CustomerMatch } from "./types";
 import { daysText, demoDaysProblem, demoDaysValue } from "./validation";
 
@@ -18,26 +20,28 @@ type Search =
 
 type GrantDemoFlowProps = {
   open: boolean;
+  hold: Hold;
   onClose: () => void;
   onGranted: () => void;
 };
 
-const PLAN_LABELS: Record<string, string> = {
-  DEMO: "Demo",
-  STARTER: "Starter",
-  BUSINESS: "Business",
-  ENTERPRISE: "Enterprise",
-};
-
 function planText(planCode: string | null): string {
-  return planCode ? `Plan ${PLAN_LABELS[planCode] ?? planCode}` : "Sin plan";
+  return planCode ? `Plan ${planLabel(planCode)}` : planLabel(null);
+}
+
+const ACCESS_STATUSES: readonly string[] = ["ACTIVE", "PAST_DUE", "SUSPENDED", "PAUSED"] satisfies SubscriptionStatus[];
+
+function liveSubscription(customer: CustomerMatch): SubscriptionStatus | null {
+  const status = customer.subscriptionStatus;
+  if (!status || !ACCESS_STATUSES.includes(status) || !customer.planCode || customer.planCode === "DEMO") return null;
+  return status as SubscriptionStatus;
 }
 
 function customerName(customer: CustomerMatch): string | null {
   return customer.legalName ?? customer.name;
 }
 
-export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) {
+export function GrantDemoFlow({ open, hold, onClose, onGranted }: GrantDemoFlowProps) {
   const toast = useToast();
   const [text, setText] = useState("");
   const [search, setSearch] = useState<Search>({ status: "idle" });
@@ -60,6 +64,7 @@ export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) 
   }
 
   const daysProblem = demoDaysProblem(days);
+  const live = selected ? liveSubscription(selected) : null;
   const userProblem = selected ? null : "Buscá y elegí un usuario.";
 
   function runSearch() {
@@ -90,7 +95,8 @@ export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) 
 
   async function confirm(reason: string) {
     if (!selected) return;
-    await grantDemo(selected.id, demoDaysValue(days), reason);
+    const customer = selected;
+    await whileHeld(hold, () => grantDemo(customer.id, demoDaysValue(days), reason));
     toast({ tone: "success", message: `Le otorgaste una Demo a ${selected.email}.` });
     onGranted();
     onClose();
@@ -146,10 +152,16 @@ export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) 
           <Summary
             rows={[
               ["Usuario", selected.email],
+              ...(live ? [["Suscripción", `Plan ${planLabel(selected.planCode)} · ${SUBSCRIPTION_STATUS[live].label}`] as [string, string]] : []),
               ["Demo", daysText(demoDaysValue(days))],
               ["Arranca", "Ahora"],
             ]}
           />
+        ) : null}
+        {live ? (
+          <Banner tone="warning" title="Tiene una suscripción que le da acceso">
+            La suscripción gana sobre la Demo, así que BoxLead va a rechazar el pedido mientras siga viva.
+          </Banner>
         ) : null}
         <p>Un usuario tiene una sola Demo. Si ya tuvo una, primero hay que quitarla.</p>
       </ReasonDialog>

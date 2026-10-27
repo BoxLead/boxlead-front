@@ -1,20 +1,27 @@
 import { useState } from "react";
 import { useToast } from "../../../../src/components/ui/toast";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { formatDate } from "../../format";
+import { formatDate, formatDateTime } from "../../format";
 import { extendDemo } from "./api";
 import { addDays, dayInBuenosAires, endOfDay, todayInBuenosAires } from "./dates";
 import { Field, FormDialog, Summary } from "./FormDialog";
+import { whileHeld, type Hold } from "./hold";
 import { userLabel, type DemoGrant } from "./types";
 import { futureDayProblem } from "./validation";
 
 type ExtendDemoFlowProps = {
   grant: DemoGrant | null;
+  hold: Hold;
   onClose: () => void;
   onExtended: () => void;
 };
 
-export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowProps) {
+function currentText(grant: DemoGrant): string {
+  if (grant.status === "ENDED") return `La Demo de ${userLabel(grant)} terminó el ${formatDateTime(grant.endsAt)}.`;
+  return `${userLabel(grant)} tiene la Demo hasta el ${formatDateTime(grant.endsAt)}.`;
+}
+
+export function ExtendDemoFlow({ grant, hold, onClose, onExtended }: ExtendDemoFlowProps) {
   const toast = useToast();
   const [day, setDay] = useState("");
   const [confirming, setConfirming] = useState(false);
@@ -39,7 +46,8 @@ export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowPro
 
   async function confirm(reason: string) {
     if (!grant) return;
-    await extendDemo(grant.userId, endOfDay(day), reason);
+    const current = grant;
+    await whileHeld(hold, () => extendDemo(current.userId, endOfDay(day), reason));
     toast({ tone: "success", message: `La Demo de ${userLabel(grant)} ahora termina el ${formatDate(day)}.` });
     onExtended();
     onClose();
@@ -50,7 +58,7 @@ export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowPro
       <FormDialog
         open={grant !== null && !confirming}
         title="Extender Demo"
-        description={grant ? `${userLabel(grant)} tiene la Demo hasta el ${formatDate(grant.endsAt)}.` : undefined}
+        description={grant ? currentText(grant) : undefined}
         submitLabel="Continuar"
         onSubmit={next}
         onClose={onClose}
@@ -79,7 +87,7 @@ export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowPro
           <Summary
             rows={[
               ["Usuario", userLabel(grant)],
-              ["Fin actual", formatDate(grant.endsAt)],
+              [grant.status === "ENDED" ? "Terminó" : "Fin actual", formatDateTime(grant.endsAt)],
               ["Nuevo fin", formatDate(day)],
             ]}
           />

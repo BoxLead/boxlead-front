@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useToast } from "../../../../src/components/ui/toast";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { useResellerDirectory } from "../../session/resellerDirectory";
@@ -6,6 +6,7 @@ import { formatDate } from "../../format";
 import { createInvitation } from "./api";
 import { endOfDay, todayInBuenosAires } from "./dates";
 import { Field, FormDialog, Summary } from "./FormDialog";
+import type { Hold } from "./hold";
 import { InvitationLinkDialog } from "./InvitationLinkDialog";
 import { daysText, demoDaysProblem, demoDaysValue, emailProblem, futureDayProblem } from "./validation";
 import { MAX_DEMO_DAYS, MAX_EMAIL_LENGTH } from "./types";
@@ -18,11 +19,12 @@ const EMPTY: Draft = { email: "", expiresOn: "", demoDays: "", resellerId: "" };
 
 type CreateInvitationFlowProps = {
   open: boolean;
+  hold: Hold;
   onClose: () => void;
   onCreated: () => void;
 };
 
-export function CreateInvitationFlow({ open, onClose, onCreated }: CreateInvitationFlowProps) {
+export function CreateInvitationFlow({ open, hold, onClose, onCreated }: CreateInvitationFlowProps) {
   const toast = useToast();
   const resellers = useResellerDirectory();
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -30,6 +32,7 @@ export function CreateInvitationFlow({ open, onClose, onCreated }: CreateInvitat
   const [touched, setTouched] = useState(false);
   const [link, setLink] = useState<string | null>(null);
   const [wasOpen, setWasOpen] = useState(open);
+  const release = useRef<(() => void) | null>(null);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
@@ -60,26 +63,37 @@ export function CreateInvitationFlow({ open, onClose, onCreated }: CreateInvitat
 
   async function confirm(reason: string) {
     const email = draft.email.trim();
-    const created = await createInvitation(
-      {
-        email,
-        expiresAt: endOfDay(draft.expiresOn),
-        demoDays: demoDaysValue(draft.demoDays),
-        resellerId: draft.resellerId || null,
-      },
-      reason,
-    );
+    const done = hold();
+    let created;
+    try {
+      created = await createInvitation(
+        {
+          email,
+          expiresAt: endOfDay(draft.expiresOn),
+          demoDays: demoDaysValue(draft.demoDays),
+          resellerId: draft.resellerId || null,
+        },
+        reason,
+      );
+    } catch (error) {
+      done();
+      throw error;
+    }
     setStep("closed");
     onCreated();
     if (created.link) {
+      release.current = done;
       setLink(created.link);
     } else {
+      done();
       toast({ tone: "success", message: `Creamos la invitación. Le llega por email a ${email}.` });
       onClose();
     }
   }
 
   function closeLink() {
+    release.current?.();
+    release.current = null;
     setLink(null);
     onClose();
   }

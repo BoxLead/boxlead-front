@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../../src/components/ui/ToastProvider";
 import type { AdminMe, AdminRole } from "../../api/types";
+import { connectSession } from "../../api/client";
 import { ResellerDirectoryProvider } from "../../session/ResellerDirectoryProvider";
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
@@ -150,6 +151,27 @@ describe("InvitationsScreen", () => {
     expect(screen.getByText("Revocaste la invitación de nora@panaderia.com.")).toBeInTheDocument();
   });
 
+  it("answers the second revoke of the same invitation with a conflict and loads the list again", async () => {
+    let revokes = 0;
+    const calls = renderScreen((method, url) => {
+      if (method === "POST" && url.pathname === "/admin/invitations/i1/revoke") {
+        revokes += 1;
+        return revokes === 1 ? json(200, {}) : json(409, { error: "Conflict", message: "closed", code: "INVITATION_CLOSED" });
+      }
+      return undefined;
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Revocar" }));
+    await giveReason("Revocar");
+    expect(await screen.findByText("Revocaste la invitación de nora@panaderia.com.")).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Revocar" }));
+    const listed = calls.filter((call) => call.url.pathname === "/admin/invitations").length;
+    await giveReason("Revocar");
+    expect(await dialog().findByText("La invitación ya está cerrada.")).toBeInTheDocument();
+    expect(revokes).toBe(2);
+    await userEvent.click(hidden("Cancelar"));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/invitations").length).toBe(listed + 1));
+  }, 15_000);
+
   it("loads the list again after closing a revoke that another admin already did", async () => {
     const calls = renderScreen((method, url) => {
       if (method === "POST" && url.pathname === "/admin/invitations/i1/revoke") {
@@ -224,6 +246,44 @@ describe("InvitationsScreen", () => {
     expect(document.body.innerHTML).not.toContain("secreto");
   });
 
+  it("keeps the tabs locked while the session asks for the code in the middle of creating and until the link is closed", async () => {
+    let answer: () => void = () => undefined;
+    const disconnect = connectSession({
+      adminSessionRequired: () => new Promise<void>((resolve) => (answer = resolve)),
+      signedOut: () => undefined,
+      connectionLost: () => undefined,
+    });
+    try {
+      const day = addDays(todayInBuenosAires(), 3);
+      let posts = 0;
+      const calls = renderScreen((method, url) => {
+        if (method !== "POST" || url.pathname !== "/admin/invitations") return undefined;
+        posts += 1;
+        if (posts === 1) return json(401, { error: "Unauthorized", message: "session", code: "ADMIN_SESSION_REQUIRED" });
+        return json(201, { id: "i9", link: "https://boxlead.app/invitacion#secreto" });
+      });
+      await screen.findByRole("cell", { name: "nora@panaderia.com" });
+      await userEvent.click(screen.getByRole("button", { name: "Nueva invitación" }));
+      await userEvent.type(dialog().getByLabelText("Email"), "pablo@talleres.com");
+      await userEvent.type(dialog().getByLabelText("La invitación vence el"), day);
+      await userEvent.click(hidden("Continuar"));
+      await giveReason("Crear invitación");
+      await vi.waitFor(() => expect(posts).toBe(1));
+      expect(screen.getByRole("button", { name: "Demos", hidden: true })).toBeDisabled();
+      expect(hidden("Guardando…")).toBeDisabled();
+      answer();
+      expect(await screen.findByLabelText("Link de la invitación", { selector: "input" })).toHaveValue("https://boxlead.app/invitacion#secreto");
+      const sent = calls.filter((call) => call.method === "POST");
+      expect(sent).toHaveLength(2);
+      expect(sent[1].init.body).toBe(sent[0].init.body);
+      expect(screen.getByRole("button", { name: "Demos", hidden: true })).toBeDisabled();
+      await userEvent.click(hidden("Listo"));
+      await vi.waitFor(() => expect(screen.getByRole("button", { name: "Demos" })).toBeEnabled());
+    } finally {
+      disconnect();
+    }
+  }, 15_000);
+
   it("says the invitation goes by email when core returns no link", async () => {
     const day = addDays(todayInBuenosAires(), 3);
     renderScreen((method, url) => (method === "POST" && url.pathname === "/admin/invitations" ? json(201, { id: "i9", link: null }) : undefined));
@@ -252,6 +312,37 @@ describe("InvitationsScreen", () => {
     await giveReason("Crear invitación");
     expect(await screen.findByText("Ese email ya tiene una invitación abierta.")).toBeInTheDocument();
   });
+
+  it("explains the codes and the field problems core answers when creating", async () => {
+    const day = addDays(todayInBuenosAires(), 3);
+    const replies = [
+      json(400, { error: "past", message: "past", code: "INVITATION_EXPIRY_PAST" }),
+      json(400, { error: "email", message: "email", code: "INVITATION_EMAIL_INVALID" }),
+      json(409, { error: "reseller", message: "reseller", code: "INVITATION_RESELLER_INVALID" }),
+      json(400, {
+        error: "Validation failed",
+        message: "Validation failed",
+        fields: [
+          { field: "email", message: "must be a well-formed email address" },
+          { field: "reason", message: "size must be between 10 and 500" },
+        ],
+      }),
+    ];
+    renderScreen((method, url) => (method === "POST" && url.pathname === "/admin/invitations" ? replies.shift() : undefined));
+    await screen.findByRole("cell", { name: "nora@panaderia.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Nueva invitación" }));
+    await userEvent.type(dialog().getByLabelText("Email"), "pablo@talleres.com");
+    await userEvent.type(dialog().getByLabelText("La invitación vence el"), day);
+    await userEvent.click(hidden("Continuar"));
+    await giveReason("Crear invitación");
+    expect(await dialog().findByText("El vencimiento ya pasó. Elegí hoy o un día que todavía no pasó.")).toBeInTheDocument();
+    await userEvent.click(hidden("Crear invitación"));
+    expect(await dialog().findByText("Ese email no es válido. Revisalo y volvé a intentar.")).toBeInTheDocument();
+    await userEvent.click(hidden("Crear invitación"));
+    expect(await dialog().findByText(/Ese revendedor no existe o no está activo/)).toBeInTheDocument();
+    await userEvent.click(hidden("Crear invitación"));
+    expect(await dialog().findByText("Revisá el email. El motivo tiene que tener entre 10 y 500 caracteres.")).toBeInTheDocument();
+  }, 15_000);
 
   it("filters invitations by status and email", async () => {
     const calls = renderScreen(() => undefined);
@@ -307,6 +398,41 @@ describe("InvitationsScreen", () => {
     expect(await screen.findByText(/Ese usuario ya tiene una Demo/)).toBeInTheDocument();
   });
 
+  it("warns that a live subscription wins over the Demo and shows the refusal", async () => {
+    renderScreen((method, url) => {
+      if (url.pathname === "/admin/customers") {
+        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: "STARTER", subscriptionStatus: "PAST_DUE" }]);
+      }
+      if (method === "POST") return json(409, { error: "Conflict", message: "live", code: "DEMO_SUBSCRIPTION_ACTIVE" });
+      return undefined;
+    }, "/invitaciones?vista=demos");
+    await screen.findByRole("link", { name: "lucia@estudio.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Otorgar Demo" }));
+    await userEvent.type(dialog().getByLabelText("Buscar usuario"), "diego{Enter}");
+    await userEvent.click(await screen.findByRole("radio", { name: /diego@agencia.com/, hidden: true }));
+    await userEvent.click(hidden("Continuar"));
+    expect(dialog().getByText("Tiene una suscripción que le da acceso")).toBeInTheDocument();
+    expect(dialog().getByText("Plan Starter · Cuota impaga")).toBeInTheDocument();
+    await giveReason("Otorgar Demo");
+    expect(await dialog().findByText(/Ese usuario tiene una suscripción que le da acceso/)).toBeInTheDocument();
+  }, 15_000);
+
+  it("does not warn when the subscription no longer gives access", async () => {
+    renderScreen((_method, url) => {
+      if (url.pathname === "/admin/customers") {
+        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: null, subscriptionStatus: "CANCELED" }]);
+      }
+      return undefined;
+    }, "/invitaciones?vista=demos");
+    await screen.findByRole("link", { name: "lucia@estudio.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Otorgar Demo" }));
+    await userEvent.type(dialog().getByLabelText("Buscar usuario"), "diego{Enter}");
+    await userEvent.click(await screen.findByRole("radio", { name: /diego@agencia.com/, hidden: true }));
+    await userEvent.click(hidden("Continuar"));
+    expect(dialog().getByLabelText("Motivo")).toBeInTheDocument();
+    expect(dialog().queryByText("Tiene una suscripción que le da acceso")).toBeNull();
+  });
+
   it("extends a Demo to a later day and takes one away", async () => {
     const calls = renderScreen((method) => (method === "POST" ? json(200, {}) : undefined), "/invitaciones?vista=demos");
     await screen.findByRole("link", { name: "lucia@estudio.com" });
@@ -327,6 +453,20 @@ describe("InvitationsScreen", () => {
     expect(JSON.parse(String(revoke?.init.body))).toEqual({ reason: REASON });
   });
 
+  it("shows the hour a Demo starts and ends and explains how to take away one that ended", async () => {
+    const ended: DemoGrant = { ...ACTIVE, id: "g2", userId: "u3", email: "martin@ferreteria.com", invitationId: null, status: "ENDED", startsAt: "2029-12-01T13:00:00Z", endsAt: "2029-12-15T13:00:00Z" };
+    renderScreen((_method, url) => (url.pathname === "/admin/demo-grants" ? pageOf([ACTIVE, ended]) : undefined), "/invitaciones?vista=demos");
+    const row = within((await screen.findByRole("link", { name: "martin@ferreteria.com" })).closest("tr") as HTMLElement);
+    expect(row.getByText(/1 dic 2029, 10:00/)).toBeInTheDocument();
+    expect(row.getByText(/15 dic 2029, 10:00/)).toBeInTheDocument();
+    await userEvent.click(row.getByRole("button", { name: "Extender" }));
+    expect(dialog().getByText(/La Demo de martin@ferreteria.com terminó el 15 dic 2029, 10:00/)).toBeInTheDocument();
+    await userEvent.click(hidden("Cancelar"));
+    await userEvent.click(row.getByRole("button", { name: "Quitar" }));
+    expect(dialog().getByText(/ya terminó. Quitarla no cambia su plan y deja lugar para otorgarle otra/)).toBeInTheDocument();
+    expect(dialog().queryByText(/se queda sin plan desde ahora/)).toBeNull();
+  });
+
   it("shows the empty and error states of each list", async () => {
     let fail = true;
     renderScreen((_method, url) => {
@@ -341,10 +481,12 @@ describe("InvitationsScreen", () => {
       return undefined;
     });
     expect(await screen.findByText("Todavía no hay invitaciones")).toBeInTheDocument();
+    expect(screen.getByText(/Una invitación es para quien todavía no tiene cuenta/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Demos" }));
     expect(await screen.findByText("No pudimos cargar la lista")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByText("Todavía no hay Demos")).toBeInTheDocument();
+    expect(screen.getByText(/Una Demo otorgada es para quien ya tiene cuenta y arranca en el acto/)).toBeInTheDocument();
   });
 
   it("hides every action from a role that can not act", async () => {

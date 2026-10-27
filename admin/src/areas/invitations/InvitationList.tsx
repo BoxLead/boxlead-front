@@ -14,11 +14,13 @@ import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotic
 import { useResellerDirectory } from "../../session/resellerDirectory";
 import { revokeInvitation } from "./api";
 import { CreateInvitationFlow } from "./CreateInvitationFlow";
+import { whileHeld, type Hold } from "./hold";
 import { daysText } from "./validation";
 import { INVITATION_STATUS } from "./labels";
 import type { Invitation, InvitationStatus } from "./types";
 
 const FILTERS = ["status", "email"] as const;
+const INVITATION_HINT = "Una invitación es para quien todavía no tiene cuenta y su Demo arranca cuando se registra con ese email.";
 
 const STATUS_OPTIONS = (Object.keys(INVITATION_STATUS) as InvitationStatus[]).map((value) => ({
   value,
@@ -30,6 +32,7 @@ type InvitationListProps = {
   tabs: ReactNode;
   canAct: boolean;
   creating: boolean;
+  hold: Hold;
   onCloseCreate: () => void;
 };
 
@@ -39,7 +42,7 @@ function closedNote(invitation: Invitation): ReactNode {
   return null;
 }
 
-export function InvitationList({ tabs, canAct, creating, onCloseCreate }: InvitationListProps) {
+export function InvitationList({ tabs, canAct, creating, hold, onCloseCreate }: InvitationListProps) {
   const toast = useToast();
   const directory = useResellerDirectory();
   const { params, query } = useListQuery<Invitation>("/admin/invitations", FILTERS, RULES);
@@ -52,7 +55,8 @@ export function InvitationList({ tabs, canAct, creating, onCloseCreate }: Invita
 
   async function revoke(reason: string) {
     if (!revoking) return;
-    await revokeInvitation(revoking.id, reason);
+    const invitation = revoking;
+    await whileHeld(hold, () => revokeInvitation(invitation.id, reason));
     toast({ tone: "success", message: `Revocaste la invitación de ${revoking.email}.` });
     setRevoking(null);
     query.reload();
@@ -112,7 +116,7 @@ export function InvitationList({ tabs, canAct, creating, onCloseCreate }: Invita
         onClearFilters={params.clear}
         onPageChange={params.setPage}
         emptyTitle="Todavía no hay invitaciones"
-        emptyHint={canAct ? "Creá la primera con Nueva invitación." : undefined}
+        emptyHint={canAct ? `${INVITATION_HINT} Creá la primera con Nueva invitación.` : INVITATION_HINT}
         filters={
           <>
             <FilterBar active={params.active} onClear={params.clear} lead={tabs}>
@@ -136,7 +140,7 @@ export function InvitationList({ tabs, canAct, creating, onCloseCreate }: Invita
       />
       {canAct ? (
         <>
-          <CreateInvitationFlow open={creating} onClose={onCloseCreate} onCreated={query.reload} />
+          <CreateInvitationFlow open={creating} hold={hold} onClose={onCloseCreate} onCreated={query.reload} />
           <ReasonDialog
             open={revoking !== null}
             title="Revocar invitación"
