@@ -143,7 +143,7 @@ describe("InvitationsScreen", () => {
     await giveReason("Revocar");
     const post = calls.find((call) => call.method === "POST");
     expect(JSON.parse(String(post?.init.body))).toEqual({ reason: REASON });
-    expect(await screen.findByText("Revocada")).toBeInTheDocument();
+    expect(await screen.findByText("Revocada", { selector: ".tag" })).toBeInTheDocument();
     expect(screen.getByText("Revocaste la invitación de nora@panaderia.com.")).toBeInTheDocument();
   });
 
