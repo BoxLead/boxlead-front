@@ -1,4 +1,4 @@
-import { labelsOf, REQUEST_KIND } from "../../status";
+import { labelsOf, REQUEST_KIND } from "../../status.ts";
 import type { AuditActorType, ConsumerRequestKind, ConsumerRequestStatus, UsageGrouping } from "./types";
 
 export const GROUPING_LABELS: Record<UsageGrouping, string> = {
