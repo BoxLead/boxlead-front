@@ -65,10 +65,10 @@ const SCREENS: Capture[] = [
   { name: "12-usuario", path: "/usuarios", scenario: "customers", follow: true, ready: "Suscripción" },
   { name: "13-suscripciones", path: "/suscripciones", scenario: "default", ready: "Cuota impaga" },
   { name: "14-pagos", path: "/pagos", scenario: "default", ready: "Aprobado" },
-  { name: "15-reembolsos", path: "/reembolsos", scenario: "default", ready: "Reembolsos" },
-  { name: "16-facturas", path: "/facturas", scenario: "default", ready: "Facturas" },
-  { name: "17-invitaciones", path: "/invitaciones", scenario: "invitations", ready: "Nueva invitación" },
-  { name: "18-demos", path: "/invitaciones?vista=demos", scenario: "invitations", ready: "Otorgar Demo" },
+  { name: "15-reembolsos", path: "/reembolsos", scenario: "default", ready: "Sin respuesta" },
+  { name: "16-facturas", path: "/facturas", scenario: "default", ready: "Emitida" },
+  { name: "17-invitaciones", path: "/invitaciones", scenario: "invitations", ready: "nora@panaderiadelbarrio.com" },
+  { name: "18-demos", path: "/invitaciones?vista=demos", scenario: "invitations", ready: "Vigente" },
   { name: "19-revendedores", path: "/revendedores", scenario: "referrals", ready: "Agencia Norte" },
   { name: "20-revendedor", path: "/revendedores", scenario: "referrals", follow: true, ready: "Clics por día" },
   { name: "21-comisiones", path: "/comisiones", scenario: "referrals", ready: "Devengada" },
@@ -108,7 +108,7 @@ for (const scheme of ["light", "dark"] as const) {
         await page.locator(".data-table a").first().click();
         await expect(page.getByRole("navigation", { name: "Ubicación" })).toBeVisible();
       }
-      await expect(page.getByText(screen.ready).first()).toBeVisible();
+      await expect(page.locator("table, .section, .stat-grid, .facts").getByText(screen.ready).first()).toBeVisible();
       await expect(page.locator(".skeleton")).toHaveCount(0);
       await shot(page, screen.name, scheme);
       if (screen.dialog) {
