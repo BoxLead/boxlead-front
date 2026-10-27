@@ -42,7 +42,7 @@ function Probe() {
   return (
     <>
       <p>{reauthenticating ? "pidiendo código" : "sin pedido"}</p>
-      <button type="button" onClick={() => void adminApi.get<{ total: number }>("/admin/overview").then((data) => setResult(`total ${data.total}`), () => setResult("falló"))}>
+      <button type="button" onClick={() => void adminApi.get<{ total: number }>("/admin/probe").then((data) => setResult(`total ${data.total}`), () => setResult("falló"))}>
         Cargar
       </button>
       <p>{result}</p>
@@ -101,7 +101,7 @@ describe("SessionProvider", () => {
         session = true;
         return json(200, { expiresAt: LATER });
       }
-      if (url.pathname === "/admin/overview") {
+      if (url.pathname === "/admin/probe") {
         return session
           ? json(200, { total: 3 })
           : json(401, { error: "Unauthorized", message: "An admin session is required", code: "ADMIN_SESSION_REQUIRED" });
@@ -128,7 +128,7 @@ describe("SessionProvider", () => {
     await userEvent.click(screen.getByRole("button", { name: "Seguir", hidden: true }));
     expect(await screen.findByText("total 3")).toBeInTheDocument();
     expect(screen.getByText("sin pedido")).toBeInTheDocument();
-    expect(calls.filter((call) => call.url.pathname === "/admin/overview")).toHaveLength(2);
+    expect(calls.filter((call) => call.url.pathname === "/admin/probe")).toHaveLength(2);
   });
 
   it("fails the request when the code is canceled", async () => {
