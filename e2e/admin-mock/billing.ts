@@ -26,6 +26,7 @@ const PAYMENT_STATUSES: PaymentStatus[] = [
 const REFUND_STATUSES = ["REQUESTED", "APPROVED", "REJECTED"];
 const INVOICE_STATUSES = ["PENDING", "ISSUED", "VOIDED"];
 const MAX_INVOICE_NUMBER = 50;
+const MIN_REASON = 10;
 const MAX_REASON = 500;
 
 const ars = (amountMinor: number): Money => ({ amountMinor, currency: "ARS" });
@@ -324,8 +325,8 @@ function listInvoices({ query }: MockRequest): MockReply {
 }
 
 function reasonOf(body: Record<string, unknown>): string | null {
-  const reason = typeof body.reason === "string" ? body.reason.trim() : "";
-  return reason && reason.length <= MAX_REASON ? reason : null;
+  const reason = typeof body.reason === "string" ? body.reason : "";
+  return reason.trim() && reason.length >= MIN_REASON && reason.length <= MAX_REASON ? reason.trim() : null;
 }
 
 function selfOperation(admin: AdminIdentity, userId: string): MockReply | null {
@@ -460,6 +461,8 @@ function markIssued({ match, body, admin }: MockRequest): MockReply {
   if (issuedAt > Date.now()) return failure(400, "An invoice cannot be issued in the future");
   const invoice = state.invoices.find((row) => row.id === decodeURIComponent(match[1]));
   if (!invoice) return failure(404, "Invoice not found");
+  const self = selfOperation(admin, invoice.userId);
+  if (self) return self;
   if (invoice.status !== "PENDING") return failure(409, "Only a pending invoice can be issued");
   invoice.status = "ISSUED";
   invoice.invoiceNumber = number;
@@ -473,6 +476,8 @@ function markVoided({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return failure(400, "A reason is required");
   const invoice = state.invoices.find((row) => row.id === decodeURIComponent(match[1]));
   if (!invoice) return failure(404, "Invoice not found");
+  const self = selfOperation(admin, invoice.userId);
+  if (self) return self;
   if (invoice.status === "VOIDED") return failure(409, "The invoice is already voided");
   if (invoice.status !== "ISSUED") return failure(409, "Only an issued invoice can be voided", "INVOICE_NOT_ISSUED");
   invoice.status = "VOIDED";
