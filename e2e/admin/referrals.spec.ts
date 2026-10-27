@@ -292,8 +292,10 @@ test.describe("finance actions", () => {
 
     await page.getByRole("button", { name: "Exportar CSV" }).click();
     await expect(dialog(page).getByText("$ 15.000,00")).toBeVisible();
-    const [download, exported] = await Promise.all([page.waitForEvent("download"), confirmWithReason(page, "Exportar CSV", "/export", "GET")]);
-    expect(new URL(exported.url()).searchParams.get("reason")).toBe(REASON);
+    const [download, exported] = await Promise.all([page.waitForEvent("download"), confirmWithReason(page, "Exportar CSV", "/export")]);
+    expect(exported.postDataJSON()).toEqual({ reason: REASON });
+    const wrongMethod = await page.request.get(exported.url(), { headers: { "X-Requested-With": "boxlead-web" } });
+    expect(wrongMethod.status()).toBe(405);
     expect(exported.headers()["x-requested-with"]).toBe("boxlead-web");
     expect(download.suggestedFilename()).toMatch(/^liquidacion-\d{4}-\d{2}-\d{2}-[0-9a-f-]+\.csv$/);
     expect(download.url()).toMatch(/^blob:/);

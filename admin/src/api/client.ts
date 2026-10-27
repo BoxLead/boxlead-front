@@ -101,7 +101,7 @@ export const adminApi = {
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, { body }, readJson<T>),
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, { body }, readJson<T>),
   delete: <T>(path: string, body?: unknown) => request<T>("DELETE", path, { body }, readJson<T>),
-  blob: (path: string, options: Query = {}) => request<Blob>("GET", path, options, readBlob),
+  postBlob: (path: string, body?: unknown) => request<Blob>("POST", path, { body }, readBlob),
 };
 
 export const entryApi = {

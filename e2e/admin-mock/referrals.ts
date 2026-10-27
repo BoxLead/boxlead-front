@@ -314,12 +314,15 @@ function correctAttribution({ match, body }: MockRequest): MockReply {
 }
 
 function commissions({ query }: MockRequest): MockReply {
-  const status = query.get("status");
+  const statuses = query.getAll("status").filter(Boolean);
   const resellerId = query.get("resellerId");
   const from = query.get("from");
   const to = query.get("to");
   const rows = state.commissions.filter(
-    (row) => (!status || row.status === status) && (!resellerId || row.resellerId === resellerId) && inRange(dayOf(Date.parse(row.createdAt)), from, to),
+    (row) =>
+      (statuses.length === 0 || statuses.includes(row.status)) &&
+      (!resellerId || row.resellerId === resellerId) &&
+      inRange(dayOf(Date.parse(row.createdAt)), from, to),
   );
   return page(rows, query, 100);
 }
@@ -429,8 +432,8 @@ function csvCell(value: string): string {
   return /[",\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
 
-function exportPayout({ match, query }: MockRequest): MockReply {
-  if (!query.get("reason")?.trim()) return MISSING_REASON;
+function exportPayout({ match, body }: MockRequest): MockReply {
+  if (!reasonOf(body)) return MISSING_REASON;
   const payout = findPayout(match[1]);
   if (!payout) return notFound();
   const reseller = findReseller(payout.resellerId);
@@ -513,7 +516,7 @@ export const referrals: MockArea = {
     { method: "GET", pattern: /^\/admin\/payouts$/, access: ["FINANCE"], handle: payouts },
     { method: "POST", pattern: /^\/admin\/payouts$/, access: ["FINANCE"], handle: createPayout },
     { method: "GET", pattern: new RegExp(`^/admin/payouts/${SEGMENT}$`), access: ["FINANCE"], handle: payoutDetail },
-    { method: "GET", pattern: new RegExp(`^/admin/payouts/${SEGMENT}/export$`), access: ["FINANCE"], handle: exportPayout },
+    { method: "POST", pattern: new RegExp(`^/admin/payouts/${SEGMENT}/export$`), access: ["FINANCE"], handle: exportPayout },
     { method: "POST", pattern: new RegExp(`^/admin/payouts/${SEGMENT}/paid$`), access: ["FINANCE"], handle: markPaid },
   ],
 };

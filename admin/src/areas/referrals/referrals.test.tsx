@@ -110,7 +110,9 @@ describe("payout export", () => {
     await downloadPayout(PAYOUT, REASON);
 
     expect(calls[0].url.pathname).toBe("/admin/payouts/p-1/export");
-    expect(calls[0].url.searchParams.get("reason")).toBe(REASON);
+    expect(calls[0].method).toBe("POST");
+    expect(calls[0].url.search).toBe("");
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: REASON });
     expect(calls[0].init.credentials).toBe("include");
     expect(calls[0].init.headers).toMatchObject({ "X-Requested-With": "boxlead-web" });
     expect(click).toHaveBeenCalledTimes(1);

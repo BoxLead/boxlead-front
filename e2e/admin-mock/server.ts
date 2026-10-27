@@ -45,8 +45,11 @@ function businessRoute(method: string, path: string, url: URL, body: Record<stri
   if (!signedIn(cookies)) return failure(401, "Unauthorized");
   const admin = identity();
   if (admin.roles.length === 0) return failure(403, "This action needs another admin role", "ROLE_REQUIRED");
+  let pathKnown = false;
   for (const area of AREAS) {
     for (const route of area.routes) {
+      if (!path.match(route.pattern)) continue;
+      pathKnown = true;
       const match = route.method === method ? path.match(route.pattern) : null;
       if (!match) continue;
       if (!canAccess(admin.roles, route.access)) return failure(403, "This action needs another admin role", "ROLE_REQUIRED");
@@ -55,7 +58,7 @@ function businessRoute(method: string, path: string, url: URL, body: Record<stri
       if (reply) return reply;
     }
   }
-  return failure(404, "Not found");
+  return pathKnown ? failure(405, "Method not allowed") : failure(404, "Not found");
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse) {
