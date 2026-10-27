@@ -72,6 +72,8 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await page.getByRole("button", { name: "Buscar" }).click();
   await expect(page.getByText("Nada coincide con estos filtros")).toBeVisible();
   await page.getByRole("button", { name: "Limpiar filtros" }).first().click();
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Buscar" })).toHaveValue("");
   await page.getByRole("searchbox", { name: "Buscar" }).fill("ruiz");
   await page.getByRole("button", { name: "Buscar" }).click();
   await expect(page.getByText("1 a 1 de 1")).toBeVisible();
