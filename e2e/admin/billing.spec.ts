@@ -6,6 +6,7 @@ import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow,
 
 const DIR = process.env.SCREENSHOT_DIR;
 const REASON = "Pedido del cliente por mail";
+const ANA_SUBSCRIPTION = "5b538453-0000-4000-8000-000000000007";
 
 async function resetBilling(roles: AdminRole[], scenario = "default") {
   const res = await fetch(`${adminMockUrl()}/__reset`, {
@@ -47,19 +48,46 @@ test("an owner pauses, resumes and cancels subscriptions with a reason", async (
   await expect(dialog).toContainText("ARS");
   await expect(dialog.getByRole("button", { name: "Pausar", exact: true })).toBeDisabled();
   await expectAccessible(page);
-  expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON });
+  expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(page.getByText("Pausamos la suscripción.")).toBeVisible();
   await expect(ana).toContainText("Pausada");
 
   await ana.getByRole("button", { name: "Reanudar" }).click();
-  expect(await confirmWithReason(page, "Reanudar")).toEqual({ reason: REASON });
+  expect(await confirmWithReason(page, "Reanudar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(ana).toContainText("Activa");
 
   await ana.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.getByRole("dialog", { name: "Cancelar suscripción" })).toContainText("No devuelve plata");
-  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON });
+  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(ana).toContainText("Cancelada");
   await expect(ana.getByRole("button")).toHaveCount(0);
+});
+
+test("an owner acting on a subscription that changed meanwhile gets a conflict and a fresh list", async ({ page }) => {
+  await resetBilling(["OWNER"]);
+  await page.route(
+    `${ADMIN_MOCK_ORIGIN}/admin/subscriptions*`,
+    async (route) => {
+      const response = await route.fetch();
+      const body = (await response.json()) as { items: { id: string }[] };
+      const items = body.items.map((item) => (item.id === ANA_SUBSCRIPTION ? { ...item, id: "5b000000-0000-4000-8000-000000000099" } : item));
+      await route.fulfill({ response, json: { ...body, items } });
+    },
+    { times: 1 },
+  );
+  await enterAdmin(page, "/suscripciones");
+  const ana = row(page, "ana@example.com");
+  await ana.getByRole("button", { name: "Cancelar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Cancelar suscripción" });
+  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: "5b000000-0000-4000-8000-000000000099" });
+  await expect(dialog).toContainText("La suscripción de este cliente cambió desde que abriste la lista. No tocamos nada");
+  const reload = page.waitForResponse((res) => res.url().startsWith(`${ADMIN_MOCK_ORIGIN}/admin/subscriptions`));
+  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await reload;
+  await expect(ana).toContainText("Activa");
+  await ana.getByRole("button", { name: "Pausar" }).click();
+  expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
+  await expect(ana).toContainText("Pausada");
 });
 
 test("asks for the code and finishes the pause when the admin session expired in the dialog", async ({ page }) => {

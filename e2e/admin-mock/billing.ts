@@ -342,8 +342,15 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
   const userId = decodeURIComponent(match[1]);
   const self = selfOperation(admin, userId);
   if (self) return self;
+  const expected = body.expectedSubscriptionId;
+  if (expected !== undefined && expected !== null && (typeof expected !== "string" || !UUID.test(expected))) {
+    return failure(400, "Invalid expectedSubscriptionId");
+  }
   const live = state.subscriptions.find((row) => row.userId === userId && row.status !== "CANCELED");
-  if (!live) return failure(404, "The user has no live subscription");
+  if (!live) return NOT_ACTIVE;
+  if (typeof expected === "string" && expected !== live.id) {
+    return failure(409, "The live subscription is not the one you saw, reload and try again", "SUBSCRIPTION_CHANGED");
+  }
   const action = match[2];
   if (action === "pause") {
     if (!["ACTIVE", "PAST_DUE", "SUSPENDED"].includes(live.status)) return NOT_ACTIVE;

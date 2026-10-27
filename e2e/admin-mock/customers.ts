@@ -648,9 +648,12 @@ const revokeOverride: Action = (customer, _reason, { admin, match }) => {
 };
 
 function transition(next: (subscription: StoredSubscription) => Partial<Subscription> | null): Action {
-  return (customer) => {
+  return (customer, _reason, { body }) => {
     const live = liveSubscription(customer);
-    if (!live) return failure(404, "The user has no live subscription");
+    if (!live) return failure(409, "The user has no live subscription", "SUBSCRIPTION_NOT_ACTIVE");
+    if (typeof body.expectedSubscriptionId === "string" && body.expectedSubscriptionId !== live.id) {
+      return failure(409, "The live subscription is not the one you saw, reload and try again", "SUBSCRIPTION_CHANGED");
+    }
     const change = next(live);
     if (!change) return failure(409, "The subscription is not active", "SUBSCRIPTION_NOT_ACTIVE");
     Object.assign(live, change);

@@ -318,7 +318,22 @@ describe("buttons by role", () => {
     await userEvent.click(screen.getByRole("button", { name: "Pausar", hidden: true }));
     const post = calls.find((call) => call.method === "POST");
     expect(post?.url.pathname).toBe(`/admin/customers/${SUBSCRIPTION.userId}/subscription/pause`);
-    expect(JSON.parse(String(post?.init.body))).toEqual({ reason: "Pedido del cliente por mail" });
+    expect(JSON.parse(String(post?.init.body))).toEqual({ reason: "Pedido del cliente por mail", expectedSubscriptionId: SUBSCRIPTION.id });
     expect(await screen.findByText("Pausamos la suscripción.")).toBeInTheDocument();
+  });
+
+  it("explains that the subscription changed and reloads the list on close", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "changed", code: "SUBSCRIPTION_CHANGED" }) : page([SUBSCRIPTION]),
+    );
+    renderAs(["OWNER"], <SubscriptionsScreen />, "/suscripciones");
+    const row = (await screen.findByText("Renueva el 20 nov 2026")).closest("tr");
+    if (!row) throw new Error("missing row");
+    await userEvent.click(within(row).getByRole("button", { name: /Cancelar la suscripción/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Pedido del cliente por mail");
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar suscripción", hidden: true }));
+    expect(await screen.findByText(/La suscripción de este cliente cambió desde que abriste la lista/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
   });
 });

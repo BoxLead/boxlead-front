@@ -33,8 +33,10 @@ async function billingCall<T>(call: () => Promise<T>, messages: Record<string, s
   }
 }
 
-export function changeSubscription(userId: string, action: SubscriptionAction, reason: string): Promise<void> {
-  return billingCall(() => adminApi.post<void>(`/admin/customers/${encodeURIComponent(userId)}/subscription/${action}`, { reason }));
+export function changeSubscription(userId: string, action: SubscriptionAction, reason: string, expectedSubscriptionId: string): Promise<void> {
+  return billingCall(() =>
+    adminApi.post<void>(`/admin/customers/${encodeURIComponent(userId)}/subscription/${action}`, { reason, expectedSubscriptionId }),
+  );
 }
 
 export function refundPayment(paymentId: string, amount: Money | null, reason: string): Promise<RefundResult> {

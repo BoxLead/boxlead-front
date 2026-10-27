@@ -4,6 +4,7 @@ import { resetCustomers, routeResellers, routeUsage, section } from "./customers
 import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, expireAdminSession, reauthenticate } from "./support.ts";
 
 const ANA = "0c000000-0000-4000-8000-000000000001";
+const ANA_SUBSCRIPTION = "0e000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
 const ELENA = "0c000000-0000-4000-8000-000000000005";
 const CLIENT_08 = "0c000000-0000-4000-8000-000000000008";
@@ -160,13 +161,14 @@ test("the owner pauses, resumes and cancels with a reason", async ({ page }) => 
   await subscription.getByRole("button", { name: "Pausar" }).click();
   await expect(page.getByRole("dialog", { name: "Pausar suscripción" })).toContainText("87.000,00 ARS por período");
   const paused = await confirm(page, "Pausar suscripción", "Pausar", `/admin/customers/${ANA}/subscription/pause`);
-  expect(paused.postDataJSON()).toEqual({ reason: REASON });
+  expect(paused.postDataJSON()).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(page.getByText("La suscripción quedó pausada.")).toBeVisible();
   await expect(subscription).toContainText("Pausada");
 
   await subscription.getByRole("button", { name: "Reanudar" }).click();
   expect((await confirm(page, "Reanudar suscripción", "Reanudar", `/admin/customers/${ANA}/subscription/resume`)).postDataJSON()).toEqual({
     reason: REASON,
+    expectedSubscriptionId: ANA_SUBSCRIPTION,
   });
   await expect(subscription).toContainText("Activa");
 

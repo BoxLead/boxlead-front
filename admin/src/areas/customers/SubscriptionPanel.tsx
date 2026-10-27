@@ -1,4 +1,5 @@
 import { adminApi } from "../../api/client";
+import { isStale } from "../../api/errors";
 import { DateText } from "../../components/DateText";
 import { Money } from "../../components/Money";
 import { ReasonDialog } from "../../components/ReasonDialog";
@@ -52,6 +53,9 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
   const base = `/admin/customers/${userId}/subscription`;
   const status = subscription?.status;
   const live = subscription !== null && status !== "CANCELED";
+  const settled = (failure: unknown) => {
+    if (isStale(failure)) onChanged();
+  };
 
   const actions =
     canOperate && subscription && live ? (
@@ -104,7 +108,8 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
             title="Pausar suscripción"
             confirmLabel="Pausar"
             onClose={dialogs.close}
-            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/pause`, { reason }), "La suscripción quedó pausada.")}
+            onSettled={settled}
+            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/pause`, { reason, expectedSubscriptionId: subscription.id }), "La suscripción quedó pausada.")}
           >
             <p>Primero se pausa el cobro en Mercado Pago y después la suscripción pasa a pausada.</p>
             <p>{pauseText(subscription)}</p>
@@ -114,7 +119,8 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
             title="Reanudar suscripción"
             confirmLabel="Reanudar"
             onClose={dialogs.close}
-            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/resume`, { reason }), "La suscripción volvió a estar activa.")}
+            onSettled={settled}
+            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/resume`, { reason, expectedSubscriptionId: subscription.id }), "La suscripción volvió a estar activa.")}
           >
             <p>Se reactiva el cobro en Mercado Pago y la suscripción vuelve a activa.</p>
             <p>El cobro vuelve a ser de {chargeText(subscription)} por período.</p>
@@ -125,7 +131,8 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
             confirmLabel="Cancelar suscripción"
             tone="danger"
             onClose={dialogs.close}
-            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/cancel`, { reason }), "La suscripción quedó cancelada.")}
+            onSettled={settled}
+            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/cancel`, { reason, expectedSubscriptionId: subscription.id }), "La suscripción quedó cancelada.")}
           >
             <p>
               {cancelText(subscription)}

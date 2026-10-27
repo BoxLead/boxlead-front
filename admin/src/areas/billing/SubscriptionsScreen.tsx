@@ -12,7 +12,7 @@ import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
 import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
-import { changeSubscription, type SubscriptionAction } from "./api";
+import { changedUnderneath, changeSubscription, type SubscriptionAction } from "./api";
 import { Amount, CustomerCell, RowActions, Stack, StatusTag } from "./cells";
 import { PLAN_OPTIONS, planLabel, SUBSCRIPTION_STATUS, SUBSCRIPTION_STATUS_OPTIONS } from "./labels";
 import { actionsFor, nextStep } from "./subscriptionSteps";
@@ -67,7 +67,7 @@ export function SubscriptionsScreen() {
 
   async function confirm(reason: string) {
     if (!pending) return;
-    await changeSubscription(pending.row.userId, pending.action, reason);
+    await changeSubscription(pending.row.userId, pending.action, reason, pending.row.id);
     toast({ message: ACTIONS[pending.action].done });
     setOpen(false);
     query.reload();
@@ -182,6 +182,9 @@ export function SubscriptionsScreen() {
         amount={pending?.row.charge}
         onConfirm={confirm}
         onClose={() => setOpen(false)}
+        onSettled={(failure) => {
+          if (changedUnderneath(failure)) query.reload();
+        }}
       >
         {pending ? <Explanation pending={pending} /> : null}
       </ReasonDialog>
