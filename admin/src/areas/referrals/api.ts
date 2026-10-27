@@ -53,6 +53,8 @@ export function payoutFileName(payout: Payout): string {
   return `liquidacion-${payout.periodEnd}-${payout.id}.csv`;
 }
 
+const REVOKE_AFTER_MS = 10_000;
+
 export function saveBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -63,7 +65,7 @@ export function saveBlob(blob: Blob, fileName: string): void {
   document.body.append(link);
   link.click();
   link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  window.setTimeout(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);
 }
 
 export async function downloadPayout(payout: Payout, reason: string): Promise<void> {

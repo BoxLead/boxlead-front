@@ -99,7 +99,7 @@ describe("commission rules", () => {
 });
 
 describe("payout export", () => {
-  it("downloads the CSV with the reason through a blob that is let go right away", async () => {
+  it("downloads the CSV with the reason through a blob that is let go a few seconds later", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout"] });
     const calls = mockFetch(() => ({ status: 200, body: "a,b" }));
     const create = vi.fn(() => "blob:local/1");
@@ -119,7 +119,9 @@ describe("payout export", () => {
     const link = click.mock.contexts[0] as HTMLAnchorElement;
     expect(link.download).toBe("liquidacion-2026-10-31-p-1.csv");
     expect(document.querySelector("a[download]")).toBeNull();
-    vi.runAllTimers();
+    vi.advanceTimersByTime(1_000);
+    expect(revoke).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(9_000);
     expect(revoke).toHaveBeenCalledWith("blob:local/1");
     vi.useRealTimers();
     Reflect.deleteProperty(URL, "createObjectURL");
