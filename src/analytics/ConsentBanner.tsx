@@ -16,7 +16,7 @@ export function ConsentBanner() {
         <p className="consent-text">
           Usamos Google Analytics solo si aceptás, para entender qué páginas sirven y mejorar el sitio. No vendemos tus
           datos. Podés cambiar de idea desde el pie de página. Más en la{" "}
-          <Link to="/privacidad">Política de privacidad</Link>.
+          <Link to="/privacidad#cookies">Política de privacidad</Link>.
         </p>
       </div>
       <div className="consent-actions">
