@@ -196,6 +196,19 @@ describe("TeamScreen", () => {
     expect(JSON.parse(String(removal?.init.body))).toEqual({ reason: "Dejó el equipo de soporte" });
   });
 
+  it("says when the role was already removed and loads the team again on close", async () => {
+    const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method) =>
+      method === "DELETE" ? json(404, { error: "Not found", message: "Grant not found" }) : json(200, pageOf(members)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Soporte a carla@example.com" }));
+    const listed = calls.filter((call) => call.url.pathname === "/admin/grants").length;
+    await userEvent.type(screen.getByLabelText("Motivo"), "Dejó el equipo de soporte");
+    await userEvent.click(screen.getByRole("button", { name: "Quitar rol", hidden: true }));
+    expect(await screen.findByText("Ese rol ya fue quitado.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/grants").length).toBe(listed + 1));
+  });
+
   it("finds an existing user and grants a role with the reason", async () => {
     const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method, url) => {
       if (method === "POST") return json(201, { id: "g3", userId: LUCIA, role: "FINANCE", grantedAt: "2026-10-26T12:00:00Z", enrollmentOpenUntil: null });

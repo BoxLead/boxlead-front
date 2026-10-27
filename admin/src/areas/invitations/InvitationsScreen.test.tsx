@@ -150,6 +150,37 @@ describe("InvitationsScreen", () => {
     expect(screen.getByText("Revocaste la invitación de nora@panaderia.com.")).toBeInTheDocument();
   });
 
+  it("loads the list again after closing a revoke that another admin already did", async () => {
+    const calls = renderScreen((method, url) => {
+      if (method === "POST" && url.pathname === "/admin/invitations/i1/revoke") {
+        return json(409, { error: "Conflict", message: "closed", code: "INVITATION_CLOSED" });
+      }
+      return undefined;
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Revocar" }));
+    const listed = calls.filter((call) => call.url.pathname === "/admin/invitations").length;
+    await giveReason("Revocar");
+    expect(await dialog().findByText("La invitación ya está cerrada.")).toBeInTheDocument();
+    await userEvent.click(hidden("Cancelar"));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/invitations").length).toBe(listed + 1));
+  });
+
+  it("says when the Demo is already gone and loads the list again on close", async () => {
+    const calls = renderScreen(
+      (method, url) => {
+        if (method === "POST" && url.pathname.endsWith("/demo/revoke")) return json(404, { error: "Not found", message: "No demo" });
+        return undefined;
+      },
+      "/invitaciones?vista=demos",
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar" }));
+    const listed = calls.filter((call) => call.url.pathname === "/admin/demo-grants").length;
+    await giveReason("Quitar Demo");
+    expect(await dialog().findByText("Ese usuario ya no tiene Demo.")).toBeInTheDocument();
+    await userEvent.click(hidden("Cancelar"));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/demo-grants").length).toBe(listed + 1));
+  });
+
   it("checks the fields, creates the invitation and shows the link once", async () => {
     const writeText = vi.fn(() => Promise.resolve());
     vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });

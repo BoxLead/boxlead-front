@@ -90,6 +90,17 @@ export function toAdminError(status: number, body: unknown): AdminApiError {
   return new AdminApiError(messageFor(status, code), status, code);
 }
 
+export function isStale(error: unknown): boolean {
+  return error instanceof AdminApiError && (error.status === 404 || error.status === 409);
+}
+
+export function withMessage(status: number, message: string) {
+  return (error: unknown): never => {
+    if (error instanceof AdminApiError && error.status === status) throw new AdminApiError(message, status, error.code);
+    throw error;
+  };
+}
+
 export function errorText(error: unknown): string {
   if (error instanceof AdminApiError || error instanceof ConnectionLostError) return error.message;
   return FALLBACK;

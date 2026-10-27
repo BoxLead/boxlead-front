@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../../../src/components/ui/toast";
+import { isStale } from "../../api/errors";
 import { DateText } from "../../components/DateText";
 import { StatusBadge } from "../../components/StatusBadge";
 import { FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
@@ -143,6 +144,9 @@ export function InvitationList({ tabs, canAct, creating, onCloseCreate }: Invita
             tone="danger"
             onConfirm={revoke}
             onClose={() => setRevoking(null)}
+            onSettled={(failure) => {
+              if (isStale(failure)) query.reload();
+            }}
           >
             <p>
               Vas a revocar la invitación de <strong>{revoking?.email}</strong>. Su link deja de funcionar y no se puede volver a abrir.

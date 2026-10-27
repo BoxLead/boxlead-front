@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../../../src/components/ui/toast";
+import { isStale, withMessage } from "../../api/errors";
 import { DateText } from "../../components/DateText";
 import { StatusBadge } from "../../components/StatusBadge";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
@@ -16,6 +17,7 @@ import { DEMO_STATUS } from "./labels";
 import { userLabel, type DemoGrant, type DemoGrantStatus } from "./types";
 
 const FILTERS = ["status", "endsBefore"] as const;
+const NO_DEMO = "Ese usuario ya no tiene Demo.";
 
 const STATUS_OPTIONS = (Object.keys(DEMO_STATUS) as DemoGrantStatus[]).map((value) => ({
   value,
@@ -38,7 +40,7 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
 
   async function revoke(reason: string) {
     if (!revoking) return;
-    await revokeDemo(revoking.userId, reason);
+    await revokeDemo(revoking.userId, reason).catch(withMessage(404, NO_DEMO)).catch(withMessage(409, NO_DEMO));
     toast({ tone: "success", message: `Le quitaste la Demo a ${userLabel(revoking)}.` });
     setRevoking(null);
     query.reload();
@@ -132,6 +134,9 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
             tone="danger"
             onConfirm={revoke}
             onClose={() => setRevoking(null)}
+            onSettled={(failure) => {
+              if (isStale(failure)) query.reload();
+            }}
           >
             <p>
               Vas a quitarle la Demo a <strong>{revoking ? userLabel(revoking) : ""}</strong>. Si no tiene un plan pago, se queda sin
