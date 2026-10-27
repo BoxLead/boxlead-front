@@ -1,10 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "../api/errors";
 import { ReasonDialog } from "./ReasonDialog";
 
-function renderDialog(onConfirm: (reason: string) => Promise<void>) {
+function renderDialog(onConfirm: (reason: string) => Promise<void>, onClose = vi.fn(), onSettled = vi.fn()) {
   render(
     <ReasonDialog
       open
@@ -13,11 +13,27 @@ function renderDialog(onConfirm: (reason: string) => Promise<void>) {
       tone="danger"
       amount={{ amountMinor: 1234500, currency: "ARS" }}
       onConfirm={onConfirm}
-      onClose={vi.fn()}
+      onClose={onClose}
+      onSettled={onSettled}
     >
       <p>Se devuelve el pago completo y se cancela la suscripción.</p>
     </ReasonDialog>,
   );
+}
+
+function dialog(): HTMLElement {
+  const element = screen.getByRole("heading", { name: "Reembolsar pago", hidden: true }).closest("dialog");
+  if (!element) throw new Error("No dialog");
+  return element;
+}
+
+function pressEscape() {
+  fireEvent(dialog(), new Event("cancel", { cancelable: true }));
+}
+
+function clickOutside() {
+  fireEvent.pointerDown(dialog());
+  fireEvent.click(dialog());
 }
 
 describe("ReasonDialog", () => {
@@ -43,5 +59,34 @@ describe("ReasonDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
     expect(await screen.findByText("El reembolso supera lo que queda del pago.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reembolsar", hidden: true })).toBeEnabled();
+  });
+
+  it("ignores Escape and clicks outside while the action is in flight", async () => {
+    let fail: (error: Error) => void = () => undefined;
+    const onClose = vi.fn();
+    const onSettled = vi.fn();
+    const failure = new AdminApiError("El estado cambió y esta acción ya no aplica.", 409, null);
+    renderDialog(() => new Promise<void>((_, reject) => (fail = reject)), onClose, onSettled);
+    await userEvent.type(screen.getByLabelText("Motivo"), "Pedido del cliente por mail");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(screen.getByRole("button", { name: "Guardando…", hidden: true })).toBeDisabled();
+    pressEscape();
+    clickOutside();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Cancelar", hidden: true })).toBeDisabled();
+    fail(failure);
+    expect(await screen.findByText("El estado cambió y esta acción ya no aplica.")).toBeInTheDocument();
+    pressEscape();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onSettled).toHaveBeenCalledWith(failure);
+  });
+
+  it("closes without reporting anything when nothing was tried", () => {
+    const onClose = vi.fn();
+    const onSettled = vi.fn();
+    renderDialog(() => Promise.resolve(), onClose, onSettled);
+    clickOutside();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onSettled).not.toHaveBeenCalled();
   });
 });
