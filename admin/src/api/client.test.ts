@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, mockFetch } from "../test/fetch";
 import { adminApi, connectSession, entryApi, type SessionHooks } from "./client";
-import { AdminApiError, ConnectionLostError } from "./errors";
+import { AdminApiError, ConnectionLostError, messageFor } from "./errors";
 
 const SESSION_REQUIRED = json(401, { error: "Unauthorized", message: "An admin session is required", code: "ADMIN_SESSION_REQUIRED" });
 
@@ -96,5 +96,23 @@ describe("entryApi", () => {
     await expect(entryApi.openSession("000000")).rejects.toMatchObject({ code: "MFA_INVALID" });
     expect(session.value.signedOut).not.toHaveBeenCalled();
     expect(session.value.adminSessionRequired).not.toHaveBeenCalled();
+  });
+});
+
+describe("messageFor", () => {
+  it.each([
+    "DEMO_ALREADY_USED",
+    "SUBSCRIPTION_NOT_ACTIVE",
+    "RESELLER_EXISTS",
+    "INVOICE_NUMBER_TAKEN",
+    "PAYOUT_NOTHING_TO_PAY",
+    "PAYOUT_MIXED_CURRENCIES",
+    "PAYOUT_NOT_POSITIVE",
+    "COMMISSION_NOTHING_TO_REVERSE",
+    "CONCURRENT_CHANGE",
+    "INVITATION_RESELLER_INVALID",
+  ])("has its own message for %s instead of the status fallback", (code) => {
+    expect(messageFor(409, code)).not.toBe(messageFor(409, null));
+    expect(messageFor(409, code)).not.toBe(messageFor(500, null));
   });
 });

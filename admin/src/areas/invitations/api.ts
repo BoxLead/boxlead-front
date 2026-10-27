@@ -1,16 +1,6 @@
 import { adminApi } from "../../api/client";
-import { AdminApiError } from "../../api/errors";
 import type { AdminPage } from "../../api/types";
 import type { CreatedInvitation, CustomerMatch, DemoGrant, NewInvitation } from "./types";
-
-const DEMO_ALREADY_USED = "Ese usuario ya tiene una Demo, aunque haya terminado. Quitala antes de otorgarle otra.";
-
-function explain(error: unknown): never {
-  if (error instanceof AdminApiError && error.code === "DEMO_ALREADY_USED") {
-    throw new AdminApiError(DEMO_ALREADY_USED, error.status, error.code);
-  }
-  throw error;
-}
 
 export function createInvitation(invitation: NewInvitation, reason: string) {
   return adminApi.post<CreatedInvitation>("/admin/invitations", { ...invitation, reason });
@@ -25,7 +15,7 @@ function demoPath(userId: string, action = "") {
 }
 
 export function grantDemo(userId: string, demoDays: number | null, reason: string) {
-  return adminApi.post<DemoGrant>(demoPath(userId), { demoDays, reason }).catch(explain);
+  return adminApi.post<DemoGrant>(demoPath(userId), { demoDays, reason });
 }
 
 export function extendDemo(userId: string, endsAt: string, reason: string) {
