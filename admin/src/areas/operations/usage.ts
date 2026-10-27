@@ -1,3 +1,5 @@
+import { isDay, isUuid } from "../../components/list/filterRules";
+
 const LOCALE = "es-AR";
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 const MICROS = 1_000_000;
@@ -5,8 +7,8 @@ const DAY_MS = 86_400_000;
 
 export const MAX_RANGE_DAYS = 366;
 
-const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export { isDay, isUuid };
+
 
 export function formatCost(micros: number, currency: string | null): string {
   const units = micros / MICROS;
@@ -29,14 +31,6 @@ export function todayInBuenosAires(now = new Date()): string {
 
 export function monthStart(day: string): string {
   return `${day.slice(0, 8)}01`;
-}
-
-export function isDay(value: string): boolean {
-  return ISO_DAY.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
-}
-
-export function isUuid(value: string): boolean {
-  return UUID.test(value);
 }
 
 export function rangeProblem(from: string, to: string): string | null {

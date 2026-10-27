@@ -6,6 +6,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import type { Column } from "../../components/list/DataTable";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { revokeInvitation } from "./api";
@@ -21,6 +22,7 @@ const STATUS_OPTIONS = (Object.keys(INVITATION_STATUS) as InvitationStatus[]).ma
   value,
   label: INVITATION_STATUS[value].label,
 }));
+const RULES: FilterRules = { status: enumOf(STATUS_OPTIONS) };
 
 type InvitationListProps = {
   tabs: ReactNode;
@@ -38,7 +40,7 @@ function closedNote(invitation: Invitation): ReactNode {
 
 export function InvitationList({ tabs, canAct, resellers, creating, onCloseCreate }: InvitationListProps) {
   const toast = useToast();
-  const { params, query } = useListQuery<Invitation>("/admin/invitations", FILTERS);
+  const { params, query } = useListQuery<Invitation>("/admin/invitations", FILTERS, RULES);
   const [revoking, setRevoking] = useState<Invitation | null>(null);
 
   function resellerName(id: string | null): ReactNode {

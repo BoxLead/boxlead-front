@@ -6,6 +6,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import type { Column } from "../../components/list/DataTable";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { revokeDemo } from "./api";
@@ -20,6 +21,7 @@ const STATUS_OPTIONS = (Object.keys(DEMO_STATUS) as DemoGrantStatus[]).map((valu
   value,
   label: DEMO_STATUS[value].label,
 }));
+const RULES: FilterRules = { status: enumOf(STATUS_OPTIONS), endsBefore: { kind: "date" } };
 
 type DemoListProps = {
   tabs: ReactNode;
@@ -30,7 +32,7 @@ type DemoListProps = {
 
 export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProps) {
   const toast = useToast();
-  const { params, query } = useListQuery<DemoGrant>("/admin/demo-grants", FILTERS);
+  const { params, query } = useListQuery<DemoGrant>("/admin/demo-grants", FILTERS, RULES);
   const [extending, setExtending] = useState<DemoGrant | null>(null);
   const [revoking, setRevoking] = useState<DemoGrant | null>(null);
 

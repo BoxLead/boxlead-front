@@ -391,3 +391,9 @@
     flex-wrap: wrap;
   }
 }
+
+.list-error .banner-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--signal-space-2);
+}

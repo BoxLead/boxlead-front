@@ -5,6 +5,7 @@ import { DateText } from "../../components/DateText";
 import type { Column } from "../../components/list/DataTable";
 import { FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { Money } from "../../components/Money";
 import { Screen } from "../../components/Screen";
@@ -18,10 +19,11 @@ import type { Payout } from "./types";
 
 const KEYS = ["resellerId", "status"] as const;
 const STATUS_OPTIONS = optionsOf(PAYOUT_STATUS);
+const RULES: FilterRules = { resellerId: { kind: "uuid", what: "del revendedor" }, status: enumOf(STATUS_OPTIONS) };
 
 export function PayoutsScreen() {
   const item = navItem("payouts");
-  const { params, query } = useListQuery<Payout>("/admin/payouts", KEYS);
+  const { params, query } = useListQuery<Payout>("/admin/payouts", KEYS, RULES);
   const directory = useResellerDirectory();
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();

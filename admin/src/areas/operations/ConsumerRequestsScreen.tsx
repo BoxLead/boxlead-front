@@ -11,6 +11,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import type { Column } from "../../components/list/DataTable";
 import { FilterBar } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import type { FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { formatDateTime } from "../../format";
 import { navItem } from "../../nav";
@@ -23,6 +24,7 @@ import "./Operations.css";
 
 const KEYS = ["status"] as const;
 const STATUSES: readonly ConsumerRequestStatus[] = ["RECEIVED", "RESOLVED", "REJECTED"];
+const RULES: FilterRules = { status: { kind: "enum", values: STATUSES } };
 const MAX_RESOLUTION = 1000;
 
 const RECEIPT_QUEUED: StatusLabel = { label: "En cola", tone: "success" };
@@ -143,7 +145,7 @@ function ResolveDialog({ request, onClose, onDone }: { request: ConsumerRequest;
 export function ConsumerRequestsScreen() {
   const item = navItem("consumer-requests");
   const me = useAdmin();
-  const { params, query } = useListQuery<ConsumerRequest>("/admin/consumer-requests", KEYS);
+  const { params, query } = useListQuery<ConsumerRequest>("/admin/consumer-requests", KEYS, RULES);
   const status = STATUSES.find((value) => value === params.value("status")) ?? "RECEIVED";
   const [resolving, setResolving] = useState<ConsumerRequest | null>(null);
 

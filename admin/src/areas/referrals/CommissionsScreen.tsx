@@ -5,6 +5,7 @@ import { DateText } from "../../components/DateText";
 import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { Money } from "../../components/Money";
 import { Screen } from "../../components/Screen";
@@ -19,6 +20,7 @@ import type { Commission } from "./types";
 
 const KEYS = ["status", "resellerId", "from", "to"] as const;
 const STATUS_OPTIONS = optionsOf(COMMISSION_STATUS);
+const RULES: FilterRules = { status: enumOf(STATUS_OPTIONS), resellerId: { kind: "uuid", what: "del revendedor" }, ...dateRange("from", "to") };
 
 type Dialog = { kind: "approve"; commissions: Commission[] } | { kind: CommissionAction; commission: Commission };
 
@@ -32,7 +34,7 @@ const DONE: Record<CommissionAction, string> = {
 
 export function CommissionsScreen() {
   const item = navItem("commissions");
-  const { params, query } = useListQuery<Commission>("/admin/commissions", KEYS);
+  const { params, query } = useListQuery<Commission>("/admin/commissions", KEYS, RULES);
   const directory = useResellerDirectory();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [selection, setSelection] = useState<Selection>({ search: "", rows: new Map() });
