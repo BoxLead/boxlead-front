@@ -1,59 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../../api/client";
 import { AdminApiError, errorText } from "../../api/errors";
-import type { AdminPage } from "../../api/types";
 import { useAdmin } from "../../session/session";
-import { shortId } from "./labels";
-import type { Reseller } from "./types";
-
-const MAX_PAGES = 20;
 
 export function useReferralRoles() {
   const me = useAdmin();
   const owner = me.roles.includes("OWNER");
   return { owner, finance: owner || me.roles.includes("FINANCE") };
-}
-
-async function loadAll(signal: AbortSignal): Promise<Reseller[]> {
-  const found: Reseller[] = [];
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const query = page > 0 ? new URLSearchParams({ page: String(page) }) : undefined;
-    const result = await adminApi.get<AdminPage<Reseller>>("/admin/resellers", { query, signal });
-    found.push(...result.items);
-    if ((page + 1) * result.size >= result.totalItems || result.items.length === 0) break;
-  }
-  return found;
-}
-
-export type ResellerDirectory = {
-  resellers: Reseller[];
-  loaded: boolean;
-  nameOf: (id: string) => string;
-};
-
-export function useResellerDirectory(): ResellerDirectory {
-  const [resellers, setResellers] = useState<Reseller[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadAll(controller.signal)
-      .then((list) => {
-        setResellers(list);
-        setLoaded(true);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setLoaded(true);
-      });
-    return () => controller.abort();
-  }, []);
-
-  const nameOf = useCallback(
-    (id: string) => resellers.find((reseller) => reseller.id === id)?.displayName ?? `Revendedor ${shortId(id)}`,
-    [resellers],
-  );
-
-  return { resellers, loaded, nameOf };
 }
 
 export type DetailResult<T> =

@@ -16,7 +16,8 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { formatCount, formatDate, formatDateTime } from "../../format";
 import { referralsApi } from "./api";
 import { AttributionDialog, CreatePayoutDialog } from "./dialogs";
-import { useDetailQuery, useReferralRoles, useResellerDirectory } from "./hooks";
+import { useResellerDirectory } from "../../session/resellerDirectory";
+import { useDetailQuery, useReferralRoles } from "./hooks";
 import {
   ATTRIBUTION_SOURCE,
   CODE_STATUS,

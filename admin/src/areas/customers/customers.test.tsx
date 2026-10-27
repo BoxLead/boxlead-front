@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../../src/components/ui/ToastProvider";
 import type { AdminRole } from "../../api/types";
+import { ResellerDirectoryProvider } from "../../session/ResellerDirectoryProvider";
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
 import { CustomerDetailScreen } from "./CustomerDetailScreen";
@@ -47,13 +48,15 @@ function renderAt(path: string, roles: AdminRole[], handler: (method: string, ur
   render(
     <SessionContext.Provider value={session(roles)}>
       <ToastProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/" element={<OverviewScreen />} />
-            <Route path="/usuarios" element={<CustomersScreen />} />
-            <Route path="/usuarios/:userId" element={<CustomerDetailScreen />} />
-          </Routes>
-        </MemoryRouter>
+        <ResellerDirectoryProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/" element={<OverviewScreen />} />
+              <Route path="/usuarios" element={<CustomersScreen />} />
+              <Route path="/usuarios/:userId" element={<CustomerDetailScreen />} />
+            </Routes>
+          </MemoryRouter>
+        </ResellerDirectoryProvider>
       </ToastProvider>
     </SessionContext.Provider>,
   );

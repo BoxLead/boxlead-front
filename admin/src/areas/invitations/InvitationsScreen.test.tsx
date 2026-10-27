@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../../src/components/ui/ToastProvider";
 import type { AdminMe, AdminRole } from "../../api/types";
+import { ResellerDirectoryProvider } from "../../session/ResellerDirectoryProvider";
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
 import { addDays, endOfDay, todayInBuenosAires } from "./dates";
@@ -85,7 +86,9 @@ function renderScreen(handler: Handler, path = "/invitaciones", roles: AdminRole
     <MemoryRouter initialEntries={[path]}>
       <SessionContext.Provider value={session(roles)}>
         <ToastProvider>
-          <InvitationsScreen />
+          <ResellerDirectoryProvider>
+            <InvitationsScreen />
+          </ResellerDirectoryProvider>
         </ToastProvider>
       </SessionContext.Provider>
     </MemoryRouter>,

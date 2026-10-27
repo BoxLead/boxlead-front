@@ -49,12 +49,6 @@ export type CustomerMatch = {
   subscriptionStatus: string | null;
 };
 
-export type ResellerOption = {
-  id: string;
-  displayName: string;
-  status: "ACTIVE" | "SUSPENDED" | "CLOSED";
-};
-
 export const MAX_DEMO_DAYS = 365;
 export const MAX_EMAIL_LENGTH = 254;
 

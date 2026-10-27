@@ -1,10 +1,10 @@
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { adminApi } from "../../api/client";
-import type { AdminPage } from "../../api/types";
-import { useAdminQuery, type QueryResult } from "../../components/list/useAdminQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
+import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotice";
 import { DateText } from "../../components/DateText";
+import { useResellerDirectory, type ResellerDirectory } from "../../session/resellerDirectory";
 import { SOURCE_LABELS } from "./labels";
 import { Facts, LoadingBlock, Muted, Section } from "./parts";
 import type { Attribution, ResellerOption } from "./types";
@@ -22,9 +22,8 @@ type Run = (call: () => Promise<unknown>, message: string) => Promise<void>;
 
 const RESELLER_STATUS: Record<string, string> = { SUSPENDED: "suspendido", CLOSED: "cerrado" };
 
-function resellerName(resellers: QueryResult<AdminPage<ResellerOption>>, id: string): string {
-  if (resellers.status !== "ready") return "Ver revendedor";
-  return resellers.data.items.find((reseller) => reseller.id === id)?.displayName ?? "Ver revendedor";
+function resellerName(directory: ResellerDirectory, id: string): string {
+  return directory.find(id)?.displayName ?? "Ver revendedor";
 }
 
 function optionLabel(reseller: ResellerOption): string {
@@ -35,15 +34,15 @@ function optionLabel(reseller: ResellerOption): string {
 type CorrectDialogProps = {
   userId: string;
   current: Attribution | null;
-  resellers: QueryResult<AdminPage<ResellerOption>>;
+  directory: ResellerDirectory;
   onClose: () => void;
   run: Run;
 };
 
-function CorrectDialog({ userId, current, resellers, onClose, run }: CorrectDialogProps) {
+function CorrectDialog({ userId, current, directory, onClose, run }: CorrectDialogProps) {
   const [selected, setSelected] = useState("");
   const id = useId();
-  const options = resellers.status === "ready" ? resellers.data.items.filter((reseller) => reseller.id !== current?.resellerId) : [];
+  const options = directory.resellers.filter((reseller) => reseller.id !== current?.resellerId);
 
   function confirm(reason: string) {
     if (!selected) invalid("Elegí el revendedor.");
@@ -57,13 +56,13 @@ function CorrectDialog({ userId, current, resellers, onClose, run }: CorrectDial
     <ReasonDialog open title="Corregir atribución" confirmLabel="Corregir" onClose={onClose} onConfirm={confirm}>
       <p>
         {current
-          ? `Hoy lo refirió ${resellerName(resellers, current.resellerId)}. La atribución nueva pasa a ser la vigente y la anterior queda en el historial.`
+          ? `Hoy lo refirió ${resellerName(directory, current.resellerId)}. La atribución nueva pasa a ser la vigente y la anterior queda en el historial.`
           : "Hoy nadie lo refirió. La atribución nueva pasa a ser la vigente."}
       </p>
-      {resellers.status === "loading" ? (
+      {directory.status === "loading" ? (
         <LoadingBlock rows={1} />
-      ) : resellers.status === "error" ? (
-        <Muted>No pudimos cargar los revendedores. {resellers.message}</Muted>
+      ) : directory.status === "error" ? (
+        <ResellerDirectoryNotice directory={directory} />
       ) : options.length === 0 ? (
         <Muted>No hay otro revendedor para elegir.</Muted>
       ) : (
@@ -87,7 +86,7 @@ function CorrectDialog({ userId, current, resellers, onClose, run }: CorrectDial
 
 export function AttributionPanel({ userId, attribution, resellerId, canOperate, onChanged }: AttributionPanelProps) {
   const dialogs = useActionDialogs<"correct">(onChanged);
-  const resellers = useAdminQuery<AdminPage<ResellerOption>>("/admin/resellers");
+  const directory = useResellerDirectory();
 
   const actions = canOperate ? (
     <button type="button" className="btn btn-secondary btn-sm" onClick={() => dialogs.show("correct")}>
@@ -105,7 +104,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
               label: "Revendedor",
               value: (
                 <Link className="entity-link" to={`/revendedores/${attribution.resellerId}`}>
-                  {resellerName(resellers, attribution.resellerId)}
+                  {resellerName(directory, attribution.resellerId)}
                 </Link>
               ),
             },
@@ -118,6 +117,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
       ) : (
         <Muted>Nadie lo refirió.</Muted>
       )}
+      {attribution ? <ResellerDirectoryNotice directory={directory} /> : null}
       {resellerId ? (
         <p className="customer-note">
           Este usuario también es revendedor.{" "}
@@ -127,7 +127,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
         </p>
       ) : null}
       {dialogs.open === "correct" ? (
-        <CorrectDialog userId={userId} current={attribution} resellers={resellers} onClose={dialogs.close} run={dialogs.run} />
+        <CorrectDialog userId={userId} current={attribution} directory={directory} onClose={dialogs.close} run={dialogs.run} />
       ) : null}
     </Section>
   );

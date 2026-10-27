@@ -4,12 +4,14 @@ import { useToast } from "../../../../src/components/ui/toast";
 import { DateText } from "../../components/DateText";
 import { DataTable, type Column } from "../../components/list/DataTable";
 import { Money } from "../../components/Money";
+import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotice";
 import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate } from "../../format";
 import { downloadPayout } from "./api";
 import { ExportPayoutDialog, MarkPaidDialog } from "./dialogs";
-import { useDetailQuery, useResellerDirectory } from "./hooks";
+import { useResellerDirectory } from "../../session/resellerDirectory";
+import { useDetailQuery } from "./hooks";
 import { COMMISSION_KIND, COMMISSION_STATUS, PAYOUT_STATUS, shortId } from "./labels";
 import { DetailState, Facts, Muted, Section } from "./parts";
 import type { Commission, PayoutDetail } from "./types";
@@ -88,6 +90,7 @@ function PayoutContent({ detail, reload }: { detail: PayoutDetail; reload: () =>
         />
       }
     >
+      <ResellerDirectoryNotice directory={directory} />
       <Section title="Movimientos" flush>
         {entries.length === 0 ? <Muted>Esta liquidación no tiene movimientos.</Muted> : <DataTable caption="Movimientos" rows={entries} rowKey={(row) => row.id} columns={ENTRY_COLUMNS} />}
       </Section>

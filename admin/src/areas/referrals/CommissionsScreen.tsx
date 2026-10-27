@@ -8,13 +8,14 @@ import { ListView } from "../../components/list/ListView";
 import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { Money } from "../../components/Money";
+import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotice";
 import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatMoney } from "../../format";
 import { navItem } from "../../nav";
+import { useResellerDirectory } from "../../session/resellerDirectory";
 import { canHold, canRelease, canReverse, isReleasable, totalsByCurrency, type CommissionAction } from "./api";
 import { ApproveDialog, CommissionDialog } from "./dialogs";
-import { useResellerDirectory } from "./hooks";
 import { COMMISSION_KIND, COMMISSION_STATUS, optionsOf, shortId } from "./labels";
 import type { Commission } from "./types";
 
@@ -161,6 +162,7 @@ export function CommissionsScreen() {
         emptyHint="Se crean solas cuando un cliente atribuido paga."
         filters={
           <>
+            <ResellerDirectoryNotice directory={directory} />
             <FilterBar active={params.active} onClear={params.clear}>
               <SelectFilter label="Estado" value={params.value("status")} options={STATUS_OPTIONS} onChange={(value) => params.setFilter("status", value)} />
               <SelectFilter

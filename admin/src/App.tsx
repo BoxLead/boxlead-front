@@ -11,6 +11,7 @@ import { EnrollmentClosedScreen, FailedScreen, NoAccessScreen } from "./entry/St
 import { AdminLayout } from "./layout/AdminLayout";
 import { ForbiddenScreen, NotFoundScreen } from "./layout/MissingScreens";
 import { ROUTES } from "./routes";
+import { ResellerDirectoryProvider } from "./session/ResellerDirectoryProvider";
 import { canAccess, type Access } from "./session/roles";
 import { useAdmin, useSession } from "./session/session";
 
@@ -72,10 +73,10 @@ function Stage() {
       return <CodeScreen me={stage.me} enrolled={stage.enrolled} />;
     case "ready":
       return (
-        <>
+        <ResellerDirectoryProvider>
           <AdminRoutes />
           <ReauthDialog />
-        </>
+        </ResellerDirectoryProvider>
       );
   }
 }

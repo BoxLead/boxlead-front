@@ -9,6 +9,7 @@ import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { navItem } from "../../nav";
 import { CreateResellerDialog } from "./dialogs";
+import { useResellerDirectory } from "../../session/resellerDirectory";
 import { useReferralRoles } from "./hooks";
 import { CODE_STATUS, formatRate, RESELLER_STATUS } from "./labels";
 import type { Reseller } from "./types";
@@ -53,6 +54,7 @@ const COLUMNS: readonly Column<Reseller>[] = [
 export function ResellersScreen() {
   const item = navItem("resellers");
   const { owner } = useReferralRoles();
+  const directory = useResellerDirectory();
   const { params, query } = useListQuery<Reseller>("/admin/resellers", NO_FILTERS);
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
@@ -60,6 +62,7 @@ export function ResellersScreen() {
 
   function created(reseller: Reseller) {
     setCreating(false);
+    directory.invalidate();
     toast({ tone: "success", message: `${reseller.displayName} ya es revendedor.` });
     navigate(`/revendedores/${reseller.id}`);
   }
