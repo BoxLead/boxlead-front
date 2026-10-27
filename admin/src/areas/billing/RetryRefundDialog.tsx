@@ -1,31 +1,17 @@
-import type { AdminPage } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { retryRefund } from "./api";
 import { ShortId } from "./cells";
-import type { PaymentRow, RefundResult, RefundRow } from "./types";
+import type { RefundResult, RefundRow } from "./types";
 
 type RetryRefundDialogProps = {
   refund: RefundRow;
   open: boolean;
   onClose: () => void;
   onDone: (result: RefundResult) => void;
+  onSettled?: (failure: unknown) => void;
 };
 
-function useFullAmount(refund: RefundRow) {
-  const lookup = useAdminQuery<AdminPage<PaymentRow>>(
-    refund.amount ? null : "/admin/payments",
-    new URLSearchParams({ userId: refund.userId }).toString(),
-  );
-  if (refund.amount) return { status: "ready" as const, amount: refund.amount };
-  if (lookup.status !== "ready") return { status: lookup.status, amount: undefined };
-  const payment = lookup.data.items.find((item) => item.id === refund.paymentId);
-  return { status: payment ? ("ready" as const) : ("missing" as const), amount: payment ? payment.refundable : undefined };
-}
-
-export function RetryRefundDialog({ refund, open, onClose, onDone }: RetryRefundDialogProps) {
-  const full = useFullAmount(refund);
-
+export function RetryRefundDialog({ refund, open, onClose, onDone, onSettled }: RetryRefundDialogProps) {
   async function confirm(reason: string) {
     onDone(await retryRefund(refund.id, reason));
   }
@@ -35,25 +21,16 @@ export function RetryRefundDialog({ refund, open, onClose, onDone }: RetryRefund
       open={open}
       title="Reintentar reembolso"
       confirmLabel="Reintentar"
-      amount={full.amount}
+      amount={refund.effectiveAmount}
       onConfirm={confirm}
       onClose={onClose}
+      onSettled={onSettled}
     >
       <p>
-        Mercado Pago no respondió este reembolso del pago <ShortId id={refund.paymentId} />. Lo mandamos de nuevo con la misma clave, así no se
-        devuelve dos veces.
+        Mercado Pago no llegó a responder este reembolso del pago <ShortId id={refund.paymentId} /> y no le dio un id. Lo mandamos de nuevo con la
+        misma clave, así no se devuelve dos veces.
       </p>
-      {refund.amount ? (
-        <p>Es un reembolso parcial.</p>
-      ) : full.status === "loading" ? (
-        <p className="sub-text" role="status">
-          Buscando cuánto quedaba del pago…
-        </p>
-      ) : full.status === "ready" ? (
-        <p>Es un reembolso total y devuelve lo que quedaba del pago.</p>
-      ) : (
-        <p>Es un reembolso total y devuelve lo que quedaba del pago. No pudimos traer el monto, miralo en Pagos antes de confirmar.</p>
-      )}
+      <p>{refund.amount ? "Es un reembolso parcial." : "Es un reembolso total y devuelve lo que quedaba del pago cuando se pidió."}</p>
     </ReasonDialog>
   );
 }

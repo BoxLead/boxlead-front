@@ -170,6 +170,10 @@ test("finance retries a refund that Mercado Pago did not answer", async ({ page 
   await expect(page.getByRole("heading", { level: 1, name: "Reembolsos" })).toBeVisible();
   const waiting = page.locator("tbody tr").filter({ hasText: "Sin respuesta" });
   await expect(waiting).toContainText("Lo que quedaba del pago");
+  await expect(waiting).toContainText("290.000,00");
+  const inProcess = page.locator("tbody tr").filter({ hasText: "En proceso en Mercado Pago" });
+  await expect(inProcess).toContainText("10.000,00");
+  await expect(inProcess.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
   await expectFitsTheScreen(page);
   await waiting.getByRole("button", { name: "Reintentar" }).click();
   const dialog = page.getByRole("dialog", { name: "Reintentar reembolso" });

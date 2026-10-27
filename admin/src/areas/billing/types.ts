@@ -65,6 +65,7 @@ export type RefundRow = {
   paymentId: string;
   userId: string;
   amount: Money | null;
+  effectiveAmount: Money;
   status: RefundStatus;
   providerRefundId: string | null;
   requestedBy: string | null;

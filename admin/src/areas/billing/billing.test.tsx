@@ -9,8 +9,10 @@ import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
 import { PaymentsScreen } from "./PaymentsScreen";
 import { RefundDialog } from "./RefundDialog";
+import { RefundsScreen } from "./RefundsScreen";
+import { RetryRefundDialog } from "./RetryRefundDialog";
 import { SubscriptionsScreen } from "./SubscriptionsScreen";
-import type { PaymentRow, SubscriptionRow } from "./types";
+import type { PaymentRow, RefundRow, SubscriptionRow } from "./types";
 
 const ars = (amountMinor: number) => ({ amountMinor, currency: "ARS" });
 
@@ -29,6 +31,26 @@ const PAYMENT: PaymentRow = {
   approvedAt: "2026-10-20T15:00:00Z",
   createdAt: "2026-10-20T15:00:00Z",
   invoice: null,
+};
+
+const UNANSWERED: RefundRow = {
+  id: "7a000000-0000-4000-8000-000000000001",
+  paymentId: PAYMENT.id,
+  userId: PAYMENT.userId,
+  amount: null,
+  effectiveAmount: ars(6700000),
+  status: "REQUESTED",
+  providerRefundId: null,
+  requestedBy: "a2",
+  createdAt: "2026-10-21T15:00:00Z",
+};
+
+const IN_PROCESS: RefundRow = {
+  ...UNANSWERED,
+  id: "7a000000-0000-4000-8000-000000000002",
+  amount: ars(1000000),
+  effectiveAmount: ars(1000000),
+  providerRefundId: "rf-2003",
 };
 
 const SUBSCRIPTION: SubscriptionRow = {
@@ -172,6 +194,66 @@ describe("payments screen", () => {
     const loads = calls.filter((call) => call.method === "GET").length;
     await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
     await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET").length).toBe(loads + 1));
+  });
+});
+
+describe("refunds screen", () => {
+  it("offers a retry only for a refund Mercado Pago never answered and names the one it is processing", async () => {
+    mockFetch(() => page([UNANSWERED, IN_PROCESS]));
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    const rows = await screen.findAllByRole("row");
+    const unanswered = rows.find((row) => row.textContent?.includes("Sin respuesta"));
+    const inProcess = rows.find((row) => row.textContent?.includes("En proceso en Mercado Pago"));
+    if (!unanswered || !inProcess) throw new Error("missing rows");
+    expect(within(unanswered).getByRole("button", { name: /Reintentar el reembolso 7a000000/ })).toBeInTheDocument();
+    expect(unanswered).toHaveTextContent("$ 67.000,00ARS");
+    expect(unanswered).toHaveTextContent("Lo que quedaba del pago");
+    expect(within(inProcess).queryByRole("button", { name: /Reintentar/ })).not.toBeInTheDocument();
+    expect(inProcess).toHaveTextContent("$ 10.000,00ARS");
+  });
+
+  it("tells when Mercado Pago is processing the retry and reloads the list", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST"
+        ? json(200, { id: UNANSWERED.id, paymentId: PAYMENT.id, amount: null, status: "REQUESTED", providerRefundId: "rf-9", createdAt: "" })
+        : page([UNANSWERED]),
+    );
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reintentar el reembolso/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(await screen.findByText("Lo mandamos de nuevo y Mercado Pago lo está procesando.")).toBeInTheDocument();
+    expect(calls.filter((call) => call.method === "GET")).toHaveLength(2);
+  });
+
+  it("reloads the list when the retry finds the refund already answered", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "answered", code: "REFUND_ALREADY_ANSWERED" }) : page([UNANSWERED]),
+    );
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reintentar el reembolso/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(await screen.findByText(/Mercado Pago ya respondió este reembolso/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+});
+
+describe("retry refund dialog", () => {
+  it("shows what the refund is worth without asking for the payments of the user", async () => {
+    const calls = mockFetch(() => json(200, { id: UNANSWERED.id, paymentId: PAYMENT.id, amount: null, status: "APPROVED", providerRefundId: "rf-9", createdAt: "" }));
+    const onDone = vi.fn();
+    renderAs(["FINANCE"], <RetryRefundDialog refund={UNANSWERED} open onClose={vi.fn()} onDone={onDone} />);
+    expect(screen.getByText(/67\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/Es un reembolso total/)).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url.pathname).toBe(`/admin/refunds/${UNANSWERED.id}/retry`);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: "Mercado Pago no contestó ayer" });
+    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ status: "APPROVED" }));
   });
 });
 
