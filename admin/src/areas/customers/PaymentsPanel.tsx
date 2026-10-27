@@ -4,6 +4,7 @@ import { DataTable } from "../../components/list/DataTable";
 import { Money } from "../../components/Money";
 import { StatusBadge } from "../../components/StatusBadge";
 import { PAYMENT_STATUS } from "../../status";
+import { refundInProgress } from "../billing/money";
 import { INVOICE_LABELS } from "./labels";
 import { Muted, Section } from "./parts";
 import type { Payment } from "./types";
@@ -12,6 +13,21 @@ function invoiceText(payment: Payment): string {
   if (!payment.invoice) return "Sin factura";
   const status = INVOICE_LABELS[payment.invoice.status];
   return payment.invoice.invoiceNumber ? `${status}, ${payment.invoice.invoiceNumber}` : status;
+}
+
+function Refunded({ payment }: { payment: Payment }) {
+  const waiting = refundInProgress(payment);
+  if (payment.refunded.amountMinor <= 0 && waiting.amountMinor <= 0) return "—";
+  return (
+    <span className="cell-stack">
+      {payment.refunded.amountMinor > 0 ? <Money money={payment.refunded} /> : null}
+      {waiting.amountMinor > 0 ? (
+        <span className="sub-text">
+          Pedido y sin acreditar <Money money={waiting} />
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 export function PaymentsPanel({ payments }: { payments: Payment[] }) {
@@ -31,7 +47,7 @@ export function PaymentsPanel({ payments }: { payments: Payment[] }) {
               key: "refunded",
               header: "Reembolsado",
               type: "money",
-              cell: (row) => (row.refunded.amountMinor > 0 ? <Money money={row.refunded} /> : "—"),
+              cell: (row) => <Refunded payment={row} />,
             },
             { key: "fee", header: "Costo de Mercado Pago", type: "money", cell: (row) => (row.providerFee ? <Money money={row.providerFee} /> : "—") },
             {

@@ -35,3 +35,7 @@
   gap: var(--signal-space-4);
 }
 
+
+.billing-line {
+  display: block;
+}

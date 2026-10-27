@@ -167,6 +167,10 @@ function payment(n: number, charge: Money, at: number, status: Payment["status"]
     statusDetail: status === "REJECTED" ? "cc_rejected_insufficient_amount" : "accredited",
     amount: charge,
     refunded: { amountMinor: refunded, currency: charge.currency },
+    refundable: {
+      amountMinor: status === "APPROVED" || status === "PARTIALLY_REFUNDED" ? charge.amountMinor - refunded : 0,
+      currency: charge.currency,
+    },
     providerFee: status === "REJECTED" ? null : { amountMinor: Math.round(charge.amountMinor * 0.07), currency: charge.currency },
     approvedAt: status === "REJECTED" ? null : iso(at),
     createdAt: iso(at),
@@ -644,9 +648,12 @@ const revokeOverride: Action = (customer, _reason, { admin, match }) => {
 };
 
 function transition(next: (subscription: StoredSubscription) => Partial<Subscription> | null): Action {
-  return (customer) => {
+  return (customer, _reason, { body }) => {
     const live = liveSubscription(customer);
-    if (!live) return failure(404, "The user has no live subscription");
+    if (!live) return failure(409, "The user has no live subscription", "SUBSCRIPTION_NOT_ACTIVE");
+    if (typeof body.expectedSubscriptionId === "string" && body.expectedSubscriptionId !== live.id) {
+      return failure(409, "The live subscription is not the one you saw, reload and try again", "SUBSCRIPTION_CHANGED");
+    }
     const change = next(live);
     if (!change) return failure(409, "The subscription is not active", "SUBSCRIPTION_NOT_ACTIVE");
     Object.assign(live, change);

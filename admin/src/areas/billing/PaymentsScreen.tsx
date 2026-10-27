@@ -12,24 +12,38 @@ import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
 import { Amount, CustomerCell, NoAction, ShortId, Stack, StatusTag } from "./cells";
 import { INVOICE_STATUS, PAYMENT_STATUS, PAYMENT_STATUS_OPTIONS } from "./labels";
-import { canRefund } from "./money";
+import { changedUnderneath } from "./api";
+import { canRefund, refundInProgress } from "./money";
 import { RefundDialog } from "./RefundDialog";
 import type { PaymentRow, RefundResult } from "./types";
 
 const FILTERS = ["status", "userId", "from", "to"] as const;
 const RULES: FilterRules = { status: enumOf(PAYMENT_STATUS_OPTIONS), userId: { kind: "uuid", what: "de usuario" }, ...dateRange("from", "to") };
 
-const REFUND_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" | "danger"; message: string }> = {
-  APPROVED: { tone: "success", message: "Mercado Pago aprobó el reembolso." },
-  REQUESTED: { tone: "info", message: "Pedimos el reembolso y Mercado Pago todavía no respondió. Podés reintentarlo desde Reembolsos." },
-  REJECTED: { tone: "danger", message: "Mercado Pago rechazó el reembolso." },
-};
+type Notice = { tone: "success" | "info" | "danger"; message: string };
+
+function refundNotice(result: RefundResult): Notice {
+  if (result.status === "APPROVED") return { tone: "success", message: "Mercado Pago aprobó el reembolso." };
+  if (result.status === "REJECTED") return { tone: "danger", message: "Mercado Pago rechazó el reembolso. No se devolvió plata." };
+  if (result.providerRefundId) return { tone: "info", message: "Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos." };
+  return { tone: "info", message: "Pedimos el reembolso y Mercado Pago todavía no respondió. Reintentalo desde Reembolsos." };
+}
 
 function RefundedDetail({ row }: { row: PaymentRow }) {
-  if (row.refunded.amountMinor <= 0) return null;
+  const waiting = refundInProgress(row);
+  if (row.refunded.amountMinor <= 0 && waiting.amountMinor <= 0) return null;
   return (
     <>
-      Reembolsado <Amount money={row.refunded} />
+      {row.refunded.amountMinor > 0 ? (
+        <span className="billing-line">
+          Reembolsado <Amount money={row.refunded} />
+        </span>
+      ) : null}
+      {waiting.amountMinor > 0 ? (
+        <span className="billing-line">
+          Pedido y sin acreditar <Amount money={waiting} />
+        </span>
+      ) : null}
     </>
   );
 }
@@ -45,7 +59,7 @@ export function PaymentsScreen() {
   const canRefundPayments = canAccess(me.roles, ["FINANCE"]);
 
   function done(result: RefundResult) {
-    toast(REFUND_NOTICE[result.status]);
+    toast(refundNotice(result));
     setOpen(false);
     query.reload();
   }
@@ -145,7 +159,16 @@ export function PaymentsScreen() {
         }
       />
       {target ? (
-        <RefundDialog key={attempt} payment={target} open={open} onClose={() => setOpen(false)} onDone={done} />
+        <RefundDialog
+          key={attempt}
+          payment={target}
+          open={open}
+          onClose={() => setOpen(false)}
+          onDone={done}
+          onSettled={(failure) => {
+            if (changedUnderneath(failure)) query.reload();
+          }}
+        />
       ) : null}
     </Screen>
   );

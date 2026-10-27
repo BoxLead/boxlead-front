@@ -119,6 +119,7 @@ export type Payment = {
   statusDetail: string | null;
   amount: Money;
   refunded: Money;
+  refundable: Money;
   providerFee: Money | null;
   approvedAt: string | null;
   createdAt: string;

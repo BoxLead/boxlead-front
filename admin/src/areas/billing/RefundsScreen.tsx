@@ -10,7 +10,8 @@ import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
 import { Amount, CustomerCell, RowActions, ShortId, Stack, StatusTag } from "./cells";
-import { REFUND_STATUS, REFUND_STATUS_OPTIONS } from "./labels";
+import { changedUnderneath } from "./api";
+import { canRetryRefund, REFUND_STATUS_OPTIONS, refundStatusOf } from "./labels";
 import { RetryRefundDialog } from "./RetryRefundDialog";
 import type { RefundResult, RefundRow } from "./types";
 
@@ -19,7 +20,7 @@ const RULES: FilterRules = { status: enumOf(REFUND_STATUS_OPTIONS) };
 
 const RETRY_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" | "danger"; message: string }> = {
   APPROVED: { tone: "success", message: "Mercado Pago aprobó el reembolso." },
-  REQUESTED: { tone: "info", message: "Lo mandamos de nuevo y Mercado Pago todavía no respondió." },
+  REQUESTED: { tone: "info", message: "Lo mandamos de nuevo y Mercado Pago lo está procesando." },
   REJECTED: { tone: "danger", message: "Mercado Pago rechazó el reembolso." },
 };
 
@@ -44,9 +45,16 @@ export function RefundsScreen() {
       key: "amount",
       header: "Monto",
       type: "money",
-      cell: (row) => (row.amount ? <Amount money={row.amount} code /> : <span className="sub-text">Lo que quedaba del pago</span>),
+      cell: (row) => <Stack main={<Amount money={row.effectiveAmount} code />} detail={row.amount ? undefined : "Lo que quedaba del pago"} />,
     },
-    { key: "status", header: "Estado", type: "status", cell: (row) => <StatusTag status={REFUND_STATUS[row.status]} /> },
+    {
+      key: "status",
+      header: "Estado",
+      type: "status",
+      cell: (row) => (
+        <Stack main={<StatusTag status={refundStatusOf(row)} />} detail={row.status === "REQUESTED" && row.providerRefundId ? "en Mercado Pago" : undefined} />
+      ),
+    },
     {
       key: "provider",
       header: "Mercado Pago",
@@ -79,7 +87,7 @@ export function RefundsScreen() {
           <Link className="btn btn-ghost btn-sm" to={`/pagos?userId=${encodeURIComponent(row.userId)}`}>
             Pagos
           </Link>
-          {row.status === "REQUESTED" ? (
+          {canRetryRefund(row) ? (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -121,7 +129,18 @@ export function RefundsScreen() {
           </FilterBar>
         }
       />
-      {target ? <RetryRefundDialog key={attempt} refund={target} open={open} onClose={() => setOpen(false)} onDone={done} /> : null}
+      {target ? (
+        <RetryRefundDialog
+          key={attempt}
+          refund={target}
+          open={open}
+          onClose={() => setOpen(false)}
+          onDone={done}
+          onSettled={(failure) => {
+            if (changedUnderneath(failure)) query.reload();
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }

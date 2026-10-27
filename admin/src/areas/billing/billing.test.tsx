@@ -7,10 +7,14 @@ import { ToastProvider } from "../../../../src/components/ui/ToastProvider";
 import type { AdminRole } from "../../api/types";
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
+import { InvoiceDialog } from "./InvoiceDialog";
+import { InvoicesScreen } from "./InvoicesScreen";
 import { PaymentsScreen } from "./PaymentsScreen";
 import { RefundDialog } from "./RefundDialog";
+import { RefundsScreen } from "./RefundsScreen";
+import { RetryRefundDialog } from "./RetryRefundDialog";
 import { SubscriptionsScreen } from "./SubscriptionsScreen";
-import type { PaymentRow, SubscriptionRow } from "./types";
+import type { InvoiceRow, PaymentRow, RefundRow, SubscriptionRow } from "./types";
 
 const ars = (amountMinor: number) => ({ amountMinor, currency: "ARS" });
 
@@ -24,10 +28,64 @@ const PAYMENT: PaymentRow = {
   statusDetail: "partially_refunded",
   amount: ars(8700000),
   refunded: ars(2000000),
+  refundable: ars(5700000),
   providerFee: ars(435000),
   approvedAt: "2026-10-20T15:00:00Z",
   createdAt: "2026-10-20T15:00:00Z",
   invoice: null,
+};
+
+const UNANSWERED: RefundRow = {
+  id: "7a000000-0000-4000-8000-000000000001",
+  paymentId: PAYMENT.id,
+  userId: PAYMENT.userId,
+  amount: null,
+  effectiveAmount: ars(6700000),
+  status: "REQUESTED",
+  providerRefundId: null,
+  requestedBy: "a2",
+  createdAt: "2026-10-21T15:00:00Z",
+};
+
+const IN_PROCESS: RefundRow = {
+  ...UNANSWERED,
+  id: "7a000000-0000-4000-8000-000000000002",
+  amount: ars(1000000),
+  effectiveAmount: ars(1000000),
+  providerRefundId: "rf-2003",
+};
+
+const PENDING_INVOICE: InvoiceRow = {
+  id: "1f000000-0000-4000-8000-000000000001",
+  paymentId: PAYMENT.id,
+  userId: PAYMENT.userId,
+  status: "PENDING",
+  amount: ars(8700000),
+  invoiceNumber: null,
+  issuedAt: null,
+  issuedBy: null,
+  voidedAt: null,
+  voidedBy: null,
+  receiver: { legalName: "Ana Pérez", taxIdType: "CUIT", taxId: "20123456786", vatCondition: "MONOTRIBUTO" },
+  createdAt: "2026-10-20T15:00:00Z",
+};
+
+const ISSUED_INVOICE: InvoiceRow = {
+  ...PENDING_INVOICE,
+  id: "1f000000-0000-4000-8000-000000000002",
+  status: "ISSUED",
+  invoiceNumber: "0003-00000011",
+  issuedAt: "2026-10-21T15:00:00Z",
+  issuedBy: "a2",
+};
+
+const VOIDED_INVOICE: InvoiceRow = {
+  ...ISSUED_INVOICE,
+  id: "1f000000-0000-4000-8000-000000000003",
+  status: "VOIDED",
+  invoiceNumber: "0003-00000010",
+  voidedAt: "2026-10-22T15:00:00Z",
+  voidedBy: "a2",
 };
 
 const SUBSCRIPTION: SubscriptionRow = {
@@ -100,11 +158,12 @@ describe("refund dialog", () => {
     return calls;
   }
 
-  it("shows what is left and sends a total refund without amount", async () => {
+  it("shows what core says is left and sends a total refund without amount", async () => {
     const onDone = vi.fn();
     const calls = renderRefund(onDone);
     const left = screen.getByText("Queda para reembolsar").closest("div");
-    expect(left).toHaveTextContent("67.000,00");
+    expect(left).toHaveTextContent("57.000,00");
+    expect(screen.getByText("Pedido y sin acreditar").closest("div")).toHaveTextContent("10.000,00");
     expect(screen.getByText("ARS")).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
     await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
@@ -128,6 +187,195 @@ describe("refund dialog", () => {
     expect(JSON.parse(String(calls[0].init.body))).toEqual({
       amount: { amountMinor: 100050, currency: "ARS" },
       reason: "Descuento acordado con el cliente",
+    });
+  });
+
+  it("keeps the dialog open with the reason when core says the refund exceeds what is left", async () => {
+    mockFetch(() => json(422, { error: "Unprocessable", message: "exceeds", code: "REFUND_EXCEEDS_PAYMENT" }));
+    const onDone = vi.fn();
+    renderAs(["FINANCE"], <RefundDialog payment={PAYMENT} open onClose={vi.fn()} onDone={onDone} />);
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("El reembolso supera lo que queda del pago.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reembolsar pago", hidden: true })).toBeInTheDocument();
+    expect(screen.getByLabelText("Motivo")).toHaveValue("El cliente pidió la baja");
+    expect(onDone).not.toHaveBeenCalled();
+  });
+});
+
+describe("payments screen", () => {
+  it("offers a refund only when core leaves something to refund and shows what is in progress", async () => {
+    const waiting: PaymentRow = { ...PAYMENT, id: "9e000000-0000-4000-8000-000000000002", status: "APPROVED", refunded: ars(0), refundable: ars(0) };
+    mockFetch(() => page([PAYMENT, waiting]));
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    expect(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Reembolsar el pago/ })).toHaveLength(1);
+    const rows = screen.getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("Reembolsado $ 20.000,00");
+    expect(rows[1]).toHaveTextContent("Pedido y sin acreditar $ 10.000,00");
+    expect(rows[2]).toHaveTextContent("Pedido y sin acreditar $ 87.000,00");
+    expect(within(rows[2]).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [{ status: "REQUESTED", providerRefundId: "rf-9" }, "Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos."],
+    [{ status: "REQUESTED", providerRefundId: null }, "Pedimos el reembolso y Mercado Pago todavía no respondió. Reintentalo desde Reembolsos."],
+    [{ status: "REJECTED", providerRefundId: "rf-9" }, "Mercado Pago rechazó el reembolso. No se devolvió plata."],
+  ])("tells what Mercado Pago answered to the refund %o", async (answer, message) => {
+    mockFetch((method) =>
+      method === "POST" ? json(201, { id: "r1", paymentId: PAYMENT.id, amount: null, createdAt: "", ...answer }) : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it("says the refund stays asked for when Mercado Pago does not answer and reloads on close", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" }) : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.")).toBeInTheDocument();
+    expect(screen.queryByText(/no cambió nada/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+
+  it("reloads the list when the refund dialog closes after core refused the amount", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(422, { error: "Unprocessable", message: "exceeds", code: "REFUND_EXCEEDS_PAYMENT" }) : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("El reembolso supera lo que queda del pago.")).toBeInTheDocument();
+    const loads = calls.filter((call) => call.method === "GET").length;
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET").length).toBe(loads + 1));
+  });
+});
+
+describe("refunds screen", () => {
+  it("offers a retry only for a refund Mercado Pago never answered and names the one it is processing", async () => {
+    mockFetch(() => page([UNANSWERED, IN_PROCESS]));
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    const rows = await screen.findAllByRole("row");
+    const unanswered = rows.find((row) => row.textContent?.includes("Sin respuesta"));
+    const inProcess = rows.find((row) => /En proceso\s*en Mercado Pago/.test(row.textContent ?? ""));
+    if (!unanswered || !inProcess) throw new Error("missing rows");
+    expect(within(unanswered).getByRole("button", { name: /Reintentar el reembolso 7a000000/ })).toBeInTheDocument();
+    expect(unanswered).toHaveTextContent("$ 67.000,00ARS");
+    expect(unanswered).toHaveTextContent("Lo que quedaba del pago");
+    expect(within(inProcess).queryByRole("button", { name: /Reintentar/ })).not.toBeInTheDocument();
+    expect(inProcess).toHaveTextContent("$ 10.000,00ARS");
+  });
+
+  it("tells when Mercado Pago is processing the retry and reloads the list", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST"
+        ? json(200, { id: UNANSWERED.id, paymentId: PAYMENT.id, amount: null, status: "REQUESTED", providerRefundId: "rf-9", createdAt: "" })
+        : page([UNANSWERED]),
+    );
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reintentar el reembolso/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(await screen.findByText("Lo mandamos de nuevo y Mercado Pago lo está procesando.")).toBeInTheDocument();
+    expect(calls.filter((call) => call.method === "GET")).toHaveLength(2);
+  });
+
+  it("reloads the list when the retry finds the refund already answered", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "answered", code: "REFUND_ALREADY_ANSWERED" }) : page([UNANSWERED]),
+    );
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reintentar el reembolso/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(await screen.findByText(/Mercado Pago ya respondió este reembolso/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+});
+
+describe("retry refund dialog", () => {
+  it("shows what the refund is worth without asking for the payments of the user", async () => {
+    const calls = mockFetch(() => json(200, { id: UNANSWERED.id, paymentId: PAYMENT.id, amount: null, status: "APPROVED", providerRefundId: "rf-9", createdAt: "" }));
+    const onDone = vi.fn();
+    renderAs(["FINANCE"], <RetryRefundDialog refund={UNANSWERED} open onClose={vi.fn()} onDone={onDone} />);
+    expect(screen.getByText(/67\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/Es un reembolso total/)).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url.pathname).toBe(`/admin/refunds/${UNANSWERED.id}/retry`);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: "Mercado Pago no contestó ayer" });
+    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ status: "APPROVED" }));
+  });
+});
+
+describe("invoices screen", () => {
+  it("issues a pending invoice, voids only an issued one and says the list goes from oldest to newest", async () => {
+    mockFetch(() => page([PENDING_INVOICE, ISSUED_INVOICE, VOIDED_INVOICE]));
+    renderAs(["FINANCE"], <InvoicesScreen />, "/facturas");
+    const rows = await screen.findAllByRole("row");
+    const [pending, issued, voided] = rows.slice(1);
+    expect(within(pending).getByRole("button", { name: /Marcar emitida/ })).toBeInTheDocument();
+    expect(within(pending).queryByRole("button", { name: /Anular/ })).not.toBeInTheDocument();
+    expect(within(issued).getByRole("button", { name: "Anular la factura 0003-00000011" })).toBeInTheDocument();
+    expect(within(issued).queryByRole("button", { name: /Marcar emitida/ })).not.toBeInTheDocument();
+    expect(within(voided).queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByText(/de la más vieja a la más nueva/)).toBeInTheDocument();
+  });
+
+  it("reloads the list when core says the invoice is not issued anymore", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "not issued", code: "INVOICE_NOT_ISSUED" }) : page([ISSUED_INVOICE]),
+    );
+    renderAs(["FINANCE"], <InvoicesScreen />, "/facturas");
+    await userEvent.click(await screen.findByRole("button", { name: "Anular la factura 0003-00000011" }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Se emitió con el CUIT equivocado");
+    await userEvent.click(screen.getByRole("button", { name: "Anular factura", hidden: true }));
+    expect(await screen.findByText("Solo se puede anular una factura emitida. Recargá para ver su estado.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+});
+
+describe("invoice dialog", () => {
+  it("voids an issued invoice saying it does not go back", async () => {
+    const calls = mockFetch(() => json(200, { ...ISSUED_INVOICE, status: "VOIDED" }));
+    const onDone = vi.fn();
+    renderAs(["FINANCE"], <InvoiceDialog invoice={ISSUED_INVOICE} action="void" open today="2026-10-27" onClose={vi.fn()} onDone={onDone} />);
+    expect(screen.getByText(/0003-00000011 queda anulada en BoxLead y no vuelve atrás/)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Motivo"), "Se emitió con el CUIT equivocado");
+    await userEvent.click(screen.getByRole("button", { name: "Anular factura", hidden: true }));
+    expect(calls[0].url.pathname).toBe(`/admin/invoices/${ISSUED_INVOICE.id}/voided`);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: "Se emitió con el CUIT equivocado" });
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it("asks for the number before marking an invoice issued and sends the date in Buenos Aires", async () => {
+    const calls = mockFetch(() => json(200, ISSUED_INVOICE));
+    renderAs(["FINANCE"], <InvoiceDialog invoice={PENDING_INVOICE} action="issue" open today="2026-10-27" onClose={vi.fn()} onDone={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("Motivo"), "Factura emitida en ARCA hoy");
+    await userEvent.click(screen.getByRole("button", { name: "Marcar emitida", hidden: true }));
+    expect(await screen.findAllByText("Ingresá el número de la factura.")).not.toHaveLength(0);
+    expect(calls).toHaveLength(0);
+    await userEvent.type(screen.getByLabelText("Número de factura"), "0003-00000020");
+    await userEvent.type(screen.getByLabelText("Fecha de emisión"), "2026-10-26");
+    await userEvent.click(screen.getByRole("button", { name: "Marcar emitida", hidden: true }));
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({
+      invoiceNumber: "0003-00000020",
+      issuedAt: "2026-10-26T00:00:00-03:00",
+      reason: "Factura emitida en ARCA hoy",
     });
   });
 });
@@ -164,7 +412,35 @@ describe("buttons by role", () => {
     await userEvent.click(screen.getByRole("button", { name: "Pausar", hidden: true }));
     const post = calls.find((call) => call.method === "POST");
     expect(post?.url.pathname).toBe(`/admin/customers/${SUBSCRIPTION.userId}/subscription/pause`);
-    expect(JSON.parse(String(post?.init.body))).toEqual({ reason: "Pedido del cliente por mail" });
+    expect(JSON.parse(String(post?.init.body))).toEqual({ reason: "Pedido del cliente por mail", expectedSubscriptionId: SUBSCRIPTION.id });
     expect(await screen.findByText("Pausamos la suscripción.")).toBeInTheDocument();
+  });
+
+  it("offers only paid plans in the plan filter and shows the fee as a fee, not as money that moves", async () => {
+    mockFetch(() => page([SUBSCRIPTION]));
+    renderAs(["OWNER"], <SubscriptionsScreen />, "/suscripciones");
+    const row = (await screen.findByText("Renueva el 20 nov 2026")).closest("tr");
+    if (!row) throw new Error("missing row");
+    const plans = within(screen.getByLabelText("Plan", { selector: "select" })).getAllByRole("option").map((option) => option.textContent);
+    expect(plans).not.toContain("Demo");
+    expect(plans).toContain("Starter");
+    await userEvent.click(within(row).getByRole("button", { name: /Cancelar la suscripción/ }));
+    expect(screen.getByText(/no se le vuelve a cobrar la cuota de \$\s87\.000,00 ARS/)).toBeInTheDocument();
+    expect(screen.queryByText("Monto")).not.toBeInTheDocument();
+  });
+
+  it("explains that the subscription changed and reloads the list on close", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "changed", code: "SUBSCRIPTION_CHANGED" }) : page([SUBSCRIPTION]),
+    );
+    renderAs(["OWNER"], <SubscriptionsScreen />, "/suscripciones");
+    const row = (await screen.findByText("Renueva el 20 nov 2026")).closest("tr");
+    if (!row) throw new Error("missing row");
+    await userEvent.click(within(row).getByRole("button", { name: /Cancelar la suscripción/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Pedido del cliente por mail");
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar suscripción", hidden: true }));
+    expect(await screen.findByText(/La suscripción de este cliente cambió desde que abriste la lista/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
   });
 });

@@ -145,6 +145,7 @@ function file(): CustomerFile {
         statusDetail: "accredited",
         amount: ars(8700000),
         refunded: ars(0),
+        refundable: ars(8700000),
         providerFee: ars(609000),
         approvedAt: "2026-10-16T12:00:00Z",
         createdAt: "2026-10-16T12:00:00Z",
@@ -319,8 +320,24 @@ describe("CustomerDetailScreen", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Pausar", hidden: true }));
     const pause = calls.find((call) => call.method === "POST");
     expect(pause?.url.pathname).toBe(`/admin/customers/${USER_ID}/subscription/pause`);
-    expect(JSON.parse(String(pause?.init.body))).toEqual({ reason: "Pidió frenar el cobro por vacaciones" });
+    expect(JSON.parse(String(pause?.init.body))).toEqual({ reason: "Pidió frenar el cobro por vacaciones", expectedSubscriptionId: "s1" });
     expect(await screen.findByText("La suscripción quedó pausada.")).toBeInTheDocument();
+  });
+
+  it("reloads the user when the subscription changed under the open dialog", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], (method, url) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "changed", code: "SUBSCRIPTION_CHANGED" }) : detailHandler(method, url),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const dialog = dialogOf("Cancelar suscripción");
+    await userEvent.type(within(dialog).getByLabelText("Motivo"), "Pidió la baja por teléfono");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar suscripción", hidden: true }));
+    expect(await within(dialog).findByText(/La suscripción de este cliente cambió/)).toBeInTheDocument();
+    const loads = calls.filter((call) => call.method === "GET" && call.url.pathname === `/admin/customers/${USER_ID}`).length;
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() =>
+      expect(calls.filter((call) => call.method === "GET" && call.url.pathname === `/admin/customers/${USER_ID}`).length).toBe(loads + 1),
+    );
   });
 
   it("sends an override with its value", async () => {

@@ -26,6 +26,7 @@ const PAYMENT_STATUSES: PaymentStatus[] = [
 const REFUND_STATUSES = ["REQUESTED", "APPROVED", "REJECTED"];
 const INVOICE_STATUSES = ["PENDING", "ISSUED", "VOIDED"];
 const MAX_INVOICE_NUMBER = 50;
+const MIN_REASON = 10;
 const MAX_REASON = 500;
 
 const ars = (amountMinor: number): Money => ({ amountMinor, currency: "ARS" });
@@ -33,10 +34,13 @@ const usd = (amountMinor: number): Money => ({ amountMinor, currency: "USD" });
 const STARTER = { price: usd(6000), charge: ars(8700000) };
 const BUSINESS = { price: usd(20000), charge: ars(29000000) };
 
+type StoredPayment = Omit<PaymentRow, "refundable">;
+type StoredRefund = Omit<RefundRow, "effectiveAmount">;
+
 type State = {
   subscriptions: SubscriptionRow[];
-  payments: PaymentRow[];
-  refunds: RefundRow[];
+  payments: StoredPayment[];
+  refunds: StoredRefund[];
   invoices: InvoiceRow[];
 };
 
@@ -116,7 +120,7 @@ function seed(now: Date): State {
     refundedMinor: number,
     createdDays: number,
     statusDetail: string,
-  ): PaymentRow => ({
+  ): StoredPayment => ({
     id: id("9e", n),
     userId: user.userId,
     email: user.email,
@@ -171,21 +175,38 @@ function seed(now: Date): State {
     invoice(6, 0, "PENDING", {}, receiver("Ana Pérez", "20123456786", "MONOTRIBUTO", ana.email)),
   ];
 
-  const refunds: RefundRow[] = [
+  const refunds: StoredRefund[] = [
     { id: id("7a", 1), paymentId: payments[6].id, userId: diego.userId, amount: null, status: "REQUESTED", providerRefundId: null, requestedBy: id("0b", 1), createdAt: at(-1) },
     { id: id("7a", 2), paymentId: payments[0].id, userId: ana.userId, amount: ars(500000), status: "REJECTED", providerRefundId: "rf-2002", requestedBy: id("0b", 1), createdAt: at(-1.5) },
     { id: id("7a", 3), paymentId: payments[3].id, userId: carla.userId, amount: ars(2000000), status: "APPROVED", providerRefundId: "rf-2001", requestedBy: id("0b", 1), createdAt: at(-9) },
     { id: id("7a", 4), paymentId: payments[5].id, userId: elena.userId, amount: null, status: "APPROVED", providerRefundId: "rf-2000", requestedBy: null, createdAt: at(-30) },
+    { id: id("7a", 5), paymentId: payments[7].id, userId: ana.userId, amount: ars(1000000), status: "REQUESTED", providerRefundId: "rf-2003", requestedBy: id("0b", 1), createdAt: at(-2) },
   ];
 
   return { subscriptions, payments, refunds, invoices };
 }
 
+export const REFUND_IN_PROCESS_SCENARIO = "billing-refund-in-process";
+export const PROVIDER_DOWN_SCENARIO = "billing-provider-down";
+
+type ProviderAnswer = "APPROVED" | "IN_PROCESS" | "DOWN";
+
 let state: State = seed(new Date());
+let provider: ProviderAnswer = "APPROVED";
 
 function reset({ scenario, now }: ResetOptions) {
   sequence = 0;
   state = scenario === "empty" ? { subscriptions: [], payments: [], refunds: [], invoices: [] } : seed(now);
+  provider = scenario === REFUND_IN_PROCESS_SCENARIO ? "IN_PROCESS" : scenario === PROVIDER_DOWN_SCENARIO ? "DOWN" : "APPROVED";
+}
+
+const PROVIDER_UNAVAILABLE = failure(502, "The payment provider did not answer", "PROVIDER_UNAVAILABLE");
+
+function answer(refund: StoredRefund, providerRefundId: string): MockReply | null {
+  if (provider === "DOWN") return PROVIDER_UNAVAILABLE;
+  refund.providerRefundId = providerRefundId;
+  refund.status = provider === "IN_PROCESS" ? "REQUESTED" : "APPROVED";
+  return null;
 }
 
 type Parsed<T> = { values: T[] } | { error: MockReply };
@@ -236,6 +257,25 @@ function listSubscriptions({ query }: MockRequest): MockReply {
   return page(newestFirst(rows), query, 50);
 }
 
+function isRefundable(payment: StoredPayment): boolean {
+  return payment.status === "APPROVED" || payment.status === "PARTIALLY_REFUNDED";
+}
+
+function committed(payment: StoredPayment): number {
+  return state.refunds
+    .filter((refund) => refund.paymentId === payment.id && refund.status !== "REJECTED")
+    .reduce((sum, refund) => sum + (refund.amount?.amountMinor ?? payment.amount.amountMinor), 0);
+}
+
+function remaining(payment: StoredPayment): number {
+  return payment.amount.amountMinor - Math.max(payment.refunded.amountMinor, committed(payment));
+}
+
+function withRefundable(payment: StoredPayment): PaymentRow {
+  const left = isRefundable(payment) ? Math.max(0, remaining(payment)) : 0;
+  return { ...payment, refundable: { amountMinor: left, currency: payment.amount.currency } };
+}
+
 function listPayments({ query }: MockRequest): MockReply {
   const status = enumFilter<PaymentStatus>(query, "status", PAYMENT_STATUSES);
   if ("error" in status) return status.error;
@@ -250,14 +290,29 @@ function listPayments({ query }: MockRequest): MockReply {
       (!userId || row.userId === userId) &&
       within(query, row.createdAt),
   );
-  return page(newestFirst(rows), query, 50);
+  return page(newestFirst(rows).map(withRefundable), query, 50);
+}
+
+function effectiveAmount(refund: StoredRefund): Money {
+  const payment = state.payments.find((row) => row.id === refund.paymentId);
+  if (!payment) return refund.amount ?? { amountMinor: 0, currency: "ARS" };
+  const ofPayment = state.refunds
+    .filter((row) => row.paymentId === payment.id)
+    .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt) || a.id.localeCompare(b.id));
+  let taken = 0;
+  for (const row of ofPayment) {
+    const amount = row.amount?.amountMinor ?? Math.max(0, payment.amount.amountMinor - taken);
+    if (row.id === refund.id) return { amountMinor: amount, currency: payment.amount.currency };
+    if (row.status !== "REJECTED") taken += amount;
+  }
+  return refund.amount ?? { amountMinor: 0, currency: payment.amount.currency };
 }
 
 function listRefunds({ query }: MockRequest): MockReply {
   const status = enumFilter<string>(query, "status", REFUND_STATUSES);
   if ("error" in status) return status.error;
   const rows = state.refunds.filter((row) => status.values.length === 0 || status.values.includes(row.status));
-  return page(newestFirst(rows), query, 50);
+  return page(newestFirst(rows).map((row): RefundRow => ({ ...row, effectiveAmount: effectiveAmount(row) })), query, 50);
 }
 
 function listInvoices({ query }: MockRequest): MockReply {
@@ -270,8 +325,8 @@ function listInvoices({ query }: MockRequest): MockReply {
 }
 
 function reasonOf(body: Record<string, unknown>): string | null {
-  const reason = typeof body.reason === "string" ? body.reason.trim() : "";
-  return reason && reason.length <= MAX_REASON ? reason : null;
+  const reason = typeof body.reason === "string" ? body.reason : "";
+  return reason.trim() && reason.length >= MIN_REASON && reason.length <= MAX_REASON ? reason.trim() : null;
 }
 
 function selfOperation(admin: AdminIdentity, userId: string): MockReply | null {
@@ -288,8 +343,15 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
   const userId = decodeURIComponent(match[1]);
   const self = selfOperation(admin, userId);
   if (self) return self;
+  const expected = body.expectedSubscriptionId;
+  if (expected !== undefined && expected !== null && (typeof expected !== "string" || !UUID.test(expected))) {
+    return failure(400, "Invalid expectedSubscriptionId");
+  }
   const live = state.subscriptions.find((row) => row.userId === userId && row.status !== "CANCELED");
-  if (!live) return failure(404, "The user has no live subscription");
+  if (!live) return NOT_ACTIVE;
+  if (typeof expected === "string" && expected !== live.id) {
+    return failure(409, "The live subscription is not the one you saw, reload and try again", "SUBSCRIPTION_CHANGED");
+  }
   const action = match[2];
   if (action === "pause") {
     if (!["ACTIVE", "PAST_DUE", "SUSPENDED"].includes(live.status)) return NOT_ACTIVE;
@@ -306,19 +368,7 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
   return { status: 204 };
 }
 
-function committed(payment: PaymentRow): number {
-  const waiting = state.refunds
-    .filter((refund) => refund.paymentId === payment.id && refund.status === "REQUESTED")
-    .reduce((sum, refund) => sum + (refund.amount?.amountMinor ?? payment.amount.amountMinor - payment.refunded.amountMinor), 0);
-  return payment.refunded.amountMinor + waiting;
-}
-
-function applyRefund(payment: PaymentRow, amountMinor: number) {
-  payment.refunded = { amountMinor: payment.refunded.amountMinor + amountMinor, currency: payment.amount.currency };
-  payment.status = payment.refunded.amountMinor >= payment.amount.amountMinor ? "REFUNDED" : "PARTIALLY_REFUNDED";
-}
-
-function refundResult(refund: RefundRow) {
+function refundResult(refund: StoredRefund) {
   return {
     id: refund.id,
     paymentId: refund.paymentId,
@@ -329,7 +379,7 @@ function refundResult(refund: RefundRow) {
   };
 }
 
-function isLatestApproval(payment: PaymentRow): boolean {
+function isLatestApproval(payment: StoredPayment): boolean {
   const approved = state.payments
     .filter((row) => row.subscriptionId === payment.subscriptionId && row.approvedAt)
     .sort((a, b) => Date.parse(b.approvedAt ?? "") - Date.parse(a.approvedAt ?? ""));
@@ -351,14 +401,29 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
   if (!payment) return failure(404, "Payment not found");
   const self = selfOperation(admin, payment.userId);
   if (self) return self;
-  if (payment.status !== "APPROVED" && payment.status !== "PARTIALLY_REFUNDED") return failure(409, "The payment cannot be refunded");
+  if (!isRefundable(payment)) return failure(409, "The payment cannot be refunded");
   const amount = moneyOf(body.amount);
   if (amount === "invalid") return failure(400, "Invalid amount");
   if (amount && amount.currency !== payment.amount.currency) return failure(400, "A refund must be in the currency of its payment");
-  const left = payment.amount.amountMinor - committed(payment);
+  const left = remaining(payment);
   const requested = amount ? amount.amountMinor : left;
   if (requested <= 0 || requested > left) return failure(422, "The refund exceeds the payment", "REFUND_EXCEEDS_PAYMENT");
-  if (requested === left && isLatestApproval(payment)) {
+  const closesTheSubscription = requested === left && isLatestApproval(payment);
+  sequence += 1;
+  const refund: StoredRefund = {
+    id: id("7b", sequence),
+    paymentId: payment.id,
+    userId: payment.userId,
+    amount,
+    status: "REQUESTED",
+    providerRefundId: null,
+    requestedBy: admin.userId,
+    createdAt: new Date().toISOString(),
+  };
+  state.refunds.push(refund);
+  const down = answer(refund, `rf-${3000 + sequence}`);
+  if (down) return down;
+  if (closesTheSubscription) {
     const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
     if (subscription) {
       subscription.status = "CANCELED";
@@ -366,31 +431,19 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
       subscription.cancelReason = "REFUNDED";
     }
   }
-  sequence += 1;
-  const refund: RefundRow = {
-    id: id("7b", sequence),
-    paymentId: payment.id,
-    userId: payment.userId,
-    amount,
-    status: "APPROVED",
-    providerRefundId: `rf-${3000 + sequence}`,
-    requestedBy: admin.userId,
-    createdAt: new Date().toISOString(),
-  };
-  applyRefund(payment, requested);
-  state.refunds.push(refund);
   return { status: 201, body: refundResult(refund) };
 }
 
-function retryRefund({ match, body }: MockRequest): MockReply {
+function retryRefund({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return failure(400, "A reason is required");
   const refund = state.refunds.find((row) => row.id === decodeURIComponent(match[1]));
   if (!refund) return failure(404, "Refund not found");
-  if (refund.status !== "REQUESTED") return failure(409, "The provider already answered this refund");
   const payment = state.payments.find((row) => row.id === refund.paymentId);
-  if (payment) applyRefund(payment, refund.amount?.amountMinor ?? payment.amount.amountMinor - payment.refunded.amountMinor);
-  refund.status = "APPROVED";
-  refund.providerRefundId = `rf-${3500 + state.refunds.indexOf(refund)}`;
+  const self = payment ? selfOperation(admin, payment.userId) : null;
+  if (self) return self;
+  if (refund.providerRefundId) return failure(409, "The provider already answered this refund", "REFUND_ALREADY_ANSWERED");
+  const down = answer(refund, `rf-${3500 + state.refunds.indexOf(refund)}`);
+  if (down) return down;
   return ok(refundResult(refund));
 }
 
@@ -408,6 +461,8 @@ function markIssued({ match, body, admin }: MockRequest): MockReply {
   if (issuedAt > Date.now()) return failure(400, "An invoice cannot be issued in the future");
   const invoice = state.invoices.find((row) => row.id === decodeURIComponent(match[1]));
   if (!invoice) return failure(404, "Invoice not found");
+  const self = selfOperation(admin, invoice.userId);
+  if (self) return self;
   if (invoice.status !== "PENDING") return failure(409, "Only a pending invoice can be issued");
   invoice.status = "ISSUED";
   invoice.invoiceNumber = number;
@@ -421,7 +476,10 @@ function markVoided({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return failure(400, "A reason is required");
   const invoice = state.invoices.find((row) => row.id === decodeURIComponent(match[1]));
   if (!invoice) return failure(404, "Invoice not found");
+  const self = selfOperation(admin, invoice.userId);
+  if (self) return self;
   if (invoice.status === "VOIDED") return failure(409, "The invoice is already voided");
+  if (invoice.status !== "ISSUED") return failure(409, "Only an issued invoice can be voided", "INVOICE_NOT_ISSUED");
   invoice.status = "VOIDED";
   invoice.voidedAt = new Date().toISOString();
   invoice.voidedBy = admin.userId;

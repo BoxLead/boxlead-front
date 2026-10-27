@@ -11,13 +11,15 @@ export function fractionDigits(currency: string): number {
   }
 }
 
-export function refundable(payment: Pick<PaymentRow, "amount" | "refunded">): Money {
-  const left = payment.amount.amountMinor - payment.refunded.amountMinor;
-  return { amountMinor: Math.max(0, left), currency: payment.amount.currency };
+export function canRefund(payment: Pick<PaymentRow, "refundable">): boolean {
+  return payment.refundable.amountMinor > 0;
 }
 
-export function canRefund(payment: Pick<PaymentRow, "status" | "amount" | "refunded">): boolean {
-  return REFUNDABLE.includes(payment.status) && refundable(payment).amountMinor > 0;
+export function refundInProgress(payment: Pick<PaymentRow, "status" | "amount" | "refunded" | "refundable">): Money {
+  const waiting = REFUNDABLE.includes(payment.status)
+    ? payment.amount.amountMinor - payment.refunded.amountMinor - payment.refundable.amountMinor
+    : 0;
+  return { amountMinor: Math.max(0, waiting), currency: payment.amount.currency };
 }
 
 export function parseAmount(text: string, currency: string): number | null {

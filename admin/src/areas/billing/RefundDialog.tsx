@@ -4,7 +4,7 @@ import { ReasonDialog } from "../../components/ReasonDialog";
 import { formatMoney } from "../../format";
 import { invalidInput, refundPayment } from "./api";
 import { Amount } from "./cells";
-import { parseAmount, refundable } from "./money";
+import { parseAmount, refundInProgress } from "./money";
 import type { PaymentRow, RefundResult } from "./types";
 
 type Mode = "full" | "partial";
@@ -14,6 +14,7 @@ type RefundDialogProps = {
   open: boolean;
   onClose: () => void;
   onDone: (result: RefundResult) => void;
+  onSettled?: (failure: unknown) => void;
 };
 
 const MODES = [
@@ -21,13 +22,14 @@ const MODES = [
   { value: "partial" as const, label: "Parcial" },
 ];
 
-export function RefundDialog({ payment, open, onClose, onDone }: RefundDialogProps) {
+export function RefundDialog({ payment, open, onClose, onDone, onSettled }: RefundDialogProps) {
   const [mode, setMode] = useState<Mode>("full");
   const [text, setText] = useState("");
   const [touched, setTouched] = useState(false);
   const fieldId = useId();
   const helpId = useId();
-  const left = refundable(payment);
+  const left = payment.refundable;
+  const waiting = refundInProgress(payment);
   const parsed = parseAmount(text, left.currency);
   const valid = parsed !== null && parsed > 0 && parsed <= left.amountMinor;
   const amount = mode === "full" ? left : valid ? { amountMinor: parsed, currency: left.currency } : undefined;
@@ -51,6 +53,7 @@ export function RefundDialog({ payment, open, onClose, onDone }: RefundDialogPro
       amount={amount}
       onConfirm={confirm}
       onClose={onClose}
+      onSettled={onSettled}
     >
       <p>
         Le devolvemos plata a {payment.email ?? "este cliente"} por Mercado Pago. Si deja en cero el último pago aprobado de la suscripción,
@@ -69,6 +72,14 @@ export function RefundDialog({ payment, open, onClose, onDone }: RefundDialogPro
             <Amount money={payment.refunded} />
           </dd>
         </div>
+        {waiting.amountMinor > 0 ? (
+          <div>
+            <dt>Pedido y sin acreditar</dt>
+            <dd>
+              <Amount money={waiting} />
+            </dd>
+          </div>
+        ) : null}
         <div>
           <dt>Queda para reembolsar</dt>
           <dd>

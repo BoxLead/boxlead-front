@@ -1,10 +1,13 @@
 import type { Page } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
-import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
+import { PROVIDER_DOWN_SCENARIO, REFUND_IN_PROCESS_SCENARIO } from "../admin-mock/billing.ts";
+import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const REASON = "Pedido del cliente por mail";
+const ANA_SUBSCRIPTION = "5b538453-0000-4000-8000-000000000007";
+const ADMIN_APP_ORIGIN = `http://localhost:${ADMIN_APP_PORT}`;
 
 async function resetBilling(roles: AdminRole[], scenario = "default") {
   const res = await fetch(`${adminMockUrl()}/__reset`, {
@@ -46,19 +49,49 @@ test("an owner pauses, resumes and cancels subscriptions with a reason", async (
   await expect(dialog).toContainText("ARS");
   await expect(dialog.getByRole("button", { name: "Pausar", exact: true })).toBeDisabled();
   await expectAccessible(page);
-  expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON });
+  expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(page.getByText("Pausamos la suscripción.")).toBeVisible();
   await expect(ana).toContainText("Pausada");
 
   await ana.getByRole("button", { name: "Reanudar" }).click();
-  expect(await confirmWithReason(page, "Reanudar")).toEqual({ reason: REASON });
+  expect(await confirmWithReason(page, "Reanudar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(ana).toContainText("Activa");
 
   await ana.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.getByRole("dialog", { name: "Cancelar suscripción" })).toContainText("No devuelve plata");
-  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON });
+  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(ana).toContainText("Cancelada");
   await expect(ana.getByRole("button")).toHaveCount(0);
+});
+
+test("an owner acting on a subscription that changed meanwhile gets a conflict and a fresh list", async ({ page }) => {
+  await resetBilling(["OWNER"]);
+  let lists = 0;
+  page.on("request", (request) => {
+    if (request.method() === "GET" && new URL(request.url()).pathname === "/admin/subscriptions") lists += 1;
+  });
+  await enterAdmin(page, "/suscripciones");
+  await page.route("**/admin/customers/*/subscription/cancel", (route) =>
+    route.fulfill({
+      status: 409,
+      headers: { "Access-Control-Allow-Origin": ADMIN_APP_ORIGIN, "Access-Control-Allow-Credentials": "true" },
+      contentType: "application/json",
+      json: { error: "Conflict", message: "The live subscription is not the one you saw", code: "SUBSCRIPTION_CHANGED" },
+    }),
+  );
+  const ana = row(page, "ana@example.com");
+  await ana.getByRole("button", { name: "Cancelar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Cancelar suscripción" });
+  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
+  await expect(dialog).toContainText("La suscripción de este cliente cambió desde que abriste la lista. No tocamos nada");
+  await page.unrouteAll({ behavior: "wait" });
+  const before = lists;
+  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect.poll(() => lists).toBeGreaterThan(before);
+  await expect(ana).toContainText("Activa");
+  await ana.getByRole("button", { name: "Pausar" }).click();
+  expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
+  await expect(ana).toContainText("Pausada");
 });
 
 test("asks for the code and finishes the pause when the admin session expired in the dialog", async ({ page }) => {
@@ -106,7 +139,7 @@ test("only an owner sees the subscription actions and only finance refunds", asy
   await expect(page.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
 });
 
-test("finance refunds part of a payment with the amount in view", async ({ page }) => {
+test("finance refunds part of a payment and the row keeps what Mercado Pago has not credited yet", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/pagos");
   const carla = row(page, "carla@example.com");
@@ -125,19 +158,85 @@ test("finance refunds part of a payment with the amount in view", async ({ page 
   await expectAccessible(page);
   expect(await confirmWithReason(page, "Reembolsar")).toEqual({ amount: { amountMinor: 1000000, currency: "ARS" }, reason: REASON });
   await expect(page.getByText("Mercado Pago aprobó el reembolso.")).toBeVisible();
-  await expect(carla).toContainText("30.000,00");
+  await expect(carla).toContainText("Reembolsado $ 20.000,00");
+  await expect(carla).toContainText("Pedido y sin acreditar $ 10.000,00");
+
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const again = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await expect(again.locator(".billing-facts")).toContainText("Pedido y sin acreditar");
+  await expect(again.locator(".reason-amount")).toContainText("57.000,00");
+  await again.getByRole("button", { name: "Cancelar", exact: true }).click();
 });
 
-test("a total refund goes without amount and core refuses money already committed", async ({ page }) => {
+test("a payment with a total refund on the way offers nothing more to refund", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/pagos?userId=0c78dde6-0000-4000-8000-000000000004");
   await expect(page.locator("tbody tr")).toHaveCount(2);
-  await page.locator("tbody tr").nth(1).getByRole("button", { name: "Reembolsar" }).click();
-  const body = await confirmWithReason(page, "Reembolsar");
-  expect(body).toEqual({ reason: REASON });
-  await expect(page.getByRole("dialog")).toContainText("El reembolso supera lo que queda del pago.");
-  await page.getByRole("dialog").getByRole("button", { name: "Cancelar" }).click();
+  const older = page.locator("tbody tr").nth(1);
+  await expect(older).toContainText("Pedido y sin acreditar $ 290.000,00");
+  await expect(older.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
+});
+
+test("a total refund goes without amount and core refuses money another admin already committed", async ({ page }) => {
+  await resetBilling(["FINANCE"]);
+  await enterAdmin(page, "/pagos");
+  const carla = row(page, "carla@example.com");
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await expect(dialog.locator(".reason-amount")).toContainText("67.000,00");
+  const other = await page.context().newPage();
+  await other.goto("/pagos");
+  await row(other, "carla@example.com").getByRole("button", { name: "Reembolsar" }).click();
+  await confirmWithReason(other, "Reembolsar");
+  await expect(other.getByText("Mercado Pago aprobó el reembolso.")).toBeVisible();
+  await other.close();
+  expect(await confirmWithReason(page, "Reembolsar")).toEqual({ reason: REASON });
+  await expect(dialog).toContainText("El reembolso supera lo que queda del pago.");
+  await dialog.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(carla).toContainText("Pedido y sin acreditar $ 67.000,00");
+  await expect(carla.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
+});
+
+test("a refund Mercado Pago is processing waits in Reembolsos without a retry", async ({ page }) => {
+  await resetBilling(["FINANCE"], REFUND_IN_PROCESS_SCENARIO);
+  await enterAdmin(page, "/pagos");
+  const carla = row(page, "carla@example.com");
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Parcial" }).click();
+  await page.getByRole("dialog").getByLabel("Monto a reembolsar en ARS").fill("4.000");
+  await confirmWithReason(page, "Reembolsar");
+  await expect(page.getByText("Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos.")).toBeVisible();
+  await expect(carla).toContainText("Reembolsado $ 20.000,00");
+  await expect(carla).toContainText("Pedido y sin acreditar $ 4.000,00");
+
+  await page.goto("/reembolsos");
+  const processing = page.locator("tbody tr").filter({ hasText: "4.000,00" });
+  await expect(processing).toContainText(/En proceso\s*en Mercado Pago/);
+  await expect(processing.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
+});
+
+test("a refund that Mercado Pago did not answer stays asked for and can be retried", async ({ page }) => {
+  await resetBilling(["FINANCE"], PROVIDER_DOWN_SCENARIO);
+  await enterAdmin(page, "/pagos");
+  const carla = row(page, "carla@example.com");
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await dialog.getByRole("button", { name: "Parcial" }).click();
+  await dialog.getByLabel("Monto a reembolsar en ARS").fill("4.000");
+  await confirmWithReason(page, "Reembolsar");
+  await expect(dialog).toContainText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.");
+  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(carla).toContainText("Pedido y sin acreditar $ 4.000,00");
+
+  await page.goto("/reembolsos");
+  const unanswered = page.locator("tbody tr").filter({ hasText: "4.000,00" });
+  await expect(unanswered).toContainText("Sin respuesta");
+  await unanswered.getByRole("button", { name: "Reintentar" }).click();
+  const retry = page.getByRole("dialog", { name: "Reintentar reembolso" });
+  await expect(retry.locator(".reason-amount")).toContainText("4.000,00");
+  await confirmWithReason(page, "Reintentar");
+  await expect(retry).toContainText("Mercado Pago no respondió y el reembolso sigue pedido.");
 });
 
 test("finance retries a refund that Mercado Pago did not answer", async ({ page }) => {
@@ -146,6 +245,10 @@ test("finance retries a refund that Mercado Pago did not answer", async ({ page 
   await expect(page.getByRole("heading", { level: 1, name: "Reembolsos" })).toBeVisible();
   const waiting = page.locator("tbody tr").filter({ hasText: "Sin respuesta" });
   await expect(waiting).toContainText("Lo que quedaba del pago");
+  await expect(waiting).toContainText("290.000,00");
+  const inProcess = page.locator("tbody tr").filter({ hasText: /En proceso\s*en Mercado Pago/ });
+  await expect(inProcess).toContainText("10.000,00");
+  await expect(inProcess.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
   await expectFitsTheScreen(page);
   await waiting.getByRole("button", { name: "Reintentar" }).click();
   const dialog = page.getByRole("dialog", { name: "Reintentar reembolso" });
@@ -161,7 +264,9 @@ test("finance retries a refund that Mercado Pago did not answer", async ({ page 
 test("finance marks an invoice issued with its number and voids another", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/facturas?status=PENDING");
+  await expect(page.getByText("Facturas para emitir, emitidas y anuladas, de la más vieja a la más nueva.")).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /Anular/ })).toHaveCount(0);
   await expectFitsTheScreen(page);
   const first = page.locator("tbody tr").first();
   await first.getByRole("button", { name: "Marcar emitida" }).click();
@@ -180,7 +285,7 @@ test("finance marks an invoice issued with its number and voids another", async 
   await page.getByLabel("Estado").selectOption("ISSUED");
   const issued = page.locator("tbody tr").filter({ hasText: "0003-00000020" });
   await issued.getByRole("button", { name: "Anular" }).click();
-  await expect(page.getByRole("dialog", { name: "Anular factura" })).toContainText("nota de crédito");
+  await expect(page.getByRole("dialog", { name: "Anular factura" })).toContainText("no vuelve atrás");
   expect(await confirmWithReason(page, "Anular factura")).toEqual({ reason: REASON });
   await expect(page.getByText("Anulamos la factura.")).toBeVisible();
   await expect(issued).toHaveCount(0);
@@ -227,16 +332,15 @@ test("every billing screen has its loading, empty and error states", async ({ pa
   await expectAccessible(page);
 });
 
-test("the billing screens with data pass the accessibility checks", async ({ page }) => {
-  await resetBilling(["OWNER"]);
-  await enterAdmin(page, "/suscripciones");
-  for (const screen of SCREENS) {
-    await page.goto(screen.path);
+for (const screen of SCREENS) {
+  test(`${screen.title} with data passes the accessibility checks`, async ({ page }) => {
+    await resetBilling(["OWNER"]);
+    await enterAdmin(page, screen.path);
     await expect(page.locator("tbody tr").first()).toBeVisible();
     await expectFitsTheScreen(page);
     await expectAccessible(page);
-  }
-});
+  });
+}
 
 async function shot(page: Page, name: string, scheme: string) {
   await settled(page);

@@ -15,6 +15,7 @@ type InvoiceDialogProps = {
   today: string;
   onClose: () => void;
   onDone: (invoice: InvoiceRow) => void;
+  onSettled?: (failure: unknown) => void;
 };
 
 function IssueFields({ number, date, today, touched, onNumber, onDate }: {
@@ -71,7 +72,7 @@ function IssueFields({ number, date, today, touched, onNumber, onDate }: {
   );
 }
 
-export function InvoiceDialog({ invoice, action, open, today, onClose, onDone }: InvoiceDialogProps) {
+export function InvoiceDialog({ invoice, action, open, today, onClose, onDone, onSettled }: InvoiceDialogProps) {
   const [number, setNumber] = useState("");
   const [date, setDate] = useState("");
   const [touched, setTouched] = useState(false);
@@ -100,13 +101,13 @@ export function InvoiceDialog({ invoice, action, open, today, onClose, onDone }:
       amount={invoice.amount}
       onConfirm={confirm}
       onClose={onClose}
+      onSettled={onSettled}
     >
       {issuing ? (
         <p>Anotá el número de la factura que emitiste fuera de BoxLead para este pago.</p>
       ) : (
         <p>
-          La factura queda anulada en BoxLead.{" "}
-          {invoice.status === "ISSUED" ? `Si ya la emitiste con el número ${invoice.invoiceNumber ?? ""}, la nota de crédito se hace fuera de BoxLead.` : "Ya no aparece para emitir."}
+          La factura {invoice.invoiceNumber ?? ""} queda anulada en BoxLead y no vuelve atrás. La nota de crédito se hace fuera de BoxLead.
         </p>
       )}
       <Receiver receiver={invoice.receiver} />
