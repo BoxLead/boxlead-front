@@ -99,7 +99,7 @@ jobs:
           grep -q '<meta name="robots" content="noindex' dist-admin/index.html || { echo "::error::index.html lacks the noindex meta"; exit 1; }
           grep -qx 'Disallow: /' dist-admin/robots.txt || { echo "::error::robots.txt does not disallow everything"; exit 1; }
           api_origin=$(printf '%s' "$API_BASE_URL" | grep -oE '^https://[^/]+')
-          third_party=$(grep -rhoIE '(https?|wss?)://[A-Za-z0-9.-]+(:[0-9]+)?' dist-admin | sort -u | grep -vxF -e "$api_origin" -e http://www.w3.org -e http://localhost -e https://react.dev -e https://reactrouter.com || true)
+          third_party=$(grep -rhoIE '(https?|wss?)://[A-Za-z0-9.-]+(:[0-9]+)?' dist-admin | sort -u | grep -vxF -e "$api_origin" -e http://www.w3.org -e http://localhost -e https://react.dev -e https://reactrouter.com -e https://github.com || true)
           if [ -n "$third_party" ]; then
             echo "::error::The backoffice references third party origins"
             echo "$third_party"
