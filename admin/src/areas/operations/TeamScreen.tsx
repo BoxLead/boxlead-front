@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
 import { Tag } from "../../../../src/components/ui/Tag";
@@ -6,8 +6,12 @@ import { useToast } from "../../../../src/components/ui/toast";
 import { adminApi } from "../../api/client";
 import { AdminApiError } from "../../api/errors";
 import type { AdminPage, AdminRole } from "../../api/types";
+import { DateText } from "../../components/DateText";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
+import { Muted, Section } from "../../components/Section";
+import { TableSkeleton } from "../../components/Skeleton";
+import { StatusBadge } from "../../components/StatusBadge";
 import type { Column } from "../../components/list/DataTable";
 import { SearchFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
@@ -17,6 +21,7 @@ import { formatDateTime } from "../../format";
 import { navItem } from "../../nav";
 import { ROLE_LABELS } from "../../session/roles";
 import { isFuture, useAdmin, useSession } from "../../session/session";
+import { FACTOR_STATUS } from "../../status";
 import type { AdminGrant, CustomerMatch, MemberRole, TeamMember } from "./types";
 import "./Operations.css";
 
@@ -39,25 +44,19 @@ function withMessage(status: number, message: string) {
 }
 
 function Factor({ member }: { member: TeamMember }) {
-  if (member.factorConfirmed) {
-    return (
-      <span className="ops-stack">
-        <Tag tone="success">Configurado</Tag>
-      </span>
-    );
-  }
+  if (member.factorConfirmed) return <StatusBadge status={FACTOR_STATUS.CONFIRMED} />;
   if (isFuture(member.enrollmentOpenUntil)) {
     return (
-      <span className="ops-stack">
-        <Tag tone="warning">Sin configurar</Tag>
-        <span className="ops-muted">Puede hasta el {formatDateTime(member.enrollmentOpenUntil)}</span>
+      <span className="cell-stack">
+        <StatusBadge status={FACTOR_STATUS.PENDING} />
+        <span className="sub-text">Puede hasta el {formatDateTime(member.enrollmentOpenUntil)}</span>
       </span>
     );
   }
   return (
-    <span className="ops-stack">
-      <Tag tone="danger">Ventana vencida</Tag>
-      <span className="ops-muted">Quitale el rol y dáselo de nuevo</span>
+    <span className="cell-stack">
+      <StatusBadge status={FACTOR_STATUS.EXPIRED} />
+      <span className="sub-text">Quitale el rol y dáselo de nuevo</span>
     </span>
   );
 }
@@ -68,7 +67,6 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
   const [picked, setPicked] = useState<CustomerMatch | null>(null);
   const [role, setRole] = useState<AdminRole>("SUPPORT");
   const [confirming, setConfirming] = useState(false);
-  const titleId = useId();
   const results = useAdminQuery<AdminPage<CustomerMatch>>(search ? "/admin/customers" : null, new URLSearchParams({ query: search }).toString());
   const current = picked ? (members.find((member) => member.userId === picked.id)?.roles.map((grant) => grant.role) ?? []) : [];
 
@@ -89,18 +87,15 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
   }
 
   return (
-    <section className="panel ops-panel-pad ops-grant" aria-labelledby={titleId}>
-      <div className="ops-grant-head">
-        <h2 id={titleId} className="ops-section-title">
-          Otorgar un rol
-        </h2>
+    <Section
+      title="Otorgar un rol"
+      hint="La persona necesita una cuenta de BoxLead con contraseña. Buscala por email, nombre o id."
+      actions={
         <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
           Cerrar
         </button>
-      </div>
-      <p className="ops-muted">
-        La persona necesita una cuenta de BoxLead con contraseña. Buscala por email, nombre o id.
-      </p>
+      }
+    >
       <SearchFilter
         label="Buscar usuario"
         value={search}
@@ -112,10 +107,7 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
       />
       {search ? (
         results.status === "loading" ? (
-          <div className="list-loading" role="status">
-            <span className="skeleton list-skeleton-row" />
-            <span className="visually-hidden">Buscando…</span>
-          </div>
+          <TableSkeleton columns={1} rows={2} />
         ) : results.status === "error" ? (
           <Banner
             tone="danger"
@@ -129,19 +121,14 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
             {results.message}
           </Banner>
         ) : results.data.items.length === 0 ? (
-          <p className="ops-muted">No encontramos a nadie con eso. Probá con el email completo.</p>
+          <Muted>No encontramos a nadie con eso. Probá con el email completo.</Muted>
         ) : (
-          <ul className="ops-matches" aria-label="Resultados">
+          <ul className="team-matches" aria-label="Resultados">
             {results.data.items.map((customer) => (
               <li key={customer.id}>
-                <button
-                  type="button"
-                  className="ops-match"
-                  aria-pressed={picked?.id === customer.id}
-                  onClick={() => pick(customer)}
-                >
-                  <span className="ops-match-email">{customer.email}</span>
-                  <span className="ops-muted">{customer.name ?? customer.legalName ?? "Sin nombre"}</span>
+                <button type="button" className="team-match" aria-pressed={picked?.id === customer.id} onClick={() => pick(customer)}>
+                  <span className="team-match-email">{customer.email}</span>
+                  <span className="sub-text">{customer.name ?? customer.legalName ?? "Sin nombre"}</span>
                 </button>
               </li>
             ))}
@@ -149,7 +136,7 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
         )
       ) : null}
       {picked ? (
-        <div className="ops-grant-role">
+        <div className="team-grant-role">
           <div className="ops-choice">
             <ChoiceGroup<AdminRole>
               label="Rol"
@@ -159,7 +146,7 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
               choices={ROLES.map((value) => ({ value, label: ROLE_LABELS[value], disabled: current.includes(value) }))}
             />
           </div>
-          <p className="ops-muted">{ROLE_SCOPE[role]}</p>
+          <Muted>{ROLE_SCOPE[role]}</Muted>
           <div>
             <button type="button" className="btn btn-primary" disabled={current.includes(role)} onClick={() => setConfirming(true)}>
               Otorgar {ROLE_LABELS[role]}
@@ -184,7 +171,7 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
           </p>
         </ReasonDialog>
       ) : null}
-    </section>
+    </Section>
   );
 }
 
@@ -239,24 +226,28 @@ export function TeamScreen() {
     {
       key: "person",
       header: "Persona",
+      width: "md",
       cell: (row) => (
-        <span className="ops-stack">
-          <span>{row.name ?? "Sin nombre"}</span>
-          <span className="ops-muted">{row.email}</span>
-          {row.userId === me.userId ? <Tag tone="accent">Vos</Tag> : null}
+        <span className="cell-stack">
+          <span className="team-person">
+            {row.name ?? "Sin nombre"}
+            {row.userId === me.userId ? <Tag>Vos</Tag> : null}
+          </span>
+          <span className="sub-text">{row.email}</span>
         </span>
       ),
     },
     {
       key: "roles",
       header: "Roles",
+      width: "md",
       cell: (row) => (
-        <ul className="ops-roles">
+        <ul className="team-roles">
           {row.roles.map((grant) => (
-            <li key={grant.grantId} className="ops-role">
+            <li key={grant.grantId} className="team-role">
               <Tag tone="accent">{ROLE_LABELS[grant.role]}</Tag>
               {soleOwner(grant) ? (
-                <span className="ops-muted">Único Dueño</span>
+                <span className="sub-text">Único Dueño</span>
               ) : (
                 <button
                   type="button"
@@ -272,11 +263,12 @@ export function TeamScreen() {
         </ul>
       ),
     },
-    { key: "factor", header: "Factor", cell: (row) => <Factor member={row} /> },
+    { key: "factor", header: "Factor", type: "status", cell: (row) => <Factor member={row} /> },
     {
       key: "session",
       header: "Última sesión",
-      cell: (row) => (row.lastAdminSessionAt ? formatDateTime(row.lastAdminSessionAt) : <span className="ops-muted">Nunca</span>),
+      type: "date",
+      cell: (row) => (row.lastAdminSessionAt ? <DateText value={row.lastAdminSessionAt} time /> : <span className="sub-text">Nunca</span>),
     },
   ];
 

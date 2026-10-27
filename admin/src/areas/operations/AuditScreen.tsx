@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { Dialog } from "../../../../src/components/ui/Dialog";
+import { DateText } from "../../components/DateText";
 import { Screen } from "../../components/Screen";
+import { Facts } from "../../components/Section";
 import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import type { AdminPage } from "../../api/types";
 import { useListParams } from "../../components/list/useListParams";
-import { formatDateTime } from "../../format";
 import { navItem } from "../../nav";
 import { ACTION_LABELS, ACTOR_LABELS, labelOf, optionsOf, TARGET_LABELS } from "./labels";
 import type { AuditEvent } from "./types";
@@ -27,27 +28,35 @@ function json(value: unknown): string | null {
 function Snapshot({ label, value }: { label: string; value: unknown }) {
   const text = json(value);
   return (
-    <figure className="ops-snapshot">
+    <figure className="audit-snapshot">
       <figcaption className="panel-title">{label}</figcaption>
-      {text ? <pre className="ops-json">{text}</pre> : <p className="ops-muted">Sin datos</p>}
+      {text ? <pre className="audit-json">{text}</pre> : <p className="muted-text">Sin datos</p>}
     </figure>
   );
 }
 
-function actor(event: AuditEvent) {
+function Id({ value, full = false }: { value: string; full?: boolean }) {
   return (
-    <span className="ops-stack">
+    <code className="mono-text sub-text" title={full ? undefined : value}>
+      {full ? value : value.slice(0, 8)}
+    </code>
+  );
+}
+
+function actor(event: AuditEvent, full = false) {
+  return (
+    <span className="cell-stack">
       <span>{ACTOR_LABELS[event.actorType] ?? event.actorType}</span>
-      {event.actorUserId ? <code className="ops-code ops-muted">{event.actorUserId}</code> : null}
+      {event.actorUserId ? <Id value={event.actorUserId} full={full} /> : null}
     </span>
   );
 }
 
-function target(event: AuditEvent) {
+function target(event: AuditEvent, full = false) {
   return (
-    <span className="ops-stack">
+    <span className="cell-stack">
       <span>{labelOf(TARGET_LABELS, event.targetType)}</span>
-      <code className="ops-code ops-muted">{event.targetId}</code>
+      <Id value={event.targetId} full={full} />
     </span>
   );
 }
@@ -56,40 +65,20 @@ function EventDialog({ open, event, onClose }: { open: boolean; event: AuditEven
   return (
     <Dialog open={open} title={event ? labelOf(ACTION_LABELS, event.action) : "Cambio"} size="lg" onClose={onClose}>
       {event ? (
-        <div className="ops-event">
-          <dl className="ops-facts">
-            <div>
-              <dt>Fecha</dt>
-              <dd>{formatDateTime(event.occurredAt)}</dd>
-            </div>
-            <div>
-              <dt>Acción</dt>
-              <dd>
-                <code className="ops-code">{event.action}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>Quién</dt>
-              <dd>{actor(event)}</dd>
-            </div>
-            <div>
-              <dt>Sobre qué</dt>
-              <dd>{target(event)}</dd>
-            </div>
-            <div>
-              <dt>Motivo</dt>
-              <dd>{event.reason ?? "Sin motivo"}</dd>
-            </div>
-            <div>
-              <dt>Dirección IP</dt>
-              <dd>{event.ip ?? "Sin dato"}</dd>
-            </div>
-            <div>
-              <dt>Pedido</dt>
-              <dd>{event.requestId ? <code className="ops-code">{event.requestId}</code> : "Sin dato"}</dd>
-            </div>
-          </dl>
-          <div className="ops-snapshots">
+        <div className="audit-event">
+          <Facts
+            columns={2}
+            items={[
+              { label: "Fecha", value: <DateText value={event.occurredAt} time /> },
+              { label: "Acción", value: <code className="mono-text">{event.action}</code> },
+              { label: "Quién", value: actor(event, true) },
+              { label: "Sobre qué", value: target(event, true) },
+              { label: "Motivo", value: event.reason ?? "Sin motivo" },
+              { label: "Dirección IP", value: event.ip ?? "Sin dato" },
+              { label: "Pedido", value: event.requestId ? <code className="mono-text">{event.requestId}</code> : "Sin dato" },
+            ]}
+          />
+          <div className="audit-snapshots">
             <Snapshot label="Antes" value={event.before} />
             <Snapshot label="Después" value={event.after} />
           </div>
@@ -124,14 +113,15 @@ export function AuditScreen() {
   }
 
   const columns: Column<AuditEvent>[] = [
-    { key: "when", header: "Fecha", cell: (row) => formatDateTime(row.occurredAt) },
-    { key: "action", header: "Acción", cell: (row) => labelOf(ACTION_LABELS, row.action) },
-    { key: "actor", header: "Quién", cell: actor },
-    { key: "target", header: "Sobre qué", cell: target },
-    { key: "reason", header: "Motivo", cell: (row) => row.reason ?? <span className="ops-muted">Sin motivo</span> },
+    { key: "when", header: "Fecha", type: "date", cell: (row) => <DateText value={row.occurredAt} time /> },
+    { key: "action", header: "Acción", width: "sm", cell: (row) => labelOf(ACTION_LABELS, row.action) },
+    { key: "actor", header: "Quién", width: "sm", cell: (row) => actor(row) },
+    { key: "target", header: "Sobre qué", width: "sm", cell: (row) => target(row) },
+    { key: "reason", header: "Motivo", width: "md", truncate: true, cell: (row) => row.reason ?? <span className="sub-text">Sin motivo</span> },
     {
       key: "changes",
       header: "Cambios",
+      type: "actions",
       cell: (row) => (
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => show(row)}>
           Ver antes y después
@@ -156,11 +146,9 @@ export function AuditScreen() {
       {problem ? (
         <section className="list-view" aria-label="Auditoría">
           {filters}
-          <div className="panel ops-panel-pad">
-            <Banner tone="warning" title="Revisá los filtros">
-              {problem}
-            </Banner>
-          </div>
+          <Banner tone="warning" title="Revisá los filtros">
+            {problem}
+          </Banner>
         </section>
       ) : (
         <ListView<AuditEvent>

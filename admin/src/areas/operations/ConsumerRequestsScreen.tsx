@@ -2,18 +2,21 @@ import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { CharCounter } from "../../../../src/components/ui/CharCounter";
 import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
-import { Tag } from "../../../../src/components/ui/Tag";
 import { adminApi } from "../../api/client";
 import { AdminApiError } from "../../api/errors";
+import { DateText } from "../../components/DateText";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
+import { StatusBadge } from "../../components/StatusBadge";
 import type { Column } from "../../components/list/DataTable";
+import { FilterBar } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
 import { formatDateTime } from "../../format";
 import { navItem } from "../../nav";
 import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
+import { REQUEST_KIND, type StatusLabel } from "../../status";
 import { KIND_LABELS, REQUEST_STATUS_LABELS } from "./labels";
 import type { ConsumerRequest, ConsumerRequestDecision, ConsumerRequestStatus } from "./types";
 import "./Operations.css";
@@ -21,6 +24,9 @@ import "./Operations.css";
 const KEYS = ["status"] as const;
 const STATUSES: readonly ConsumerRequestStatus[] = ["RECEIVED", "RESOLVED", "REJECTED"];
 const MAX_RESOLUTION = 1000;
+
+const RECEIPT_QUEUED: StatusLabel = { label: "En cola", tone: "success" };
+const RECEIPT_PENDING: StatusLabel = { label: "Pendiente", tone: "neutral" };
 
 const EMPTY: Record<ConsumerRequestStatus, string> = {
   RECEIVED: "No hay pedidos pendientes",
@@ -142,47 +148,40 @@ export function ConsumerRequestsScreen() {
   const [resolving, setResolving] = useState<ConsumerRequest | null>(null);
 
   const columns: Column<ConsumerRequest>[] = [
-    {
-      key: "request",
-      header: "Pedido",
-      cell: (row) => (
-        <span className="ops-stack">
-          <code className="ops-code">{row.code}</code>
-          <Tag tone={row.kind === "WITHDRAWAL" ? "warning" : "neutral"}>{KIND_LABELS[row.kind]}</Tag>
-        </span>
-      ),
-    },
+    { key: "code", header: "Pedido", type: "id", cell: (row) => <code className="mono-text">{row.code}</code> },
+    { key: "kind", header: "Tipo", type: "status", cell: (row) => <StatusBadge status={REQUEST_KIND[row.kind]} /> },
     {
       key: "customer",
       header: "Cliente",
-      cell: (row) => (
-        <span className="ops-stack">
-          <span>{row.email}</span>
-          {row.userId ? (
-            <Link className="ops-link" to={`/usuarios/${row.userId}`}>
-              Ver cliente
-            </Link>
-          ) : (
-            <span className="ops-muted">Sin cuenta en BoxLead</span>
-          )}
-        </span>
-      ),
+      width: "md",
+      cell: (row) =>
+        row.userId ? (
+          <Link className="entity-link" to={`/usuarios/${row.userId}`}>
+            {row.email}
+          </Link>
+        ) : (
+          <span className="cell-stack">
+            <span>{row.email}</span>
+            <span className="sub-text">Sin cuenta en BoxLead</span>
+          </span>
+        ),
     },
-    { key: "details", header: "Detalle", cell: (row) => row.details || <span className="ops-muted">Sin detalle</span> },
-    { key: "created", header: "Recibido", cell: (row) => formatDateTime(row.createdAt) },
+    { key: "details", header: "Detalle", width: "md", truncate: true, cell: (row) => row.details || <span className="sub-text">Sin detalle</span> },
+    { key: "created", header: "Recibido", type: "date", cell: (row) => <DateText value={row.createdAt} time /> },
   ];
 
   if (status === "RECEIVED") {
     columns.push({
       key: "action",
       header: "Acción",
+      type: "actions",
       cell: (row) =>
         canResolve(me.roles, row) ? (
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setResolving(row)}>
             Cerrar pedido
           </button>
         ) : (
-          <span className="ops-muted">Lo cierra Finanzas</span>
+          <span className="sub-text">Lo cierra Finanzas</span>
         ),
     });
   } else {
@@ -190,24 +189,26 @@ export function ConsumerRequestsScreen() {
       {
         key: "resolution",
         header: "Respuesta",
+        width: "lg",
         cell: (row) => (
-          <span className="ops-stack">
+          <span className="cell-stack">
             <span>{row.resolution}</span>
-            <span className="ops-muted">{formatDateTime(row.resolvedAt)}</span>
+            <span className="sub-text">{formatDateTime(row.resolvedAt)}</span>
           </span>
         ),
       },
       {
         key: "receipt",
         header: "Comprobante",
+        type: "status",
         cell: (row) =>
           row.receiptSentAt ? (
-            <span className="ops-stack">
-              <Tag tone="success">En cola</Tag>
-              <span className="ops-muted">{formatDateTime(row.receiptSentAt)}</span>
+            <span className="cell-stack">
+              <StatusBadge status={RECEIPT_QUEUED} />
+              <span className="sub-text">{formatDateTime(row.receiptSentAt)}</span>
             </span>
           ) : (
-            <Tag>Pendiente</Tag>
+            <StatusBadge status={RECEIPT_PENDING} />
           ),
       },
     );
@@ -221,15 +222,17 @@ export function ConsumerRequestsScreen() {
         columns={columns}
         rowKey={(row) => row.id}
         filters={
-          <div className="ops-switch">
-            <ChoiceGroup<ConsumerRequestStatus>
-              label="Estado"
-              variant="segmented"
-              value={status}
-              onChange={(value) => params.setFilter("status", value === "RECEIVED" ? null : value)}
-              choices={STATUSES.map((value) => ({ value, label: REQUEST_STATUS_LABELS[value] }))}
-            />
-          </div>
+          <FilterBar
+            lead={
+              <ChoiceGroup<ConsumerRequestStatus>
+                label="Estado"
+                variant="segmented"
+                value={status}
+                onChange={(value) => params.setFilter("status", value === "RECEIVED" ? null : value)}
+                choices={STATUSES.map((value) => ({ value, label: REQUEST_STATUS_LABELS[value] }))}
+              />
+            }
+          />
         }
         emptyTitle={EMPTY[status]}
         emptyHint={status === "RECEIVED" ? "Cuando un cliente use el botón de arrepentimiento o de baja, aparece acá." : undefined}

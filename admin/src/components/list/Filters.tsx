@@ -7,13 +7,13 @@ export type FilterOption = { value: string; label: string };
 
 type FilterBarProps = {
   children?: ReactNode;
-  active: boolean;
-  onClear: () => void;
+  active?: boolean;
+  onClear?: () => void;
   lead?: ReactNode;
   actions?: ReactNode;
 };
 
-export function FilterBar({ children, active, onClear, lead, actions }: FilterBarProps) {
+export function FilterBar({ children, active = false, onClear, lead, actions }: FilterBarProps) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const expanded = open || active;
@@ -35,7 +35,7 @@ export function FilterBar({ children, active, onClear, lead, actions }: FilterBa
       {children ? (
         <div className="toolbar-filters" id={id}>
           {children}
-          {active ? (
+          {active && onClear ? (
             <button type="button" className="btn btn-ghost toolbar-clear" onClick={onClear}>
               Limpiar
             </button>
