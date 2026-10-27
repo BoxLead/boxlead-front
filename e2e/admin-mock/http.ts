@@ -27,7 +27,7 @@ export type AdminMockRoute = {
   method: "GET" | "POST" | "PUT" | "DELETE";
   pattern: RegExp;
   access: Access;
-  handle: (request: MockRequest) => MockReply;
+  handle: (request: MockRequest) => MockReply | null;
 };
 
 export type ResetOptions = {

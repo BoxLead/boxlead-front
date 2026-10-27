@@ -51,7 +51,8 @@ function businessRoute(method: string, path: string, url: URL, body: Record<stri
       if (!match) continue;
       if (!canAccess(admin.roles, route.access)) return failure(403, "This action needs another admin role", "ROLE_REQUIRED");
       if (!adminSessionOpen(cookies)) return failure(401, "An admin session is required", "ADMIN_SESSION_REQUIRED");
-      return route.handle({ method, path, query: url.searchParams, body, admin, match });
+      const reply = route.handle({ method, path, query: url.searchParams, body, admin, match });
+      if (reply) return reply;
     }
   }
   return failure(404, "Not found");
