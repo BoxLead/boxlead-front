@@ -126,12 +126,16 @@ test.describe("consumer requests", () => {
     await expect(page.getByRole("row", { name: /BX-Q4TD8R/ })).toHaveCount(0);
   });
 
-  test("finance resolves a withdrawal after reading that it refunds", async ({ page }) => {
+  test("finance resolves a withdrawal after reading what it refunds", async ({ page }) => {
     await resetOperations({ roles: ["FINANCE"] });
     await enterAdmin(page, "/pedidos");
     await page.getByRole("row", { name: /BX-7KX2M9/ }).getByRole("button", { name: "Cerrar pedido" }).click();
     const dialog = page.getByRole("dialog", { name: "Cerrar el pedido BX-7KX2M9" });
-    await expect(dialog.getByText(/reembolsa completo el último pago aprobado en Mercado Pago/)).toBeVisible();
+    await expect(dialog.getByText(/Reembolsa el último pago aprobado y cancela la suscripción en el acto/)).toBeVisible();
+    await expect(dialog.locator(".reason-amount")).toContainText("18.900");
+    await expect(dialog.locator(".reason-amount")).toContainText("ARS");
+    await expect(dialog.getByText("Contraté ayer y me arrepentí, no lo voy a usar.")).toBeVisible();
+    await noSideScroll(page);
     await dialog.getByLabel("Motivo").fill("Pedido dentro de los diez días");
     await dialog.getByRole("button", { name: "Resolver arrepentimiento" }).click();
     await expect(dialog.getByText("Escribí la respuesta para el cliente.").first()).toBeVisible();
@@ -139,6 +143,9 @@ test.describe("consumer requests", () => {
     await dialog.getByRole("button", { name: "Resolver arrepentimiento" }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByRole("row", { name: /BX-7KX2M9/ })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Resueltos" }).click();
+    await expect(page.getByRole("row", { name: /BX-7KX2M9/ }).getByRole("link", { name: /^0b0e0000/ })).toBeVisible();
   });
 
   test("shows the empty and the error", async ({ page }) => {

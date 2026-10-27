@@ -102,10 +102,11 @@ function fixtures(now: Date): State {
     resolvedBy: null,
     resolvedAt: null,
     receiptSentAt: null,
+    refundable: null,
     ...fields,
   });
   const requests = [
-    request(1, { kind: "WITHDRAWAL", email: "lucia@agencia-norte.example", userId: lucia, subscriptionId: id("004", 1), details: "Contraté ayer y me arrepentí, no lo voy a usar.", createdAt: at(30) }),
+    request(1, { kind: "WITHDRAWAL", email: "lucia@agencia-norte.example", userId: lucia, subscriptionId: id("004", 1), details: "Contraté ayer y me arrepentí, no lo voy a usar.", refundable: { amountMinor: 1_890_000, currency: "ARS" }, createdAt: at(30) }),
     request(2, { kind: "CANCELLATION", email: "martin@tienda-sur.example", userId: martin, subscriptionId: id("004", 2), createdAt: at(20) }),
     request(3, { kind: "CANCELLATION", email: "alguien@correo.example", details: "Quiero darme de baja.", createdAt: at(6) }),
     request(4, { kind: "CANCELLATION", email: "ana@kiosco.example", status: "RESOLVED", resolution: "Cancelamos tu suscripción al final del período.", resolvedAt: at(70), receiptSentAt: at(70), createdAt: at(96) }),
@@ -320,7 +321,7 @@ function resolve(requestId: string, body: Record<string, unknown>, admin: AdminI
   if (request.status !== "RECEIVED") return failure(409, "The request is already closed");
   const before = { id: request.id, kind: request.kind, status: request.status, resolvedAt: null };
   const now = new Date().toISOString();
-  Object.assign(request, { status: body.status, resolution, resolvedBy: admin.userId, resolvedAt: now, receiptSentAt: now });
+  Object.assign(request, { status: body.status, resolution, resolvedBy: admin.userId, resolvedAt: now, receiptSentAt: now, refundable: null });
   record(admin, "CONSUMER_REQUEST_RESOLVED", "CONSUMER_REQUEST", request.id, before, { ...before, status: request.status, resolvedAt: now }, reason);
   return ok(request);
 }

@@ -73,6 +73,7 @@ function request(fields: Partial<ConsumerRequest> & Pick<ConsumerRequest, "id" |
     resolvedAt: null,
     receiptSentAt: null,
     createdAt: "2026-10-20T12:00:00Z",
+    refundable: null,
     ...fields,
   };
 }
@@ -134,7 +135,10 @@ describe("UsageScreen", () => {
 });
 
 describe("ConsumerRequestsScreen", () => {
-  const pending = [request({ id: "w1", kind: "WITHDRAWAL", userId: LUCIA }), request({ id: "c1", kind: "CANCELLATION" })];
+  const pending = [
+    request({ id: "w1", kind: "WITHDRAWAL", userId: LUCIA, details: "Contraté ayer y me arrepentí.\nNo lo voy a usar.", refundable: { amountMinor: 1_890_000, currency: "ARS" } }),
+    request({ id: "c1", kind: "CANCELLATION" }),
+  ];
 
   it("lets support close a cancellation but leaves a withdrawal to finance", async () => {
     renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos", () => json(200, pageOf(pending)));
@@ -142,12 +146,20 @@ describe("ConsumerRequestsScreen", () => {
     expect(screen.getAllByRole("button", { name: "Cerrar pedido" })).toHaveLength(1);
   });
 
-  it("explains the refund and sends status, resolution and reason", async () => {
+  it("explains the refund with its amount and the full details and sends status, resolution and reason", async () => {
     const calls = renderScreen(<ConsumerRequestsScreen />, ["FINANCE"], "/pedidos", (method) =>
-      method === "POST" ? json(200, { ...pending[0], status: "RESOLVED" }) : json(200, pageOf(pending)),
+      method === "POST" ? json(200, { ...pending[0], status: "RESOLVED", refundable: null }) : json(200, pageOf(pending)),
     );
     await userEvent.click((await screen.findAllByRole("button", { name: "Cerrar pedido" }))[0]);
-    expect(screen.getByText(/reembolsa completo el último pago aprobado/)).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(within(dialog).getByText(/Reembolsa el último pago aprobado y cancela la suscripción en el acto/)).toBeInTheDocument();
+    expect(within(dialog).getByText("ARS")).toBeInTheDocument();
+    expect(within(dialog).getByText(/18\.900/)).toBeInTheDocument();
+    expect(within(dialog).queryByText("No hay pago para reembolsar.")).toBeNull();
+    expect(within(dialog).getByText((_, node) => node?.tagName === "BLOCKQUOTE" && node.textContent === "Contraté ayer y me arrepentí.\nNo lo voy a usar.")).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Rechazar", hidden: true }));
+    expect(within(dialog).queryByText("ARS")).toBeNull();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Resolver", hidden: true }));
     await userEvent.type(screen.getByLabelText("Motivo"), "Pedido dentro de los diez días");
     await userEvent.click(screen.getByRole("button", { name: "Resolver arrepentimiento", hidden: true }));
     expect(await screen.findByText("Escribí la respuesta para el cliente.", { selector: ".banner-text" })).toBeInTheDocument();
@@ -161,6 +173,55 @@ describe("ConsumerRequestsScreen", () => {
       resolution: "Te devolvemos el pago completo.",
       reason: "Pedido dentro de los diez días",
     });
+  });
+
+  it("says when there is no payment to refund", async () => {
+    renderScreen(<ConsumerRequestsScreen />, ["FINANCE"], "/pedidos", () => json(200, pageOf([{ ...pending[0], refundable: null }])));
+    await userEvent.click(await screen.findByRole("button", { name: "Cerrar pedido" }));
+    expect(screen.getByText("No hay pago para reembolsar.")).toBeInTheDocument();
+    expect(screen.queryByText("Monto")).toBeNull();
+  });
+
+  it("loads the list again after closing a request", async () => {
+    const calls = renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos", (method) =>
+      method === "POST" ? json(200, { ...pending[1], status: "RESOLVED" }) : json(200, pageOf(pending)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cerrar pedido" }));
+    await userEvent.type(screen.getByLabelText("Respuesta para el cliente"), "Cancelamos tu suscripción.");
+    await userEvent.type(screen.getByLabelText("Motivo"), "Baja pedida desde la web");
+    await userEvent.click(screen.getByRole("button", { name: "Resolver baja", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("says inside the dialog that the request was already closed and loads the list again on close", async () => {
+    const calls = renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos", (method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "The consumer request is already closed" }) : json(200, pageOf(pending)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cerrar pedido" }));
+    await userEvent.type(screen.getByLabelText("Respuesta para el cliente"), "Cancelamos tu suscripción.");
+    await userEvent.type(screen.getByLabelText("Motivo"), "Baja pedida desde la web");
+    await userEvent.click(screen.getByRole("button", { name: "Resolver baja", hidden: true }));
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(await within(dialog).findByText("Ese pedido ya fue cerrado. Cerrá este diálogo para ver la lista al día.")).toBeInTheDocument();
+    expect(calls.filter((call) => call.method === "GET")).toHaveLength(1);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+
+  it("does not offer to close a request of the own account unless owner", async () => {
+    renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos", () => json(200, pageOf([request({ id: "c2", kind: "CANCELLATION", userId: SELF })])));
+    expect(await screen.findByText("Es tu cuenta")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cerrar pedido" })).toBeNull();
+  });
+
+  it("links who closed a request", async () => {
+    renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos?status=RESOLVED", () =>
+      json(200, pageOf([request({ id: "c3", kind: "CANCELLATION", status: "RESOLVED", resolution: "Listo.", resolvedBy: SELF, resolvedAt: "2026-10-21T12:00:00Z" })])),
+    );
+    const link = await screen.findByRole("link", { name: SELF.slice(0, 8) });
+    expect(link).toHaveAttribute("href", `/usuarios/${SELF}`);
+    expect(screen.getByText("Sin enviar")).toBeInTheDocument();
   });
 
   it("says a rejection does not cancel or refund", async () => {

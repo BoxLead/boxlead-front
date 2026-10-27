@@ -1,4 +1,4 @@
-import type { AdminPage, AdminRole } from "../../api/types";
+import type { AdminPage, AdminRole, Money } from "../../api/types";
 
 export type UsageGrouping = "USER" | "DAY" | "MODEL";
 
@@ -58,6 +58,7 @@ export type ConsumerRequest = {
   resolvedAt: string | null;
   receiptSentAt: string | null;
   createdAt: string;
+  refundable: Money | null;
 };
 
 export type MemberRole = {
