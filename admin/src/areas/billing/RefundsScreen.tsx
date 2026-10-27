@@ -42,14 +42,14 @@ export function RefundsScreen() {
       key: "amount",
       header: "Monto",
       type: "money",
-      cell: (row) => (row.amount ? <Amount money={row.amount} code /> : <span className="billing-detail">Lo que quedaba del pago</span>),
+      cell: (row) => (row.amount ? <Amount money={row.amount} code /> : <span className="sub-text">Lo que quedaba del pago</span>),
     },
     { key: "status", header: "Estado", type: "status", cell: (row) => <StatusTag status={REFUND_STATUS[row.status]} /> },
     {
       key: "provider",
       header: "Id en Mercado Pago",
       type: "id",
-      cell: (row) => (row.providerRefundId ? row.providerRefundId : <span className="billing-detail">Sin id</span>),
+      cell: (row) => (row.providerRefundId ? row.providerRefundId : <span className="sub-text">Sin id</span>),
     },
     {
       key: "requested",

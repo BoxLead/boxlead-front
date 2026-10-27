@@ -69,11 +69,11 @@ export function CustomersScreen() {
             header: "Usuario",
             width: "lg",
             cell: (row) => (
-              <span className="customer-cell">
-                <Link className="customer-link" to={`/usuarios/${row.id}`}>
+              <span className="cell-stack">
+                <Link className="entity-link" to={`/usuarios/${row.id}`}>
                   {row.email}
                 </Link>
-                {row.name || row.legalName ? <span className="customer-cell-sub">{row.legalName ?? row.name}</span> : null}
+                {row.name || row.legalName ? <span className="sub-text">{row.legalName ?? row.name}</span> : null}
               </span>
             ),
           },

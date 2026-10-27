@@ -150,9 +150,9 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
               header: "Ajuste",
               width: "md",
               cell: (row) => (
-                <span className="customer-cell">
+                <span className="cell-stack">
                   <span>{overrideText(row)}</span>
-                  {row.override ? <span className="customer-cell-sub">{row.override.reason}</span> : null}
+                  {row.override ? <span className="sub-text">{row.override.reason}</span> : null}
                 </span>
               ),
             },

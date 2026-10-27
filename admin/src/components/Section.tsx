@@ -31,9 +31,16 @@ export function Section({ title, hint, actions, flush = false, wide = false, chi
 
 export type Fact = { label: string; value: ReactNode };
 
-export function Facts({ items, columns = 1 }: { items: readonly (Fact | null)[]; columns?: 1 | 2 | 3 }) {
+type FactsProps = {
+  items: readonly (Fact | null)[];
+  columns?: 1 | 2 | 3;
+  strip?: boolean;
+  label?: string;
+};
+
+export function Facts({ items, columns = 1, strip = false, label }: FactsProps) {
   return (
-    <dl className={cx("facts", columns > 1 && `facts-${columns}`)}>
+    <dl className={cx("facts", strip ? "facts-strip" : columns > 1 && `facts-${columns}`)} aria-label={label}>
       {items.map((item) =>
         item ? (
           <div key={item.label} className="fact">

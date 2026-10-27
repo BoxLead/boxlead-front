@@ -19,12 +19,6 @@
   font-size: var(--signal-text-sm);
 }
 
-.invitations-actions {
-  display: inline-flex;
-  justify-content: flex-end;
-  gap: var(--signal-space-2);
-}
-
 .invitations-summary {
   display: grid;
   gap: var(--signal-space-2);
@@ -106,9 +100,3 @@
   min-width: 0;
 }
 
-@media (max-width: 760px) {
-  .invitations-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-}

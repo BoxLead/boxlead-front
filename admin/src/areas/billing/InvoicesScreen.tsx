@@ -67,7 +67,7 @@ export function InvoicesScreen() {
       key: "number",
       header: "Número",
       type: "id",
-      cell: (row) => (row.invoiceNumber ? row.invoiceNumber : <span className="billing-detail">Sin número</span>),
+      cell: (row) => (row.invoiceNumber ? row.invoiceNumber : <span className="sub-text">Sin número</span>),
     },
     { key: "created", header: "Pago registrado", type: "date", cell: (row) => <DateText value={row.createdAt} /> },
     {

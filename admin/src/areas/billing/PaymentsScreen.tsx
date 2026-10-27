@@ -81,7 +81,7 @@ export function PaymentsScreen() {
         row.invoice ? (
           <Stack main={<StatusTag status={INVOICE_STATUS[row.invoice.status]} />} detail={row.invoice.invoiceNumber ?? undefined} />
         ) : (
-          <span className="billing-detail">Sin factura</span>
+          <span className="sub-text">Sin factura</span>
         ),
     },
   ];

@@ -200,7 +200,7 @@ test.describe("owner actions", () => {
     const attributed = await confirmWithReason(page, "Corregir atribución", "/attribution");
     expect(attributed.url()).toContain(`/admin/customers/${EMMA.id}/attribution`);
     expect(attributed.postDataJSON()).toEqual({ resellerId: NORTH, reason: REASON });
-    await expect(page.locator(".ref-fact").filter({ hasText: "Clientes atribuidos" })).toContainText("3");
+    await expect(page.locator(".fact").filter({ hasText: "Clientes atribuidos" })).toContainText("3");
   });
 
   test("tells when the user search fails", async ({ page }) => {
@@ -273,7 +273,7 @@ test.describe("finance actions", () => {
     await expect(dialog(page).getByText("$ 15.000,00")).toBeVisible();
     const created = await confirmWithReason(page, "Armar liquidación", "/admin/payouts");
     expect(created.postDataJSON()).toMatchObject({ resellerId: NORTH, reason: REASON });
-    await expect(page.getByRole("heading", { level: 1, name: "Detalle de liquidación" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /^Liquidación al / })).toBeVisible();
     await expect(page.getByText("Armada", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Marcar pagada" })).toHaveCount(0);
 

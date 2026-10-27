@@ -1,41 +1,7 @@
-.billing-stack {
-  display: grid;
-  gap: var(--signal-space-0-5);
-  justify-items: start;
-  min-width: 0;
-}
-
-.data-table-end .billing-stack {
-  justify-items: end;
-}
-
-.billing-detail {
-  color: var(--signal-text-muted);
-  font-size: var(--signal-text-sm);
-}
-
 .billing-id {
   color: var(--signal-text-muted);
   font-family: var(--signal-mono);
   font-size: var(--signal-text-sm);
-}
-
-.billing-customer,
-.billing-link {
-  color: var(--signal-accent);
-  font-weight: var(--signal-weight-medium);
-  overflow-wrap: anywhere;
-}
-
-.billing-customer:hover,
-.billing-link:hover {
-  text-decoration: underline;
-}
-
-.billing-actions {
-  display: inline-flex;
-  justify-content: flex-end;
-  gap: var(--signal-space-2);
 }
 
 .billing-facts {
@@ -69,13 +35,3 @@
   gap: var(--signal-space-4);
 }
 
-@media (max-width: 760px) {
-  .data-table-end .billing-stack {
-    justify-items: end;
-  }
-
-  .billing-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-}

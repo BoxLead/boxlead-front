@@ -2,18 +2,17 @@ import type { FilterOption } from "../../components/list/Filters";
 import {
   CODE_STATUS,
   COMMISSION_STATUS,
-  labelsOf,
   PAYOUT_STATUS,
   planLabel,
   RESELLER_STATUS,
-  SUBSCRIPTION_STATUS as SUBSCRIPTION_TABLE,
+  SUBSCRIPTION_STATUS,
   type StatusLabel,
 } from "../../status";
 import type { AttributionSource, CommissionKind, CustomerMatch } from "./types";
 
 type Label = StatusLabel;
 
-export { CODE_STATUS, COMMISSION_STATUS, PAYOUT_STATUS, RESELLER_STATUS };
+export { CODE_STATUS, COMMISSION_STATUS, PAYOUT_STATUS, RESELLER_STATUS, SUBSCRIPTION_STATUS };
 
 export const COMMISSION_KIND: Record<CommissionKind, string> = {
   ACCRUAL: "Comisión",
@@ -25,8 +24,6 @@ export const ATTRIBUTION_SOURCE: Record<AttributionSource, string> = {
   INVITATION: "Invitación",
   ADMIN: "Corrección",
 };
-
-export const SUBSCRIPTION_STATUS = labelsOf(SUBSCRIPTION_TABLE);
 
 export const planName = planLabel;
 

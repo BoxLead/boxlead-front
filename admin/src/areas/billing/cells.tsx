@@ -20,7 +20,7 @@ export function ShortId({ id }: { id: string }) {
 
 export function CustomerCell({ userId, email }: { userId: string; email?: string | null }) {
   return (
-    <Link className="billing-customer" to={`/usuarios/${encodeURIComponent(userId)}`}>
+    <Link className="entity-link" to={`/usuarios/${encodeURIComponent(userId)}`}>
       {email ?? <ShortId id={userId} />}
     </Link>
   );
@@ -32,17 +32,17 @@ export function Amount({ money, code = false }: { money: MoneyValue; code?: bool
 
 export function Stack({ main, detail }: { main: ReactNode; detail?: ReactNode }) {
   return (
-    <span className="billing-stack">
+    <span className="cell-stack">
       <span>{main}</span>
-      {detail ? <span className="billing-detail">{detail}</span> : null}
+      {detail ? <span className="sub-text">{detail}</span> : null}
     </span>
   );
 }
 
 export function RowActions({ children }: { children: ReactNode }) {
-  return <span className="billing-actions">{children}</span>;
+  return <span className="row-actions">{children}</span>;
 }
 
 export function NoAction() {
-  return <span className="billing-detail">—</span>;
+  return <span className="sub-text">—</span>;
 }

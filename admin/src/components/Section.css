@@ -88,8 +88,25 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.facts-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--signal-space-4) var(--signal-space-8);
+  padding: var(--signal-space-4) var(--signal-space-5);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-surface);
+  box-shadow: var(--signal-edge);
+}
+
+.facts-strip dd {
+  color: var(--signal-heading);
+  font-weight: var(--signal-weight-medium);
+}
+
 .fact {
   display: grid;
+  align-content: start;
   gap: var(--signal-space-0-5);
   min-width: 0;
 }
@@ -121,6 +138,31 @@
   overflow-wrap: anywhere;
 }
 
+.sub-text {
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-sm);
+}
+
+.entity-link {
+  color: var(--signal-accent);
+  font-weight: var(--signal-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.entity-link:hover {
+  color: var(--signal-accent-hover);
+  text-decoration: underline;
+}
+
+.restricted-text {
+  margin: 0;
+  padding: var(--signal-space-3) var(--signal-space-4);
+  border: 1px dashed var(--signal-border-strong);
+  border-radius: var(--signal-radius-sm);
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-md);
+}
+
 @media (max-width: 900px) {
   .section-grid,
   .facts-3 {
@@ -137,6 +179,11 @@
 
   .section-head {
     padding-inline: var(--signal-space-4);
+  }
+
+  .facts-strip {
+    gap: var(--signal-space-3) var(--signal-space-5);
+    padding: var(--signal-space-4);
   }
 
   .section-body {

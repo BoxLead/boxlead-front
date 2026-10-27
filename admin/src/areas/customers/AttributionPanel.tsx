@@ -104,7 +104,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
             {
               label: "Revendedor",
               value: (
-                <Link className="customer-link" to={`/revendedores/${attribution.resellerId}`}>
+                <Link className="entity-link" to={`/revendedores/${attribution.resellerId}`}>
                   {resellerName(resellers, attribution.resellerId)}
                 </Link>
               ),
@@ -121,7 +121,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
       {resellerId ? (
         <p className="customer-note">
           Este usuario también es revendedor.{" "}
-          <Link className="customer-link" to={`/revendedores/${resellerId}`}>
+          <Link className="entity-link" to={`/revendedores/${resellerId}`}>
             Ver su ficha
           </Link>
         </p>

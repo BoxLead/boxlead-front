@@ -29,38 +29,38 @@ function Summary({ file }: { file: CustomerFile }) {
   const { subscription, entitlements, demo } = file;
   const demoRunning = demo !== null && isFuture(demo.endsAt);
   return (
-    <dl className="customer-summary">
-      <div>
-        <dt>Plan</dt>
-        <dd>{planLabel(entitlements.plan.code)}</dd>
-      </div>
-      <div>
-        <dt>Suscripción</dt>
-        <dd>{subscription ? <StatusBadge status={SUBSCRIPTION_STATUS[subscription.status]} /> : <span className="muted-text">Sin suscripción</span>}</dd>
-      </div>
-      <div>
-        <dt>Próximo cobro</dt>
-        <dd>
-          <DateText value={subscription?.providerNextPaymentAt ?? subscription?.currentPeriodEnd} />
-        </dd>
-      </div>
-      <div>
-        <dt>Demo</dt>
-        <dd>{demoRunning ? <>Hasta el <DateText value={demo.endsAt} /></> : <span className="muted-text">Sin Demo vigente</span>}</dd>
-      </div>
-      <div>
-        <dt>Referido por</dt>
-        <dd>
-          {file.attribution ? (
-            <Link className="customer-link" to={`/revendedores/${file.attribution.resellerId}`}>
+    <Facts
+      strip
+      label="Resumen"
+      items={[
+        { label: "Plan", value: planLabel(entitlements.plan.code) },
+        {
+          label: "Suscripción",
+          value: subscription ? <StatusBadge status={SUBSCRIPTION_STATUS[subscription.status]} /> : <span className="sub-text">Sin suscripción</span>,
+        },
+        { label: "Próximo cobro", value: <DateText value={subscription?.providerNextPaymentAt ?? subscription?.currentPeriodEnd} /> },
+        {
+          label: "Demo",
+          value: demoRunning ? (
+            <>
+              Hasta el <DateText value={demo.endsAt} />
+            </>
+          ) : (
+            <span className="sub-text">Sin Demo vigente</span>
+          ),
+        },
+        {
+          label: "Referido por",
+          value: file.attribution ? (
+            <Link className="entity-link" to={`/revendedores/${file.attribution.resellerId}`}>
               Ver revendedor
             </Link>
           ) : (
-            <span className="muted-text">Nadie</span>
-          )}
-        </dd>
-      </div>
-    </dl>
+            <span className="sub-text">Nadie</span>
+          ),
+        },
+      ]}
+    />
   );
 }
 

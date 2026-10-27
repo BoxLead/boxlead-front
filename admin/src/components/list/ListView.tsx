@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { EmptyState } from "../../../../src/components/EmptyState/EmptyState";
 import { Banner } from "../../../../src/components/ui/Banner";
 import type { AdminPage } from "../../api/types";
+import { TableSkeleton } from "../Skeleton";
 import { DataTable, type Column } from "./DataTable";
 import { Pagination } from "./Pagination";
 import type { QueryResult } from "./useAdminQuery";
@@ -18,9 +19,8 @@ type ListViewProps<T> = {
   emptyHint?: string;
   onClearFilters?: () => void;
   onPageChange: (page: number) => void;
+  plain?: boolean;
 };
-
-const SKELETON_ROWS = [0, 1, 2, 3, 4];
 
 export function ListView<T>({
   caption,
@@ -33,18 +33,14 @@ export function ListView<T>({
   emptyHint,
   onClearFilters,
   onPageChange,
+  plain = false,
 }: ListViewProps<T>) {
   return (
     <section className="list-view" aria-label={caption}>
       {filters}
-      <div className="panel list-panel">
+      <div className={plain ? "list-body" : "panel list-panel"}>
         {query.status === "loading" ? (
-          <div className="list-loading" role="status">
-            {SKELETON_ROWS.map((row) => (
-              <span key={row} className="skeleton list-skeleton-row" />
-            ))}
-            <span className="visually-hidden">Cargando…</span>
-          </div>
+          <TableSkeleton columns={Math.min(columns.length, 6)} />
         ) : query.status === "error" ? (
           <div className="list-error">
             <Banner

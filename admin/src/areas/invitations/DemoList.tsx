@@ -82,7 +82,7 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
         row.status === "REVOKED" ? (
           <span className="invitations-note">—</span>
         ) : (
-          <span className="invitations-actions">
+          <span className="row-actions">
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setExtending(row)}>
               Extender
             </button>
