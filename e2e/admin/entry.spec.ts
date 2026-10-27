@@ -115,6 +115,8 @@ test("tells an account without a role that it has no access", async ({ page }) =
 test("asks to reload when a request fails without an answer", async ({ page }) => {
   await resetAdmin();
   await enterAdmin(page);
+  await expect(page.getByRole("heading", { level: 1, name: "Inicio" })).toBeVisible();
+  await expect(page.locator(".skeleton")).toHaveCount(0);
   await page.route(`${ADMIN_MOCK_ORIGIN}/**`, (route) => route.abort("connectionrefused"));
   await openMenu(page);
   await page.getByRole("link", { name: "Usuarios" }).click();
