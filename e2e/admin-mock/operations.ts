@@ -16,6 +16,7 @@ export const OPERATIONS_SCENARIO = "operations";
 
 const DAY_MS = 86_400_000;
 const MAX_RANGE_DAYS = 366;
+const MIN_REASON = 10;
 const MAX_REASON = 500;
 const MAX_RESOLUTION = 1000;
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -109,8 +110,8 @@ function fixtures(now: Date): State {
     request(1, { kind: "WITHDRAWAL", email: "lucia@agencia-norte.example", userId: lucia, subscriptionId: id("004", 1), details: "Contraté ayer y me arrepentí, no lo voy a usar.", refundable: { amountMinor: 1_890_000, currency: "ARS" }, createdAt: at(30) }),
     request(2, { kind: "CANCELLATION", email: "martin@tienda-sur.example", userId: martin, subscriptionId: id("004", 2), createdAt: at(20) }),
     request(3, { kind: "CANCELLATION", email: "alguien@correo.example", details: "Quiero darme de baja.", createdAt: at(6) }),
-    request(4, { kind: "CANCELLATION", email: "ana@kiosco.example", status: "RESOLVED", resolution: "Cancelamos tu suscripción al final del período.", resolvedAt: at(70), receiptSentAt: at(70), createdAt: at(96) }),
-    request(5, { kind: "WITHDRAWAL", email: "juan@feria.example", status: "REJECTED", resolution: "El pedido llegó fuera del plazo de diez días.", resolvedAt: at(120), receiptSentAt: at(120), createdAt: at(150) }),
+    request(4, { kind: "CANCELLATION", email: "ana@kiosco.example", status: "RESOLVED", resolution: "Cancelamos tu suscripción al final del período.", resolvedBy: id("001", 4), resolvedAt: at(70), receiptSentAt: at(70), createdAt: at(96) }),
+    request(5, { kind: "WITHDRAWAL", email: "juan@feria.example", status: "REJECTED", resolution: "El pedido llegó fuera del plazo de diez días.", resolvedBy: id("001", 4), resolvedAt: at(120), createdAt: at(150) }),
   ];
   const grant = (n: number, userId: string, role: AdminRole, hours: number): Grant => ({
     id: id("005", n),
@@ -262,7 +263,7 @@ function summary(query: URLSearchParams): MockReply {
     add(totals.get(currency) as UsageTotals, row);
   }
   const sorted = [...rows.values()].sort((a, b) =>
-    grouping === "DAY" ? a.key.localeCompare(b.key) || byCurrency(a, b) : b.estimatedCostMicros - a.estimatedCostMicros || byCurrency(a, b),
+    grouping === "DAY" ? a.key.localeCompare(b.key) || byCurrency(a, b) : byCurrency(a, b) || b.estimatedCostMicros - a.estimatedCostMicros || a.key.localeCompare(b.key),
   );
   const reply = page(sorted, query, 100);
   return ok({ ...(reply.body as object), totals: [...totals.values()].sort(byCurrency) });
@@ -279,10 +280,14 @@ function usage(query: URLSearchParams): MockReply {
   return page(rows, query, 100);
 }
 
-function textOf(value: unknown, max: number): string | null {
+function textOf(value: unknown, max: number, min = 1): string | null {
   if (typeof value !== "string") return null;
   const text = value.trim();
-  return text.length === 0 || text.length > max ? null : text;
+  return text.length < min || text.length > max ? null : text;
+}
+
+function reasonOf(body: Record<string, unknown>): string | null {
+  return textOf(body.reason, MAX_REASON, MIN_REASON);
 }
 
 function record(admin: AdminIdentity, action: string, targetType: string, targetId: string, before: unknown, after: unknown, reason: string) {
@@ -310,7 +315,7 @@ function consumerRequests(query: URLSearchParams): MockReply {
 }
 
 function resolve(requestId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
-  const reason = textOf(body.reason, MAX_REASON);
+  const reason = reasonOf(body);
   const resolution = textOf(body.resolution, MAX_RESOLUTION);
   if (body.status !== "RESOLVED" && body.status !== "REJECTED") return badRequest("A decision resolves or rejects the request");
   if (!reason || !resolution) return badRequest("A decision needs a resolution and a reason");
@@ -379,7 +384,7 @@ function snapshot(grant: Grant) {
 
 function grantRole(body: Record<string, unknown>, admin: AdminIdentity): MockReply {
   ensureSelf(admin);
-  const reason = textOf(body.reason, MAX_REASON);
+  const reason = reasonOf(body);
   const userId = typeof body.userId === "string" ? body.userId : "";
   const role = ROLES.find((candidate) => candidate === body.role);
   if (!reason || !role || !UUID.test(userId)) return badRequest("userId, role and reason are required");
@@ -397,7 +402,7 @@ function grantRole(body: Record<string, unknown>, admin: AdminIdentity): MockRep
 
 function revokeRole(grantId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
   ensureSelf(admin);
-  const reason = textOf(body.reason, MAX_REASON);
+  const reason = reasonOf(body);
   if (!reason) return badRequest("reason is required");
   const grant = state.grants.find((candidate) => candidate.id === grantId && !candidate.revoked);
   if (!grant) return failure(404, "Grant not found");
@@ -421,7 +426,7 @@ function audit(query: URLSearchParams): MockReply {
   const actions = query.getAll("action");
   const from = query.get("from");
   const to = query.get("to");
-  if (targetId && !targetType) return badRequest("A target id needs its target type");
+  if (targetId && !targetType) return failure(400, "A target id needs its target type", "AUDIT_TARGET_TYPE_REQUIRED");
   if (targetType && !(targetType in TARGET_LABELS)) return badRequest("Unknown targetType");
   if (actions.some((action) => !(action in ACTION_LABELS))) return badRequest("Unknown action");
   if (actorUserId && !UUID.test(actorUserId)) return badRequest("Invalid actorUserId");
