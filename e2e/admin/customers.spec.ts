@@ -44,11 +44,13 @@ test("the overview keeps the amounts away from support and changes the month", a
   await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("0");
 });
 
-test("the overview says when there is nothing yet", async ({ page }) => {
+test("the overview shows zeros when there is nothing yet", async ({ page }) => {
   await resetCustomers(["OWNER"], "default");
   await enterAdmin(page, "/");
-  await expect(page.getByText("Todavía no hay nada para mostrar acá")).toBeVisible();
-  await expect(page.getByText("En este mes no hubo usuarios, suscripciones ni pagos.")).toBeVisible();
+  await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("0");
+  await expect(section(page, "Suscripciones por estado")).toContainText("Todavía no hay suscripciones.");
+  await expect(section(page, "Ingresos del mes")).toContainText("No hubo cobros en este mes.");
+  await expect(page.getByText("Todavía no hay nada para mostrar acá")).toHaveCount(0);
 });
 
 test("the overview shows an error and loads again", async ({ page }) => {

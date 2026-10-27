@@ -1,5 +1,4 @@
 import { useSearchParams } from "react-router-dom";
-import { EmptyState } from "../../../../src/components/EmptyState/EmptyState";
 import type { Money as MoneyValue } from "../../api/types";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { DataTable } from "../../components/list/DataTable";
@@ -17,18 +16,6 @@ import { SUBSCRIPTION_STATUSES, type Overview, type Revenue } from "./types";
 import "./customers.css";
 
 const MONTH_PARAM = "month";
-
-function isEmpty(overview: Overview): boolean {
-  const subscriptions = Object.values(overview.subscriptions.byStatus).reduce<number>((sum, count) => sum + (count ?? 0), 0);
-  return (
-    overview.users.total === 0 &&
-    overview.users.newInMonth === 0 &&
-    subscriptions === 0 &&
-    overview.demos.active === 0 &&
-    overview.payments.approvedInMonth === 0 &&
-    overview.payments.rejectedInMonth === 0
-  );
-}
 
 function Counts({ caption, rows, empty }: { caption: string; rows: { label: string; count: number }[]; empty: string }) {
   if (rows.length === 0) return <Muted>{empty}</Muted>;
@@ -96,7 +83,7 @@ function OverviewBody({ overview, month }: { overview: Overview; month: string }
   return (
     <div className="overview">
       <StatGrid>
-        <StatCard label="Usuarios" value={formatCount(overview.users.total)} period="Hoy" delta={{ value: overview.users.newInMonth, label: "nuevos en el mes" }} />
+        <StatCard label="Usuarios" value={formatCount(overview.users.total)} period={period} delta={{ value: overview.users.newInMonth, label: "nuevos en el mes" }} />
         <StatCard label="Demos vigentes" value={formatCount(overview.demos.active)} period="Hoy" />
         <StatCard label="Pagos aprobados" value={formatCount(overview.payments.approvedInMonth)} period={period} />
         <StatCard label="Pagos rechazados" value={formatCount(overview.payments.rejectedInMonth)} period={period} tone="danger" />
@@ -146,14 +133,6 @@ export function OverviewScreen() {
         <CardsSkeleton />
       ) : query.status === "error" ? (
         <ErrorBlock title="No pudimos cargar el inicio" message={query.message} onRetry={query.reload} />
-      ) : isEmpty(query.data) ? (
-        <div className="panel">
-          <EmptyState
-            illustration="metrics"
-            title="Todavía no hay nada para mostrar acá"
-            hint="En este mes no hubo usuarios, suscripciones ni pagos."
-          />
-        </div>
       ) : (
         <OverviewBody overview={query.data} month={shown} />
       )}

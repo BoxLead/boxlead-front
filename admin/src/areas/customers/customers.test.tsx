@@ -183,7 +183,7 @@ describe("OverviewScreen", () => {
     expect(screen.getByText("24")).toBeInTheDocument();
   });
 
-  it("asks for the month in the URL and shows an empty month", async () => {
+  it("asks for the month in the URL and shows an empty month with zeros and its users at the end of that month", async () => {
     const calls = renderAt("/?month=2026-09", ["OWNER"], () =>
       json(200, {
         ...overview(true),
@@ -192,9 +192,18 @@ describe("OverviewScreen", () => {
         subscriptions: { byStatus: {}, byPlan: {} },
         demos: { active: 0 },
         payments: { approvedInMonth: 0, rejectedInMonth: 0 },
+        revenue: [],
+        commissions: { approvedUnpaid: [ars(1305000)], accruedReleasable: [] },
       }),
     );
-    expect(await screen.findByText("Todavía no hay nada para mostrar acá")).toBeInTheDocument();
+    const users = (await screen.findByText("Usuarios", { selector: ".stat-label" })).closest("article") as HTMLElement;
+    expect(within(users).getByText("septiembre de 2026")).toBeInTheDocument();
+    expect(within(users).queryByText("Hoy")).toBeNull();
+    expect(within(users).getByText("0", { selector: ".stat-value" })).toBeInTheDocument();
+    expect(screen.getByText("Todavía no hay suscripciones.")).toBeInTheDocument();
+    expect(screen.getByText("No hubo cobros en este mes.")).toBeInTheDocument();
+    expect(screen.getByText("Aprobadas sin liquidar")).toBeInTheDocument();
+    expect(screen.queryByText("Todavía no hay nada para mostrar acá")).toBeNull();
     expect(calls[0].url.search).toBe("?month=2026-09");
   });
 
