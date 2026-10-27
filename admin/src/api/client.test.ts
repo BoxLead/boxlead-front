@@ -126,4 +126,8 @@ describe("messageFor", () => {
     expect(messageFor(409, code)).not.toBe(messageFor(409, null));
     expect(messageFor(409, code)).not.toBe(messageFor(500, null));
   });
+
+  it("asks for the target type when core gets a target id without it", () => {
+    expect(messageFor(400, "AUDIT_TARGET_TYPE_REQUIRED")).toBe("Elegí el tipo de objetivo para buscar por id.");
+  });
 });

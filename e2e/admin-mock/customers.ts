@@ -100,6 +100,7 @@ type Customer = {
   overrides: Override[];
   resellerId: string | null;
   replies: number;
+  hasPassword: boolean;
 };
 
 type StoredRefund = { paymentId: string; amount: Money | null; status: "REQUESTED" | "APPROVED" | "REJECTED"; createdAt: string };
@@ -196,6 +197,7 @@ function person(n: number, email: string, name: string, now: number, days: numbe
     overrides: [],
     resellerId: null,
     replies: 0,
+    hasPassword: true,
   };
 }
 
@@ -249,6 +251,7 @@ function seed(now: number): Customer[] {
     },
   ];
   bruno.replies = 37;
+  bruno.hasPassword = false;
 
   const carla = person(3, "carla.ruiz@example.com", "Carla Ruiz", now, 70);
   carla.billingProfile = {
@@ -398,6 +401,7 @@ function matchOf(customer: Customer, now: number): CustomerMatch {
     createdAt: customer.createdAt,
     planCode: planOf(customer, now).code,
     subscriptionStatus: customer.subscription?.status ?? null,
+    hasPassword: customer.hasPassword,
   };
 }
 

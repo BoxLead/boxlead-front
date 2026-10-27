@@ -126,12 +126,16 @@ test.describe("consumer requests", () => {
     await expect(page.getByRole("row", { name: /BX-Q4TD8R/ })).toHaveCount(0);
   });
 
-  test("finance resolves a withdrawal after reading that it refunds", async ({ page }) => {
+  test("finance resolves a withdrawal after reading what it refunds", async ({ page }) => {
     await resetOperations({ roles: ["FINANCE"] });
     await enterAdmin(page, "/pedidos");
     await page.getByRole("row", { name: /BX-7KX2M9/ }).getByRole("button", { name: "Cerrar pedido" }).click();
     const dialog = page.getByRole("dialog", { name: "Cerrar el pedido BX-7KX2M9" });
-    await expect(dialog.getByText(/reembolsa completo el último pago aprobado en Mercado Pago/)).toBeVisible();
+    await expect(dialog.getByText(/Reembolsa el último pago aprobado y cancela la suscripción en el acto/)).toBeVisible();
+    await expect(dialog.locator(".reason-amount")).toContainText("18.900");
+    await expect(dialog.locator(".reason-amount")).toContainText("ARS");
+    await expect(dialog.getByText("Contraté ayer y me arrepentí, no lo voy a usar.")).toBeVisible();
+    await noSideScroll(page);
     await dialog.getByLabel("Motivo").fill("Pedido dentro de los diez días");
     await dialog.getByRole("button", { name: "Resolver arrepentimiento" }).click();
     await expect(dialog.getByText("Escribí la respuesta para el cliente.").first()).toBeVisible();
@@ -139,6 +143,9 @@ test.describe("consumer requests", () => {
     await dialog.getByRole("button", { name: "Resolver arrepentimiento" }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByRole("row", { name: /BX-7KX2M9/ })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Resueltos" }).click();
+    await expect(page.getByRole("row", { name: /BX-7KX2M9/ }).getByRole("link", { name: /^0b0e0000/ })).toBeVisible();
   });
 
   test("shows the empty and the error", async ({ page }) => {
@@ -164,10 +171,14 @@ test.describe("team", () => {
     await page.getByLabel("Buscar usuario").fill("sofia");
     await page.getByRole("button", { name: "Buscar" }).click();
     await page.getByRole("list", { name: "Resultados" }).getByRole("button", { name: /sofia@estudio-lago\.example/ }).click();
+    const noPassword = "Esta cuenta no tiene contraseña. Puede entrar si antes abre sesión en boxlead.app con Google.";
+    await expect(page.getByText(noPassword)).toBeVisible();
+    await noSideScroll(page);
     await page.getByRole("group", { name: "Rol" }).getByRole("button", { name: "Finanzas" }).click();
     await page.getByRole("button", { name: "Otorgar Finanzas" }).click();
     const grant = page.getByRole("dialog", { name: "Otorgar rol" });
     await expect(grant.getByText(/tiene 24 horas para hacerlo/)).toBeVisible();
+    await expect(grant.getByText(noPassword)).toBeVisible();
     await grant.getByLabel("Motivo").fill("Se suma a cobranzas");
     await grant.getByRole("button", { name: "Otorgar Finanzas" }).click();
     await expect(grant).toBeHidden();
@@ -181,9 +192,11 @@ test.describe("team", () => {
     await expect(revoke).toBeHidden();
     await expect(page.getByRole("row", { name: /carla@equipo\.example/ })).toHaveCount(0);
 
-    await page.goto("/auditoria");
+    await page.getByRole("link", { name: "Ver auditoría de equipo@boxlead.app" }).click();
+    await expect(page).toHaveURL(/\/auditoria\?actorUserId=0b0e0000-0000-4000-8000-0000000000a1$/);
     await expect(page.getByRole("row", { name: /Rol quitado/ })).toContainText("Dejó el equipo de soporte");
     await expect(page.getByRole("row", { name: /Rol otorgado/ })).toContainText("Se suma a cobranzas");
+    await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toHaveCount(0);
   });
 
   test("shows the error", async ({ page }) => {
@@ -210,6 +223,36 @@ test.describe("audit", () => {
     await expect(dialog.getByText('"status": "RESOLVED"')).toBeVisible();
     await noSideScroll(page);
     await expectAccessible(page);
+  });
+
+  test("finds the events of one target and links the users", async ({ page }) => {
+    await resetOperations();
+    await enterAdmin(page, "/auditoria");
+    await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toBeVisible();
+    await openFilters(page);
+    await page.getByLabel("Tipo de objetivo").selectOption("CONSUMER_REQUEST");
+    await page.getByLabel("Id del objetivo").fill("0b0e0000-0000-4000-8003-000000000004");
+    await page.getByLabel("Id del objetivo").press("Enter");
+    await expect(page.getByRole("row", { name: /Pedido de consumo cerrado/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toHaveCount(0);
+    await expect(page.getByRole("row", { name: /Pedido de consumo recibido/ })).toHaveCount(0);
+    await page.getByRole("row", { name: /Pedido de consumo cerrado/ }).getByRole("link", { name: "0b0e0000" }).click();
+    await expect(page).toHaveURL(/\/usuarios\/0b0e0000-0000-4000-8001-000000000004$/);
+  });
+
+  test("does not ask core with dates it would reject", async ({ page }) => {
+    await resetOperations();
+    const asked: string[] = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (url.origin === ADMIN_MOCK_ORIGIN && url.pathname === "/admin/audit") asked.push(url.search);
+    });
+    await enterAdmin(page, "/auditoria?from=ayer");
+    await expect(page.getByText("Una de las fechas no tiene el formato correcto.")).toBeVisible();
+    await page.goto("/auditoria?from=2026-10-20&to=2026-10-01");
+    await expect(page.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeVisible();
+    await noSideScroll(page);
+    expect(asked).toEqual([]);
   });
 
   test("shows the empty and the error", async ({ page }) => {

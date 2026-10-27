@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { CharCounter } from "../../../../src/components/ui/CharCounter";
 import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
 import { adminApi } from "../../api/client";
-import { AdminApiError } from "../../api/errors";
+import { AdminApiError, isStale } from "../../api/errors";
 import { DateText } from "../../components/DateText";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
@@ -20,6 +20,7 @@ import { useAdmin } from "../../session/session";
 import { REQUEST_KIND, type StatusLabel } from "../../status";
 import { KIND_LABELS, REQUEST_STATUS_LABELS } from "./labels";
 import type { ConsumerRequest, ConsumerRequestDecision, ConsumerRequestStatus } from "./types";
+import { UserLink } from "./UserLink";
 import "./Operations.css";
 
 const KEYS = ["status"] as const;
@@ -28,13 +29,23 @@ const RULES: FilterRules = { status: { kind: "enum", values: STATUSES } };
 const MAX_RESOLUTION = 1000;
 
 const RECEIPT_QUEUED: StatusLabel = { label: "En cola", tone: "success" };
-const RECEIPT_PENDING: StatusLabel = { label: "Pendiente", tone: "neutral" };
+const RECEIPT_NOT_SENT: StatusLabel = { label: "Sin enviar", tone: "neutral" };
 
 const EMPTY: Record<ConsumerRequestStatus, string> = {
   RECEIVED: "No hay pedidos pendientes",
   RESOLVED: "Todavía no hay pedidos resueltos",
   REJECTED: "Todavía no hay pedidos rechazados",
 };
+
+function alreadyClosed(error: unknown): never {
+  if (error instanceof AdminApiError && error.code === null && error.status === 409) {
+    throw new AdminApiError("Ese pedido ya fue cerrado. Cerrá este diálogo para ver la lista al día.", 409, null);
+  }
+  if (error instanceof AdminApiError && error.status === 404) {
+    throw new AdminApiError("Ese pedido ya no existe. Cerrá este diálogo para ver la lista al día.", 404, error.code);
+  }
+  throw error;
+}
 
 function canResolve(roles: Parameters<typeof canAccess>[0], request: ConsumerRequest): boolean {
   return canAccess(roles, request.kind === "WITHDRAWAL" ? ["FINANCE"] : ["SUPPORT", "FINANCE"]);
@@ -55,23 +66,17 @@ function Effect({ request, decision }: { request: ConsumerRequest; decision: Con
   return (
     <>
       <p>
-        Resolver el arrepentimiento cancela la suscripción al final del período y reembolsa completo el último pago aprobado en
-        Mercado Pago. Si no hay un pago cobrado, solo cancela.
+        Reembolsa el último pago aprobado y cancela la suscripción en el acto. Si no hay pago cobrado, la cancela al final del
+        período.
       </p>
-      <p>
-        {request.userId ? (
-          <>
-            Mirá el monto en el <Link to={`/usuarios/${request.userId}`}>detalle del cliente</Link> antes de confirmar.
-          </>
-        ) : (
-          "Este pedido no tiene una cuenta asociada, así que no hay nada para reembolsar."
-        )}
-      </p>
+      {request.refundable ? null : <p>No hay pago para reembolsar.</p>}
     </>
   );
 }
 
-function ResolveDialog({ request, onClose, onDone }: { request: ConsumerRequest; onClose: () => void; onDone: () => void }) {
+type ResolveDialogProps = { request: ConsumerRequest; onClose: () => void; onDone: () => void; onStale: () => void };
+
+function ResolveDialog({ request, onClose, onDone, onStale }: ResolveDialogProps) {
   const [decision, setDecision] = useState<ConsumerRequestDecision>("RESOLVED");
   const [resolution, setResolution] = useState("");
   const [touched, setTouched] = useState(false);
@@ -84,23 +89,38 @@ function ResolveDialog({ request, onClose, onDone }: { request: ConsumerRequest;
   async function confirm(reason: string) {
     setTouched(true);
     if (problem) throw new AdminApiError(problem, 400, null);
-    await adminApi.post<ConsumerRequest>(`/admin/consumer-requests/${request.id}/resolve`, { status: decision, resolution: text, reason });
+    await adminApi
+      .post<ConsumerRequest>(`/admin/consumer-requests/${request.id}/resolve`, { status: decision, resolution: text, reason })
+      .catch(alreadyClosed);
     onDone();
   }
 
   const kind = KIND_LABELS[request.kind].toLowerCase();
+  const refunds = decision === "RESOLVED" && request.kind === "WITHDRAWAL";
   return (
     <ReasonDialog
       open
       title={`Cerrar el pedido ${request.code}`}
       confirmLabel={decision === "RESOLVED" ? `Resolver ${kind}` : "Rechazar pedido"}
-      tone={decision === "RESOLVED" && request.kind === "WITHDRAWAL" ? "danger" : "primary"}
+      tone={refunds ? "danger" : "primary"}
+      amount={refunds ? (request.refundable ?? undefined) : undefined}
       onConfirm={confirm}
       onClose={onClose}
+      onSettled={(failure) => {
+        if (isStale(failure)) onStale();
+      }}
     >
       <p>
         Pedido de {kind} de <strong>{request.email}</strong>, recibido el {formatDateTime(request.createdAt)}.
       </p>
+      {request.details ? (
+        <figure className="ops-details">
+          <figcaption className="field-label">Lo que escribió el cliente</figcaption>
+          <blockquote className="ops-details-text">{request.details}</blockquote>
+        </figure>
+      ) : (
+        <p className="muted-text">El cliente no dejó detalle.</p>
+      )}
       <div className="ops-choice">
         <ChoiceGroup<ConsumerRequestDecision>
           label="Decisión"
@@ -178,7 +198,9 @@ export function ConsumerRequestsScreen() {
       header: "Acción",
       type: "actions",
       cell: (row) =>
-        canResolve(me.roles, row) ? (
+        row.userId === me.userId && !me.roles.includes("OWNER") ? (
+          <span className="sub-text">Es tu cuenta</span>
+        ) : canResolve(me.roles, row) ? (
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setResolving(row)}>
             Cerrar pedido
           </button>
@@ -196,6 +218,11 @@ export function ConsumerRequestsScreen() {
           <span className="cell-stack">
             <span>{row.resolution}</span>
             <span className="sub-text">{formatDateTime(row.resolvedAt)}</span>
+            {row.resolvedBy ? (
+              <span className="sub-text">
+                Lo cerró <UserLink id={row.resolvedBy} />
+              </span>
+            ) : null}
           </span>
         ),
       },
@@ -210,7 +237,7 @@ export function ConsumerRequestsScreen() {
               <span className="sub-text">{formatDateTime(row.receiptSentAt)}</span>
             </span>
           ) : (
-            <StatusBadge status={RECEIPT_PENDING} />
+            <StatusBadge status={RECEIPT_NOT_SENT} />
           ),
       },
     );
@@ -249,6 +276,7 @@ export function ConsumerRequestsScreen() {
             setResolving(null);
             query.reload();
           }}
+          onStale={query.reload}
         />
       ) : null}
     </Screen>

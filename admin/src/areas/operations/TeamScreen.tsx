@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
 import { Tag } from "../../../../src/components/ui/Tag";
@@ -36,6 +37,12 @@ const ROLE_SCOPE: Record<AdminRole, string> = {
 
 type Revoking = { member: TeamMember; role: MemberRole };
 
+const NO_PASSWORD = "Esta cuenta no tiene contraseña. Puede entrar si antes abre sesión en boxlead.app con Google.";
+
+function blockedRoles(held: readonly AdminRole[]): AdminRole[] {
+  return held.includes("OWNER") ? [...ROLES] : [...held];
+}
+
 function useRoleLost() {
   const { retry } = useSession();
   return (error: unknown): never => {
@@ -72,12 +79,13 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
   const [role, setRole] = useState<AdminRole>("SUPPORT");
   const [confirming, setConfirming] = useState(false);
   const results = useAdminQuery<AdminPage<CustomerMatch>>(search ? "/admin/customers" : null, new URLSearchParams({ query: search }).toString());
-  const current = picked ? (members.find((member) => member.userId === picked.id)?.roles.map((grant) => grant.role) ?? []) : [];
+  const held = picked ? (members.find((member) => member.userId === picked.id)?.roles.map((grant) => grant.role) ?? []) : [];
+  const blocked = blockedRoles(held);
 
   function pick(customer: CustomerMatch) {
     setPicked(customer);
-    const held = members.find((member) => member.userId === customer.id)?.roles.map((grant) => grant.role) ?? [];
-    setRole(ROLES.find((candidate) => !held.includes(candidate)) ?? "SUPPORT");
+    const roles = blockedRoles(members.find((member) => member.userId === customer.id)?.roles.map((grant) => grant.role) ?? []);
+    setRole(ROLES.find((candidate) => !roles.includes(candidate)) ?? "SUPPORT");
   }
 
   async function grant(reason: string) {
@@ -94,7 +102,7 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
   return (
     <Section
       title="Otorgar un rol"
-      hint="La persona necesita una cuenta de BoxLead con contraseña. Buscala por email, nombre o id."
+      hint="La persona necesita una cuenta de BoxLead. Buscala por email, nombre o id."
       actions={
         <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
           Cerrar
@@ -148,12 +156,13 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
               variant="segmented"
               value={role}
               onChange={setRole}
-              choices={ROLES.map((value) => ({ value, label: ROLE_LABELS[value], disabled: current.includes(value) }))}
+              choices={ROLES.map((value) => ({ value, label: ROLE_LABELS[value], disabled: blocked.includes(value) }))}
             />
           </div>
-          <Muted>{ROLE_SCOPE[role]}</Muted>
+          <Muted>{held.includes("OWNER") ? "Ya es Dueño, que incluye todos los permisos." : ROLE_SCOPE[role]}</Muted>
+          {picked.hasPassword ? null : <Banner tone="warning">{NO_PASSWORD}</Banner>}
           <div>
-            <button type="button" className="btn btn-primary" disabled={current.includes(role)} onClick={() => setConfirming(true)}>
+            <button type="button" className="btn btn-primary" disabled={blocked.includes(role)} onClick={() => setConfirming(true)}>
               Otorgar {ROLE_LABELS[role]}
             </button>
           </div>
@@ -173,6 +182,7 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
           <p>
             <strong>{picked.email}</strong> va a tener el rol {ROLE_LABELS[role]}. {ROLE_SCOPE[role]}
           </p>
+          {picked.hasPassword ? null : <p>{NO_PASSWORD}</p>}
           <p>
             Si todavía no configuró su factor, tiene 24 horas para hacerlo al entrar al backoffice. Para entrar también tiene que estar
             en la lista de Cloudflare Access, que se carga aparte.
@@ -183,7 +193,9 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
   );
 }
 
-function RevokeSummary({ revoking, lastRole, self }: { revoking: Revoking; lastRole: boolean; self: boolean }) {
+type RevokeSummaryProps = { revoking: Revoking; lastRole: boolean; self: boolean; noEnrolledOwner: boolean };
+
+function RevokeSummary({ revoking, lastRole, self, noEnrolledOwner }: RevokeSummaryProps) {
   return (
     <>
       <p>
@@ -197,6 +209,12 @@ function RevokeSummary({ revoking, lastRole, self }: { revoking: Revoking; lastR
       ) : (
         <p>Sigue con sus otros roles y con su factor.</p>
       )}
+      {noEnrolledOwner ? (
+        <p>
+          <strong>Ningún otro Dueño configuró su factor.</strong> Si lo quitás, nadie va a poder dar ni quitar roles hasta que otro
+          Dueño lo configure.
+        </p>
+      ) : null}
       {self ? <p>Es tu propia cuenta. Lo que quites deja de valer para vos apenas confirmes.</p> : null}
     </>
   );
@@ -217,6 +235,11 @@ export function TeamScreen() {
 
   function soleOwner(role: MemberRole): boolean {
     return complete && role.role === "OWNER" && owners <= 1;
+  }
+
+  function noEnrolledOwner({ member, role }: Revoking): boolean {
+    if (!complete || role.role !== "OWNER") return false;
+    return !members.some((other) => other.userId !== member.userId && other.factorConfirmed && other.roles.some((grant) => grant.role === "OWNER"));
   }
 
   async function revoke(reason: string) {
@@ -245,6 +268,9 @@ export function TeamScreen() {
             {row.userId === me.userId ? <Tag>Vos</Tag> : null}
           </span>
           <span className="sub-text">{row.email}</span>
+          <Link className="entity-link sub-text" to={`/auditoria?${new URLSearchParams({ actorUserId: row.userId }).toString()}`} aria-label={`Ver auditoría de ${row.email}`}>
+            Ver auditoría
+          </Link>
         </span>
       ),
     },
@@ -333,6 +359,7 @@ export function TeamScreen() {
             revoking={revoking}
             lastRole={revoking.member.roles.length <= 1}
             self={revoking.member.userId === me.userId}
+            noEnrolledOwner={noEnrolledOwner(revoking)}
           />
         ) : null}
       </ReasonDialog>

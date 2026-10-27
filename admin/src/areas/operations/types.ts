@@ -1,4 +1,4 @@
-import type { AdminPage, AdminRole } from "../../api/types";
+import type { AdminPage, AdminRole, Money } from "../../api/types";
 
 export type UsageGrouping = "USER" | "DAY" | "MODEL";
 
@@ -58,6 +58,7 @@ export type ConsumerRequest = {
   resolvedAt: string | null;
   receiptSentAt: string | null;
   createdAt: string;
+  refundable: Money | null;
 };
 
 export type MemberRole = {
@@ -71,6 +72,7 @@ export type TeamMember = {
   userId: string;
   email: string;
   name: string | null;
+  hasPassword: boolean;
   roles: MemberRole[];
   factorConfirmed: boolean;
   enrollmentOpenUntil: string | null;
@@ -91,6 +93,7 @@ export type CustomerMatch = {
   name: string | null;
   legalName: string | null;
   createdAt: string;
+  hasPassword: boolean;
 };
 
 export type AuditActorType = "USER" | "ADMIN" | "SYSTEM" | "PROVIDER";

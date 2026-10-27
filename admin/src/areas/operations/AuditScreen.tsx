@@ -14,6 +14,8 @@ import { useListParams } from "../../components/list/useListParams";
 import { navItem } from "../../nav";
 import { ACTION_LABELS, ACTOR_LABELS, labelOf, optionsOf, TARGET_LABELS } from "./labels";
 import type { AuditEvent } from "./types";
+import { isUuid } from "./usage";
+import { UserLink } from "./UserLink";
 import "./Operations.css";
 
 const KEYS = ["targetType", "targetId", "actorUserId", "action", "from", "to"] as const;
@@ -49,20 +51,41 @@ function Id({ value, full = false }: { value: string; full?: boolean }) {
   );
 }
 
+function UserId({ value, full = false }: { value: string; full?: boolean }) {
+  return isUuid(value) ? <UserLink id={value} full={full} /> : <Id value={value} full={full} />;
+}
+
+function userIdIn(snapshot: unknown): string | null {
+  if (!snapshot || typeof snapshot !== "object" || !("userId" in snapshot)) return null;
+  return typeof snapshot.userId === "string" && isUuid(snapshot.userId) ? snapshot.userId : null;
+}
+
+function targetUser(event: AuditEvent): string | null {
+  if (event.targetType === "USER") return isUuid(event.targetId) ? event.targetId : null;
+  if (event.targetType === "ADMIN_GRANT") return userIdIn(event.after) ?? userIdIn(event.before);
+  return null;
+}
+
 function actor(event: AuditEvent, full = false) {
   return (
     <span className="cell-stack">
       <span>{ACTOR_LABELS[event.actorType] ?? event.actorType}</span>
-      {event.actorUserId ? <Id value={event.actorUserId} full={full} /> : null}
+      {event.actorUserId ? <UserId value={event.actorUserId} full={full} /> : null}
     </span>
   );
 }
 
 function target(event: AuditEvent, full = false) {
+  const user = targetUser(event);
   return (
     <span className="cell-stack">
       <span>{labelOf(TARGET_LABELS, event.targetType)}</span>
-      <Id value={event.targetId} full={full} />
+      {event.targetType === "USER" && user ? <UserLink id={user} full={full} /> : <Id value={event.targetId} full={full} />}
+      {event.targetType === "ADMIN_GRANT" && user ? (
+        <span className="sub-text">
+          De <UserLink id={user} full={full} />
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -81,7 +104,7 @@ function EventDialog({ open, event, onClose }: { open: boolean; event: AuditEven
               { label: "Sobre qué", value: target(event, true) },
               { label: "Motivo", value: event.reason ?? "Sin motivo" },
               { label: "Dirección IP", value: event.ip ?? "Sin dato" },
-              { label: "Pedido", value: event.requestId ? <code className="mono-text">{event.requestId}</code> : "Sin dato" },
+              { label: "Id de la solicitud", value: event.requestId ? <code className="mono-text">{event.requestId}</code> : "Sin dato" },
             ]}
           />
           <div className="audit-snapshots">

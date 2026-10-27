@@ -12,11 +12,12 @@ import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../compone
 import { ListView } from "../../components/list/ListView";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { PAGE_PARAM, useListParams, type ListParams } from "../../components/list/useListParams";
-import { formatCount } from "../../format";
+import { formatCount, formatDateTime } from "../../format";
 import { navItem } from "../../nav";
 import { GROUPING_LABELS } from "./labels";
 import type { UsageDay, UsageGrouping, UsageSummary, UsageSummaryRow, UsageTotals } from "./types";
 import { formatCost, isUuid, monthStart, rangeProblem, todayInBuenosAires } from "./usage";
+import { UserLink } from "./UserLink";
 import "./Operations.css";
 
 type View = "resumen" | "detalle";
@@ -114,7 +115,7 @@ function summaryColumns(grouping: UsageGrouping, range: Range): Column<UsageSumm
 
 const DETAIL_COLUMNS: Column<UsageDay>[] = [
   { key: "day", header: "Día", type: "date", cell: (row) => <DateText value={row.day} /> },
-  { key: "user", header: "Usuario", type: "id", cell: (row) => <code className="mono-text" title={row.userId}>{row.userId.slice(0, 8)}</code> },
+  { key: "user", header: "Usuario", type: "id", cell: (row) => <UserLink id={row.userId} /> },
   {
     key: "agent",
     header: "Agente y modelo",
@@ -134,15 +135,13 @@ const DETAIL_COLUMNS: Column<UsageDay>[] = [
     key: "cost",
     header: "Costo estimado",
     type: "money",
-    cell: (row) =>
-      row.estimatedCostMicros === null ? (
-        <Tag tone="warning">Sin costo</Tag>
-      ) : (
-        <span className="cell-stack">
-          <span>{formatCost(row.estimatedCostMicros, row.costCurrency)}</span>
-          {row.priceVersion !== null ? <span className="sub-text">Precios versión {row.priceVersion}</span> : null}
-        </span>
-      ),
+    cell: (row) => (
+      <span className="cell-stack">
+        {row.estimatedCostMicros === null ? <Tag tone="warning">Sin costo</Tag> : <span>{formatCost(row.estimatedCostMicros, row.costCurrency)}</span>}
+        {row.priceVersion !== null ? <span className="sub-text">Precios versión {row.priceVersion}</span> : null}
+        <span className="sub-text">Calculado el {formatDateTime(row.computedAt)}</span>
+      </span>
+    ),
   },
 ];
 
@@ -308,7 +307,7 @@ export function UsageScreen() {
   return (
     <Screen
       title={item.label}
-      description="Tokens y costo estimado de los agentes por usuario, día o modelo. El costo lo calcula core con sus precios."
+      description="Tokens y costo estimado de los agentes por usuario, día o modelo. El costo lo estima el agente con su tabla de precios y core solo lo guarda."
     >
       {view === "detalle" ? <DetailView lead={lead} /> : <SummaryView lead={lead} />}
     </Screen>

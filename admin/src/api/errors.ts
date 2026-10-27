@@ -23,7 +23,8 @@ export type AdminErrorCode =
   | "SUBSCRIPTION_CHANGED"
   | "REFUND_ALREADY_ANSWERED"
   | "INVOICE_NOT_ISSUED"
-  | "CONCURRENT_CHANGE";
+  | "CONCURRENT_CHANGE"
+  | "AUDIT_TARGET_TYPE_REQUIRED";
 
 const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   ADMIN_SESSION_REQUIRED: "Tu sesión de administración venció. Ingresá un código nuevo para seguir.",
@@ -51,6 +52,7 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   REFUND_ALREADY_ANSWERED: "Mercado Pago ya respondió este reembolso, así que no hace falta reintentarlo. Recargá para ver su estado.",
   INVOICE_NOT_ISSUED: "Solo se puede anular una factura emitida. Recargá para ver su estado.",
   CONCURRENT_CHANGE: "Otra persona cambió esto al mismo tiempo. Recargá para ver lo último y volvé a intentar.",
+  AUDIT_TARGET_TYPE_REQUIRED: "Elegí el tipo de objetivo para buscar por id.",
 };
 
 const STATUS_MESSAGES: Record<number, string> = {
