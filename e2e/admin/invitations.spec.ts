@@ -1,5 +1,5 @@
 import type { Locator, Page, Route } from "@playwright/test";
-import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_USERS } from "../admin-mock/invitations.ts";
+import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_SUBSCRIBED, MOCK_USERS } from "../admin-mock/invitations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
@@ -27,8 +27,8 @@ async function routeDirectory(page: Page) {
       ...user,
       legalName: null,
       createdAt: "2026-09-01T12:00:00Z",
-      planCode: null,
-      subscriptionStatus: null,
+      planCode: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.planCode : null,
+      subscriptionStatus: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.subscriptionStatus : null,
     }));
     return fulfill(route, { items, page: 0, size: 20, totalItems: items.length });
   });
@@ -52,6 +52,16 @@ async function resetScenario(scenario: string, roles: string[]) {
 
 function dialog(page: Page, name: string): Locator {
   return page.getByRole("dialog", { name }).filter({ has: page.locator("form, .dialog-form") });
+}
+
+async function overflowWithDialog(page: Page): Promise<number> {
+  const dialogOverflow = await page.evaluate(() => {
+    const open = document.querySelector("dialog[open]");
+    if (!open) return Number.POSITIVE_INFINITY;
+    const box = open.getBoundingClientRect();
+    return Math.max(open.scrollWidth - open.clientWidth, box.right - window.innerWidth, -box.left);
+  });
+  return Math.max(dialogOverflow, await horizontalOverflow(page));
 }
 
 function row(page: Page, text: string): Locator {
@@ -187,6 +197,27 @@ test("grants, extends and takes away a Demo", async ({ page }) => {
   await expect(row(page, sofia.email)).toContainText("Quitada");
 });
 
+test("warns before granting a Demo to a user whose subscription gives access", async ({ page }) => {
+  const subscribed = MOCK_USERS[4];
+  await open(page, INVITATIONS_SCENARIO, "/invitaciones?vista=demos");
+  await page.getByRole("button", { name: "Otorgar Demo" }).click();
+  const grant = dialog(page, "Otorgar Demo");
+  await grant.getByLabel("Buscar usuario").fill("diego");
+  await grant.getByLabel("Buscar usuario").press("Enter");
+  await expect(grant.locator("label", { hasText: subscribed.email })).toContainText("Plan Starter");
+  await grant.getByRole("radio", { name: new RegExp(subscribed.email) }).check();
+  await grant.getByRole("button", { name: "Continuar" }).click();
+  const confirm = dialog(page, "Otorgar Demo");
+  await expect(confirm.getByText("Tiene una suscripción que le da acceso")).toBeVisible();
+  await expect(confirm).toContainText("Plan Starter · Activa");
+  await confirmWithReason(page, "Otorgar Demo", "Otorgar Demo");
+  await expect(confirm.getByText(/Ese usuario tiene una suscripción que le da acceso/)).toBeVisible();
+  await confirm.getByRole("button", { name: "Cancelar" }).click();
+  await grant.getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await expect(row(page, subscribed.email)).toHaveCount(0);
+});
+
 test("shows the loading, empty and error states", async ({ page }) => {
   await open(page, "default");
   await expect(page.getByText("Todavía no hay invitaciones")).toBeVisible();
@@ -231,12 +262,33 @@ test("fits without sideways scroll and passes the accessibility check", async ({
   await expectAccessible(page);
   await page.getByRole("button", { name: "Nueva invitación" }).click();
   await expect(dialog(page, "Nueva invitación")).toBeVisible();
-  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  expect(await overflowWithDialog(page)).toBeLessThanOrEqual(0);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Demos" }).click();
   await expect(row(page, MOCK_USERS[0].email)).toBeVisible();
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   await expectAccessible(page);
+
+  await page.getByRole("button", { name: "Otorgar Demo" }).click();
+  const grant = dialog(page, "Otorgar Demo");
+  await grant.getByLabel("Buscar usuario").fill("ca");
+  await grant.getByLabel("Buscar usuario").press("Enter");
+  await expect(grant.getByRole("radio", { name: new RegExp(MOCK_USERS[2].email) })).toBeVisible();
+  expect(await overflowWithDialog(page)).toBeLessThanOrEqual(0);
+  await grant.getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+
+  await row(page, MOCK_USERS[1].email).getByRole("button", { name: "Extender" }).click();
+  await expect(dialog(page, "Extender Demo").getByLabel("Nuevo fin")).toBeVisible();
+  expect(await overflowWithDialog(page)).toBeLessThanOrEqual(0);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+
+  await row(page, MOCK_USERS[3].email).getByRole("button", { name: "Quitar" }).click();
+  await expect(dialog(page, "Quitar Demo").getByLabel("Motivo")).toBeVisible();
+  expect(await overflowWithDialog(page)).toBeLessThanOrEqual(0);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
 });
 
 async function shot(page: Page, name: string, scheme: string) {
