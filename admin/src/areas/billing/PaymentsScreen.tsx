@@ -20,11 +20,14 @@ import type { PaymentRow, RefundResult } from "./types";
 const FILTERS = ["status", "userId", "from", "to"] as const;
 const RULES: FilterRules = { status: enumOf(PAYMENT_STATUS_OPTIONS), userId: { kind: "uuid", what: "de usuario" }, ...dateRange("from", "to") };
 
-const REFUND_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" | "danger"; message: string }> = {
-  APPROVED: { tone: "success", message: "Mercado Pago aprobó el reembolso." },
-  REQUESTED: { tone: "info", message: "Pedimos el reembolso y Mercado Pago todavía no respondió. Podés reintentarlo desde Reembolsos." },
-  REJECTED: { tone: "danger", message: "Mercado Pago rechazó el reembolso." },
-};
+type Notice = { tone: "success" | "info" | "danger"; message: string };
+
+function refundNotice(result: RefundResult): Notice {
+  if (result.status === "APPROVED") return { tone: "success", message: "Mercado Pago aprobó el reembolso." };
+  if (result.status === "REJECTED") return { tone: "danger", message: "Mercado Pago rechazó el reembolso. No se devolvió plata." };
+  if (result.providerRefundId) return { tone: "info", message: "Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos." };
+  return { tone: "info", message: "Pedimos el reembolso y Mercado Pago todavía no respondió. Reintentalo desde Reembolsos." };
+}
 
 function RefundedDetail({ row }: { row: PaymentRow }) {
   const waiting = refundInProgress(row);
@@ -56,7 +59,7 @@ export function PaymentsScreen() {
   const canRefundPayments = canAccess(me.roles, ["FINANCE"]);
 
   function done(result: RefundResult) {
-    toast(REFUND_NOTICE[result.status]);
+    toast(refundNotice(result));
     setOpen(false);
     query.reload();
   }

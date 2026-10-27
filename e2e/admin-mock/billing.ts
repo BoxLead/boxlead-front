@@ -185,11 +185,27 @@ function seed(now: Date): State {
   return { subscriptions, payments, refunds, invoices };
 }
 
+export const REFUND_IN_PROCESS_SCENARIO = "billing-refund-in-process";
+export const PROVIDER_DOWN_SCENARIO = "billing-provider-down";
+
+type ProviderAnswer = "APPROVED" | "IN_PROCESS" | "DOWN";
+
 let state: State = seed(new Date());
+let provider: ProviderAnswer = "APPROVED";
 
 function reset({ scenario, now }: ResetOptions) {
   sequence = 0;
   state = scenario === "empty" ? { subscriptions: [], payments: [], refunds: [], invoices: [] } : seed(now);
+  provider = scenario === REFUND_IN_PROCESS_SCENARIO ? "IN_PROCESS" : scenario === PROVIDER_DOWN_SCENARIO ? "DOWN" : "APPROVED";
+}
+
+const PROVIDER_UNAVAILABLE = failure(502, "The payment provider did not answer", "PROVIDER_UNAVAILABLE");
+
+function answer(refund: StoredRefund, providerRefundId: string): MockReply | null {
+  if (provider === "DOWN") return PROVIDER_UNAVAILABLE;
+  refund.providerRefundId = providerRefundId;
+  refund.status = provider === "IN_PROCESS" ? "REQUESTED" : "APPROVED";
+  return null;
 }
 
 type Parsed<T> = { values: T[] } | { error: MockReply };
@@ -391,12 +407,14 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
     paymentId: payment.id,
     userId: payment.userId,
     amount,
-    status: "APPROVED",
-    providerRefundId: `rf-${3000 + sequence}`,
+    status: "REQUESTED",
+    providerRefundId: null,
     requestedBy: admin.userId,
     createdAt: new Date().toISOString(),
   };
   state.refunds.push(refund);
+  const down = answer(refund, `rf-${3000 + sequence}`);
+  if (down) return down;
   if (closesTheSubscription) {
     const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
     if (subscription) {
@@ -416,8 +434,8 @@ function retryRefund({ match, body, admin }: MockRequest): MockReply {
   const self = payment ? selfOperation(admin, payment.userId) : null;
   if (self) return self;
   if (refund.providerRefundId) return failure(409, "The provider already answered this refund", "REFUND_ALREADY_ANSWERED");
-  refund.status = "APPROVED";
-  refund.providerRefundId = `rf-${3500 + state.refunds.indexOf(refund)}`;
+  const down = answer(refund, `rf-${3500 + state.refunds.indexOf(refund)}`);
+  if (down) return down;
   return ok(refundResult(refund));
 }
 

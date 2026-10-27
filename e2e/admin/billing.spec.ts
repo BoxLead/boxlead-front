@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
+import { PROVIDER_DOWN_SCENARIO, REFUND_IN_PROCESS_SCENARIO } from "../admin-mock/billing.ts";
 import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
@@ -162,6 +163,47 @@ test("a total refund goes without amount and core refuses money another admin al
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(carla).toContainText("Pedido y sin acreditar $ 67.000,00");
   await expect(carla.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
+});
+
+test("a refund Mercado Pago is processing waits in Reembolsos without a retry", async ({ page }) => {
+  await resetBilling(["FINANCE"], REFUND_IN_PROCESS_SCENARIO);
+  await enterAdmin(page, "/pagos");
+  const carla = row(page, "carla@example.com");
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Parcial" }).click();
+  await page.getByRole("dialog").getByLabel("Monto a reembolsar en ARS").fill("5.000");
+  await confirmWithReason(page, "Reembolsar");
+  await expect(page.getByText("Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos.")).toBeVisible();
+  await expect(carla).toContainText("Reembolsado $ 20.000,00");
+  await expect(carla).toContainText("Pedido y sin acreditar $ 5.000,00");
+
+  await page.goto("/reembolsos");
+  const processing = page.locator("tbody tr").filter({ hasText: "5.000,00" });
+  await expect(processing).toContainText("En proceso en Mercado Pago");
+  await expect(processing.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
+});
+
+test("a refund that Mercado Pago did not answer stays asked for and can be retried", async ({ page }) => {
+  await resetBilling(["FINANCE"], PROVIDER_DOWN_SCENARIO);
+  await enterAdmin(page, "/pagos");
+  const carla = row(page, "carla@example.com");
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await dialog.getByRole("button", { name: "Parcial" }).click();
+  await dialog.getByLabel("Monto a reembolsar en ARS").fill("5.000");
+  await confirmWithReason(page, "Reembolsar");
+  await expect(dialog).toContainText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.");
+  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(carla).toContainText("Pedido y sin acreditar $ 5.000,00");
+
+  await page.goto("/reembolsos");
+  const unanswered = page.locator("tbody tr").filter({ hasText: "5.000,00" });
+  await expect(unanswered).toContainText("Sin respuesta");
+  await unanswered.getByRole("button", { name: "Reintentar" }).click();
+  const retry = page.getByRole("dialog", { name: "Reintentar reembolso" });
+  await expect(retry.locator(".reason-amount")).toContainText("5.000,00");
+  await confirmWithReason(page, "Reintentar");
+  await expect(retry).toContainText("Mercado Pago no respondió y el reembolso sigue pedido.");
 });
 
 test("finance retries a refund that Mercado Pago did not answer", async ({ page }) => {

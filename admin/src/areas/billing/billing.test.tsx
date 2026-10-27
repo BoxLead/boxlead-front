@@ -182,6 +182,35 @@ describe("payments screen", () => {
     expect(within(rows[2]).queryByRole("button")).not.toBeInTheDocument();
   });
 
+  it.each([
+    [{ status: "REQUESTED", providerRefundId: "rf-9" }, "Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos."],
+    [{ status: "REQUESTED", providerRefundId: null }, "Pedimos el reembolso y Mercado Pago todavía no respondió. Reintentalo desde Reembolsos."],
+    [{ status: "REJECTED", providerRefundId: "rf-9" }, "Mercado Pago rechazó el reembolso. No se devolvió plata."],
+  ])("tells what Mercado Pago answered to the refund %o", async (answer, message) => {
+    mockFetch((method) =>
+      method === "POST" ? json(201, { id: "r1", paymentId: PAYMENT.id, amount: null, createdAt: "", ...answer }) : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it("says the refund stays asked for when Mercado Pago does not answer and reloads on close", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" }) : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.")).toBeInTheDocument();
+    expect(screen.queryByText(/no cambió nada/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+
   it("reloads the list when the refund dialog closes after core refused the amount", async () => {
     const calls = mockFetch((method) =>
       method === "POST" ? json(422, { error: "Unprocessable", message: "exceeds", code: "REFUND_EXCEEDS_PAYMENT" }) : page([PAYMENT]),
