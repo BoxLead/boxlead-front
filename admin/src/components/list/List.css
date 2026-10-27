@@ -6,7 +6,7 @@
 
 .list-panel {
   min-width: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .toolbar {
@@ -88,19 +88,29 @@
   padding: var(--signal-space-5);
 }
 
+.data-table-wrap {
+  min-width: 0;
+}
+
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: var(--signal-text-md);
 }
 
 .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: var(--signal-z-raised);
   padding: var(--signal-space-3) var(--signal-space-4);
   border-bottom: 1px solid var(--signal-border);
+  background: var(--signal-surface);
   color: var(--signal-text-muted);
   font-size: var(--signal-text-xs);
   font-weight: var(--signal-weight-semibold);
   letter-spacing: var(--signal-tracking-wide);
+  line-height: var(--signal-leading-snug);
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
@@ -110,8 +120,13 @@
   padding: var(--signal-space-3) var(--signal-space-4);
   border-bottom: 1px solid var(--signal-hairline);
   color: var(--signal-text);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   vertical-align: top;
+}
+
+.data-table-dense th,
+.data-table-dense td {
+  padding-block: var(--signal-space-2);
 }
 
 .data-table tbody tr:last-child td {
@@ -122,9 +137,60 @@
   background: var(--signal-hover);
 }
 
+.data-table tbody tr:focus-within td {
+  background: var(--signal-hover);
+}
+
 .data-table .data-table-end {
   text-align: right;
+}
+
+.data-table .data-table-number,
+.data-table .data-table-money {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.data-table .data-table-date,
+.data-table .data-table-status {
+  white-space: nowrap;
+}
+
+.data-table .data-table-id {
+  font-family: var(--signal-mono);
+  font-size: var(--signal-text-sm);
+  white-space: nowrap;
+}
+
+.data-table .data-table-actions {
+  white-space: nowrap;
+}
+
+.data-table .data-table-truncate {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table .data-table-w-xs {
+  min-width: 96px;
+}
+
+.data-table .data-table-w-sm {
+  min-width: 128px;
+}
+
+.data-table .data-table-w-md {
+  min-width: 176px;
+}
+
+.data-table .data-table-w-lg {
+  min-width: 240px;
+}
+
+.data-table .data-table-w-xl {
+  min-width: 320px;
 }
 
 .pagination {
@@ -205,7 +271,8 @@
 
   .data-table td {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: minmax(88px, 2fr) minmax(0, 5fr);
+    align-items: start;
     gap: var(--signal-space-3);
     padding: var(--signal-space-1) 0;
     border-bottom: 0;
@@ -213,16 +280,36 @@
 
   .data-table td::before {
     content: attr(data-label);
+    padding-top: var(--signal-space-0-5);
     color: var(--signal-text-muted);
     font-size: var(--signal-text-xs);
     font-weight: var(--signal-weight-semibold);
-  }
-
-  .data-table .data-table-end {
+    line-height: var(--signal-leading-snug);
     text-align: left;
   }
 
-  .data-table tbody tr:hover td {
+  .data-table .data-table-end {
+    text-align: right;
+  }
+
+  .data-table .data-table-truncate {
+    max-width: none;
+    white-space: normal;
+  }
+
+  .data-table .data-table-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--signal-space-2);
+    white-space: normal;
+  }
+
+  .data-table .data-table-actions::before {
+    display: none;
+  }
+
+  .data-table tbody tr:hover td,
+  .data-table tbody tr:focus-within td {
     background: none;
   }
 
