@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { LogoMark } from "../../../src/components/Logo/Logo";
 import { ChevronDownIcon, LogoutIcon } from "../../../src/components/icons/UiIcons";
@@ -18,10 +18,21 @@ export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const menuId = useId();
+  const navRef = useRef<HTMLElement>(null);
   const sections = NAV.map((section) => ({
     ...section,
     items: section.items.filter((item) => canAccess(me.roles, item.access)),
   })).filter((section) => section.items.length > 0);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    navRef.current?.querySelector<HTMLElement>("a")?.focus();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   async function leave() {
     setLeaving(true);
@@ -47,8 +58,9 @@ export function AdminLayout() {
             <ChevronDownIcon width={16} height={16} />
           </button>
         </div>
+        {menuOpen ? <button type="button" className="admin-scrim" aria-label="Cerrar el menú" onClick={() => setMenuOpen(false)} /> : null}
         <div className="admin-menu" id={menuId}>
-          <nav className="admin-nav" aria-label="Secciones">
+          <nav className="admin-nav" aria-label="Secciones" ref={navRef}>
             {sections.map((section) => (
               <div key={section.label} className="admin-nav-section">
                 <p className="admin-nav-heading">{section.label}</p>
@@ -70,21 +82,29 @@ export function AdminLayout() {
             ))}
           </nav>
           <div className="admin-account">
-            <p className="admin-account-email">{me.email}</p>
-            <div className="admin-account-roles">
+            <div className="admin-account-head">
+              <p className="admin-account-email" title={me.email}>
+                {me.email}
+              </p>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-icon admin-signout"
+                aria-label={leaving ? "Saliendo…" : "Salir"}
+                title="Salir"
+                onClick={() => void leave()}
+                disabled={leaving}
+              >
+                <LogoutIcon width={16} height={16} />
+              </button>
+            </div>
+            <div className="admin-account-meta">
               {me.roles.map((role) => (
                 <Tag key={role} tone="accent">
                   {ROLE_LABELS[role]}
                 </Tag>
               ))}
+              {me.adminSessionExpiresAt ? <span className="admin-account-session">Hasta las {formatTime(me.adminSessionExpiresAt)}</span> : null}
             </div>
-            {me.adminSessionExpiresAt ? (
-              <p className="admin-account-session">Sesión abierta hasta las {formatTime(me.adminSessionExpiresAt)}</p>
-            ) : null}
-            <button type="button" className="btn btn-ghost btn-sm admin-signout" onClick={() => void leave()} disabled={leaving}>
-              <LogoutIcon width={16} height={16} />
-              {leaving ? "Saliendo…" : "Salir"}
-            </button>
           </div>
         </div>
       </aside>

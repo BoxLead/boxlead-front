@@ -51,7 +51,7 @@ test("enrolls a factor with a QR drawn in the page and then asks for a fresh cod
   const qr = page.getByRole("img", { name: "Código QR para tu app de autenticación" });
   await expect(qr).toBeVisible();
   expect(await qr.locator("path").getAttribute("d")).toMatch(/^M\d+ \d+h1v1h-1z/);
-  await expect(page.locator(".entry-secret code")).toHaveText(/^[A-Z2-7]{16,}$/);
+  await expect(page.locator(".entry-secret code")).toHaveText(/^([A-Z2-7]{4} )+[A-Z2-7]{1,4}$/);
   await expectAccessible(page);
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
 

@@ -70,6 +70,12 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--signal-space-2) var(--signal-space-3) var(--signal-space-4);
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+.admin-scrim {
+  display: none;
 }
 
 .admin-nav-section + .admin-nav-section {
@@ -146,9 +152,18 @@
 
 .admin-account {
   display: grid;
-  gap: var(--signal-space-2);
-  padding: var(--signal-space-4) var(--signal-space-5);
+  gap: var(--signal-space-1);
+  padding: var(--signal-space-3) var(--signal-space-5);
   border-top: 1px solid var(--signal-border);
+  background: var(--signal-sidebar-bg);
+}
+
+.admin-account-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--signal-space-2);
+  min-width: 0;
 }
 
 .admin-account-email {
@@ -161,21 +176,29 @@
   white-space: nowrap;
 }
 
-.admin-account-roles {
+.admin-account-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--signal-space-1);
+  align-items: center;
+  gap: var(--signal-space-1) var(--signal-space-2);
 }
 
 .admin-account-session {
-  margin: 0;
   color: var(--signal-text-muted);
   font-size: var(--signal-text-xs);
 }
 
 .admin-signout {
-  justify-self: start;
-  margin-left: calc(var(--signal-space-3) * -1);
+  flex-shrink: 0;
+  margin-right: calc(var(--signal-space-3) * -1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav-link,
+  .admin-nav-link::before,
+  .admin-menu-toggle svg {
+    transition: none;
+  }
 }
 
 .admin-main {
@@ -197,6 +220,8 @@
   }
 
   .admin-bar {
+    position: relative;
+    z-index: 2;
     min-height: var(--signal-space-12);
     padding: 0 var(--signal-gutter-mobile);
   }
@@ -209,13 +234,36 @@
     display: none;
   }
 
+  .admin-sidebar-open .admin-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    padding: 0;
+    border: 0;
+    background: var(--signal-backdrop);
+    cursor: default;
+  }
+
   .admin-sidebar-open .admin-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 2;
     display: flex;
+    max-height: calc(100dvh - var(--signal-space-12));
+    overflow-y: auto;
     border-top: 1px solid var(--signal-hairline);
+    border-bottom: 1px solid var(--signal-border);
+    background: var(--signal-sidebar-bg);
+    box-shadow: var(--signal-shadow-3);
   }
 
   .admin-nav {
+    flex: none;
     overflow: visible;
+    padding-inline: var(--signal-space-2);
   }
 
   .admin-account {
