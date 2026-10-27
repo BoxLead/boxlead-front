@@ -1,5 +1,6 @@
 import { adminApi } from "../../api/client";
 import { AdminApiError } from "../../api/errors";
+import { isDay, RANGE_PROBLEM } from "../../components/list/filterRules";
 import type { AdminPage, Money } from "../../api/types";
 import type { Attribution, Commission, CustomerMatch, NewReseller, Payout, ReferralCode, Reseller } from "./types";
 
@@ -93,6 +94,20 @@ export function canReverse(commission: Commission): boolean {
 }
 
 const BUENOS_AIRES_OFFSET = "-03:00";
+
+export function todayInBuenosAires(now = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+}
+
+const FORMAT_PROBLEM = "Una de las fechas no tiene el formato correcto.";
+const FUTURE_START = "Sin fecha de fin el período termina hoy, así que la de inicio no puede ser posterior.";
+
+export function clickRangeProblem(from: string, to: string, today: string): string | null {
+  if ((from && !isDay(from)) || (to && !isDay(to))) return FORMAT_PROBLEM;
+  if (!from) return null;
+  if (to) return from > to ? RANGE_PROBLEM : null;
+  return from > today ? FUTURE_START : null;
+}
 
 export function releasedBy(commission: Commission, periodEnd: string): boolean {
   const end = Date.parse(`${periodEnd}T00:00:00${BUENOS_AIRES_OFFSET}`) + 24 * 60 * 60 * 1000;

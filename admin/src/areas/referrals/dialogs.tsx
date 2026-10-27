@@ -3,7 +3,7 @@ import { AdminApiError, errorText } from "../../api/errors";
 import type { Money } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { formatDate, formatMoney } from "../../format";
-import { payableCommissions, referralsApi, totalsByCurrency, type CommissionAction } from "./api";
+import { payableCommissions, referralsApi, todayInBuenosAires, totalsByCurrency, type CommissionAction } from "./api";
 import { COMMISSION_KIND, customerName, VAT_CONDITIONS } from "./labels";
 import { SelectField, TextField } from "./parts";
 import type { Attribution, Commission, CustomerMatch, Payout, Reseller } from "./types";
@@ -252,10 +252,6 @@ export function ApproveDialog({ commissions, onClose, onDone }: Closable & { com
 }
 
 type Preview = { status: "idle" } | { status: "loading" } | { status: "ready"; commissions: Commission[] } | { status: "error"; message: string };
-
-function todayInBuenosAires(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
-}
 
 type CreatePayoutDialogProps = Closable & {
   resellers: readonly Reseller[];

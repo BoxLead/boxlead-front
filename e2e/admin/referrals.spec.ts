@@ -141,6 +141,33 @@ test.describe("roles", () => {
   });
 });
 
+test("a clicks range that ends before it starts warns in its section and keeps the screen", async ({ page }) => {
+  await seed(["OWNER"]);
+  await enterAdmin(page, `/revendedores/${NORTH}`);
+  const clicks = page.getByRole("region", { name: "Clics por día" });
+  await expect(clicks.getByText(/hubo/)).toBeVisible();
+  const toggle = clicks.getByRole("button", { name: "Filtros" });
+  if (await toggle.isVisible()) await toggle.click();
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === `/admin/resellers/${NORTH}`) asked.push(new URL(request.url()).search);
+  });
+  await clicks.getByLabel("Hasta").fill("2026-10-10");
+  await expect(clicks.getByText(/hubo/)).toBeVisible();
+  await clicks.getByLabel("Desde").fill("2026-10-20");
+  await expect(clicks.getByText("Revisá el período")).toBeVisible();
+  await expect(clicks.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Agencia Norte" })).toBeVisible();
+  await expect(clicks.getByLabel("Desde")).toHaveValue("2026-10-20");
+  await expect(clicks.getByLabel("Hasta")).toHaveValue("2026-10-10");
+  await expect(page.getByText("No pudimos cargar esta pantalla")).toHaveCount(0);
+  await expect(page.getByText("ana@example.com")).toBeVisible();
+  expect(asked.some((search) => search.includes("from=2026-10-20"))).toBe(false);
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await clicks.getByRole("button", { name: "Limpiar" }).click();
+  await expect(clicks.getByText("En los últimos 30 días", { exact: false })).toBeVisible();
+});
+
 test.describe("owner actions", () => {
   test("creates a reseller, issues and disables a code and corrects an attribution", async ({ page }) => {
     await seed(["OWNER"]);

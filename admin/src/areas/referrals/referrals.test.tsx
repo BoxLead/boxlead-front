@@ -6,7 +6,7 @@ import App from "../../App";
 import type { AdminMe, AdminRole } from "../../api/types";
 import { SessionProvider } from "../../session/SessionProvider";
 import { json, mockFetch, type Reply } from "../../test/fetch";
-import { canHold, canRelease, canReverse, downloadPayout, isReleasable, releasedBy } from "./api";
+import { canHold, canRelease, canReverse, clickRangeProblem, downloadPayout, isReleasable, releasedBy } from "./api";
 import type { Commission, Payout, ResellerDetail } from "./types";
 
 const LATER = new Date(Date.now() + 30 * 60_000).toISOString();
@@ -192,6 +192,52 @@ describe("reseller detail", () => {
     expect(screen.queryByRole("button", { name: "Nuevo código" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Armar liquidación" })).toBeNull();
   }, 20_000);
+
+  it("keeps the screen and warns in the clicks section when the range ends before it starts", async () => {
+    const detail: ResellerDetail = {
+      reseller: {
+        id: NORTH,
+        userId: "u9",
+        displayName: "Agencia Norte",
+        status: "ACTIVE",
+        rateBps: 5000,
+        maxPaidCycles: 6,
+        createdAt: PAST,
+        codes: [{ id: "k1", resellerId: NORTH, code: "7KQ2M9XTRB", status: "ACTIVE", disabledAt: null, createdAt: PAST }],
+      },
+      customersCount: 0,
+      clicks: [{ day: "2026-10-12", referralCodeId: "k1", clicks: 4 }],
+      billing: null,
+      commissionTotals: null,
+    };
+    const calls = renderAdmin(`/revendedores/${NORTH}?from=2026-10-20&to=2026-10-10`, ["OWNER"], (_method, url) => {
+      if (url.pathname === `/admin/resellers/${NORTH}`) {
+        if (url.search) return json(400, { error: "bad range", message: "bad range" });
+        return json(200, detail);
+      }
+      if (url.pathname === `/admin/resellers/${NORTH}/customers`) return page([]);
+      if (url.pathname === "/admin/resellers") return page([]);
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    expect(await screen.findByRole("heading", { level: 1, name: "Agencia Norte" }, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByText("Revisá el período")).toBeInTheDocument();
+    expect(screen.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Desde")).toHaveValue("2026-10-20");
+    expect(screen.getByLabelText("Hasta")).toHaveValue("2026-10-10");
+    expect(screen.queryByText(/hubo/)).toBeNull();
+    expect(screen.queryByText("No pudimos cargar esta pantalla")).toBeNull();
+    const detailCalls = calls.filter((call) => call.url.pathname === `/admin/resellers/${NORTH}`);
+    expect(detailCalls.map((call) => call.url.search)).toEqual([""]);
+  }, 20_000);
+
+  it("checks the clicks range against today when it has no end", () => {
+    expect(clickRangeProblem("", "", "2026-10-27")).toBeNull();
+    expect(clickRangeProblem("2026-10-01", "2026-10-01", "2026-10-27")).toBeNull();
+    expect(clickRangeProblem("2026-10-02", "2026-10-01", "2026-10-27")).toBe("La fecha de inicio tiene que ser anterior a la de fin.");
+    expect(clickRangeProblem("2026-10-28", "", "2026-10-27")).toMatch(/termina hoy/);
+    expect(clickRangeProblem("", "2026-10-28", "2026-10-27")).toBeNull();
+    expect(clickRangeProblem("ayer", "", "2026-10-27")).toBe("Una de las fechas no tiene el formato correcto.");
+  });
 
   it("treats an id that is not a UUID as not found without asking core", async () => {
     const calls = renderAdmin("/revendedores/abc", ["OWNER"], () => json(500, { error: "boom", message: "boom" }));

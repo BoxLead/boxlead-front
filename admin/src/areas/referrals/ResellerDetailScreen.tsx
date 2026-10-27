@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Banner } from "../../../../src/components/ui/Banner";
 import { useToast } from "../../../../src/components/ui/toast";
 import type { AdminPage } from "../../api/types";
 import { Bars } from "../../components/Bars";
@@ -14,7 +15,7 @@ import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatCount, formatDate, formatDateTime } from "../../format";
-import { referralsApi } from "./api";
+import { clickRangeProblem, referralsApi, todayInBuenosAires } from "./api";
 import { AttributionDialog, CreatePayoutDialog } from "./dialogs";
 import { useResellerDirectory } from "../../session/resellerDirectory";
 import { useDetailQuery, useReferralRoles } from "./hooks";
@@ -81,10 +82,11 @@ type Customers = QueryResult<AdminPage<ResellerCustomer>> & { reload: () => void
 type ContentProps = {
   detail: ResellerDetail;
   customers: Customers;
+  clicksProblem: string | null;
   reload: () => void;
 };
 
-function ResellerContent({ detail, customers, reload }: ContentProps) {
+function ResellerContent({ detail, customers, clicksProblem, reload }: ContentProps) {
   const { owner, finance } = useReferralRoles();
   const directory = useResellerDirectory();
   const [params, setParams] = useSearchParams();
@@ -119,7 +121,7 @@ function ResellerContent({ detail, customers, reload }: ContentProps) {
   const codeColumns: Column<ReferralCode>[] = [
     { key: "code", header: "Código", type: "id", cell: (row) => <code className="ref-code">{row.code}</code> },
     { key: "status", header: "Estado", type: "status", cell: (row) => <StatusBadge status={CODE_STATUS[row.status]} /> },
-    { key: "clicks", header: "Clics en el período", type: "number", cell: (row) => formatCount(codeClicks.get(row.id) ?? 0) },
+    { key: "clicks", header: "Clics en el período", type: "number", cell: (row) => (clicksProblem ? "—" : formatCount(codeClicks.get(row.id) ?? 0)) },
     { key: "createdAt", header: "Alta", type: "date", cell: (row) => <DateText value={row.createdAt} /> },
     { key: "disabledAt", header: "Desactivado", type: "date", cell: (row) => <DateText value={row.disabledAt} /> },
   ];
@@ -230,16 +232,22 @@ function ResellerContent({ detail, customers, reload }: ContentProps) {
           title="Clics por día"
           wide
           hint={
-            <>
-              {datesActive ? "En el período elegido" : "En los últimos 30 días"} hubo <strong className="num">{formatCount(totalClicks)}</strong> clics.
-            </>
+            clicksProblem ? undefined : (
+              <>
+                {datesActive ? "En el período elegido" : "En los últimos 30 días"} hubo <strong className="num">{formatCount(totalClicks)}</strong> clics.
+              </>
+            )
           }
         >
           <FilterBar active={datesActive} onClear={() => setParam({ from: null, to: null })}>
             <DateFilter label="Desde" value={params.get("from") ?? ""} onChange={(value) => setParam({ from: value })} />
             <DateFilter label="Hasta" value={params.get("to") ?? ""} onChange={(value) => setParam({ to: value })} />
           </FilterBar>
-          {days.length === 0 ? (
+          {clicksProblem ? (
+            <Banner tone="warning" title="Revisá el período">
+              {clicksProblem}
+            </Banner>
+          ) : days.length === 0 ? (
             <Muted>No hubo clics en este período.</Muted>
           ) : (
             <Bars caption="Clics por día" unit="clics" items={days.map((row) => ({ key: row.day, label: formatDate(row.day), value: row.clicks }))} />
@@ -377,11 +385,13 @@ const NOT_FOUND = "No encontramos este revendedor";
 
 function ResellerLoader({ resellerId }: { resellerId: string }) {
   const [params] = useSearchParams();
+  const [today] = useState(todayInBuenosAires);
+  const from = params.get("from") ?? "";
+  const to = params.get("to") ?? "";
+  const clicksProblem = clickRangeProblem(from, to, today);
   const range = new URLSearchParams();
-  for (const key of ["from", "to"]) {
-    const value = params.get(key);
-    if (value) range.set(key, value);
-  }
+  if (!clicksProblem && from) range.set("from", from);
+  if (!clicksProblem && to) range.set("to", to);
   const query = useDetailQuery<ResellerDetail>(`/admin/resellers/${encodeURIComponent(resellerId)}`, range.toString());
   const page = Math.max(0, Math.floor(Number(params.get(CUSTOMERS_PAGE)) || 0));
   const customers = useAdminQuery<AdminPage<ResellerCustomer>>(
@@ -389,7 +399,7 @@ function ResellerLoader({ resellerId }: { resellerId: string }) {
     page > 0 ? `page=${page}` : "",
   );
 
-  if (query.status === "ready") return <ResellerContent detail={query.data} customers={customers} reload={query.reload} />;
+  if (query.status === "ready") return <ResellerContent detail={query.data} customers={customers} clicksProblem={clicksProblem} reload={query.reload} />;
   return (
     <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
       <DetailState query={query} notFound={NOT_FOUND} back={BACK}>
