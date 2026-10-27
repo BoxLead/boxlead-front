@@ -192,6 +192,39 @@ function dayInBuenosAires(daysAgo: number): string {
   return new Date(Date.now() - daysAgo * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
 }
 
+test("commission filters survive a reload and going back", async ({ page }) => {
+  await seed(["FINANCE"]);
+  await enterAdmin(page, "/comisiones");
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  const filters = page.getByRole("search", { name: "Filtros" });
+  const toggle = filters.getByRole("button", { name: "Filtros" });
+  if (await toggle.isVisible()) await toggle.click();
+  const from = dayInBuenosAires(42);
+  await filters.getByLabel("Estado").selectOption("APPROVED");
+  await filters.getByLabel("Revendedor").selectOption({ label: "Agencia Norte" });
+  await filters.getByLabel("Desde").fill(from);
+
+  async function expectFiltered() {
+    await expect(filters.getByLabel("Estado")).toHaveValue("APPROVED");
+    await expect(filters.getByLabel("Revendedor")).toHaveValue(NORTH);
+    await expect(filters.getByLabel("Desde")).toHaveValue(from);
+    await expect(page.getByRole("button", { name: "Revertir" })).toHaveCount(1);
+  }
+
+  await expectFiltered();
+  const [reloaded] = await Promise.all([
+    page.waitForRequest((request) => new URL(request.url()).pathname === "/admin/commissions"),
+    page.reload(),
+  ]);
+  const query = new URL(reloaded.url()).searchParams;
+  expect([query.getAll("status"), query.get("resellerId"), query.get("from")]).toEqual([["APPROVED"], NORTH, from]);
+  await expectFiltered();
+  await page.getByRole("link", { name: "Agencia Norte" }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: "Agencia Norte" })).toBeVisible();
+  await page.goBack();
+  await expectFiltered();
+});
+
 test("the mock answers with the codes core sends", async ({ page }) => {
   await seed(["OWNER"]);
   await enterAdmin(page, "/revendedores");
