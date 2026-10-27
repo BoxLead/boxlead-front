@@ -245,6 +245,7 @@ describe("CustomersScreen", () => {
     expect(await screen.findByRole("link", { name: "ana.gomez@example.com" })).toHaveAttribute("href", `/usuarios/${USER_ID}`);
     expect(screen.getByRole("cell", { name: "Starter" })).toBeInTheDocument();
     expect(calls[0].url.search).toBe("?status=ACTIVE");
+    expect(screen.getByRole("searchbox", { name: "Buscar" })).toHaveAttribute("placeholder", "Email, nombre o id, distingue tildes");
     await userEvent.selectOptions(screen.getByLabelText("Plan"), "DEMO");
     expect(calls.at(-1)?.url.search).toBe("?plan=DEMO&status=ACTIVE");
   });
