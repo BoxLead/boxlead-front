@@ -251,6 +251,50 @@ describe("CustomersScreen", () => {
   });
 });
 
+const DETAIL_PATH = `/admin/customers/${USER_ID}`;
+const HOUR = 3_600_000;
+
+function demoOf(endsAt: number): CustomerFile["demo"] {
+  return {
+    id: "d1",
+    userId: USER_ID,
+    invitationId: null,
+    planVersionId: "v0",
+    startsAt: new Date(endsAt - 14 * 24 * HOUR).toISOString(),
+    endsAt: new Date(endsAt).toISOString(),
+    revokedAt: null,
+  };
+}
+
+function handlerWith(change: Partial<CustomerFile>, replies: Record<string, Reply> = {}) {
+  return (method: string, url: URL): Reply => {
+    if (method === "GET" && url.pathname === DETAIL_PATH) return json(200, { ...file(), ...change });
+    if (method === "GET" && url.pathname === "/admin/resellers") {
+      return json(200, {
+        items: [
+          { id: "r1", displayName: "Agencia Norte", status: "ACTIVE" },
+          { id: "r2", displayName: "Estudio Delta", status: "ACTIVE" },
+        ],
+        page: 0,
+        size: 50,
+        totalItems: 2,
+      });
+    }
+    if (method === "GET") return json(200, EMPTY_PAGE);
+    return replies[`${method} ${url.pathname}`] ?? json(204);
+  };
+}
+
+function detailLoads(calls: { method: string; url: URL }[]): number {
+  return calls.filter((call) => call.method === "GET" && call.url.pathname === DETAIL_PATH).length;
+}
+
+async function confirmIn(title: string, button: string, reason = "Lo pidió el cliente por mail") {
+  const dialog = dialogOf(title);
+  await userEvent.type(within(dialog).getByLabelText("Motivo"), reason);
+  await userEvent.click(within(dialog).getByRole("button", { name: button, hidden: true }));
+}
+
 describe("CustomerDetailScreen", () => {
   it("gives the owner every action and sends the reason", async () => {
     const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], detailHandler);
@@ -291,6 +335,55 @@ describe("CustomerDetailScreen", () => {
     const put = calls.find((call) => call.method === "PUT");
     expect(put?.url.pathname).toBe(`/admin/customers/${USER_ID}/overrides/LLM_COST_CAP_MICROS`);
     expect(JSON.parse(String(put?.init.body))).toEqual({ value: 12_500_000, reason: "Cliente con mucho volumen este mes" });
+  });
+
+  it("grants a Demo with its days and loads the detail again before the notice", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: null }));
+    await userEvent.click(await screen.findByRole("button", { name: "Otorgar Demo" }));
+    const loads = detailLoads(calls);
+    await userEvent.type(within(dialogOf("Otorgar Demo")).getByLabelText("Días de Demo"), "10");
+    await confirmIn("Otorgar Demo", "Otorgar Demo");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/demo`);
+    expect(JSON.parse(String(post?.init.body))).toEqual({ demoDays: 10, reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Le otorgamos la Demo.")).toBeInTheDocument();
+    expect(detailLoads(calls)).toBe(loads + 1);
+  }, 15_000);
+
+  it("extends a running Demo and says when it ends", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: demoOf(Date.now() + 3 * 24 * HOUR) }));
+    await userEvent.click(await screen.findByRole("button", { name: "Extender" }));
+    const dialog = dialogOf("Extender Demo");
+    expect(within(dialog).getByText(/^Termina el .+\. Pasa a terminar al final del día que elijas/)).toBeInTheDocument();
+    const day = (within(dialog).getByLabelText("Nuevo fin") as HTMLInputElement).value;
+    await confirmIn("Extender Demo", "Extender");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/demo/extend`);
+    expect(JSON.parse(String(post?.init.body))).toEqual({ endsAt: new Date(`${day}T23:59:59-03:00`).toISOString(), reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Extendimos la Demo.")).toBeInTheDocument();
+  }, 15_000);
+
+  it("takes away a running Demo and says the access ends now", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: demoOf(Date.now() + 3 * 24 * HOUR) }));
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Demo" }));
+    expect(within(dialogOf("Quitar Demo")).getByText(/La Demo termina ahora/)).toBeInTheDocument();
+    await confirmIn("Quitar Demo", "Quitar Demo");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/demo/revoke`);
+    expect(await screen.findByText("Le quitamos la Demo.")).toBeInTheDocument();
+  }, 15_000);
+
+  it("words the extend and the take away of a Demo that already ended", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: demoOf(Date.now() - 2 * 24 * HOUR) }));
+    await userEvent.click(await screen.findByRole("button", { name: "Extender" }));
+    const extend = dialogOf("Extender Demo");
+    expect(within(extend).getByText(/^Terminó el .+\. Vuelve a estar vigente desde ahora/)).toBeInTheDocument();
+    expect(within(extend).queryByText(/^Termina el/)).toBeNull();
+    await userEvent.click(within(extend).getByRole("button", { name: "Cancelar", hidden: true }));
+    await userEvent.click(screen.getByRole("button", { name: "Quitar Demo" }));
+    const revoke = dialogOf("Quitar Demo");
+    expect(within(revoke).getByText("La Demo ya terminó, así que su acceso no cambia. Quitarla deja lugar para otorgarle otra.")).toBeInTheDocument();
+    expect(within(revoke).queryByText(/La Demo termina ahora/)).toBeNull();
   });
 
   it("gives support only the Demo actions and finance none", async () => {

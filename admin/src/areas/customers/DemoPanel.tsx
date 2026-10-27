@@ -3,7 +3,7 @@ import { adminApi } from "../../api/client";
 import { DateText } from "../../components/DateText";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { StatusBadge } from "../../components/StatusBadge";
-import { formatDate } from "../../format";
+import { formatDateTime } from "../../format";
 import { DEMO_STATUS } from "../../status";
 import { addDays, dayOf, endOfDay, isDay, today } from "./dates";
 import { Facts, Muted, Section } from "./parts";
@@ -88,7 +88,13 @@ function ExtendDialog({
 
   return (
     <ReasonDialog open={open} title="Extender Demo" confirmLabel="Extender" onClose={onClose} onConfirm={confirm}>
-      <p>Hoy termina el {formatDate(demo.endsAt)}. Pasa a terminar al final del día que elijas, en hora de Argentina.</p>
+      {running(demo) ? (
+        <p>Termina el {formatDateTime(demo.endsAt)}. Pasa a terminar al final del día que elijas, en hora de Argentina.</p>
+      ) : (
+        <p>
+          Terminó el {formatDateTime(demo.endsAt)}. Vuelve a estar vigente desde ahora hasta el final del día que elijas, en hora de Argentina.
+        </p>
+      )}
       <div className="field">
         <label className="field-label" htmlFor={id}>
           Nuevo fin
@@ -148,7 +154,11 @@ export function DemoPanel({ userId, demo, canOperate, onChanged }: DemoPanelProp
               dialogs.run(() => adminApi.post(`/admin/customers/${userId}/demo/revoke`, { reason }), "Le quitamos la Demo.")
             }
           >
-            <p>La Demo termina ahora. Si no tiene una suscripción, el acceso queda restringido. Después se le puede otorgar otra.</p>
+            {running(demo) ? (
+              <p>La Demo termina ahora. Si no tiene una suscripción, el acceso queda restringido. Después se le puede otorgar otra.</p>
+            ) : (
+              <p>La Demo ya terminó, así que su acceso no cambia. Quitarla deja lugar para otorgarle otra.</p>
+            )}
           </ReasonDialog>
         </>
       ) : null}
