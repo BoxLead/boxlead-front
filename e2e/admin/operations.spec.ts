@@ -225,6 +225,36 @@ test.describe("audit", () => {
     await expectAccessible(page);
   });
 
+  test("finds the events of one target and links the users", async ({ page }) => {
+    await resetOperations();
+    await enterAdmin(page, "/auditoria");
+    await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toBeVisible();
+    await openFilters(page);
+    await page.getByLabel("Tipo de objetivo").selectOption("CONSUMER_REQUEST");
+    await page.getByLabel("Id del objetivo").fill("0b0e0000-0000-4000-8003-000000000004");
+    await page.getByLabel("Id del objetivo").press("Enter");
+    await expect(page.getByRole("row", { name: /Pedido de consumo cerrado/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toHaveCount(0);
+    await expect(page.getByRole("row", { name: /Pedido de consumo recibido/ })).toHaveCount(0);
+    await page.getByRole("row", { name: /Pedido de consumo cerrado/ }).getByRole("link", { name: "0b0e0000" }).click();
+    await expect(page).toHaveURL(/\/usuarios\/0b0e0000-0000-4000-8001-000000000004$/);
+  });
+
+  test("does not ask core with dates it would reject", async ({ page }) => {
+    await resetOperations();
+    const asked: string[] = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (url.origin === ADMIN_MOCK_ORIGIN && url.pathname === "/admin/audit") asked.push(url.search);
+    });
+    await enterAdmin(page, "/auditoria?from=ayer");
+    await expect(page.getByText("Una de las fechas no tiene el formato correcto.")).toBeVisible();
+    await page.goto("/auditoria?from=2026-10-20&to=2026-10-01");
+    await expect(page.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeVisible();
+    await noSideScroll(page);
+    expect(asked).toEqual([]);
+  });
+
   test("shows the empty and the error", async ({ page }) => {
     await resetOperations();
     await enterAdmin(page, "/auditoria?targetId=nada");

@@ -400,7 +400,7 @@ describe("AuditScreen", () => {
     targetType: "ADMIN_GRANT",
     targetId: "g3",
     before: null,
-    after: { role: "FINANCE", note: "<img src=x onerror=alert(1)>" },
+    after: { userId: LUCIA, role: "FINANCE", note: "<img src=x onerror=alert(1)>" },
     reason: "Se suma a cobranzas",
     ip: "203.0.113.10",
     requestId: "req-1",
@@ -413,6 +413,20 @@ describe("AuditScreen", () => {
     expect(screen.getByText("Sin datos")).toBeInTheDocument();
     expect(screen.getByText(/"note": "<img src=x onerror=alert\(1\)>"/)).toBeInTheDocument();
     expect(document.querySelector("img[src=x]")).toBeNull();
+  });
+
+  it("links the actor, a user target and the user of a role and names the request id", async () => {
+    const touched: AuditEvent = { ...event, id: "e2", action: "USER_UPDATED", targetType: "USER", targetId: LUCIA, after: null };
+    renderScreen(<AuditScreen />, ["OWNER"], "/auditoria", () => json(200, pageOf([event, touched])));
+    const [granted, updated] = (await screen.findAllByRole("row")).slice(1);
+    const hrefs = (row: HTMLElement) => within(row).getAllByRole("link").map((link) => link.getAttribute("href"));
+    expect(hrefs(granted)).toEqual([`/usuarios/${SELF}`, `/usuarios/${LUCIA}`]);
+    expect(within(granted).getByText("g3")).toBeInTheDocument();
+    expect(hrefs(updated)).toEqual([`/usuarios/${SELF}`, `/usuarios/${LUCIA}`]);
+    expect(updated.textContent).not.toContain("De 0b0e");
+    await userEvent.click(within(granted).getByRole("button", { name: "Ver antes y después" }));
+    expect(screen.getByText("Id de la solicitud")).toBeInTheDocument();
+    expect(screen.queryByText("Pedido")).toBeNull();
   });
 
   it("checks the actor id before asking core", async () => {
