@@ -89,6 +89,14 @@ describe("adminApi", () => {
 });
 
 describe("entryApi", () => {
+  it("leaves a connection failure to the entry screens instead of the reload notice", async () => {
+    const session = hooks();
+    disconnect = session.disconnect;
+    mockFetch(() => new TypeError("Failed to fetch"));
+    await expect(entryApi.me()).rejects.toBeInstanceOf(ConnectionLostError);
+    expect(session.value.connectionLost).not.toHaveBeenCalled();
+  });
+
   it("leaves the entry errors to the screens", async () => {
     const session = hooks();
     disconnect = session.disconnect;

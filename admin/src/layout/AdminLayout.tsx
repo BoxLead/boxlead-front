@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { LogoMark } from "../../../src/components/Logo/Logo";
 import { ChevronDownIcon, LogoutIcon } from "../../../src/components/icons/UiIcons";
@@ -19,10 +19,14 @@ export function AdminLayout() {
   const [leaving, setLeaving] = useState(false);
   const menuId = useId();
   const navRef = useRef<HTMLElement>(null);
-  const sections = NAV.map((section) => ({
-    ...section,
-    items: section.items.filter((item) => canAccess(me.roles, item.access)),
-  })).filter((section) => section.items.length > 0);
+  const sections = useMemo(
+    () =>
+      NAV.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => canAccess(me.roles, item.access)),
+      })).filter((section) => section.items.length > 0),
+    [me.roles],
+  );
 
   useEffect(() => {
     if (!menuOpen) return;

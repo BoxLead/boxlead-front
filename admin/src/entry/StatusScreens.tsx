@@ -1,4 +1,4 @@
-import { useSession } from "../session/session";
+import { useSession, type NoAccessReason } from "../session/session";
 import { EntryLayout } from "./EntryLayout";
 
 function SignOutButton() {
@@ -10,7 +10,18 @@ function SignOutButton() {
   );
 }
 
-export function NoAccessScreen({ email }: { email: string }) {
+export function NoAccessScreen({ email, reason }: { email: string; reason: NoAccessReason }) {
+  if (reason === "mismatch") {
+    return (
+      <EntryLayout
+        title="Entraste con otra cuenta"
+        subtitle="Entraste a BoxLead con una cuenta distinta a la de Cloudflare Access. Salí y volvé a entrar."
+      >
+        <p className="auth-hint">{email ? `En BoxLead estás como ${email}.` : "Usá en BoxLead el mismo email que en Cloudflare Access."}</p>
+        <SignOutButton />
+      </EntryLayout>
+    );
+  }
   return (
     <EntryLayout
       title="Esta cuenta no tiene acceso"

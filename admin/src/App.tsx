@@ -64,7 +64,7 @@ function Stage() {
     case "signed-out":
       return <LoginScreen notice={stage.notice} />;
     case "no-access":
-      return <NoAccessScreen email={stage.email} />;
+      return <NoAccessScreen email={stage.email} reason={stage.reason} />;
     case "enroll":
       return <EnrollScreen me={stage.me} />;
     case "enrollment-closed":

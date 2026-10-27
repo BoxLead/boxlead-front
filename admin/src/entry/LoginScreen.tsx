@@ -55,7 +55,7 @@ export function LoginScreen({ notice }: { notice: string | null }) {
           {busy ? "Entrando…" : "Entrar"}
         </button>
       </form>
-      <p className="auth-hint">Una cuenta creada solo con Google o Facebook no tiene contraseña y no puede entrar acá.</p>
+      <p className="auth-hint">Si ya tenés sesión abierta en boxlead.app entrás directo. Si no, usá tu email y tu contraseña.</p>
     </EntryLayout>
   );
 }

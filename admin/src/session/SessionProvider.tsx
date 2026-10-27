@@ -37,31 +37,35 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     else current.resolve();
   }, []);
 
-  const loadAdmin = useCallback(async (enrolled = false) => {
+  const loadAdmin = useCallback(async (enrolled = false, request = entryApi.adminMe()) => {
     try {
-      const me = await entryApi.adminMe();
+      const me = await request;
       setStage(stageFor(me, enrolled));
     } catch (error) {
       const status = statusOf(error);
       if (status === 401) setStage({ kind: "signed-out", notice: null });
-      else if (status === 403 || status === 404) setStage({ kind: "no-access", email: email.current });
+      else if (status === 403) setStage({ kind: "no-access", email: email.current, reason: "role" });
+      else if (status === 404) setStage({ kind: "no-access", email: email.current, reason: "mismatch" });
       else setStage({ kind: "failed" });
     }
   }, []);
 
   const evaluate = useCallback(
-    (cancelled: () => boolean = () => false) =>
-      entryApi.me().then(
+    (cancelled: () => boolean = () => false) => {
+      const admin = entryApi.adminMe();
+      admin.catch(() => undefined);
+      return entryApi.me().then(
         (user) => {
           if (cancelled()) return;
           email.current = user.email;
-          return loadAdmin();
+          return loadAdmin(false, admin);
         },
         (error: unknown) => {
           if (cancelled()) return;
           setStage(statusOf(error) === 401 ? { kind: "signed-out", notice: null } : { kind: "failed" });
         },
-      ),
+      );
+    },
     [loadAdmin],
   );
 
@@ -94,7 +98,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const refreshAfterLock = useCallback(
     async (error: unknown, enrolled: boolean) => {
-      if (error instanceof AdminApiError && error.code === "MFA_LOCKED") await loadAdmin(enrolled);
+      if (error instanceof AdminApiError && (error.code === "MFA_LOCKED" || error.status === 403)) await loadAdmin(enrolled);
       throw error;
     },
     [loadAdmin],

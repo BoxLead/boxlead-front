@@ -68,7 +68,7 @@ async function send(method: string, path: string, options: RequestOptions): Prom
     });
   } catch (error) {
     if (options.signal?.aborted) throw error;
-    hooks?.connectionLost();
+    if (!options.entry) hooks?.connectionLost();
     throw new ConnectionLostError();
   }
 }

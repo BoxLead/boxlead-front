@@ -51,7 +51,8 @@ for (const scheme of ["light", "dark"] as const) {
     await shot(page, "08-sin-permiso", scheme);
 
     await page.route(`${ADMIN_MOCK_ORIGIN}/**`, (route) => route.abort("connectionrefused"));
-    await page.reload();
+    await openMenu(page);
+    await page.getByRole("link", { name: "Usuarios" }).click();
     await expect(page.getByText("Se cortó la conexión con BoxLead")).toBeVisible();
     await shot(page, "09-sin-conexion", scheme);
   });
