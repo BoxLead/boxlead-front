@@ -3,7 +3,7 @@ import type { AdminPage } from "../../api/types";
 import { DataTable } from "../../components/list/DataTable";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { formatCount, formatDate } from "../../format";
-import { addDays, today } from "./dates";
+import { addDays, lastMomentBefore, today } from "./dates";
 import { formatLimit, formatMicros } from "./limits";
 import { ErrorBlock, Facts, LoadingBlock, Muted, Section } from "./parts";
 import type { Entitlements, UsageRow } from "./types";
@@ -33,7 +33,7 @@ export function UsagePanel({ userId, entitlements }: { userId: string; entitleme
             label: "Respuestas del agente en el período",
             value: `${formatCount(replies)} de ${formatLimit("AGENT_REPLIES_PER_PERIOD", entitlements.limits.AGENT_REPLIES_PER_PERIOD)}`,
           },
-          { label: "Período", value: `${formatDate(entitlements.period.start)} al ${formatDate(entitlements.period.end)}` },
+          { label: "Período", value: `${formatDate(entitlements.period.start)} al ${formatDate(lastMomentBefore(entitlements.period.end))}` },
         ]}
       />
       {query.status === "loading" ? (

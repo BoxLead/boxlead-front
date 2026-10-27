@@ -386,6 +386,15 @@ describe("CustomerDetailScreen", () => {
     expect(within(revoke).queryByText(/La Demo termina ahora/)).toBeNull();
   });
 
+  it("shows the last day of the period instead of its exclusive end", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
+    for (const title of ["Plan", "Uso"]) {
+      const section = (await screen.findByRole("heading", { name: title })).closest("section") as HTMLElement;
+      const period = within(section).getByText("Período").parentElement as HTMLElement;
+      expect(period).toHaveTextContent("16 oct 2026 al 14 nov 2026");
+    }
+  });
+
   it("shows no next charge for a subscription that is not charging", async () => {
     const paused = { ...file().subscription!, status: "PAUSED" as const, providerNextPaymentAt: "2026-11-15T03:00:00Z" };
     renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({ subscription: paused }));

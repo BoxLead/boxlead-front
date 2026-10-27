@@ -12,6 +12,7 @@ import { canAccess } from "../../session/roles";
 import { isFuture, useAdmin } from "../../session/session";
 import { SUBSCRIPTION_STATUS } from "../../status";
 import { AttributionPanel } from "./AttributionPanel";
+import { lastMomentBefore } from "./dates";
 import { DemoPanel } from "./DemoPanel";
 import { ACCESS_LABELS, planLabel, PLAN_SOURCE_LABELS } from "./labels";
 import { LimitsPanel } from "./LimitsPanel";
@@ -113,7 +114,7 @@ function PlanPanel({ file }: { file: CustomerFile }) {
           { label: "Plan", value: planLabel(plan.code) },
           { label: "Viene de", value: PLAN_SOURCE_LABELS[plan.source] },
           { label: "Acceso", value: enforced ? ACCESS_LABELS[access] : `${ACCESS_LABELS[access]}, todavía sin aplicar` },
-          { label: "Período", value: <><DateText value={period.start} /> al <DateText value={period.end} /></> },
+          { label: "Período", value: <><DateText value={period.start} /> al <DateText value={lastMomentBefore(period.end)} /></> },
         ]}
       />
     </Section>
