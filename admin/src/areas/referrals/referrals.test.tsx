@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -6,8 +6,8 @@ import App from "../../App";
 import type { AdminMe, AdminRole } from "../../api/types";
 import { SessionProvider } from "../../session/SessionProvider";
 import { json, mockFetch, type Reply } from "../../test/fetch";
-import { canHold, canRelease, canReverse, downloadPayout, isReleasable, releasedBy } from "./api";
-import type { Commission, Payout, ResellerDetail } from "./types";
+import { canHold, canRelease, canReverse, clickRangeProblem, downloadPayout, isReleasable, releasedBy, todayInBuenosAires } from "./api";
+import type { Commission, Payout, Reseller, ResellerDetail } from "./types";
 
 const LATER = new Date(Date.now() + 30 * 60_000).toISOString();
 const PAST = new Date(Date.now() - 86_400_000).toISOString();
@@ -99,7 +99,7 @@ describe("commission rules", () => {
 });
 
 describe("payout export", () => {
-  it("downloads the CSV with the reason through a blob that is let go right away", async () => {
+  it("downloads the CSV with the reason through a blob that is let go a few seconds later", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout"] });
     const calls = mockFetch(() => ({ status: 200, body: "a,b" }));
     const create = vi.fn(() => "blob:local/1");
@@ -119,7 +119,9 @@ describe("payout export", () => {
     const link = click.mock.contexts[0] as HTMLAnchorElement;
     expect(link.download).toBe("liquidacion-2026-10-31-p-1.csv");
     expect(document.querySelector("a[download]")).toBeNull();
-    vi.runAllTimers();
+    vi.advanceTimersByTime(1_000);
+    expect(revoke).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(9_000);
     expect(revoke).toHaveBeenCalledWith("blob:local/1");
     vi.useRealTimers();
     Reflect.deleteProperty(URL, "createObjectURL");
@@ -193,6 +195,52 @@ describe("reseller detail", () => {
     expect(screen.queryByRole("button", { name: "Armar liquidación" })).toBeNull();
   }, 20_000);
 
+  it("keeps the screen and warns in the clicks section when the range ends before it starts", async () => {
+    const detail: ResellerDetail = {
+      reseller: {
+        id: NORTH,
+        userId: "u9",
+        displayName: "Agencia Norte",
+        status: "ACTIVE",
+        rateBps: 5000,
+        maxPaidCycles: 6,
+        createdAt: PAST,
+        codes: [{ id: "k1", resellerId: NORTH, code: "7KQ2M9XTRB", status: "ACTIVE", disabledAt: null, createdAt: PAST }],
+      },
+      customersCount: 0,
+      clicks: [{ day: "2026-10-12", referralCodeId: "k1", clicks: 4 }],
+      billing: null,
+      commissionTotals: null,
+    };
+    const calls = renderAdmin(`/revendedores/${NORTH}?from=2026-10-20&to=2026-10-10`, ["OWNER"], (_method, url) => {
+      if (url.pathname === `/admin/resellers/${NORTH}`) {
+        if (url.search) return json(400, { error: "bad range", message: "bad range" });
+        return json(200, detail);
+      }
+      if (url.pathname === `/admin/resellers/${NORTH}/customers`) return page([]);
+      if (url.pathname === "/admin/resellers") return page([]);
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    expect(await screen.findByRole("heading", { level: 1, name: "Agencia Norte" }, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByText("Revisá el período")).toBeInTheDocument();
+    expect(screen.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Desde")).toHaveValue("2026-10-20");
+    expect(screen.getByLabelText("Hasta")).toHaveValue("2026-10-10");
+    expect(screen.queryByText(/hubo/)).toBeNull();
+    expect(screen.queryByText("No pudimos cargar esta pantalla")).toBeNull();
+    const detailCalls = calls.filter((call) => call.url.pathname === `/admin/resellers/${NORTH}`);
+    expect(detailCalls.map((call) => call.url.search)).toEqual([""]);
+  }, 20_000);
+
+  it("checks the clicks range against today when it has no end", () => {
+    expect(clickRangeProblem("", "", "2026-10-27")).toBeNull();
+    expect(clickRangeProblem("2026-10-01", "2026-10-01", "2026-10-27")).toBeNull();
+    expect(clickRangeProblem("2026-10-02", "2026-10-01", "2026-10-27")).toBe("La fecha de inicio tiene que ser anterior a la de fin.");
+    expect(clickRangeProblem("2026-10-28", "", "2026-10-27")).toMatch(/termina hoy/);
+    expect(clickRangeProblem("", "2026-10-28", "2026-10-27")).toBeNull();
+    expect(clickRangeProblem("ayer", "", "2026-10-27")).toBe("Una de las fechas no tiene el formato correcto.");
+  });
+
   it("treats an id that is not a UUID as not found without asking core", async () => {
     const calls = renderAdmin("/revendedores/abc", ["OWNER"], () => json(500, { error: "boom", message: "boom" }));
     expect(await screen.findByText("No encontramos este revendedor")).toBeInTheDocument();
@@ -241,5 +289,174 @@ describe("new reseller", () => {
     await userEvent.click(box.getByRole("button", { name: "Crear revendedor", hidden: true }));
     expect(searches).toEqual(["oeste"]);
     expect(created).toMatchObject({ userId: "u-west", displayName: "Martín Oeste", legalName: "Agencia Oeste SRL", vatCondition: "EXENTO", reason: REASON });
+  }, 20_000);
+});
+
+const NORTH_RESELLER: Reseller = {
+  id: NORTH,
+  userId: "u9",
+  displayName: "Agencia Norte",
+  status: "ACTIVE",
+  rateBps: 5000,
+  maxPaidCycles: 6,
+  createdAt: PAST,
+  codes: [],
+};
+
+function dialogTitled(title: string): HTMLElement {
+  const dialog = screen.getByText(title, { selector: "h2" }).closest("dialog");
+  if (!dialog) throw new Error(`The dialog ${title} did not open`);
+  return dialog;
+}
+
+function buildPayout(approved: Commission[], answer: () => Reply = () => json(201, { ...PAYOUT, resellerId: NORTH })) {
+  const posted: unknown[] = [];
+  const asked: URLSearchParams[] = [];
+  const calls = renderAdmin("/liquidaciones", ["FINANCE"], (method, url, body) => {
+    if (url.pathname === "/admin/resellers") return page([NORTH_RESELLER]);
+    if (method === "POST" && url.pathname === "/admin/payouts") {
+      posted.push(body);
+      return answer();
+    }
+    if (url.pathname === "/admin/payouts") return page([]);
+    if (url.pathname === "/admin/commissions") {
+      asked.push(url.searchParams);
+      return page(approved);
+    }
+    return json(404, { error: "Not found", message: "Not found" });
+  });
+  return { calls, posted, asked };
+}
+
+async function openBuildDialog() {
+  await userEvent.click(await screen.findByRole("button", { name: "Armar liquidación" }, { timeout: 5000 }));
+  const box = within(dialogTitled("Armar liquidación"));
+  await userEvent.selectOptions(box.getByLabelText("Revendedor"), NORTH);
+  return box;
+}
+
+async function confirmBuild(box: ReturnType<typeof within>) {
+  await userEvent.type(box.getByLabelText("Motivo"), REASON);
+  await userEvent.click(box.getByRole("button", { name: "Armar liquidación", hidden: true }));
+}
+
+describe("build a payout", () => {
+  it("previews only the approved rows released by the period end and sends the reseller, the day and the reason", async () => {
+    const { posted, asked } = buildPayout([
+      commission({ id: "c1", resellerId: NORTH, status: "APPROVED" }),
+      commission({ id: "c2", resellerId: NORTH, status: "APPROVED", amount: { amountMinor: 250_000, currency: "ARS" } }),
+      commission({ id: "c3", resellerId: NORTH, status: "APPROVED", payoutId: "p-old" }),
+      commission({ id: "c4", resellerId: NORTH, status: "APPROVED", releaseAt: new Date(Date.now() + 3 * 86_400_000).toISOString() }),
+    ]);
+    const box = await openBuildDialog();
+    expect(await box.findByText("2 movimientos. El monto final lo calcula BoxLead al armarla.")).toBeInTheDocument();
+    expect(box.getByText(/12\.500,00/)).toBeInTheDocument();
+    expect(asked[0].getAll("status")).toEqual(["APPROVED"]);
+    expect(asked[0].get("resellerId")).toBe(NORTH);
+    await confirmBuild(box);
+    expect(posted).toEqual([{ resellerId: NORTH, periodEnd: todayInBuenosAires(), reason: REASON }]);
+  }, 20_000);
+
+  it("does not accept a period end after today in Buenos Aires", async () => {
+    const { posted, asked } = buildPayout([commission({ resellerId: NORTH, status: "APPROVED" })]);
+    const box = await openBuildDialog();
+    await box.findByText(/1 movimiento\./);
+    const field = box.getByLabelText("Cierre del período");
+    expect(field).toHaveAttribute("max", todayInBuenosAires());
+    const before = asked.length;
+    fireEvent.change(field, { target: { value: "2999-01-01" } });
+    expect(box.getAllByText("El cierre del período no puede ser posterior a hoy.").length).toBeGreaterThan(0);
+    await confirmBuild(box);
+    expect(posted).toEqual([]);
+    expect(asked).toHaveLength(before);
+  }, 20_000);
+
+  it("refuses mixed currencies before asking core", async () => {
+    const { posted } = buildPayout([
+      commission({ id: "c1", resellerId: NORTH, status: "APPROVED" }),
+      commission({ id: "c2", resellerId: NORTH, status: "APPROVED", amount: { amountMinor: 5_000, currency: "USD" } }),
+    ]);
+    const box = await openBuildDialog();
+    expect(await box.findByText(/ARS$/)).toBeInTheDocument();
+    expect(box.getByText(/USD$/)).toBeInTheDocument();
+    expect(box.queryByText("Monto")).toBeNull();
+    await confirmBuild(box);
+    expect(await box.findByText("Las comisiones aprobadas mezclan monedas y no entran en una sola liquidación.")).toBeInTheDocument();
+    expect(posted).toEqual([]);
+  }, 20_000);
+
+  it("refuses a balance that is not positive before asking core", async () => {
+    const { posted } = buildPayout([
+      commission({ id: "c1", resellerId: NORTH, status: "APPROVED", amount: { amountMinor: 100_000, currency: "ARS" } }),
+      commission({ id: "c2", resellerId: NORTH, status: "APPROVED", kind: "REVERSAL", reversesEntryId: "c0", amount: { amountMinor: -300_000, currency: "ARS" } }),
+    ]);
+    const box = await openBuildDialog();
+    await box.findByText(/2 movimientos\./);
+    await confirmBuild(box);
+    expect(await box.findByText("El saldo aprobado no es positivo. Queda para la próxima liquidación.")).toBeInTheDocument();
+    expect(posted).toEqual([]);
+  }, 20_000);
+
+  it.each([
+    ["PAYOUT_NOTHING_TO_PAY", "Ese revendedor no tiene comisiones aprobadas para liquidar en ese período."],
+    ["PAYOUT_MIXED_CURRENCIES", "Las comisiones aprobadas están en más de una moneda y una liquidación lleva una sola. Armá una por moneda."],
+    ["PAYOUT_NOT_POSITIVE", "El total de la liquidación no es positivo. Revisá las reversas antes de armarla."],
+  ])("explains %s when core refuses after the preview", async (code, message) => {
+    const { posted } = buildPayout([commission({ resellerId: NORTH, status: "APPROVED" })], () => json(409, { error: "x", message: "x", code }));
+    const box = await openBuildDialog();
+    await box.findByText(/1 movimiento\./);
+    await confirmBuild(box);
+    expect(await box.findByText(message)).toBeInTheDocument();
+    expect(posted).toHaveLength(1);
+    expect(box.getByRole("button", { name: "Armar liquidación", hidden: true })).toBeEnabled();
+  }, 20_000);
+});
+
+describe("mark a payout paid", () => {
+  const EXPORTED: Payout = { ...PAYOUT, resellerId: NORTH, status: "EXPORTED" };
+
+  function renderPayout(answer: (body: unknown) => Reply) {
+    const posted: unknown[] = [];
+    let current: Payout = EXPORTED;
+    renderAdmin(`/liquidaciones/${PAYOUT.id}`, ["FINANCE"], (method, url, body) => {
+      if (url.pathname === "/admin/resellers") return page([NORTH_RESELLER]);
+      if (method === "POST" && url.pathname === `/admin/payouts/${PAYOUT.id}/paid`) {
+        posted.push(body);
+        const reply = answer(body);
+        if (!(reply instanceof Error) && reply.status === 200) current = reply.body as Payout;
+        return reply;
+      }
+      if (url.pathname === `/admin/payouts/${PAYOUT.id}`) return json(200, { payout: current, entries: [] });
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    return posted;
+  }
+
+  it("sends the trimmed transfer reference and shows the payout paid", async () => {
+    const posted = renderPayout((body) => {
+      const reference = (body as { transferReference: string | null }).transferReference;
+      return json(200, { ...EXPORTED, status: "PAID", paidAt: PAST, transferReference: reference });
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Marcar pagada" }, { timeout: 5000 }));
+    const box = within(dialogTitled("Marcar pagada"));
+    expect(box.getByText(/15\.000,00/)).toBeInTheDocument();
+    await userEvent.type(box.getByLabelText(/Referencia de la transferencia/), "  OP-778899  ");
+    await userEvent.type(box.getByLabelText("Motivo"), REASON);
+    await userEvent.click(box.getByRole("button", { name: "Marcar pagada", hidden: true }));
+    expect(posted).toEqual([{ transferReference: "OP-778899", reason: REASON }]);
+    expect(await screen.findByText("La liquidación quedó pagada.")).toBeInTheDocument();
+    expect(await screen.findByText("OP-778899")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Marcar pagada" })).toBeNull();
+  }, 20_000);
+
+  it("sends no reference when it is blank and keeps the dialog with the error when core refuses", async () => {
+    const posted = renderPayout(() => json(409, { error: "Only an exported payout can be marked paid", message: "x" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Marcar pagada" }, { timeout: 5000 }));
+    const box = within(dialogTitled("Marcar pagada"));
+    await userEvent.type(box.getByLabelText("Motivo"), REASON);
+    await userEvent.click(box.getByRole("button", { name: "Marcar pagada", hidden: true }));
+    expect(posted).toEqual([{ transferReference: null, reason: REASON }]);
+    expect(await box.findByText("El estado cambió y esta acción ya no aplica. Recargá para ver lo último.")).toBeInTheDocument();
+    expect(screen.queryByText("La liquidación quedó pagada.")).toBeNull();
   }, 20_000);
 });

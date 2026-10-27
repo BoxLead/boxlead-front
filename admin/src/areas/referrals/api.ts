@@ -1,5 +1,6 @@
 import { adminApi } from "../../api/client";
 import { AdminApiError } from "../../api/errors";
+import { isDay, RANGE_PROBLEM } from "../../components/list/filterRules";
 import type { AdminPage, Money } from "../../api/types";
 import type { Attribution, Commission, CustomerMatch, NewReseller, Payout, ReferralCode, Reseller } from "./types";
 
@@ -52,6 +53,8 @@ export function payoutFileName(payout: Payout): string {
   return `liquidacion-${payout.periodEnd}-${payout.id}.csv`;
 }
 
+const REVOKE_AFTER_MS = 10_000;
+
 export function saveBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -62,7 +65,7 @@ export function saveBlob(blob: Blob, fileName: string): void {
   document.body.append(link);
   link.click();
   link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  window.setTimeout(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);
 }
 
 export async function downloadPayout(payout: Payout, reason: string): Promise<void> {
@@ -93,6 +96,20 @@ export function canReverse(commission: Commission): boolean {
 }
 
 const BUENOS_AIRES_OFFSET = "-03:00";
+
+export function todayInBuenosAires(now = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+}
+
+const FORMAT_PROBLEM = "Una de las fechas no tiene el formato correcto.";
+const FUTURE_START = "Sin fecha de fin el período termina hoy, así que la de inicio no puede ser posterior.";
+
+export function clickRangeProblem(from: string, to: string, today: string): string | null {
+  if ((from && !isDay(from)) || (to && !isDay(to))) return FORMAT_PROBLEM;
+  if (!from) return null;
+  if (to) return from > to ? RANGE_PROBLEM : null;
+  return from > today ? FUTURE_START : null;
+}
 
 export function releasedBy(commission: Commission, periodEnd: string): boolean {
   const end = Date.parse(`${periodEnd}T00:00:00${BUENOS_AIRES_OFFSET}`) + 24 * 60 * 60 * 1000;

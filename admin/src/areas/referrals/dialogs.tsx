@@ -3,7 +3,7 @@ import { AdminApiError, errorText } from "../../api/errors";
 import type { Money } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { formatDate, formatMoney } from "../../format";
-import { payableCommissions, referralsApi, totalsByCurrency, type CommissionAction } from "./api";
+import { payableCommissions, referralsApi, todayInBuenosAires, totalsByCurrency, type CommissionAction } from "./api";
 import { COMMISSION_KIND, customerName, VAT_CONDITIONS } from "./labels";
 import { SelectField, TextField } from "./parts";
 import type { Attribution, Commission, CustomerMatch, Payout, Reseller } from "./types";
@@ -183,7 +183,7 @@ const ACTION_COPY: Record<CommissionAction, { title: string; confirm: string; te
   reverse: {
     title: "Revertir comisión",
     confirm: "Revertir",
-    text: "Se agrega una reversa por lo que quede de esta comisión. Si ya se pagó, se descuenta de la próxima liquidación. No se puede deshacer.",
+    text: "Se agrega una reversa por lo que quede de esta comisión. Si la comisión ya está en una liquidación, armada o pagada, la reversa queda para la próxima liquidación. No se puede deshacer.",
     danger: true,
   },
 };
@@ -253,9 +253,7 @@ export function ApproveDialog({ commissions, onClose, onDone }: Closable & { com
 
 type Preview = { status: "idle" } | { status: "loading" } | { status: "ready"; commissions: Commission[] } | { status: "error"; message: string };
 
-function todayInBuenosAires(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
-}
+const FUTURE_PERIOD = "El cierre del período no puede ser posterior a hoy.";
 
 type CreatePayoutDialogProps = Closable & {
   resellers: readonly Reseller[];
@@ -265,10 +263,12 @@ type CreatePayoutDialogProps = Closable & {
 
 export function CreatePayoutDialog({ resellers, fixedReseller, onClose, onCreated }: CreatePayoutDialogProps) {
   const [resellerId, setResellerId] = useState(fixedReseller?.id ?? "");
-  const [periodEnd, setPeriodEnd] = useState(todayInBuenosAires);
+  const [today] = useState(todayInBuenosAires);
+  const [periodEnd, setPeriodEnd] = useState(today);
   const [preview, setPreview] = useState<Preview>({ status: "idle" });
   const [tried, setTried] = useState(false);
-  const ready = Boolean(resellerId && periodEnd);
+  const future = periodEnd > today;
+  const ready = Boolean(resellerId && periodEnd && !future);
   const [previewKey, setPreviewKey] = useState("");
   const key = ready ? `${resellerId}|${periodEnd}` : "";
   if (key !== previewKey) {
@@ -277,7 +277,7 @@ export function CreatePayoutDialog({ resellers, fixedReseller, onClose, onCreate
   }
 
   useEffect(() => {
-    if (!resellerId || !periodEnd) return;
+    if (!resellerId || !periodEnd || periodEnd > today) return;
     let cancelled = false;
     payableCommissions(resellerId, periodEnd).then(
       (commissions) => {
@@ -290,7 +290,7 @@ export function CreatePayoutDialog({ resellers, fixedReseller, onClose, onCreate
     return () => {
       cancelled = true;
     };
-  }, [resellerId, periodEnd]);
+  }, [resellerId, periodEnd, today]);
 
   const amounts = preview.status === "ready" ? preview.commissions.map((commission) => commission.amount) : [];
   const total = singleAmount(amounts);
@@ -299,6 +299,7 @@ export function CreatePayoutDialog({ resellers, fixedReseller, onClose, onCreate
   async function confirm(reason: string) {
     setTried(true);
     if (!resellerId || !periodEnd) refuse("Elegí el revendedor y el cierre del período.");
+    if (future) refuse(FUTURE_PERIOD);
     if (preview.status === "ready" && preview.commissions.length === 0) refuse("No hay comisiones aprobadas para liquidar hasta esa fecha.");
     if (preview.status === "ready" && totalsByCurrency(amounts).length > 1) refuse("Las comisiones aprobadas mezclan monedas y no entran en una sola liquidación.");
     if (preview.status === "ready" && total && total.amountMinor <= 0) refuse("El saldo aprobado no es positivo. Queda para la próxima liquidación.");
@@ -321,7 +322,14 @@ export function CreatePayoutDialog({ resellers, fixedReseller, onClose, onCreate
             error={tried && !resellerId ? "Elegí un revendedor." : null}
           />
         )}
-        <TextField label="Cierre del período" type="date" value={periodEnd} onChange={setPeriodEnd} error={tried && !periodEnd ? "Elegí una fecha." : null} />
+        <TextField
+          label="Cierre del período"
+          type="date"
+          value={periodEnd}
+          max={today}
+          onChange={setPeriodEnd}
+          error={tried && !periodEnd ? "Elegí una fecha." : future ? FUTURE_PERIOD : null}
+        />
       </div>
       {preview.status === "loading" ? (
         <p className="ref-muted" role="status">

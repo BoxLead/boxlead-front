@@ -82,7 +82,7 @@ export type Commission = {
   id: string;
   resellerId: string;
   customerUserId: string;
-  paymentId: string | null;
+  paymentId: string;
   kind: CommissionKind;
   reversesEntryId: string | null;
   cycleNumber: number;

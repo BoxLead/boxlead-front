@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import type { Page, Request } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, settled, expireAdminSession, reauthenticate } from "./support.ts";
@@ -112,8 +113,11 @@ test.describe("roles", () => {
     await enterAdmin(page, "/revendedores");
     await expect(page.getByRole("link", { name: "Agencia Norte" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nuevo revendedor" })).toHaveCount(0);
+    await expect(page.getByRole("columnheader", { name: "Tasa" })).toHaveCount(1);
+    await expect(page.getByRole("columnheader", { name: "Comisión" })).toHaveCount(0);
     await page.getByRole("link", { name: "Agencia Norte" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Agencia Norte" })).toBeVisible();
+    await expect(page.locator(".fact").filter({ hasText: "Tasa" })).toContainText("50");
     await expect(page.getByText("Los datos fiscales y de cobro los ve solo Finanzas.")).toBeVisible();
     await expect(page.getByText("Los totales de comisión los ve solo Finanzas.")).toBeVisible();
     await expect(page.getByText("30-11111111-9")).toHaveCount(0);
@@ -136,6 +140,111 @@ test.describe("roles", () => {
     await expect(page.getByRole("link", { name: "Agencia Norte" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nuevo revendedor" })).toHaveCount(0);
   });
+});
+
+test("a clicks range that ends before it starts warns in its section and keeps the screen", async ({ page }) => {
+  await seed(["OWNER"]);
+  await enterAdmin(page, `/revendedores/${NORTH}`);
+  const clicks = page.getByRole("region", { name: "Clics por día" });
+  await expect(clicks.getByText(/hubo/)).toBeVisible();
+  const toggle = clicks.getByRole("button", { name: "Filtros" });
+  if (await toggle.isVisible()) await toggle.click();
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === `/admin/resellers/${NORTH}`) asked.push(new URL(request.url()).search);
+  });
+  await clicks.getByLabel("Hasta").fill("2026-10-10");
+  await expect(clicks.getByText(/hubo/)).toBeVisible();
+  await clicks.getByLabel("Desde").fill("2026-10-20");
+  await expect(clicks.getByText("Revisá el período")).toBeVisible();
+  await expect(clicks.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Agencia Norte" })).toBeVisible();
+  await expect(clicks.getByLabel("Desde")).toHaveValue("2026-10-20");
+  await expect(clicks.getByLabel("Hasta")).toHaveValue("2026-10-10");
+  await expect(page.getByText("No pudimos cargar esta pantalla")).toHaveCount(0);
+  await expect(page.getByText("ana@example.com")).toBeVisible();
+  expect(asked.some((search) => search.includes("from=2026-10-20"))).toBe(false);
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await clicks.getByRole("button", { name: "Limpiar" }).click();
+  await expect(clicks.getByText("En los últimos 30 días", { exact: false })).toBeVisible();
+});
+
+const MOCK_HEADERS = { "X-Requested-With": "boxlead-web" };
+
+test("a commissions range that ends before it starts is caught before core and core refuses it too", async ({ page }) => {
+  await seed(["FINANCE"]);
+  await enterAdmin(page, "/comisiones");
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/admin/commissions") asked.push(new URL(request.url()).search);
+  });
+  await page.goto("/comisiones?from=2026-10-20&to=2026-10-10");
+  await expect(page.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeVisible();
+  expect(asked).toEqual([]);
+  const refused = await page.request.get(`${adminMockUrl()}/admin/commissions?from=2026-10-20&to=2026-10-10`, { headers: MOCK_HEADERS });
+  expect(refused.status()).toBe(400);
+  const sameDay = await page.request.get(`${adminMockUrl()}/admin/commissions?from=2026-10-10&to=2026-10-10`, { headers: MOCK_HEADERS });
+  expect(sameDay.status()).toBe(200);
+});
+
+function dayInBuenosAires(daysAgo: number): string {
+  return new Date(Date.now() - daysAgo * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+}
+
+test("commission filters survive a reload and going back", async ({ page }) => {
+  await seed(["FINANCE"]);
+  await enterAdmin(page, "/comisiones");
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  const filters = page.getByRole("search", { name: "Filtros" });
+  const toggle = filters.getByRole("button", { name: "Filtros" });
+  if (await toggle.isVisible()) await toggle.click();
+  const from = dayInBuenosAires(42);
+  await filters.getByLabel("Estado").selectOption("APPROVED");
+  await filters.getByLabel("Revendedor").selectOption({ label: "Agencia Norte" });
+  await filters.getByLabel("Desde").fill(from);
+
+  async function expectFiltered() {
+    await expect(filters.getByLabel("Estado")).toHaveValue("APPROVED");
+    await expect(filters.getByLabel("Revendedor")).toHaveValue(NORTH);
+    await expect(filters.getByLabel("Desde")).toHaveValue(from);
+    await expect(page.getByRole("button", { name: "Revertir" })).toHaveCount(1);
+  }
+
+  await expectFiltered();
+  const [reloaded] = await Promise.all([
+    page.waitForRequest((request) => new URL(request.url()).pathname === "/admin/commissions"),
+    page.reload(),
+  ]);
+  const query = new URL(reloaded.url()).searchParams;
+  expect([query.getAll("status"), query.get("resellerId"), query.get("from")]).toEqual([["APPROVED"], NORTH, from]);
+  await expectFiltered();
+  await page.getByRole("link", { name: "Agencia Norte" }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: "Agencia Norte" })).toBeVisible();
+  await page.goBack();
+  await expectFiltered();
+});
+
+test("the mock answers with the codes core sends", async ({ page }) => {
+  await seed(["OWNER"]);
+  await enterAdmin(page, "/revendedores");
+  const post = (path: string, data: unknown) => page.request.post(`${adminMockUrl()}${path}`, { headers: MOCK_HEADERS, data });
+  const nothing = await post("/admin/payouts", { resellerId: "00000102-0b0e-4000-8000-000000000002", periodEnd: dayInBuenosAires(0), reason: REASON });
+  expect([nothing.status(), (await nothing.json()).code]).toEqual([409, "PAYOUT_NOTHING_TO_PAY"]);
+  const existing = await post("/admin/resellers", {
+    userId: "00000201-0b0e-4000-8000-000000000001",
+    displayName: "Otra",
+    legalName: "Otra SRL",
+    taxId: "30-1",
+    vatCondition: "MONOTRIBUTO",
+    reason: REASON,
+  });
+  expect([existing.status(), (await existing.json()).code]).toEqual([409, "RESELLER_EXISTS"]);
+  const paidAccrual = "00000606-0b0e-4000-8000-000000000006";
+  const first = await post(`/admin/commissions/${paidAccrual}/reverse`, { reason: REASON });
+  expect(first.status()).toBe(200);
+  const again = await post(`/admin/commissions/${paidAccrual}/reverse`, { reason: REASON });
+  expect([again.status(), (await again.json()).code]).toEqual([409, "COMMISSION_NOTHING_TO_REVERSE"]);
 });
 
 test.describe("owner actions", () => {
@@ -272,9 +381,19 @@ test.describe("finance actions", () => {
     await page.goto("/comisiones?status=HELD");
     await page.getByRole("button", { name: "Revertir" }).first().click();
     await expect(dialog(page).getByText("No se puede deshacer.", { exact: false })).toBeVisible();
-    const reversed = await confirmWithReason(page, "Revertir", "/reverse");
+    await expect(dialog(page).getByText("ya está en una liquidación, armada o pagada, la reversa queda para la próxima liquidación", { exact: false })).toBeVisible();
+    await expect(dialog(page).getByText("Si ya se pagó", { exact: false })).toHaveCount(0);
+    const [reversed, answer] = await Promise.all([
+      confirmWithReason(page, "Revertir", "/reverse"),
+      page.waitForResponse((response) => response.url().includes("/reverse")),
+    ]);
     expect(reversed.postDataJSON()).toEqual({ reason: REASON });
     await expect(page.getByText("Agregamos la reversa de la comisión.")).toBeVisible();
+    const reversal = (await answer.json()) as { paymentId: string | null; reversesEntryId: string };
+    const listed = await page.request.get(`${adminMockUrl()}/admin/commissions?resellerId=${NORTH}`, { headers: { "X-Requested-With": "boxlead-web" } });
+    const original = ((await listed.json()) as { items: { id: string; paymentId: string }[] }).items.find((row) => row.id === reversal.reversesEntryId);
+    expect(reversal.paymentId).toBeTruthy();
+    expect(reversal.paymentId).toBe(original?.paymentId);
   });
 
   test("builds a payout, exports its CSV and marks it paid", async ({ page }) => {
@@ -299,6 +418,19 @@ test.describe("finance actions", () => {
     expect(exported.headers()["x-requested-with"]).toBe("boxlead-web");
     expect(download.suggestedFilename()).toMatch(/^liquidacion-\d{4}-\d{2}-\d{2}-[0-9a-f-]+\.csv$/);
     expect(download.url()).toMatch(/^blob:/);
+    const bytes = await readFile(await download.path());
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const content = bytes.subarray(3).toString("utf8");
+    expect(content).not.toMatch(/[^\r]\n/);
+    const lines = content.split("\r\n");
+    const periodEnd = (created.postDataJSON() as { periodEnd: string }).periodEnd;
+    expect(lines).toEqual([
+      "Razón social,CUIT,Medio de cobro,Dato de cobro,Cierre del período,Total,Moneda",
+      `Agencia Norte de Prueba SRL,30-11111111-9,Transferencia bancaria,agencia.norte.prueba,${periodEnd},15000.00,ARS`,
+      "Fecha,Cliente,Ciclo,Tipo,Monto",
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2},c\*\*\*@example\.com,1,ACCRUAL,15000\.00$/),
+      "",
+    ]);
     await expect(page.getByText("Exportada", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Marcar pagada" }).click();

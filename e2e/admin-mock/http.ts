@@ -5,6 +5,7 @@ export type Access = "ANY" | readonly AdminRole[];
 export type MockReply = {
   status: number;
   body?: unknown;
+  text?: string;
   headers?: Record<string, string>;
 };
 

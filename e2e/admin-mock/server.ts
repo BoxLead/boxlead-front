@@ -14,9 +14,9 @@ const SELF = `http://localhost:${PORT}`;
 const AREAS: readonly MockArea[] = [customers, billing, invitations, referrals, operations];
 const ROLES: readonly AdminRole[] = ["OWNER", "FINANCE", "SUPPORT"];
 
-function send(res: ServerResponse, { status, body, headers }: MockReply) {
+function send(res: ServerResponse, { status, body, text, headers }: MockReply) {
   res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers });
-  res.end(body === undefined ? "" : JSON.stringify(body));
+  res.end(text ?? (body === undefined ? "" : JSON.stringify(body)));
 }
 
 function readCookies(req: IncomingMessage): Map<string, string> {
