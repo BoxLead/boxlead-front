@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { useId, type FormEvent, type ReactNode } from "react";
 import { SearchIcon } from "../../../../src/components/icons/UiIcons";
 import "./List.css";
 
@@ -65,11 +65,11 @@ type SearchFilterProps = {
 
 function SearchForm({ label, value, placeholder, onSubmit }: SearchFilterProps) {
   const id = useId();
-  const [draft, setDraft] = useState(value);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(draft.trim());
+    const typed = new FormData(event.currentTarget).get("query");
+    onSubmit(typeof typed === "string" ? typed.trim() : "");
   }
 
   return (
@@ -78,14 +78,7 @@ function SearchForm({ label, value, placeholder, onSubmit }: SearchFilterProps) 
         {label}
       </label>
       <div className="filter-search-row">
-        <input
-          id={id}
-          className="input"
-          type="search"
-          value={draft}
-          placeholder={placeholder}
-          onChange={(event) => setDraft(event.target.value)}
-        />
+        <input id={id} className="input" type="search" name="query" defaultValue={value} placeholder={placeholder} />
         <button type="submit" className="btn btn-secondary btn-icon" aria-label="Buscar">
           <SearchIcon width={16} height={16} />
         </button>
