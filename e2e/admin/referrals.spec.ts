@@ -302,6 +302,8 @@ test.describe("finance actions", () => {
     await page.goto("/comisiones?status=HELD");
     await page.getByRole("button", { name: "Revertir" }).first().click();
     await expect(dialog(page).getByText("No se puede deshacer.", { exact: false })).toBeVisible();
+    await expect(dialog(page).getByText("ya está en una liquidación, armada o pagada, la reversa queda para la próxima liquidación", { exact: false })).toBeVisible();
+    await expect(dialog(page).getByText("Si ya se pagó", { exact: false })).toHaveCount(0);
     const reversed = await confirmWithReason(page, "Revertir", "/reverse");
     expect(reversed.postDataJSON()).toEqual({ reason: REASON });
     await expect(page.getByText("Agregamos la reversa de la comisión.")).toBeVisible();

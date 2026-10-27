@@ -183,7 +183,7 @@ const ACTION_COPY: Record<CommissionAction, { title: string; confirm: string; te
   reverse: {
     title: "Revertir comisión",
     confirm: "Revertir",
-    text: "Se agrega una reversa por lo que quede de esta comisión. Si ya se pagó, se descuenta de la próxima liquidación. No se puede deshacer.",
+    text: "Se agrega una reversa por lo que quede de esta comisión. Si la comisión ya está en una liquidación, armada o pagada, la reversa queda para la próxima liquidación. No se puede deshacer.",
     danger: true,
   },
 };
