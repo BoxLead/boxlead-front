@@ -53,6 +53,12 @@ export default defineConfig([
     },
   },
   {
+    files: ['src/analytics/gtag.ts'],
+    rules: {
+      'prefer-rest-params': 'off',
+    },
+  },
+  {
     files: ['e2e/**/*.ts', 'scripts/**/*.ts', '*.config.ts'],
     languageOptions: {
       globals: globals.node,

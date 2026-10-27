@@ -41,13 +41,14 @@ describe("analytics consent", () => {
     expect(document.head.querySelector("script")).toBeNull();
 
     gtag.applyConsent("granted");
-    const layer = window.dataLayer ?? [];
+    const layer = (window.dataLayer ?? []).map((entry) => Array.from(entry));
+    expect(window.dataLayer?.every((entry) => Object.prototype.toString.call(entry) === "[object Arguments]")).toBe(true);
     expect(layer[0]).toEqual(["consent", "default", expect.objectContaining({ analytics_storage: "denied", ad_storage: "denied" })]);
     expect(layer).toContainEqual(["consent", "update", { analytics_storage: "granted" }]);
     expect(document.head.querySelector("script")?.getAttribute("src")).toBe("https://www.googletagmanager.com/gtag/js?id=G-TEST");
 
     gtag.trackEvent("demo_play");
-    expect(layer.at(-1)).toEqual(["event", "demo_play", {}]);
+    expect(Array.from(window.dataLayer?.at(-1) ?? [])).toEqual(["event", "demo_play", {}]);
   });
 
   it("never measures inside the app", async () => {
