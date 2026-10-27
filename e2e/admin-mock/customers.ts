@@ -454,7 +454,7 @@ function search(query: URLSearchParams): MockReply {
     .filter((row) => plans.length === 0 || (row.planCode !== null && plans.includes(row.planCode)))
     .filter((row) => statuses.length === 0 || statuses.includes(row.subscriptionStatus ?? NO_SUBSCRIPTION))
     .filter((row) => (!from || dayOf(row.createdAt) >= from) && (!to || dayOf(row.createdAt) <= to))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
   return page(rows, query, PAGE_SIZE);
 }
 
