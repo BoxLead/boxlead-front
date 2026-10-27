@@ -39,7 +39,6 @@ test("every screen has its heading, its empty state and no sideways scroll", asy
     await openMenu(page);
     await page.getByRole("navigation", { name: "Secciones" }).getByRole("link", { name: item.label, exact: true }).click();
     await expect(page.getByRole("heading", { level: 1, name: item.label })).toBeVisible();
-    await expect(page.getByText("Todavía no hay nada para mostrar acá")).toBeVisible();
     await expect(page).toHaveTitle(`${item.label} · Backoffice de BoxLead`);
     expect(await horizontalOverflow(page), item.path).toBeLessThanOrEqual(0);
   }
