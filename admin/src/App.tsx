@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Loading } from "../../src/components/Loading";
 import { ToastProvider } from "../../src/components/ui/ToastProvider";
@@ -13,6 +13,8 @@ import { ForbiddenScreen, NotFoundScreen } from "./layout/MissingScreens";
 import { ROUTES } from "./routes";
 import { canAccess, type Access } from "./session/roles";
 import { useAdmin, useSession } from "./session/session";
+
+const GalleryScreen = import.meta.env.DEV ? lazy(() => import("./dev/Gallery").then((module) => ({ default: module.GalleryScreen }))) : null;
 
 function Gate({ access, children }: { access: Access; children: ReactNode }) {
   const me = useAdmin();
@@ -35,6 +37,16 @@ function AdminRoutes() {
             }
           />
         ))}
+        {GalleryScreen ? (
+          <Route
+            path="/__ui"
+            element={
+              <Suspense fallback={<Loading inline />}>
+                <GalleryScreen />
+              </Suspense>
+            }
+          />
+        ) : null}
         <Route path="*" element={<NotFoundScreen />} />
       </Route>
     </Routes>

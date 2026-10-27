@@ -221,7 +221,7 @@
 
   .admin-bar {
     position: relative;
-    z-index: 2;
+    z-index: var(--signal-z-sticky);
     min-height: var(--signal-space-12);
     padding: 0 var(--signal-gutter-mobile);
   }
@@ -238,7 +238,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 1;
+    z-index: var(--signal-z-raised);
     padding: 0;
     border: 0;
     background: var(--signal-backdrop);
@@ -250,7 +250,7 @@
     top: 100%;
     right: 0;
     left: 0;
-    z-index: 2;
+    z-index: var(--signal-z-sticky);
     display: flex;
     max-height: calc(100dvh - var(--signal-space-12));
     overflow-y: auto;

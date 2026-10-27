@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
-import { enterAdmin, enterCode, expect, INVALID_CODE, openMenu, resetAdmin, signIn, test, VALID_CODE } from "./support.ts";
+import { adminMockUrl, enterAdmin, enterCode, expect, INVALID_CODE, openMenu, resetAdmin, signIn, test, VALID_CODE } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 
@@ -54,5 +54,69 @@ for (const scheme of ["light", "dark"] as const) {
     await page.reload();
     await expect(page.getByText("Se cortó la conexión con BoxLead")).toBeVisible();
     await shot(page, "09-sin-conexion", scheme);
+  });
+}
+
+type Capture = { name: string; path: string; scenario: string; follow?: boolean; ready: string | RegExp; dialog?: string };
+
+const SCREENS: Capture[] = [
+  { name: "10-inicio", path: "/", scenario: "customers", ready: "Usuarios nuevos" },
+  { name: "11-usuarios", path: "/usuarios", scenario: "customers", ready: "carla.ruiz@example.com" },
+  { name: "12-usuario", path: "/usuarios", scenario: "customers", follow: true, ready: "Suscripción" },
+  { name: "13-suscripciones", path: "/suscripciones", scenario: "default", ready: "Cuota impaga" },
+  { name: "14-pagos", path: "/pagos", scenario: "default", ready: "Aprobado" },
+  { name: "15-reembolsos", path: "/reembolsos", scenario: "default", ready: "Reembolsos" },
+  { name: "16-facturas", path: "/facturas", scenario: "default", ready: "Facturas" },
+  { name: "17-invitaciones", path: "/invitaciones", scenario: "invitations", ready: "Nueva invitación" },
+  { name: "18-demos", path: "/invitaciones?vista=demos", scenario: "invitations", ready: "Otorgar Demo" },
+  { name: "19-revendedores", path: "/revendedores", scenario: "referrals", ready: "Agencia Norte" },
+  { name: "20-revendedor", path: "/revendedores", scenario: "referrals", follow: true, ready: "Clics por día" },
+  { name: "21-comisiones", path: "/comisiones", scenario: "referrals", ready: "Devengada" },
+  { name: "22-liquidaciones", path: "/liquidaciones", scenario: "referrals", ready: "Armada" },
+  { name: "23-liquidacion", path: "/liquidaciones", scenario: "referrals", follow: true, ready: "Movimientos" },
+  { name: "24-uso", path: "/uso", scenario: "operations", ready: "Costo estimado en USD" },
+  { name: "25-pedidos", path: "/pedidos", scenario: "operations", ready: "BX-7KX2M9", dialog: "Cerrar pedido" },
+  { name: "26-equipo", path: "/equipo", scenario: "operations", ready: "Único Dueño" },
+  { name: "27-auditoria", path: "/auditoria", scenario: "operations", ready: "Ver antes y después", dialog: "Ver antes y después" },
+];
+
+async function seed(scenario: string) {
+  const res = await fetch(`${adminMockUrl()}/__reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Requested-With": "boxlead-web" },
+    body: JSON.stringify({ scenario, roles: ["OWNER"] }),
+  });
+  expect(res.ok).toBe(true);
+}
+
+for (const scheme of ["light", "dark"] as const) {
+  test(`captures every screen with data in ${scheme}`, async ({ page }) => {
+    test.skip(!DIR, "only with SCREENSHOT_DIR");
+    test.setTimeout(240_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    let scenario = "";
+    for (const screen of SCREENS) {
+      if (screen.scenario !== scenario) {
+        scenario = screen.scenario;
+        await seed(scenario);
+        await page.context().clearCookies();
+        await enterAdmin(page, screen.path);
+      } else {
+        await page.goto(screen.path);
+      }
+      if (screen.follow) {
+        await page.locator(".data-table a").first().click();
+        await expect(page.getByRole("navigation", { name: "Ubicación" })).toBeVisible();
+      }
+      await expect(page.getByText(screen.ready).first()).toBeVisible();
+      await expect(page.locator(".skeleton")).toHaveCount(0);
+      await shot(page, screen.name, scheme);
+      if (screen.dialog) {
+        await page.getByRole("button", { name: screen.dialog }).first().click();
+        await expect(page.getByRole("dialog")).toBeVisible();
+        await shot(page, `${screen.name}-dialogo`, scheme);
+        await page.keyboard.press("Escape");
+      }
+    }
   });
 }
