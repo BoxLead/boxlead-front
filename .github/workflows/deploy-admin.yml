@@ -85,6 +85,8 @@ jobs:
           context: .
           target: admin-export
           push: false
+          provenance: false
+          sbom: false
           outputs: type=local,dest=dist-admin
           build-args: |
             VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
