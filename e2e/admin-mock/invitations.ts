@@ -6,6 +6,10 @@ const DAY = 86_400_000;
 const PAGE_SIZE = 50;
 const MOCK_DEMO_DAYS = 14;
 const MAX_DEMO_DAYS = 365;
+const MAX_EMAIL_LENGTH = 254;
+const MIN_REASON = 10;
+const MAX_REASON = 500;
+const INVALID_REQUEST = "The request has a value that is not valid";
 const INVITATION_URL = "http://localhost:5173/invitacion";
 const INVITATION_STATUSES: readonly InvitationStatus[] = ["OPEN", "ACCEPTED", "REVOKED", "EXPIRED"];
 const DEMO_STATUSES: readonly DemoGrantStatus[] = ["ACTIVE", "ENDED", "REVOKED"];
@@ -18,7 +22,10 @@ export const MOCK_USERS = [
   { id: "0b0e0000-0000-4000-8000-000000000102", email: "martin@ferreteriasur.com", name: "Martín Gómez" },
   { id: "0b0e0000-0000-4000-8000-000000000103", email: "carla@inmobiliariarivas.com", name: "Carla Rivas" },
   { id: "0b0e0000-0000-4000-8000-000000000104", email: "sofia@clinicadental.com", name: "Sofía Pereyra" },
+  { id: "0b0e0000-0000-4000-8000-000000000105", email: "diego@agenciadelsur.com", name: "Diego Álvarez" },
 ] as const;
+
+export const MOCK_SUBSCRIBED = { userId: MOCK_USERS[4].id, planCode: "STARTER", subscriptionStatus: "ACTIVE" } as const;
 
 export const MOCK_RESELLER = { id: "0b0e0000-0000-4000-8000-000000000201", displayName: "Agencia Norte" };
 
@@ -101,9 +108,41 @@ function startOfDay(day: string): number {
   return Date.parse(`${day}T00:00:00-03:00`);
 }
 
-function reasonProblem(body: Record<string, unknown>): MockReply | null {
-  const reason = typeof body.reason === "string" ? body.reason.trim() : "";
-  return reason.length === 0 || reason.length > 500 ? failure(400, "A reason is required") : null;
+type FieldProblem = { field: string; message: string };
+
+function invalid(fields: FieldProblem[]): MockReply | null {
+  if (fields.length === 0) return null;
+  return { status: 400, body: { error: "Validation failed", message: "Validation failed", fields } };
+}
+
+function reasonFields(body: Record<string, unknown>): FieldProblem[] {
+  const reason = typeof body.reason === "string" ? body.reason : "";
+  if (!reason.trim()) return [{ field: "reason", message: "must not be blank" }];
+  if (reason.length < MIN_REASON || reason.length > MAX_REASON) return [{ field: "reason", message: `size must be between ${MIN_REASON} and ${MAX_REASON}` }];
+  return [];
+}
+
+function demoDaysFields(value: unknown): FieldProblem[] {
+  if (value === null || value === undefined) return [];
+  if (!Number.isInteger(value) || (value as number) < 1) return [{ field: "demoDays", message: "must be greater than or equal to 1" }];
+  if ((value as number) > MAX_DEMO_DAYS) return [{ field: "demoDays", message: `must be less than or equal to ${MAX_DEMO_DAYS}` }];
+  return [];
+}
+
+function emailFields(value: unknown): FieldProblem[] {
+  const email = typeof value === "string" ? value : "";
+  if (!email.trim()) return [{ field: "email", message: "must not be blank" }];
+  if (email.length > MAX_EMAIL_LENGTH) return [{ field: "email", message: `size must be between 0 and ${MAX_EMAIL_LENGTH}` }];
+  if (!/^[^\s@]*@[^\s@]*$/.test(email)) return [{ field: "email", message: "must be a well-formed email address" }];
+  return [];
+}
+
+function instantFields(field: string, value: unknown): FieldProblem[] {
+  return instant(value) === null ? [{ field, message: "must not be null" }] : [];
+}
+
+function invalidRequest(): MockReply {
+  return failure(400, INVALID_REQUEST);
 }
 
 function instant(value: unknown): number | null {
@@ -144,19 +183,25 @@ function listGrants(query: URLSearchParams): MockReply {
 }
 
 function createInvitation(body: Record<string, unknown>, admin: AdminIdentity): MockReply {
-  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-  const expiresAt = instant(body.expiresAt);
+  const problems = invalid([
+    ...emailFields(body.email),
+    ...instantFields("expiresAt", body.expiresAt),
+    ...demoDaysFields(body.demoDays),
+    ...reasonFields(body),
+  ]);
+  if (problems) return problems;
+  const email = (body.email as string).trim().toLowerCase();
+  const expiresAt = instant(body.expiresAt) as number;
   const demoDays = body.demoDays ?? null;
   const resellerId = typeof body.resellerId === "string" ? body.resellerId : null;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || expiresAt === null) return failure(400, "Invalid invitation");
-  if (demoDays !== null && (!Number.isInteger(demoDays) || (demoDays as number) < 1 || (demoDays as number) > MAX_DEMO_DAYS)) {
-    return failure(400, "Invalid demo days");
-  }
-  const invalidReason = reasonProblem(body);
-  if (invalidReason) return invalidReason;
-  if (expiresAt <= Date.now()) return failure(400, "An invitation must expire in the future");
+  const at = email.indexOf("@");
+  if (at < 1 || at === email.length - 1) return failure(400, "An invitation needs a valid email", "INVITATION_EMAIL_INVALID");
   const self = selfOperation(admin, email === admin.email.toLowerCase());
   if (self) return self;
+  if (expiresAt <= Date.now()) return failure(400, "An invitation must expire in the future", "INVITATION_EXPIRY_PAST");
+  if (resellerId !== null && resellerId !== MOCK_RESELLER.id) {
+    return failure(409, "The reseller does not exist or is not active", "INVITATION_RESELLER_INVALID");
+  }
   const open = state.invitations.find((invitation) => invitation.email === email && !invitation.acceptedAt && !invitation.revokedAt);
   if (open && invitationStatus(open) === "OPEN") return failure(409, "This email already has an open invitation", "INVITATION_ALREADY_OPEN");
   if (open) open.revokedAt = new Date().toISOString();
@@ -177,14 +222,17 @@ function createInvitation(body: Record<string, unknown>, admin: AdminIdentity): 
   return { status: 201, body: { id, link } };
 }
 
-function revokeInvitation(id: string, body: Record<string, unknown>): MockReply {
-  const invalidReason = reasonProblem(body);
-  if (invalidReason) return invalidReason;
+function revokeInvitation(id: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
+  const problems = invalid(reasonFields(body));
+  if (problems) return problems;
   const invitation = state.invitations.find((candidate) => candidate.id === id);
   if (!invitation) return notFound();
+  const self = selfOperation(admin, invitation.email === admin.email.toLowerCase());
+  if (self) return self;
   if (invitation.acceptedAt || invitation.revokedAt) return failure(409, "The invitation is already closed", "INVITATION_CLOSED");
   invitation.revokedAt = new Date().toISOString();
-  return ok(invitation);
+  const { id: invitationId, email, demoDays, expiresAt, resellerId, acceptedAt, acceptedUserId, revokedAt } = invitation;
+  return ok({ id: invitationId, email, demoDays, expiresAt, resellerId, acceptedAt, acceptedUserId, revokedAt });
 }
 
 function currentGrant(userId: string): StoredGrant | undefined {
@@ -196,14 +244,16 @@ function grantResponse(grant: StoredGrant) {
 }
 
 function grantDemo(userId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
-  const invalidReason = reasonProblem(body);
-  if (invalidReason) return invalidReason;
+  const problems = invalid([...demoDaysFields(body.demoDays), ...reasonFields(body)]);
+  if (problems) return problems;
   const self = selfOperation(admin, userId === admin.userId);
   if (self) return self;
   if (!emailOf(userId)) return notFound();
   const days = body.demoDays ?? MOCK_DEMO_DAYS;
-  if (!Number.isInteger(days) || (days as number) < 1 || (days as number) > MAX_DEMO_DAYS) return failure(400, "Invalid demo days");
   if (currentGrant(userId)) return failure(409, "The user already used a demo", "DEMO_ALREADY_USED");
+  if (userId === MOCK_SUBSCRIBED.userId) {
+    return failure(409, "The user has a live subscription, a Demo would have no effect", "DEMO_SUBSCRIPTION_ACTIVE");
+  }
   const now = Date.now();
   const grant: StoredGrant = { id: randomUUID(), userId, invitationId: null, startsAt: at(now, 0), endsAt: at(now, days as number), revokedAt: null };
   state.grants.push(grant);
@@ -211,22 +261,21 @@ function grantDemo(userId: string, body: Record<string, unknown>, admin: AdminId
 }
 
 function extendDemo(userId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
-  const invalidReason = reasonProblem(body);
-  if (invalidReason) return invalidReason;
-  const endsAt = instant(body.endsAt);
-  if (endsAt === null) return failure(400, "Invalid end");
+  const problems = invalid([...instantFields("endsAt", body.endsAt), ...reasonFields(body)]);
+  if (problems) return problems;
+  const endsAt = instant(body.endsAt) as number;
   const self = selfOperation(admin, userId === admin.userId);
   if (self) return self;
   const grant = currentGrant(userId);
   if (!grant) return failure(404, "The user has no demo");
-  if (endsAt <= Date.now()) return failure(400, "A demo can only be extended into the future");
+  if (endsAt <= Date.now() || endsAt <= Date.parse(grant.endsAt)) return invalidRequest();
   grant.endsAt = new Date(endsAt).toISOString();
   return ok(grantResponse(grant));
 }
 
 function revokeDemo(userId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
-  const invalidReason = reasonProblem(body);
-  if (invalidReason) return invalidReason;
+  const problems = invalid(reasonFields(body));
+  if (problems) return problems;
   const self = selfOperation(admin, userId === admin.userId);
   if (self) return self;
   const grant = currentGrant(userId);
@@ -245,7 +294,7 @@ export const invitations: MockArea = {
       method: "POST",
       pattern: /^\/admin\/invitations\/([^/]+)\/revoke$/,
       access: ["SUPPORT"],
-      handle: ({ match, body }) => revokeInvitation(match[1], body),
+      handle: ({ match, body, admin }) => revokeInvitation(match[1], body, admin),
     },
     {
       method: "POST",
