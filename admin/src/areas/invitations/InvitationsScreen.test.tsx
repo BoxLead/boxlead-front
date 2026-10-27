@@ -151,6 +151,27 @@ describe("InvitationsScreen", () => {
     expect(screen.getByText("Revocaste la invitación de nora@panaderia.com.")).toBeInTheDocument();
   });
 
+  it("answers the second revoke of the same invitation with a conflict and loads the list again", async () => {
+    let revokes = 0;
+    const calls = renderScreen((method, url) => {
+      if (method === "POST" && url.pathname === "/admin/invitations/i1/revoke") {
+        revokes += 1;
+        return revokes === 1 ? json(200, {}) : json(409, { error: "Conflict", message: "closed", code: "INVITATION_CLOSED" });
+      }
+      return undefined;
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Revocar" }));
+    await giveReason("Revocar");
+    expect(await screen.findByText("Revocaste la invitación de nora@panaderia.com.")).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Revocar" }));
+    const listed = calls.filter((call) => call.url.pathname === "/admin/invitations").length;
+    await giveReason("Revocar");
+    expect(await dialog().findByText("La invitación ya está cerrada.")).toBeInTheDocument();
+    expect(revokes).toBe(2);
+    await userEvent.click(hidden("Cancelar"));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/invitations").length).toBe(listed + 1));
+  }, 15_000);
+
   it("loads the list again after closing a revoke that another admin already did", async () => {
     const calls = renderScreen((method, url) => {
       if (method === "POST" && url.pathname === "/admin/invitations/i1/revoke") {
