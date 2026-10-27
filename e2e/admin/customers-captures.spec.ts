@@ -1,13 +1,13 @@
 import type { Page } from "@playwright/test";
 import { resetCustomers, routeResellers, routeUsage, section } from "./customers-support.ts";
-import { enterAdmin, expect, test } from "./support.ts";
+import { enterAdmin, expect, test, settled } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const ANA = "0c000000-0000-4000-8000-000000000001";
 const ERROR = { status: 500, json: { error: "boom", message: "boom" } };
 
 async function shot(page: Page, name: string, scheme: string) {
-  await page.waitForTimeout(500);
+  await settled(page);
   const width = page.viewportSize()?.width ?? 0;
   await page.screenshot({ path: `${DIR}/${name}-${scheme}-${width}.png`, fullPage: true, animations: "disabled" });
 }
@@ -19,13 +19,18 @@ for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
 
     await resetCustomers(["OWNER"]);
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     await page.route("**/admin/overview*", async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 4000));
+      await held;
       await route.continue().catch(() => undefined);
     });
     await enterAdmin(page, "/");
     await expect(page.getByRole("status").filter({ hasText: "Cargando" })).toBeAttached();
     await shot(page, "11-inicio-cargando", scheme);
+    release();
     await page.unroute("**/admin/overview*");
     await page.reload();
     await expect(section(page, "Ingresos del mes")).toBeVisible();

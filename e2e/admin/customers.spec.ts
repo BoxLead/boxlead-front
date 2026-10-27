@@ -1,7 +1,7 @@
 import type { Page, Request } from "@playwright/test";
 import { RESELLERS } from "../admin-mock/customers.ts";
 import { resetCustomers, routeResellers, routeUsage, section } from "./customers-support.ts";
-import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
+import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, expireAdminSession, reauthenticate } from "./support.ts";
 
 const ANA = "0c000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
@@ -87,6 +87,42 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await expect(section(page, "Suscripción")).toContainText("Cuota impaga");
 });
 
+test("users keep their filters and page through a reload and going back", async ({ page }) => {
+  await resetCustomers(["SUPPORT"]);
+  await enterAdmin(page, "/usuarios");
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+  await page.getByRole("button", { name: "Siguiente" }).click();
+  await expect(page.getByText("21 a 24 de 24")).toBeVisible();
+  await expect(page).toHaveURL(/\?page=2$/);
+  await page.reload();
+  await expect(page.getByText("21 a 24 de 24")).toBeVisible();
+  await page.goBack();
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+  await expect(page).not.toHaveURL(/page=/);
+  await openFilters(page);
+  await page.getByLabel("Suscripción").selectOption("PAUSED");
+  await expect(page.getByText("1 a 1 de 1")).toBeVisible();
+  await expect(page).toHaveURL(/status=PAUSED/);
+  await page.reload();
+  await expect(page.getByText("1 a 1 de 1")).toBeVisible();
+  await expect(page.getByLabel("Suscripción")).toHaveValue("PAUSED");
+  await page.goBack();
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+  await expect(page).not.toHaveURL(/status=/);
+});
+
+test("users refuse a link with filters core would reject and offer to clear them", async ({ page }) => {
+  await resetCustomers(["SUPPORT"]);
+  await enterAdmin(page, "/usuarios?createdFrom=2026-10-27&createdTo=2026-10-01&query=a");
+  await expect(page.getByText("Revisá los filtros")).toBeVisible();
+  await page.getByRole("button", { name: "Limpiar filtros" }).click();
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+  await page.goto("/usuarios?page=9");
+  await expect(page.getByText("Esta página está vacía")).toBeVisible();
+  await page.getByRole("button", { name: "Ir a la primera página" }).click();
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+});
+
 test("users show an empty list and an error", async ({ page }) => {
   await resetCustomers(["OWNER"], "default");
   await enterAdmin(page, "/usuarios");
@@ -122,6 +158,21 @@ test("the owner pauses, resumes and cancels with a reason", async ({ page }) => 
   await expect(subscription).toContainText("La canceló el equipo");
   await expect(subscription.getByRole("button")).toHaveCount(0);
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+});
+
+test("the detail asks for the code and finishes the action when the admin session expired", async ({ page }) => {
+  await resetCustomers(["OWNER"]);
+  await enterAdmin(page, `/usuarios/${ANA}`);
+  const subscription = section(page, "Suscripción");
+  await subscription.getByRole("button", { name: "Pausar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Pausar suscripción" });
+  await expireAdminSession();
+  await dialog.getByLabel("Motivo").fill(REASON);
+  await dialog.getByRole("button", { name: "Pausar", exact: true }).click();
+  await reauthenticate(page);
+  await expect(page.getByText("La suscripción quedó pausada.")).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(subscription).toContainText("Pausada");
 });
 
 test("the dialog asks for a reason before it sends anything", async ({ page }) => {

@@ -1,6 +1,6 @@
 import type { Page, Request } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const NORTH = "00000101-0b0e-4000-8000-000000000001";
 const DRAFT_PAYOUT = "00000503-0b0e-4000-8000-000000000003";
@@ -249,6 +249,19 @@ test.describe("finance actions", () => {
     await expect(page.getByText("La comisión volvió a devengada.")).toBeVisible();
   });
 
+  test("asks for the code and holds the commission when the admin session expired in the dialog", async ({ page }) => {
+    await seed(["FINANCE"]);
+    await enterAdmin(page, "/comisiones?status=APPROVED");
+    await page.getByRole("button", { name: "Retener" }).first().click();
+    const box = page.getByRole("dialog", { name: "Retener comisión" });
+    await expireAdminSession();
+    await box.getByLabel("Motivo").fill(REASON);
+    await box.getByRole("button", { name: "Retener", exact: true }).click();
+    await reauthenticate(page);
+    await expect(page.getByText("La comisión quedó retenida.")).toBeVisible();
+    await expect(box).toBeHidden();
+  });
+
   test("holds and reverses a commission", async ({ page }) => {
     await seed(["FINANCE"]);
     await enterAdmin(page, "/comisiones?status=APPROVED");
@@ -328,7 +341,7 @@ for (const scheme of ["light", "dark"] as const) {
     const width = page.viewportSize()?.width ?? 0;
     const shot = async (name: string) => {
       await expect(page.locator(".skeleton")).toHaveCount(0);
-      await page.waitForTimeout(400);
+      await settled(page);
       await page.screenshot({ path: `${DIR}/${name}-${scheme}-${width}.png`, fullPage: true, animations: "disabled" });
     };
 

@@ -1,7 +1,7 @@
 import type { Locator, Page, Route } from "@playwright/test";
 import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_USERS } from "../admin-mock/invitations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, openFilters } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const REASON = "Pedido del equipo comercial";
 const NEW_EMAIL = "ramiro@cafeteriacentral.com";
@@ -139,6 +139,18 @@ test("revokes an open invitation with a reason and filters the list", async ({ p
   await expect(page.getByText("Nada coincide con estos filtros")).toBeVisible();
 });
 
+test("asks for the code and finishes the revoke when the admin session expired in the dialog", async ({ page }) => {
+  await open(page);
+  await row(page, "nora@panaderiadelbarrio.com").getByRole("button", { name: "Revocar" }).click();
+  const confirm = dialog(page, "Revocar invitación");
+  await expireAdminSession();
+  await confirm.getByLabel("Motivo").fill(REASON);
+  await confirm.getByRole("button", { name: "Revocar" }).click();
+  await reauthenticate(page);
+  await expect(row(page, "nora@panaderiadelbarrio.com")).toContainText("Revocada");
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+});
+
 test("grants, extends and takes away a Demo", async ({ page }) => {
   const [, martin, carla, sofia] = MOCK_USERS;
   await open(page, INVITATIONS_SCENARIO, "/invitaciones?vista=demos");
@@ -228,7 +240,7 @@ test("fits without sideways scroll and passes the accessibility check", async ({
 });
 
 async function shot(page: Page, name: string, scheme: string) {
-  await page.waitForTimeout(500);
+  await settled(page);
   const width = page.viewportSize()?.width ?? 0;
   await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/${name}-${scheme}-${width}.png`, fullPage: true, animations: "disabled" });
 }

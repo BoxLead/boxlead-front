@@ -118,7 +118,7 @@ test("asks to reload when a request fails without an answer", async ({ page }) =
   await page.route(`${ADMIN_MOCK_ORIGIN}/**`, (route) => route.abort("connectionrefused"));
   await openMenu(page);
   await page.getByRole("link", { name: "Usuarios" }).click();
-  await expect(page.getByText("Se cortó la conexión con BoxLead")).toBeVisible();
+  await expect(page.getByText("Se cortó la conexión con BoxLead", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Recargar" })).toBeVisible();
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
 });
