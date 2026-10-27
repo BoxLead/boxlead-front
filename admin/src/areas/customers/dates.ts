@@ -31,5 +31,3 @@ export function isDay(value: string): boolean {
 export function isMonth(value: string): boolean {
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 }
-
-export { formatMonth } from "../../format";
