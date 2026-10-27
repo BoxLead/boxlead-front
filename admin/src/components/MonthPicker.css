@@ -1,0 +1,14 @@
+.month-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--signal-space-2);
+}
+
+.month-picker-label {
+  min-width: 11ch;
+  color: var(--signal-heading);
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-semibold);
+  text-align: center;
+  text-transform: capitalize;
+}
