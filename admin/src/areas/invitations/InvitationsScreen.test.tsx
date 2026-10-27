@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../../src/components/ui/ToastProvider";
 import type { AdminMe, AdminRole } from "../../api/types";
+import { connectSession } from "../../api/client";
 import { ResellerDirectoryProvider } from "../../session/ResellerDirectoryProvider";
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
@@ -223,6 +224,44 @@ describe("InvitationsScreen", () => {
     expect(screen.queryByDisplayValue("https://boxlead.app/invitacion#secreto")).toBeNull();
     expect(document.body.innerHTML).not.toContain("secreto");
   });
+
+  it("keeps the tabs locked while the session asks for the code in the middle of creating and until the link is closed", async () => {
+    let answer: () => void = () => undefined;
+    const disconnect = connectSession({
+      adminSessionRequired: () => new Promise<void>((resolve) => (answer = resolve)),
+      signedOut: () => undefined,
+      connectionLost: () => undefined,
+    });
+    try {
+      const day = addDays(todayInBuenosAires(), 3);
+      let posts = 0;
+      const calls = renderScreen((method, url) => {
+        if (method !== "POST" || url.pathname !== "/admin/invitations") return undefined;
+        posts += 1;
+        if (posts === 1) return json(401, { error: "Unauthorized", message: "session", code: "ADMIN_SESSION_REQUIRED" });
+        return json(201, { id: "i9", link: "https://boxlead.app/invitacion#secreto" });
+      });
+      await screen.findByRole("cell", { name: "nora@panaderia.com" });
+      await userEvent.click(screen.getByRole("button", { name: "Nueva invitación" }));
+      await userEvent.type(dialog().getByLabelText("Email"), "pablo@talleres.com");
+      await userEvent.type(dialog().getByLabelText("La invitación vence el"), day);
+      await userEvent.click(hidden("Continuar"));
+      await giveReason("Crear invitación");
+      await vi.waitFor(() => expect(posts).toBe(1));
+      expect(screen.getByRole("button", { name: "Demos", hidden: true })).toBeDisabled();
+      expect(hidden("Guardando…")).toBeDisabled();
+      answer();
+      expect(await screen.findByLabelText("Link de la invitación", { selector: "input" })).toHaveValue("https://boxlead.app/invitacion#secreto");
+      const sent = calls.filter((call) => call.method === "POST");
+      expect(sent).toHaveLength(2);
+      expect(sent[1].init.body).toBe(sent[0].init.body);
+      expect(screen.getByRole("button", { name: "Demos", hidden: true })).toBeDisabled();
+      await userEvent.click(hidden("Listo"));
+      await vi.waitFor(() => expect(screen.getByRole("button", { name: "Demos" })).toBeEnabled());
+    } finally {
+      disconnect();
+    }
+  }, 15_000);
 
   it("says the invitation goes by email when core returns no link", async () => {
     const day = addDays(todayInBuenosAires(), 3);

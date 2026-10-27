@@ -5,11 +5,13 @@ import { formatDate, formatDateTime } from "../../format";
 import { extendDemo } from "./api";
 import { addDays, dayInBuenosAires, endOfDay, todayInBuenosAires } from "./dates";
 import { Field, FormDialog, Summary } from "./FormDialog";
+import { whileHeld, type Hold } from "./hold";
 import { userLabel, type DemoGrant } from "./types";
 import { futureDayProblem } from "./validation";
 
 type ExtendDemoFlowProps = {
   grant: DemoGrant | null;
+  hold: Hold;
   onClose: () => void;
   onExtended: () => void;
 };
@@ -19,7 +21,7 @@ function currentText(grant: DemoGrant): string {
   return `${userLabel(grant)} tiene la Demo hasta el ${formatDateTime(grant.endsAt)}.`;
 }
 
-export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowProps) {
+export function ExtendDemoFlow({ grant, hold, onClose, onExtended }: ExtendDemoFlowProps) {
   const toast = useToast();
   const [day, setDay] = useState("");
   const [confirming, setConfirming] = useState(false);
@@ -44,7 +46,8 @@ export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowPro
 
   async function confirm(reason: string) {
     if (!grant) return;
-    await extendDemo(grant.userId, endOfDay(day), reason);
+    const current = grant;
+    await whileHeld(hold, () => extendDemo(current.userId, endOfDay(day), reason));
     toast({ tone: "success", message: `La Demo de ${userLabel(grant)} ahora termina el ${formatDate(day)}.` });
     onExtended();
     onClose();

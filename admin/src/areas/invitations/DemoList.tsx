@@ -13,6 +13,7 @@ import { ReasonDialog } from "../../components/ReasonDialog";
 import { revokeDemo } from "./api";
 import { ExtendDemoFlow } from "./ExtendDemoFlow";
 import { GrantDemoFlow } from "./GrantDemoFlow";
+import { whileHeld, type Hold } from "./hold";
 import { DEMO_STATUS } from "./labels";
 import { userLabel, type DemoGrant, type DemoGrantStatus } from "./types";
 
@@ -29,10 +30,11 @@ type DemoListProps = {
   tabs: ReactNode;
   canAct: boolean;
   creating: boolean;
+  hold: Hold;
   onCloseCreate: () => void;
 };
 
-export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProps) {
+export function DemoList({ tabs, canAct, creating, hold, onCloseCreate }: DemoListProps) {
   const toast = useToast();
   const { params, query } = useListQuery<DemoGrant>("/admin/demo-grants", FILTERS, RULES);
   const [extending, setExtending] = useState<DemoGrant | null>(null);
@@ -40,7 +42,8 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
 
   async function revoke(reason: string) {
     if (!revoking) return;
-    await revokeDemo(revoking.userId, reason).catch(withMessage(404, NO_DEMO)).catch(withMessage(409, NO_DEMO));
+    const grant = revoking;
+    await whileHeld(hold, () => revokeDemo(grant.userId, reason)).catch(withMessage(404, NO_DEMO)).catch(withMessage(409, NO_DEMO));
     toast({ tone: "success", message: `Le quitaste la Demo a ${userLabel(revoking)}.` });
     setRevoking(null);
     query.reload();
@@ -125,8 +128,8 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
       />
       {canAct ? (
         <>
-          <GrantDemoFlow open={creating} onClose={onCloseCreate} onGranted={query.reload} />
-          <ExtendDemoFlow grant={extending} onClose={() => setExtending(null)} onExtended={query.reload} />
+          <GrantDemoFlow open={creating} hold={hold} onClose={onCloseCreate} onGranted={query.reload} />
+          <ExtendDemoFlow grant={extending} hold={hold} onClose={() => setExtending(null)} onExtended={query.reload} />
           <ReasonDialog
             open={revoking !== null}
             title="Quitar Demo"

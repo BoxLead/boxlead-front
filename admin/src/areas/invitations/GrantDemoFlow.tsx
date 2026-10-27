@@ -8,6 +8,7 @@ import type { AdminPage } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { grantDemo, searchCustomers } from "./api";
 import { Field, FormDialog, Summary } from "./FormDialog";
+import { whileHeld, type Hold } from "./hold";
 import { MAX_DEMO_DAYS, type CustomerMatch } from "./types";
 import { daysText, demoDaysProblem, demoDaysValue } from "./validation";
 
@@ -19,6 +20,7 @@ type Search =
 
 type GrantDemoFlowProps = {
   open: boolean;
+  hold: Hold;
   onClose: () => void;
   onGranted: () => void;
 };
@@ -39,7 +41,7 @@ function customerName(customer: CustomerMatch): string | null {
   return customer.legalName ?? customer.name;
 }
 
-export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) {
+export function GrantDemoFlow({ open, hold, onClose, onGranted }: GrantDemoFlowProps) {
   const toast = useToast();
   const [text, setText] = useState("");
   const [search, setSearch] = useState<Search>({ status: "idle" });
@@ -93,7 +95,8 @@ export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) 
 
   async function confirm(reason: string) {
     if (!selected) return;
-    await grantDemo(selected.id, demoDaysValue(days), reason);
+    const customer = selected;
+    await whileHeld(hold, () => grantDemo(customer.id, demoDaysValue(days), reason));
     toast({ tone: "success", message: `Le otorgaste una Demo a ${selected.email}.` });
     onGranted();
     onClose();
