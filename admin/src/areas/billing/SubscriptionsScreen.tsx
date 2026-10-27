@@ -7,12 +7,12 @@ import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
-import { formatDate } from "../../format";
+import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
 import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
 import { changeSubscription, type SubscriptionAction } from "./api";
-import { Amount, CustomerCell, NoAction, RowActions, Stack, StatusTag } from "./cells";
+import { Amount, CustomerCell, RowActions, Stack, StatusTag } from "./cells";
 import { PLAN_OPTIONS, planLabel, SUBSCRIPTION_STATUS, SUBSCRIPTION_STATUS_OPTIONS } from "./labels";
 import { actionsFor, nextStep } from "./subscriptionSteps";
 import type { SubscriptionRow } from "./types";
@@ -75,24 +75,23 @@ export function SubscriptionsScreen() {
     {
       key: "customer",
       header: "Cliente",
+      width: "lg",
       cell: (row) => (
         <Stack
           main={<CustomerCell userId={row.userId} email={row.email} />}
           detail={
             <>
-              Alta {formatDate(row.createdAt)}.{" "}
-              <Link className="billing-link" to={`/pagos?userId=${encodeURIComponent(row.userId)}`}>
-                Ver pagos
-              </Link>
+              Alta <DateText value={row.createdAt} />
             </>
           }
         />
       ),
     },
-    { key: "plan", header: "Plan", cell: (row) => planLabel(row.planCode) },
+    { key: "plan", header: "Plan", width: "xs", cell: (row) => planLabel(row.planCode) },
     {
       key: "status",
       header: "Estado",
+      type: "status",
       cell: (row) => (
         <Stack
           main={<StatusTag status={SUBSCRIPTION_STATUS[row.status]} />}
@@ -103,7 +102,7 @@ export function SubscriptionsScreen() {
     {
       key: "charge",
       header: "Cuota",
-      align: "end",
+      type: "money",
       cell: (row) => (
         <Stack
           main={<Amount money={row.charge} />}
@@ -111,18 +110,22 @@ export function SubscriptionsScreen() {
         />
       ),
     },
-    { key: "next", header: "Próxima acción", cell: nextStep },
-  ];
-
-  if (canOperate) {
-    columns.push({
+    { key: "next", header: "Próxima acción", width: "md", cell: nextStep },
+    {
       key: "actions",
       header: "Acciones",
+      type: "actions",
       cell: (row) => {
-        const actions = actionsFor(row);
-        if (actions.length === 0) return <NoAction />;
+        const actions = canOperate ? actionsFor(row) : [];
+        const payments = (
+          <Link className="btn btn-ghost btn-sm" to={`/pagos?userId=${encodeURIComponent(row.userId)}`}>
+            Pagos
+          </Link>
+        );
+        if (actions.length === 0) return <RowActions>{payments}</RowActions>;
         return (
           <RowActions>
+            {payments}
             {actions.map((action) => (
               <button
                 key={action}
@@ -140,8 +143,8 @@ export function SubscriptionsScreen() {
           </RowActions>
         );
       },
-    });
-  }
+    },
+  ];
 
   return (
     <Screen title={item.label} description={item.description}>

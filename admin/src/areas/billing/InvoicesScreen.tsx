@@ -5,6 +5,7 @@ import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
+import { DateText } from "../../components/DateText";
 import { formatDate } from "../../format";
 import { navItem } from "../../nav";
 import { Amount, CustomerCell, NoAction, RowActions, Stack, StatusTag } from "./cells";
@@ -53,23 +54,26 @@ export function InvoicesScreen() {
   }
 
   const columns: Column<InvoiceRow>[] = [
-    { key: "receiver", header: "Receptor", cell: (row) => <ReceiverCell receiver={row.receiver} /> },
-    { key: "customer", header: "Cliente", cell: (row) => <CustomerCell userId={row.userId} /> },
-    { key: "amount", header: "Monto", align: "end", cell: (row) => <Amount money={row.amount} /> },
+    { key: "receiver", header: "Receptor", width: "md", cell: (row) => <ReceiverCell receiver={row.receiver} /> },
+    { key: "customer", header: "Cliente", type: "id", cell: (row) => <CustomerCell userId={row.userId} /> },
+    { key: "amount", header: "Monto", type: "money", cell: (row) => <Amount money={row.amount} code /> },
     {
       key: "status",
       header: "Estado",
+      type: "status",
       cell: (row) => <Stack main={<StatusTag status={INVOICE_STATUS[row.status]} />} detail={statusDate(row)} />,
     },
     {
       key: "number",
       header: "Número",
-      cell: (row) => (row.invoiceNumber ? <span className="num">{row.invoiceNumber}</span> : <span className="billing-detail">Sin número</span>),
+      type: "id",
+      cell: (row) => (row.invoiceNumber ? row.invoiceNumber : <span className="billing-detail">Sin número</span>),
     },
-    { key: "created", header: "Pago registrado", cell: (row) => formatDate(row.createdAt) },
+    { key: "created", header: "Pago registrado", type: "date", cell: (row) => <DateText value={row.createdAt} /> },
     {
       key: "actions",
       header: "Acciones",
+      type: "actions",
       cell: (row) =>
         row.status === "VOIDED" ? (
           <NoAction />
