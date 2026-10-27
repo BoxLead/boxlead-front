@@ -114,12 +114,11 @@ function summaryColumns(grouping: UsageGrouping, range: Range): Column<UsageSumm
 
 const DETAIL_COLUMNS: Column<UsageDay>[] = [
   { key: "day", header: "Día", type: "date", cell: (row) => <DateText value={row.day} /> },
-  { key: "user", header: "Usuario", type: "id", cell: (row) => <code className="mono-text">{row.userId}</code> },
+  { key: "user", header: "Usuario", type: "id", cell: (row) => <code className="mono-text" title={row.userId}>{row.userId.slice(0, 8)}</code> },
   {
     key: "agent",
     header: "Agente y modelo",
-    type: "id",
-    width: "md",
+    width: "sm",
     cell: (row) => (
       <span className="cell-stack">
         <code className="mono-text">{row.model}</code>

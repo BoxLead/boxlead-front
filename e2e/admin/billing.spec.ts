@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
 import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const REASON = "Pedido del cliente por mail";
@@ -65,6 +65,7 @@ test("subscriptions filter by status and plan through the URL", async ({ page })
   await resetBilling(["SUPPORT"]);
   await enterAdmin(page, "/suscripciones");
   await expect(page.locator("tbody tr")).toHaveCount(7);
+  await openFilters(page);
   await page.getByLabel("Estado").selectOption("ACTIVE");
   await expect(page).toHaveURL(/status=ACTIVE/);
   await expect(page.locator("tbody tr")).toHaveCount(2);
@@ -137,6 +138,7 @@ test("finance retries a refund that Mercado Pago did not answer", async ({ page 
   expect(await confirmWithReason(page, "Reintentar")).toEqual({ reason: REASON });
   await expect(page.getByText("Mercado Pago aprobó el reembolso.")).toBeVisible();
   await expect(page.locator("tbody tr").filter({ hasText: "Sin respuesta" })).toHaveCount(0);
+  await openFilters(page);
   await page.getByLabel("Estado").selectOption("REJECTED");
   await expect(page.locator("tbody tr")).toHaveCount(1);
 });

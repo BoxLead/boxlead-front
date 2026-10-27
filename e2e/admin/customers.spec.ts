@@ -1,7 +1,7 @@
 import type { Page, Request } from "@playwright/test";
 import { RESELLERS } from "../admin-mock/customers.ts";
 import { resetCustomers, routeResellers, routeUsage, section } from "./customers-support.ts";
-import { enterAdmin, expect, expectAccessible, horizontalOverflow, test } from "./support.ts";
+import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
 
 const ANA = "0c000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
@@ -67,6 +67,7 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await expect(page.getByText("1 a 20 de 24")).toBeVisible();
   await page.getByRole("button", { name: "Siguiente" }).click();
   await expect(page.getByText("21 a 24 de 24")).toBeVisible();
+  await openFilters(page);
   await page.getByLabel("Suscripción").selectOption("PAUSED");
   await expect(page.getByRole("link", { name: "diego.fernandez@example.com" })).toBeVisible();
   await expect(page.getByText("1 a 1 de 1")).toBeVisible();

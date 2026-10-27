@@ -52,7 +52,7 @@ export function PaymentsScreen() {
     {
       key: "customer",
       header: "Cliente",
-      width: "lg",
+      width: "md",
       cell: (row) => <Stack main={<CustomerCell userId={row.userId} email={row.email} />} detail={<ShortId id={row.id} />} />,
     },
     {

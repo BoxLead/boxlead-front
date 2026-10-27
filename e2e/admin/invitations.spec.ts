@@ -1,7 +1,7 @@
 import type { Locator, Page, Route } from "@playwright/test";
 import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_USERS } from "../admin-mock/invitations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, openFilters } from "./support.ts";
 
 const REASON = "Pedido del equipo comercial";
 const NEW_EMAIL = "ramiro@cafeteriacentral.com";
@@ -129,6 +129,7 @@ test("revokes an open invitation with a reason and filters the list", async ({ p
   await expect(row(page, "nora@panaderiadelbarrio.com").getByRole("button")).toHaveCount(0);
   await expect(page.locator("dialog[open]")).toHaveCount(0);
 
+  await openFilters(page);
   await page.getByLabel("Estado").selectOption({ label: "Vencida" });
   await expect(page.getByRole("row")).toHaveCount(2);
   await expect(row(page, "pablo@talleresunidos.com")).toContainText("Vencida");

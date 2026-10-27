@@ -29,7 +29,7 @@
 
 .stat-period {
   margin: 0;
-  color: var(--signal-text-faint);
+  color: var(--signal-text-muted);
   font-size: var(--signal-text-xs);
   white-space: nowrap;
 }

@@ -74,6 +74,11 @@ export async function openMenu(page: Page) {
   if ((await toggle.isVisible()) && (await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
 }
 
+export async function openFilters(page: Page) {
+  const toggle = page.getByRole("button", { name: /^Filtros/ });
+  if ((await toggle.isVisible()) && (await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+}
+
 export async function navLinks(page: Page): Promise<string[]> {
   await openMenu(page);
   return page.getByRole("navigation", { name: "Secciones" }).getByRole("link").allTextContents();

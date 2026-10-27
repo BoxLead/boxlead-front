@@ -47,9 +47,9 @@ export function RefundsScreen() {
     { key: "status", header: "Estado", type: "status", cell: (row) => <StatusTag status={REFUND_STATUS[row.status]} /> },
     {
       key: "provider",
-      header: "Id en Mercado Pago",
+      header: "Mercado Pago",
       type: "id",
-      cell: (row) => (row.providerRefundId ? row.providerRefundId : <span className="sub-text">Sin id</span>),
+      cell: (row) => (row.providerRefundId ? <ShortId id={row.providerRefundId} /> : <span className="sub-text">Sin id</span>),
     },
     {
       key: "requested",

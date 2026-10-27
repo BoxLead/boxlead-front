@@ -209,6 +209,10 @@
   white-space: nowrap;
 }
 
+.data-table .data-table-status .sub-text {
+  white-space: normal;
+}
+
 .data-table .data-table-id {
   font-family: var(--signal-mono);
   font-size: var(--signal-text-sm);
@@ -265,6 +269,13 @@
 .pagination-buttons {
   display: flex;
   gap: var(--signal-space-2);
+}
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .data-table-wrap {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
 }
 
 @media (max-width: 760px) {

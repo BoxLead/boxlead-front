@@ -54,7 +54,7 @@ export function InvoicesScreen() {
   }
 
   const columns: Column<InvoiceRow>[] = [
-    { key: "receiver", header: "Receptor", width: "md", cell: (row) => <ReceiverCell receiver={row.receiver} /> },
+    { key: "receiver", header: "Receptor", width: "sm", cell: (row) => <ReceiverCell receiver={row.receiver} /> },
     { key: "customer", header: "Cliente", type: "id", cell: (row) => <CustomerCell userId={row.userId} /> },
     { key: "amount", header: "Monto", type: "money", cell: (row) => <Amount money={row.amount} code /> },
     {

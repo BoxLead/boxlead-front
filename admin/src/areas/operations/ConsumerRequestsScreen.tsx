@@ -166,7 +166,7 @@ export function ConsumerRequestsScreen() {
           </span>
         ),
     },
-    { key: "details", header: "Detalle", width: "md", truncate: true, cell: (row) => row.details || <span className="sub-text">Sin detalle</span> },
+    { key: "details", header: "Detalle", width: "sm", truncate: true, cell: (row) => row.details || <span className="sub-text">Sin detalle</span> },
     { key: "created", header: "Recibido", type: "date", cell: (row) => <DateText value={row.createdAt} time /> },
   ];
 
@@ -189,7 +189,7 @@ export function ConsumerRequestsScreen() {
       {
         key: "resolution",
         header: "Respuesta",
-        width: "lg",
+        width: "md",
         cell: (row) => (
           <span className="cell-stack">
             <span>{row.resolution}</span>

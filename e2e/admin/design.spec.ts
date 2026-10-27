@@ -23,7 +23,9 @@ const SCREENS: Screen[] = [
   { path: "/liquidaciones", scenario: "referrals" },
   { path: "/liquidaciones", scenario: "referrals", follow: true },
   { path: "/uso", scenario: "operations" },
+  { path: "/uso?view=detalle", scenario: "operations" },
   { path: "/pedidos", scenario: "operations" },
+  { path: "/pedidos?status=RESOLVED", scenario: "operations" },
   { path: "/equipo", scenario: "operations" },
   { path: "/auditoria", scenario: "operations" },
 ];
@@ -65,8 +67,12 @@ async function tableFacts(page: Page) {
     const numeric = [...document.querySelectorAll<HTMLElement>(".data-table td.data-table-money, .data-table td.data-table-number")].map((td) =>
       getComputedStyle(td).textAlign,
     );
-    const stacked = [...document.querySelectorAll<HTMLElement>(".data-table td.data-table-end")].map((td) => getComputedStyle(td).justifyItems);
-    return { headers, numeric, stacked };
+    const clipped = [...document.querySelectorAll<HTMLElement>(".data-table")].map((table) => {
+      const panel = table.closest<HTMLElement>(".list-panel, .section") ?? table.parentElement;
+      const over = Math.round(table.getBoundingClientRect().right - (panel?.getBoundingClientRect().right ?? 0));
+      return `${table.querySelector("caption")?.textContent?.trim()} ${over}`;
+    });
+    return { headers, numeric, clipped: clipped.filter((entry) => Number(entry.split(" ").pop()) > 0) };
   });
 }
 
@@ -105,11 +111,10 @@ for (const screen of SCREENS) {
     expect(offScale, "control heights on the scale").toEqual([]);
 
     const facts = await tableFacts(page);
-    if (mobile) {
-      expect(new Set(facts.stacked), "amounts keep the right edge on phones").toEqual(new Set(facts.stacked.length ? ["end"] : []));
-    } else {
+    expect(facts.numeric.filter((align) => align !== "right" && align !== "end"), "amounts and counts sit on the right").toEqual([]);
+    if (!mobile) {
       expect(new Set(facts.headers), "table headers stay in view").toEqual(new Set(facts.headers.length ? ["sticky"] : []));
-      expect(facts.numeric.filter((align) => align !== "right" && align !== "end"), "amounts and counts sit on the right").toEqual([]);
+      expect(facts.clipped, "every table fits its panel").toEqual([]);
     }
     testInfo.annotations.push({ type: "controls", description: String(rows.length) });
   });

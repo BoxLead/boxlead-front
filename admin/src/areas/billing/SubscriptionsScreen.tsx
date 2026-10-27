@@ -75,7 +75,7 @@ export function SubscriptionsScreen() {
     {
       key: "customer",
       header: "Cliente",
-      width: "lg",
+      width: "md",
       cell: (row) => (
         <Stack
           main={<CustomerCell userId={row.userId} email={row.email} />}
@@ -110,7 +110,7 @@ export function SubscriptionsScreen() {
         />
       ),
     },
-    { key: "next", header: "Próxima acción", width: "md", cell: nextStep },
+    { key: "next", header: "Próxima acción", width: "sm", cell: nextStep },
     {
       key: "actions",
       header: "Acciones",

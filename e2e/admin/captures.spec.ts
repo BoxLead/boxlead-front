@@ -60,7 +60,7 @@ for (const scheme of ["light", "dark"] as const) {
 type Capture = { name: string; path: string; scenario: string; follow?: boolean; ready: string | RegExp; dialog?: string };
 
 const SCREENS: Capture[] = [
-  { name: "10-inicio", path: "/", scenario: "customers", ready: "Usuarios nuevos" },
+  { name: "10-inicio", path: "/", scenario: "customers", ready: "Suscripciones por estado" },
   { name: "11-usuarios", path: "/usuarios", scenario: "customers", ready: "carla.ruiz@example.com" },
   { name: "12-usuario", path: "/usuarios", scenario: "customers", follow: true, ready: "Suscripción" },
   { name: "13-suscripciones", path: "/suscripciones", scenario: "default", ready: "Cuota impaga" },
