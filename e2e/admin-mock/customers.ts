@@ -33,6 +33,8 @@ const MAX_DEMO_DAYS = 365;
 const DEFAULT_DEMO_DAYS = 14;
 const SERVED: readonly SubscriptionStatus[] = ["ACTIVE", "PAST_DUE", "SUSPENDED"];
 const NO_SUBSCRIPTION = "NONE";
+const NOT_USER_LIMITS: readonly EntitlementKey[] = ["DEMO_DURATION_DAYS"];
+const INVALID_REQUEST = "The request has a value that is not valid";
 
 type Limits = Partial<Record<EntitlementKey, number | null>>;
 
@@ -363,7 +365,7 @@ function entitlementsOf(customer: Customer, now: number): Entitlements {
   const restricted = live !== null && (live.status === "PAUSED" || live.status === "SUSPENDED");
   const limits: Limits = {};
   for (const key of ENTITLEMENT_KEYS) {
-    if (key === "DEMO_DURATION_DAYS") continue;
+    if (NOT_USER_LIMITS.includes(key)) continue;
     limits[key] = plan.code ? (PLAN_LIMITS[plan.code][key] ?? 0) : 0;
   }
   for (const override of activeOverrides(customer, now)) limits[override.key] = override.value;
@@ -610,6 +612,7 @@ function revokeCurrentOverride(customer: Customer, key: EntitlementKey, admin: A
 const setOverride: Action = (customer, reason, { body, admin, match }) => {
   const key = keyOf(match[2]);
   if (!key) return badRequest();
+  if (NOT_USER_LIMITS.includes(key)) return badRequest(INVALID_REQUEST);
   const unlimited = body.unlimited === true;
   const value = body.value;
   if (unlimited === (value !== undefined && value !== null)) return badRequest("send a value or unlimited, not both");
