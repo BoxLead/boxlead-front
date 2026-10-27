@@ -49,7 +49,7 @@ export const NAV: NavSection[] = [
   {
     label: "Demo",
     items: [
-      { id: "invitations", path: "/invitaciones", label: "Invitaciones y Demo", description: "Invitaciones abiertas y Demos vigentes.", access: ["SUPPORT"] },
+      { id: "invitations", path: "/invitaciones", label: "Invitaciones y Demo", description: "La invitación es para quien todavía no tiene cuenta y su Demo arranca cuando se registra con ese email. La Demo otorgada es para quien ya tiene cuenta y arranca en el acto.", access: ["SUPPORT"] },
     ],
   },
   {

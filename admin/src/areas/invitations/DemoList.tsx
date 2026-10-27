@@ -109,7 +109,7 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
         onClearFilters={params.clear}
         onPageChange={params.setPage}
         emptyTitle="Todavía no hay Demos"
-        emptyHint="Aparecen cuando alguien acepta una invitación o cuando le otorgás una Demo a un usuario."
+        emptyHint="Una Demo otorgada es para quien ya tiene cuenta y arranca en el acto. Las de una invitación aparecen cuando la persona se registra."
         filters={
           <FilterBar active={params.active} onClear={params.clear} lead={tabs}>
             <SelectFilter

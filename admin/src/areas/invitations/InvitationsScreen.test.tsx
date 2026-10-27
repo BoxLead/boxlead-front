@@ -341,10 +341,12 @@ describe("InvitationsScreen", () => {
       return undefined;
     });
     expect(await screen.findByText("Todavía no hay invitaciones")).toBeInTheDocument();
+    expect(screen.getByText(/Una invitación es para quien todavía no tiene cuenta/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Demos" }));
     expect(await screen.findByText("No pudimos cargar la lista")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByText("Todavía no hay Demos")).toBeInTheDocument();
+    expect(screen.getByText(/Una Demo otorgada es para quien ya tiene cuenta y arranca en el acto/)).toBeInTheDocument();
   });
 
   it("hides every action from a role that can not act", async () => {

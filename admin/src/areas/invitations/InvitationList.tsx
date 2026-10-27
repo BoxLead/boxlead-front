@@ -19,6 +19,7 @@ import { INVITATION_STATUS } from "./labels";
 import type { Invitation, InvitationStatus } from "./types";
 
 const FILTERS = ["status", "email"] as const;
+const INVITATION_HINT = "Una invitación es para quien todavía no tiene cuenta y su Demo arranca cuando se registra con ese email.";
 
 const STATUS_OPTIONS = (Object.keys(INVITATION_STATUS) as InvitationStatus[]).map((value) => ({
   value,
@@ -112,7 +113,7 @@ export function InvitationList({ tabs, canAct, creating, onCloseCreate }: Invita
         onClearFilters={params.clear}
         onPageChange={params.setPage}
         emptyTitle="Todavía no hay invitaciones"
-        emptyHint={canAct ? "Creá la primera con Nueva invitación." : undefined}
+        emptyHint={canAct ? `${INVITATION_HINT} Creá la primera con Nueva invitación.` : INVITATION_HINT}
         filters={
           <>
             <FilterBar active={params.active} onClear={params.clear} lead={tabs}>
