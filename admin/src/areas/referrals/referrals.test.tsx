@@ -188,3 +188,47 @@ describe("reseller detail", () => {
     expect(screen.queryByRole("button", { name: "Armar liquidación" })).toBeNull();
   }, 20_000);
 });
+
+describe("new reseller", () => {
+  it("searches the user, shows who was picked and sends its id", async () => {
+    const searches: string[] = [];
+    let created: unknown = null;
+    renderAdmin("/revendedores", ["OWNER"], (method, url, body) => {
+      if (url.pathname === "/admin/customers") {
+        searches.push(url.searchParams.get("query") ?? "");
+        return page([
+          {
+            id: "u-west",
+            email: "oeste@example.com",
+            name: "Martín Oeste",
+            legalName: "Agencia Oeste SRL",
+            createdAt: PAST,
+            planCode: "STARTER",
+            subscriptionStatus: "ACTIVE",
+          },
+        ]);
+      }
+      if (method === "POST" && url.pathname === "/admin/resellers") {
+        created = body;
+        return json(400, { error: "x", message: "x" });
+      }
+      if (url.pathname === "/admin/resellers") return page([]);
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Nuevo revendedor" }, { timeout: 5000 }));
+    const dialog = screen.getByText("Nuevo revendedor", { selector: "h2" }).closest("dialog");
+    if (!dialog) throw new Error("The reseller dialog did not open");
+    const box = within(dialog);
+    await userEvent.type(box.getByLabelText("Buscar usuario"), "oeste{Enter}");
+    await userEvent.click(await box.findByRole("radio", { name: /oeste@example\.com/, hidden: true }));
+    expect(box.getByText("Usuario elegido")).toBeInTheDocument();
+    expect(box.getByLabelText("Razón social")).toHaveValue("Agencia Oeste SRL");
+    expect(box.getByLabelText("Nombre visible")).toHaveValue("Martín Oeste");
+    await userEvent.type(box.getByLabelText("CUIT"), "30-44444444-1");
+    await userEvent.selectOptions(box.getByLabelText("Condición frente al IVA"), "EXENTO");
+    await userEvent.type(box.getByLabelText("Motivo"), REASON);
+    await userEvent.click(box.getByRole("button", { name: "Crear revendedor", hidden: true }));
+    expect(searches).toEqual(["oeste"]);
+    expect(created).toMatchObject({ userId: "u-west", displayName: "Martín Oeste", legalName: "Agencia Oeste SRL", vatCondition: "EXENTO", reason: REASON });
+  }, 20_000);
+});

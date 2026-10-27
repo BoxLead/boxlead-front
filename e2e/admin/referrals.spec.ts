@@ -17,6 +17,29 @@ async function seed(roles: AdminRole[]) {
   expect(res.ok).toBe(true);
 }
 
+const WEST = { id: "0b0e0000-0000-4000-8000-0000000000f1", email: "oeste@example.com", name: "Martín Oeste", legalName: "Agencia Oeste de Prueba SRL" };
+const EMMA = { id: "0b0e0000-0000-4000-8000-0000000000f2", email: "emma@example.com", name: "Emma Ruiz", legalName: null };
+
+async function mockCustomerSearch(page: Page, fail = false) {
+  const queries: string[] = [];
+  await page.route(/\/admin\/customers\?/, (route) => {
+    const query = new URL(route.request().url()).searchParams.get("query") ?? "";
+    queries.push(query);
+    if (fail) return route.fulfill({ status: 500, contentType: "application/json", body: '{"error":"boom","message":"boom"}' });
+    const items = [WEST, EMMA]
+      .filter((user) => `${user.email} ${user.name}`.toLowerCase().includes(query.toLowerCase()))
+      .map((user) => ({ ...user, createdAt: "2026-10-01T12:00:00Z", planCode: "STARTER", subscriptionStatus: "ACTIVE" }));
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items, page: 0, size: 20, totalItems: items.length }) });
+  });
+  return queries;
+}
+
+async function searchUser(page: Page, text: string) {
+  const box = dialog(page);
+  await box.getByLabel("Buscar usuario").fill(text);
+  await box.getByLabel("Buscar usuario").press("Enter");
+}
+
 function dialog(page: Page) {
   return page.getByRole("dialog");
 }
@@ -118,19 +141,35 @@ test.describe("roles", () => {
 test.describe("owner actions", () => {
   test("creates a reseller, issues and disables a code and corrects an attribution", async ({ page }) => {
     await seed(["OWNER"]);
+    const queries = await mockCustomerSearch(page);
     await enterAdmin(page, "/revendedores");
     await page.getByRole("button", { name: "Nuevo revendedor" }).click();
     const box = dialog(page);
     await box.getByLabel("Motivo").fill(REASON);
     await box.getByRole("button", { name: "Crear revendedor" }).click();
     await expect(box.getByText("Revisá los datos marcados.")).toBeVisible();
-    await box.getByLabel("Id del usuario").fill("0b0e0000-0000-4000-8000-0000000000f1");
+    await expect(box.getByText("Buscá y elegí un usuario.")).toBeVisible();
+    await searchUser(page, "nadie");
+    await expect(box.getByText("No encontramos usuarios con ese texto.")).toBeVisible();
+    await searchUser(page, "oeste");
+    await box.getByRole("radio", { name: /oeste@example\.com/ }).check();
+    const picked = box.locator(".ref-picked");
+    await expect(picked).toContainText("oeste@example.com");
+    await expect(picked).toContainText("Agencia Oeste de Prueba SRL");
+    await expect(box.getByLabel("Razón social")).toHaveValue("Agencia Oeste de Prueba SRL");
     await box.getByLabel("Nombre visible").fill("Agencia Oeste");
-    await box.getByLabel("Razón social").fill("Agencia Oeste de Prueba SRL");
     await box.getByLabel("CUIT").fill("30-44444444-1");
     await box.getByLabel("Condición frente al IVA").selectOption("MONOTRIBUTO");
     const created = await confirmWithReason(page, "Crear revendedor", "/admin/resellers");
-    expect(created.postDataJSON()).toMatchObject({ displayName: "Agencia Oeste", vatCondition: "MONOTRIBUTO", payoutMethod: null, reason: REASON });
+    expect(queries).toEqual(["nadie", "oeste"]);
+    expect(created.postDataJSON()).toMatchObject({
+      userId: WEST.id,
+      displayName: "Agencia Oeste",
+      legalName: "Agencia Oeste de Prueba SRL",
+      vatCondition: "MONOTRIBUTO",
+      payoutMethod: null,
+      reason: REASON,
+    });
     await expect(page.getByRole("heading", { level: 1, name: "Agencia Oeste" })).toBeVisible();
     await expect(page.getByText("Todavía no tiene códigos.")).toBeVisible();
 
@@ -151,6 +190,29 @@ test.describe("owner actions", () => {
     expect(moved.postDataJSON()).toEqual({ resellerId: "00000102-0b0e-4000-8000-000000000002", reason: REASON });
     await expect(page.getByText("La atribución quedó corregida.")).toBeVisible();
     await expect(page.getByText("ana@example.com")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Atribuir cliente" }).click();
+    await expect(dialog(page).getByText("El cliente que elijas pasa a estar atribuido a Agencia Norte", { exact: false })).toBeVisible();
+    await searchUser(page, "emma");
+    await dialog(page).getByRole("radio", { name: /emma@example\.com/ }).check();
+    await expect(dialog(page).getByText("emma@example.com pasa a estar atribuido a Agencia Norte", { exact: false })).toBeVisible();
+    await expect(dialog(page).locator(".ref-picked")).toContainText("Emma Ruiz");
+    const attributed = await confirmWithReason(page, "Corregir atribución", "/attribution");
+    expect(attributed.url()).toContain(`/admin/customers/${EMMA.id}/attribution`);
+    expect(attributed.postDataJSON()).toEqual({ resellerId: NORTH, reason: REASON });
+    await expect(page.locator(".ref-fact").filter({ hasText: "Clientes atribuidos" })).toContainText("3");
+  });
+
+  test("tells when the user search fails", async ({ page }) => {
+    await seed(["OWNER"]);
+    await mockCustomerSearch(page, true);
+    await enterAdmin(page, `/revendedores/${NORTH}`);
+    await page.getByRole("button", { name: "Atribuir cliente" }).click();
+    await searchUser(page, "emma");
+    await expect(dialog(page).getByText("No pudimos buscar")).toBeVisible();
+    await dialog(page).getByLabel("Motivo").fill(REASON);
+    await dialog(page).getByRole("button", { name: "Corregir atribución" }).click();
+    await expect(dialog(page).getByText("Buscá y elegí un usuario.")).toBeVisible();
   });
 });
 
