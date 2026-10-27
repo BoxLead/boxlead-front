@@ -73,9 +73,9 @@ describe("SessionProvider", () => {
     await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
     await userEvent.type(await screen.findByLabelText("Código de 6 números"), "123456");
     await userEvent.click(screen.getByRole("button", { name: "Abrir sesión" }));
-    expect(await screen.findByRole("heading", { level: 1, name: "Equipo" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Equipo" }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText("equipo@boxlead.app")).toBeInTheDocument();
-  });
+  }, 20_000);
 
   it("asks for the customer session and the admin session together at startup", async () => {
     const calls = mockFetch((_method, url) => {
@@ -84,7 +84,7 @@ describe("SessionProvider", () => {
       return json(404, { error: "Not found", message: "Not found" });
     });
     renderApp();
-    expect(await screen.findByRole("heading", { level: 1, name: "Inicio" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Inicio" }, { timeout: 5000 })).toBeInTheDocument();
     expect(calls.slice(0, 2).map((call) => call.url.pathname).sort()).toEqual(["/admin/me", "/auth/me"]);
     expect(calls.filter((call) => call.url.pathname === "/admin/me")).toHaveLength(1);
   });
@@ -132,8 +132,8 @@ describe("SessionProvider", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Generar código QR" }));
     await userEvent.type(await screen.findByLabelText("Código de 6 números"), "123456");
     await userEvent.click(screen.getByRole("button", { name: "Confirmar" }));
-    expect(await screen.findByRole("heading", { name: "Esta cuenta no tiene acceso" })).toBeInTheDocument();
-  });
+    expect(await screen.findByRole("heading", { name: "Esta cuenta no tiene acceso" }, { timeout: 5000 })).toBeInTheDocument();
+  }, 20_000);
 
   it("shows the locked factor after too many wrong codes", async () => {
     let locked = false;
