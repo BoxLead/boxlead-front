@@ -423,6 +423,16 @@ describe("CustomerDetailScreen", () => {
     expect(within(dialog).getByLabelText("Valor")).toHaveValue(null);
   });
 
+  it("starts a switch adjustment on the value that rules today", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
+    await userEvent.click(await screen.findByRole("button", { name: "Ajustar categorización automática" }));
+    const dialog = dialogOf("Ajustar categorización automática");
+    expect(within(dialog).getByLabelText("Valor")).toHaveValue("1");
+    await confirmIn("Ajustar categorización automática", "Guardar ajuste");
+    const put = calls.find((call) => call.method === "PUT");
+    expect(JSON.parse(String(put?.init.body))).toEqual({ value: 1, reason: "Lo pidió el cliente por mail" });
+  }, 15_000);
+
   it("shows the last day of the period instead of its exclusive end", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
     for (const title of ["Plan", "Uso"]) {

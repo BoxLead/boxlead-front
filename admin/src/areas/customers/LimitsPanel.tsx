@@ -43,7 +43,7 @@ function parseValue(key: EntitlementKey, raw: string): number {
 
 function initialValue(row: Row): string {
   const current = row.value ?? 0;
-  if (isSwitch(row.key)) return current > 0 ? "0" : "1";
+  if (isSwitch(row.key)) return current > 0 ? "1" : "0";
   if (row.value === null || row.value === undefined) return "";
   return row.key === "LLM_COST_CAP_MICROS" ? String(current / MICROS) : String(current);
 }
