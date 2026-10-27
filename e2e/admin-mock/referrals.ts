@@ -426,9 +426,30 @@ function createPayout({ body }: MockRequest): MockReply {
   return { status: 201, body: payout };
 }
 
-function csvCell(value: string): string {
-  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
-  return /[",\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
+const BOM = "\uFEFF";
+const LINE_END = "\r\n";
+const FORMULA_STARTS = "=+-@\t\r";
+const PAYOUT_HEADER = ["Razón social", "CUIT", "Medio de cobro", "Dato de cobro", "Cierre del período", "Total", "Moneda"];
+const ENTRY_HEADER = ["Fecha", "Cliente", "Ciclo", "Tipo", "Monto"];
+
+function csvText(value: string | null): string {
+  const raw = value ?? "";
+  const cell = raw && FORMULA_STARTS.includes(raw[0]) ? `'${raw}` : raw;
+  return /[",\r\n]/.test(cell) ? `"${cell.replaceAll('"', '""')}"` : cell;
+}
+
+function decimal(amountMinor: number): string {
+  return (amountMinor / 100).toFixed(2);
+}
+
+function maskedEmail(email: string): string {
+  const at = email.indexOf("@");
+  return at <= 0 ? "***" : `${email[0]}***${email.slice(at)}`;
+}
+
+function customerLabel(customerUserId: string): string {
+  const customer = state.customers.find((row) => row.userId === customerUserId);
+  return customer ? maskedEmail(customer.email) : "Cliente";
 }
 
 function exportPayout({ match, body }: MockRequest): MockReply {
@@ -437,32 +458,29 @@ function exportPayout({ match, body }: MockRequest): MockReply {
   if (!payout) return notFound();
   const reseller = findReseller(payout.resellerId);
   if (!reseller) return notFound();
-  const rows = state.commissions
-    .filter((row) => row.payoutId === payout.id)
-    .map((row) =>
-      [
-        reseller.billing.legalName ?? "",
-        reseller.billing.taxId ?? "",
-        reseller.billing.payoutMethod ?? "",
-        reseller.billing.payoutReference ?? "",
-        payout.periodEnd,
-        (payout.total.amountMinor / 100).toFixed(2),
-        payout.total.currency,
-        row.createdAt,
-        `Cliente ${row.customerUserId.slice(0, 8)}`,
-        String(row.cycleNumber),
-        row.kind,
-        (row.amount.amountMinor / 100).toFixed(2),
-      ]
-        .map(csvCell)
-        .join(","),
-    );
+  const rows = [
+    PAYOUT_HEADER.map(csvText),
+    [
+      csvText(reseller.billing.legalName),
+      csvText(reseller.billing.taxId),
+      csvText(reseller.billing.payoutMethod),
+      csvText(reseller.billing.payoutReference),
+      payout.periodEnd,
+      decimal(payout.total.amountMinor),
+      payout.total.currency,
+    ],
+    ENTRY_HEADER.map(csvText),
+    ...state.commissions
+      .filter((row) => row.payoutId === payout.id)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
+      .map((row) => [dayOf(Date.parse(row.createdAt)), csvText(customerLabel(row.customerUserId)), String(row.cycleNumber), row.kind, decimal(row.amount.amountMinor)]),
+  ];
   if (payout.status === "DRAFT") payout.status = "EXPORTED";
   const fileName = `liquidacion-${payout.periodEnd}-${payout.id}.csv`;
   return {
     status: 200,
-    body: rows.join("\n"),
-    headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${fileName}"` },
+    text: BOM + rows.map((cells) => cells.join(",") + LINE_END).join(""),
+    headers: { "Content-Type": "text/csv;charset=UTF-8", "Content-Disposition": `attachment; filename="${fileName}"` },
   };
 }
 

@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import type { Page, Request } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, settled, expireAdminSession, reauthenticate } from "./support.ts";
@@ -339,6 +340,19 @@ test.describe("finance actions", () => {
     expect(exported.headers()["x-requested-with"]).toBe("boxlead-web");
     expect(download.suggestedFilename()).toMatch(/^liquidacion-\d{4}-\d{2}-\d{2}-[0-9a-f-]+\.csv$/);
     expect(download.url()).toMatch(/^blob:/);
+    const bytes = await readFile(await download.path());
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const content = bytes.subarray(3).toString("utf8");
+    expect(content).not.toMatch(/[^\r]\n/);
+    const lines = content.split("\r\n");
+    const periodEnd = (created.postDataJSON() as { periodEnd: string }).periodEnd;
+    expect(lines).toEqual([
+      "Razón social,CUIT,Medio de cobro,Dato de cobro,Cierre del período,Total,Moneda",
+      `Agencia Norte de Prueba SRL,30-11111111-9,Transferencia bancaria,agencia.norte.prueba,${periodEnd},15000.00,ARS`,
+      "Fecha,Cliente,Ciclo,Tipo,Monto",
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2},c\*\*\*@example\.com,1,ACCRUAL,15000\.00$/),
+      "",
+    ]);
     await expect(page.getByText("Exportada", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Marcar pagada" }).click();
