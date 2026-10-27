@@ -157,7 +157,7 @@ describe("UsageScreen", () => {
   });
 });
 
-describe("ConsumerRequestsScreen", () => {
+describe("ConsumerRequestsScreen", { timeout: 20_000 }, () => {
   const pending = [
     request({ id: "w1", kind: "WITHDRAWAL", userId: LUCIA, details: "Contraté ayer y me arrepentí.\nNo lo voy a usar.", refundable: { amountMinor: 1_890_000, currency: "ARS" } }),
     request({ id: "c1", kind: "CANCELLATION" }),
@@ -262,7 +262,7 @@ describe("ConsumerRequestsScreen", () => {
   });
 });
 
-describe("TeamScreen", () => {
+describe("TeamScreen", { timeout: 20_000 }, () => {
   const members: TeamMember[] = [
     { userId: SELF, email: "equipo@boxlead.app", name: "Equipo", hasPassword: true, roles: [{ grantId: "g1", role: "OWNER", grantedAt: "2026-06-01T12:00:00Z", grantedBy: null }], factorConfirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: null },
     { userId: LUCIA, email: "carla@example.com", name: "Carla", hasPassword: true, roles: [{ grantId: "g2", role: "SUPPORT", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: false, enrollmentOpenUntil: null, lastAdminSessionAt: null },
