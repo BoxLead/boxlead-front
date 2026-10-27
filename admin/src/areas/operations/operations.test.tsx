@@ -10,7 +10,7 @@ import { json, mockFetch, type Reply } from "../../test/fetch";
 import { AuditScreen } from "./AuditScreen";
 import { ConsumerRequestsScreen } from "./ConsumerRequestsScreen";
 import { TeamScreen } from "./TeamScreen";
-import type { AuditEvent, ConsumerRequest, TeamMember, UsageSummary } from "./types";
+import type { AuditEvent, ConsumerRequest, TeamMember, UsageDay, UsageSummary } from "./types";
 import { UsageScreen } from "./UsageScreen";
 import { formatCost, rangeProblem } from "./usage";
 
@@ -125,6 +125,29 @@ describe("UsageScreen", () => {
     expect(await screen.findByText("Nada coincide con estos filtros")).toBeInTheDocument();
     expect(calls.at(-1)?.url.pathname).toBe("/admin/usage");
     expect(calls.at(-1)?.url.searchParams.get("userId")).toBe(LUCIA);
+  });
+
+  it("links the user of each detail row and says when the cost was computed", async () => {
+    const day: UsageDay = {
+      userId: LUCIA,
+      day: "2026-10-20",
+      agentId: "0b0e0000-0000-4000-8002-000000000001",
+      model: "claude-sonnet-4-5",
+      runs: 4,
+      inputTokens: 1000,
+      outputTokens: 200,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      estimatedCostMicros: 1_500_000,
+      costCurrency: "USD",
+      priceVersion: 2,
+      computedAt: "2026-10-21T03:00:00Z",
+    };
+    renderScreen(<UsageScreen />, ["SUPPORT"], "/uso?view=detalle&from=2026-10-01&to=2026-10-26", () => json(200, { items: [day], page: 0, size: 100, totalItems: 1 }));
+    expect(await screen.findByRole("link", { name: LUCIA.slice(0, 8) })).toHaveAttribute("href", `/usuarios/${LUCIA}`);
+    expect(screen.getByText("Calculado el 21 oct 2026, 00:00")).toBeInTheDocument();
+    expect(screen.getByText("Precios versión 2")).toBeInTheDocument();
+    expect(screen.getByText(/El costo lo estima el agente con su tabla de precios y core solo lo guarda/)).toBeInTheDocument();
   });
 
   it("does not ask core with a range it would reject", async () => {
