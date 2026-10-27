@@ -95,7 +95,14 @@ export function Privacy() {
           ni links.
         </li>
         <li>
-          <strong>Cloudflare</strong>, que protege y entrega el sitio.
+          <strong>Cloudflare</strong>, que protege y entrega el sitio y mide las visitas con Cloudflare Web Analytics,
+          sin cookies ni identificadores de personas.
+        </li>
+        <li>
+          <strong>Google</strong>, que mide las visitas a las páginas públicas con Google Analytics, solo si lo aceptás
+          en el aviso de cookies. Google recibe la página visitada, el navegador, el dispositivo y la ciudad aproximada,
+          con la dirección IP acortada, y nosotros vemos esos datos en forma agregada durante 14 meses. Nunca le mandamos
+          tu nombre, tu email ni el contenido de tus conversaciones, y dentro de la app no se mide nada.
         </li>
         <li>
           <strong>El revendedor que te refirió</strong>, si existe, que solo ve tu razón social o tu email enmascarado y
@@ -160,12 +167,20 @@ export function Privacy() {
         protección de datos personales.
       </p>
 
-      <h2>10. Cookies y almacenamiento</h2>
+      <h2 id="cookies">10. Cookies y almacenamiento</h2>
       <ul>
         <li>Una cookie de sesión, que no se puede leer desde el navegador, para mantenerte conectado.</li>
         <li>Una cookie con el código del revendedor, si llegaste por su link.</li>
         <li>Una cookie con la invitación a la Beta, que dura una hora.</li>
         <li>El tema claro u oscuro que elegís, guardado en tu navegador.</li>
+        <li>
+          Tu respuesta al aviso de cookies, guardada en tu navegador para no volver a preguntarte. Podés cambiarla
+          cuando quieras desde Preferencias de cookies, al pie de las páginas públicas.
+        </li>
+        <li>
+          Las cookies de Google Analytics, que distinguen una visita de otra durante hasta dos años, solo si aceptaste
+          la medición. Si la rechazás no se instala ninguna y no se envía nada a Google.
+        </li>
       </ul>
       <p>
         No usamos cookies de publicidad. Si conectás WhatsApp, el ingreso con Meta puede dejar sus propias cookies.
