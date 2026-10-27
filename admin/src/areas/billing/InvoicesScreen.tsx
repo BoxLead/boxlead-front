@@ -4,6 +4,7 @@ import { Screen } from "../../components/Screen";
 import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { formatDate } from "../../format";
@@ -15,6 +16,7 @@ import { ReceiverCell } from "./Receiver";
 import type { InvoiceRow } from "./types";
 
 const FILTERS = ["status", "from", "to"] as const;
+const RULES: FilterRules = { status: enumOf(INVOICE_STATUS_OPTIONS), ...dateRange("from", "to") };
 
 const DONE: Record<InvoiceAction, string> = {
   issue: "Marcamos la factura como emitida.",
@@ -36,7 +38,7 @@ function statusDate(row: InvoiceRow): string | undefined {
 export function InvoicesScreen() {
   const toast = useToast();
   const item = navItem("invoices");
-  const { params, query } = useListQuery<InvoiceRow>("/admin/invoices", FILTERS);
+  const { params, query } = useListQuery<InvoiceRow>("/admin/invoices", FILTERS, RULES);
   const [pending, setPending] = useState<Pending | null>(null);
   const [open, setOpen] = useState(false);
   const [attempt, setAttempt] = useState(0);

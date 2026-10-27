@@ -9,16 +9,22 @@ import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../compone
 import { ListView } from "../../components/list/ListView";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import type { AdminPage } from "../../api/types";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListParams } from "../../components/list/useListParams";
 import { navItem } from "../../nav";
 import { ACTION_LABELS, ACTOR_LABELS, labelOf, optionsOf, TARGET_LABELS } from "./labels";
 import type { AuditEvent } from "./types";
-import { isDay, isUuid } from "./usage";
 import "./Operations.css";
 
 const KEYS = ["targetType", "targetId", "actorUserId", "action", "from", "to"] as const;
 const TARGET_OPTIONS = optionsOf(TARGET_LABELS);
 const ACTION_OPTIONS = optionsOf(ACTION_LABELS);
+const RULES: FilterRules = {
+  targetType: enumOf(TARGET_OPTIONS),
+  action: enumOf(ACTION_OPTIONS),
+  actorUserId: { kind: "uuid", what: "del actor" },
+  ...dateRange("from", "to"),
+};
 
 function json(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -93,16 +99,10 @@ function EventDialog({ open, event, onClose }: { open: boolean; event: AuditEven
   );
 }
 
-function filterProblem(actorUserId: string, from: string, to: string): string | null {
-  if (actorUserId && !isUuid(actorUserId)) return "El id del actor no tiene el formato correcto.";
-  if (from && to && isDay(from) && isDay(to) && from > to) return "La fecha de inicio tiene que ser anterior a la de fin.";
-  return null;
-}
-
 export function AuditScreen() {
   const item = navItem("audit");
-  const params = useListParams(KEYS);
-  const problem = filterProblem(params.value("actorUserId"), params.value("from"), params.value("to"));
+  const params = useListParams(KEYS, RULES);
+  const problem = params.problem ?? (params.value("targetId") && !params.value("targetType") ? "Elegí el tipo de objetivo para buscar por id." : null);
   const query = useAdminQuery<AdminPage<AuditEvent>>(problem ? null : "/admin/audit", params.search);
   const [selected, setSelected] = useState<AuditEvent | null>(null);
   const [open, setOpen] = useState(false);

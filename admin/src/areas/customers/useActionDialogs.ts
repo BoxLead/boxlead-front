@@ -14,8 +14,8 @@ export function useActionDialogs<K extends string>(onChanged: () => void) {
     async (call: () => Promise<unknown>, message: string) => {
       await call();
       setOpen(null);
-      toast({ tone: "success", message });
       onChanged();
+      toast({ tone: "success", message });
     },
     [onChanged, toast],
   );

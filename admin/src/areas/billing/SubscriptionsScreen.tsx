@@ -6,6 +6,7 @@ import { Screen } from "../../components/Screen";
 import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
@@ -18,6 +19,7 @@ import { actionsFor, nextStep } from "./subscriptionSteps";
 import type { SubscriptionRow } from "./types";
 
 const FILTERS = ["status", "plan", "from", "to"] as const;
+const RULES: FilterRules = { status: enumOf(SUBSCRIPTION_STATUS_OPTIONS), plan: enumOf(PLAN_OPTIONS), ...dateRange("from", "to") };
 
 const ACTIONS: Record<SubscriptionAction, { button: string; title: string; confirm: string; done: string; tone: "primary" | "danger" }> = {
   pause: { button: "Pausar", title: "Pausar suscripción", confirm: "Pausar", done: "Pausamos la suscripción.", tone: "primary" },
@@ -58,7 +60,7 @@ export function SubscriptionsScreen() {
   const me = useAdmin();
   const toast = useToast();
   const item = navItem("subscriptions");
-  const { params, query } = useListQuery<SubscriptionRow>("/admin/subscriptions", FILTERS);
+  const { params, query } = useListQuery<SubscriptionRow>("/admin/subscriptions", FILTERS, RULES);
   const [pending, setPending] = useState<Pending | null>(null);
   const [open, setOpen] = useState(false);
   const canOperate = canAccess(me.roles, ["OWNER"]);

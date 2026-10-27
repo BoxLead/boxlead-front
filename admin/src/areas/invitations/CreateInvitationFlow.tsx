@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useToast } from "../../../../src/components/ui/toast";
 import { ReasonDialog } from "../../components/ReasonDialog";
+import { useResellerDirectory } from "../../session/resellerDirectory";
 import { formatDate } from "../../format";
 import { createInvitation } from "./api";
 import { endOfDay, todayInBuenosAires } from "./dates";
 import { Field, FormDialog, Summary } from "./FormDialog";
 import { InvitationLinkDialog } from "./InvitationLinkDialog";
-import type { ResellerState } from "./useResellers";
 import { daysText, demoDaysProblem, demoDaysValue, emailProblem, futureDayProblem } from "./validation";
 import { MAX_DEMO_DAYS, MAX_EMAIL_LENGTH } from "./types";
 
@@ -18,13 +18,13 @@ const EMPTY: Draft = { email: "", expiresOn: "", demoDays: "", resellerId: "" };
 
 type CreateInvitationFlowProps = {
   open: boolean;
-  resellers: ResellerState;
   onClose: () => void;
   onCreated: () => void;
 };
 
-export function CreateInvitationFlow({ open, resellers, onClose, onCreated }: CreateInvitationFlowProps) {
+export function CreateInvitationFlow({ open, onClose, onCreated }: CreateInvitationFlowProps) {
   const toast = useToast();
+  const resellers = useResellerDirectory();
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [step, setStep] = useState<Step>("form");
   const [touched, setTouched] = useState(false);
@@ -45,8 +45,8 @@ export function CreateInvitationFlow({ open, resellers, onClose, onCreated }: Cr
     demoDays: demoDaysProblem(draft.demoDays),
   };
   const shown = (problem: string | null) => (touched ? problem : null);
-  const resellerName = resellers.status === "ready" ? resellers.names.get(draft.resellerId) : undefined;
-  const active = resellers.status === "ready" ? resellers.items.filter((reseller) => reseller.status === "ACTIVE") : [];
+  const resellerName = resellers.find(draft.resellerId)?.displayName;
+  const active = resellers.resellers.filter((reseller) => reseller.status === "ACTIVE");
 
   function update(change: Partial<Draft>) {
     setDraft((current) => ({ ...current, ...change }));
@@ -137,7 +137,7 @@ export function CreateInvitationFlow({ open, resellers, onClose, onCreated }: Cr
           label="Revendedor"
           help={
             resellers.status === "error"
-              ? "No pudimos cargar los revendedores. Podés seguir sin revendedor."
+              ? `No pudimos cargar los revendedores. ${resellers.message} Podés seguir sin revendedor.`
               : "Opcional. Solo aparecen los revendedores activos."
           }
         >

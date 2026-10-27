@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { adminMockUrl, enterAdmin, expect, horizontalOverflow, test } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, horizontalOverflow, test, settled } from "./support.ts";
 
 const CONTROLS = new Set([32, 40, 44, 48]);
 const CONTROL_SELECTOR = ".btn, .choice-group-segmented, .select, input.input";
@@ -85,7 +85,7 @@ async function open(page: Page, screen: Screen) {
   }
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.locator(".skeleton")).toHaveCount(0);
-  await page.waitForTimeout(300);
+  await settled(page);
 }
 
 for (const screen of SCREENS) {

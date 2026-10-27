@@ -4,6 +4,7 @@ import { Screen } from "../../components/Screen";
 import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
@@ -16,6 +17,7 @@ import { RefundDialog } from "./RefundDialog";
 import type { PaymentRow, RefundResult } from "./types";
 
 const FILTERS = ["status", "userId", "from", "to"] as const;
+const RULES: FilterRules = { status: enumOf(PAYMENT_STATUS_OPTIONS), userId: { kind: "uuid", what: "de usuario" }, ...dateRange("from", "to") };
 
 const REFUND_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" | "danger"; message: string }> = {
   APPROVED: { tone: "success", message: "Mercado Pago aprobó el reembolso." },
@@ -36,7 +38,7 @@ export function PaymentsScreen() {
   const me = useAdmin();
   const toast = useToast();
   const item = navItem("payments");
-  const { params, query } = useListQuery<PaymentRow>("/admin/payments", FILTERS);
+  const { params, query } = useListQuery<PaymentRow>("/admin/payments", FILTERS, RULES);
   const [target, setTarget] = useState<PaymentRow | null>(null);
   const [open, setOpen] = useState(false);
   const [attempt, setAttempt] = useState(0);

@@ -17,6 +17,8 @@ import { formatCost, rangeProblem } from "./usage";
 const SELF = "0b0e0000-0000-4000-8000-0000000000a1";
 const LUCIA = "0b0e0000-0000-4000-8001-000000000001";
 
+const retry = vi.fn(() => Promise.resolve());
+
 function session(roles: AdminRole[]): SessionValue {
   const me: AdminMe = {
     userId: SELF,
@@ -32,7 +34,7 @@ function session(roles: AdminRole[]): SessionValue {
     stage: { kind: "ready", me },
     connectionLost: false,
     reauthenticating: false,
-    retry: noop,
+    retry,
     signIn: noop,
     confirmEnrollment: noop,
     openSession: noop,
@@ -196,6 +198,30 @@ describe("TeamScreen", () => {
     expect(JSON.parse(String(removal?.init.body))).toEqual({ reason: "Dejó el equipo de soporte" });
   });
 
+  it("says when the role was already removed and loads the team again on close", async () => {
+    const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method) =>
+      method === "DELETE" ? json(404, { error: "Not found", message: "Grant not found" }) : json(200, pageOf(members)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Soporte a carla@example.com" }));
+    const listed = calls.filter((call) => call.url.pathname === "/admin/grants").length;
+    await userEvent.type(screen.getByLabelText("Motivo"), "Dejó el equipo de soporte");
+    await userEvent.click(screen.getByRole("button", { name: "Quitar rol", hidden: true }));
+    expect(await screen.findByText("Ese rol ya fue quitado.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/grants").length).toBe(listed + 1));
+  });
+
+  it("rebuilds the session when the role was taken away in the middle of an action", async () => {
+    retry.mockClear();
+    renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method) =>
+      method === "DELETE" ? json(403, { error: "Forbidden", message: "Role required", code: "ROLE_REQUIRED" }) : json(200, pageOf(members)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Soporte a carla@example.com" }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Dejó el equipo de soporte");
+    await userEvent.click(screen.getByRole("button", { name: "Quitar rol", hidden: true }));
+    await vi.waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+  });
+
   it("finds an existing user and grants a role with the reason", async () => {
     const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method, url) => {
       if (method === "POST") return json(201, { id: "g3", userId: LUCIA, role: "FINANCE", grantedAt: "2026-10-26T12:00:00Z", enrollmentOpenUntil: null });
@@ -250,6 +276,12 @@ describe("AuditScreen", () => {
   it("checks the actor id before asking core", async () => {
     const calls = renderScreen(<AuditScreen />, ["OWNER"], "/auditoria?actorUserId=nope", () => json(200, pageOf([])));
     expect(await screen.findByText("El id del actor no tiene el formato correcto.")).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+  });
+
+  it("asks for the target type before searching by target id", async () => {
+    const calls = renderScreen(<AuditScreen />, ["OWNER"], "/auditoria?targetId=abc", () => json(200, pageOf([])));
+    expect(await screen.findByText("Elegí el tipo de objetivo para buscar por id.")).toBeInTheDocument();
     expect(calls).toHaveLength(0);
   });
 });

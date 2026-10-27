@@ -1,12 +1,16 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { filterProblem, type FilterRules } from "./filterRules";
 
 export const PAGE_PARAM = "page";
+
+const NO_RULES: FilterRules = {};
 
 export type ListParams = {
   page: number;
   search: string;
   active: boolean;
+  problem: string | null;
   value: (key: string) => string;
   values: (key: string) => string[];
   setFilter: (key: string, value: string | readonly string[] | null) => void;
@@ -14,9 +18,13 @@ export type ListParams = {
   clear: () => void;
 };
 
-export function useListParams(keys: readonly string[]): ListParams {
+export function pageFromUrl(raw: string | null): number {
+  return Math.max(0, Math.floor(Number(raw) || 1) - 1);
+}
+
+export function useListParams(keys: readonly string[], rules: FilterRules = NO_RULES): ListParams {
   const [params, setParams] = useSearchParams();
-  const page = Math.max(0, Math.floor(Number(params.get(PAGE_PARAM)) || 0));
+  const page = pageFromUrl(params.get(PAGE_PARAM));
 
   const search = useMemo(() => {
     const query = new URLSearchParams();
@@ -26,6 +34,8 @@ export function useListParams(keys: readonly string[]): ListParams {
     if (page > 0) query.set(PAGE_PARAM, String(page));
     return query.toString();
   }, [keys, params, page]);
+
+  const problem = useMemo(() => filterProblem(rules, (key) => params.getAll(key).filter(Boolean)), [rules, params]);
 
   const update = useCallback(
     (change: (next: URLSearchParams) => void) => {
@@ -42,6 +52,7 @@ export function useListParams(keys: readonly string[]): ListParams {
     page,
     search,
     active: keys.some((key) => params.getAll(key).some(Boolean)),
+    problem,
     value: (key) => params.get(key) ?? "",
     values: (key) => params.getAll(key).filter(Boolean),
     setFilter: (key, value) =>
@@ -53,7 +64,7 @@ export function useListParams(keys: readonly string[]): ListParams {
       }),
     setPage: (target) =>
       update((next) => {
-        if (target > 0) next.set(PAGE_PARAM, String(target));
+        if (target > 0) next.set(PAGE_PARAM, String(target + 1));
         else next.delete(PAGE_PARAM);
       }),
     clear: () =>

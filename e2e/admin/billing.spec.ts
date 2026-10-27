@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
 import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const REASON = "Pedido del cliente por mail";
@@ -59,6 +59,21 @@ test("an owner pauses, resumes and cancels subscriptions with a reason", async (
   expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON });
   await expect(ana).toContainText("Cancelada");
   await expect(ana.getByRole("button")).toHaveCount(0);
+});
+
+test("asks for the code and finishes the pause when the admin session expired in the dialog", async ({ page }) => {
+  await resetBilling(["OWNER"]);
+  await enterAdmin(page, "/suscripciones");
+  const ana = row(page, "ana@example.com");
+  await ana.getByRole("button", { name: "Pausar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Pausar suscripción" });
+  await expireAdminSession();
+  await dialog.getByLabel("Motivo").fill(REASON);
+  await dialog.getByRole("button", { name: "Pausar", exact: true }).click();
+  await reauthenticate(page);
+  await expect(page.getByText("Pausamos la suscripción.")).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(ana).toContainText("Pausada");
 });
 
 test("subscriptions filter by status and plan through the URL", async ({ page }) => {
@@ -224,7 +239,7 @@ test("the billing screens with data pass the accessibility checks", async ({ pag
 });
 
 async function shot(page: Page, name: string, scheme: string) {
-  await page.waitForTimeout(400);
+  await settled(page);
   const width = page.viewportSize()?.width ?? 0;
   await page.screenshot({ path: `${DIR}/${name}-${scheme}-${width}.png`, fullPage: true, animations: "disabled" });
 }

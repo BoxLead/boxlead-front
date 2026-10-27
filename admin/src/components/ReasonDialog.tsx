@@ -17,32 +17,29 @@ type ReasonDialogProps = {
   amount?: Money;
   onConfirm: (reason: string) => Promise<void>;
   onClose: () => void;
+  onSettled?: (failure: unknown) => void;
 };
 
-type ReasonFormProps = Omit<ReasonDialogProps, "open" | "title">;
+type ReasonFormProps = Pick<ReasonDialogProps, "children" | "confirmLabel" | "tone" | "amount"> & {
+  busy: boolean;
+  error: string | null;
+  onSubmit: (reason: string) => void;
+  onClose: () => void;
+};
 
-function ReasonForm({ children, confirmLabel, tone = "primary", amount, onConfirm, onClose }: ReasonFormProps) {
+function ReasonForm({ children, confirmLabel, tone = "primary", amount, busy, error, onSubmit, onClose }: ReasonFormProps) {
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const fieldId = useId();
   const helpId = useId();
   const counterId = useId();
   const problem = reasonProblem(reason);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTouched(true);
     if (problem) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await onConfirm(reason.trim());
-    } catch (failure) {
-      setError(errorText(failure));
-      setBusy(false);
-    }
+    onSubmit(reason.trim());
   }
 
   return (
@@ -94,10 +91,49 @@ function ReasonForm({ children, confirmLabel, tone = "primary", amount, onConfir
   );
 }
 
-export function ReasonDialog({ open, title, ...form }: ReasonDialogProps) {
+export function ReasonDialog({ open, title, children, confirmLabel, tone, amount, onConfirm, onClose, onSettled }: ReasonDialogProps) {
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<unknown>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setBusy(false);
+      setFailure(null);
+    }
+  }
+
+  async function submit(reason: string) {
+    setBusy(true);
+    setFailure(null);
+    try {
+      await onConfirm(reason);
+    } catch (error) {
+      setFailure(error);
+      setBusy(false);
+    }
+  }
+
+  function close() {
+    onClose();
+    if (failure) onSettled?.(failure);
+  }
+
   return (
-    <Dialog open={open} title={title} size="md" onClose={form.onClose}>
-      {open ? <ReasonForm {...form} /> : null}
+    <Dialog open={open} title={title} size="md" busy={busy} onClose={close}>
+      {open ? (
+        <ReasonForm
+          confirmLabel={confirmLabel}
+          tone={tone}
+          amount={amount}
+          busy={busy}
+          error={failure ? errorText(failure) : null}
+          onSubmit={(reason) => void submit(reason)}
+          onClose={close}
+        >
+          {children}
+        </ReasonForm>
+      ) : null}
     </Dialog>
   );
 }

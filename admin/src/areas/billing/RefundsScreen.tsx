@@ -5,6 +5,7 @@ import { Screen } from "../../components/Screen";
 import type { Column } from "../../components/list/DataTable";
 import { FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
@@ -14,6 +15,7 @@ import { RetryRefundDialog } from "./RetryRefundDialog";
 import type { RefundResult, RefundRow } from "./types";
 
 const FILTERS = ["status"] as const;
+const RULES: FilterRules = { status: enumOf(REFUND_STATUS_OPTIONS) };
 
 const RETRY_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" | "danger"; message: string }> = {
   APPROVED: { tone: "success", message: "Mercado Pago aprobó el reembolso." },
@@ -24,7 +26,7 @@ const RETRY_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" | 
 export function RefundsScreen() {
   const toast = useToast();
   const item = navItem("refunds");
-  const { params, query } = useListQuery<RefundRow>("/admin/refunds", FILTERS);
+  const { params, query } = useListQuery<RefundRow>("/admin/refunds", FILTERS, RULES);
   const [target, setTarget] = useState<RefundRow | null>(null);
   const [open, setOpen] = useState(false);
   const [attempt, setAttempt] = useState(0);

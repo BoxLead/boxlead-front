@@ -73,9 +73,67 @@ describe("SessionProvider", () => {
     await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
     await userEvent.type(await screen.findByLabelText("Código de 6 números"), "123456");
     await userEvent.click(screen.getByRole("button", { name: "Abrir sesión" }));
-    expect(await screen.findByRole("heading", { level: 1, name: "Equipo" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Equipo" }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText("equipo@boxlead.app")).toBeInTheDocument();
+  }, 20_000);
+
+  it("asks for the customer session and the admin session together at startup", async () => {
+    const calls = mockFetch((_method, url) => {
+      if (url.pathname === "/auth/me") return json(200, USER);
+      if (url.pathname === "/admin/me") return json(200, { ...ME, adminSessionExpiresAt: LATER });
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    renderApp();
+    expect(await screen.findByRole("heading", { level: 1, name: "Inicio" }, { timeout: 5000 })).toBeInTheDocument();
+    expect(calls.slice(0, 2).map((call) => call.url.pathname).sort()).toEqual(["/admin/me", "/auth/me"]);
+    expect(calls.filter((call) => call.url.pathname === "/admin/me")).toHaveLength(1);
   });
+
+  it("keeps the login when the admin session answers 401 without a customer session", async () => {
+    mockFetch((_method, url) => {
+      if (url.pathname === "/auth/me") return json(401, { error: "Unauthorized", message: "Unauthorized" });
+      if (url.pathname === "/admin/me") return json(401, { error: "Unauthorized", message: "Unauthorized" });
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    renderApp();
+    expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    expect(screen.getByText("Si ya tenés sesión abierta en boxlead.app entrás directo. Si no, usá tu email y tu contraseña.")).toBeInTheDocument();
+  });
+
+  it("explains a 404 of the admin session as another account than the one in Cloudflare Access", async () => {
+    mockFetch((_method, url) => {
+      if (url.pathname === "/auth/me") return json(200, USER);
+      if (url.pathname === "/admin/me") return json(404, { error: "Not found", message: "Not found" });
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    renderApp();
+    expect(await screen.findByRole("heading", { name: "Entraste con otra cuenta" })).toBeInTheDocument();
+    expect(screen.getByText("Entraste a BoxLead con una cuenta distinta a la de Cloudflare Access. Salí y volvé a entrar.")).toBeInTheDocument();
+    expect(screen.getByText("En BoxLead estás como equipo@boxlead.app.")).toBeInTheDocument();
+  });
+
+  it("reloads the admin session when the enrollment is refused with 403", async () => {
+    let confirmed = false;
+    mockFetch((method, url) => {
+      if (url.pathname === "/auth/me") return json(200, USER);
+      if (url.pathname === "/admin/me") {
+        return confirmed
+          ? json(403, { error: "Forbidden", message: "Role required", code: "ROLE_REQUIRED" })
+          : json(200, { ...ME, factorConfirmed: false, enrollmentOpenUntil: LATER });
+      }
+      if (url.pathname === "/admin/mfa/enrollment" && method === "POST") return json(200, { otpauthUri: "otpauth://totp/BoxLead:equipo?secret=JBSWY3DP&issuer=BoxLead" });
+      if (url.pathname === "/admin/mfa/confirm" && method === "POST") {
+        confirmed = true;
+        return json(403, { error: "Forbidden", message: "Role required", code: "ROLE_REQUIRED" });
+      }
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    renderApp();
+    await userEvent.click(await screen.findByRole("button", { name: "Generar código QR" }));
+    await userEvent.type(await screen.findByLabelText("Código de 6 números"), "123456");
+    await userEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    expect(await screen.findByRole("heading", { name: "Esta cuenta no tiene acceso" }, { timeout: 5000 })).toBeInTheDocument();
+  }, 20_000);
 
   it("shows the locked factor after too many wrong codes", async () => {
     let locked = false;

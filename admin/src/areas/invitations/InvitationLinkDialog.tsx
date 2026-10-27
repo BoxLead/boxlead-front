@@ -65,7 +65,7 @@ function LinkBody({ link, onClose }: { link: string; onClose: () => void }) {
 
 export function InvitationLinkDialog({ link, onClose }: InvitationLinkDialogProps) {
   return (
-    <Dialog open={link !== null} title="Invitación creada" size="md" onClose={onClose}>
+    <Dialog open={link !== null} title="Invitación creada" size="md" dismissible={false} onClose={onClose}>
       {link ? <LinkBody key={link} link={link} onClose={onClose} /> : null}
     </Dialog>
   );

@@ -1,16 +1,19 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../../../src/components/ui/toast";
+import { isStale } from "../../api/errors";
 import { DateText } from "../../components/DateText";
 import { StatusBadge } from "../../components/StatusBadge";
 import { FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import type { Column } from "../../components/list/DataTable";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
+import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotice";
+import { useResellerDirectory } from "../../session/resellerDirectory";
 import { revokeInvitation } from "./api";
 import { CreateInvitationFlow } from "./CreateInvitationFlow";
-import type { ResellerState } from "./useResellers";
 import { daysText } from "./validation";
 import { INVITATION_STATUS } from "./labels";
 import type { Invitation, InvitationStatus } from "./types";
@@ -21,11 +24,11 @@ const STATUS_OPTIONS = (Object.keys(INVITATION_STATUS) as InvitationStatus[]).ma
   value,
   label: INVITATION_STATUS[value].label,
 }));
+const RULES: FilterRules = { status: enumOf(STATUS_OPTIONS) };
 
 type InvitationListProps = {
   tabs: ReactNode;
   canAct: boolean;
-  resellers: ResellerState;
   creating: boolean;
   onCloseCreate: () => void;
 };
@@ -36,15 +39,15 @@ function closedNote(invitation: Invitation): ReactNode {
   return null;
 }
 
-export function InvitationList({ tabs, canAct, resellers, creating, onCloseCreate }: InvitationListProps) {
+export function InvitationList({ tabs, canAct, creating, onCloseCreate }: InvitationListProps) {
   const toast = useToast();
-  const { params, query } = useListQuery<Invitation>("/admin/invitations", FILTERS);
+  const directory = useResellerDirectory();
+  const { params, query } = useListQuery<Invitation>("/admin/invitations", FILTERS, RULES);
   const [revoking, setRevoking] = useState<Invitation | null>(null);
 
   function resellerName(id: string | null): ReactNode {
     if (!id) return "—";
-    const name = resellers.status === "ready" ? resellers.names.get(id) : undefined;
-    return name ?? <span className="invitations-id">{id.slice(0, 8)}</span>;
+    return directory.find(id)?.displayName ?? <span className="invitations-id">{id.slice(0, 8)}</span>;
   }
 
   async function revoke(reason: string) {
@@ -111,26 +114,29 @@ export function InvitationList({ tabs, canAct, resellers, creating, onCloseCreat
         emptyTitle="Todavía no hay invitaciones"
         emptyHint={canAct ? "Creá la primera con Nueva invitación." : undefined}
         filters={
-          <FilterBar active={params.active} onClear={params.clear} lead={tabs}>
-            <SelectFilter
-              label="Estado"
-              value={params.value("status")}
-              options={STATUS_OPTIONS}
-              allLabel="Todas"
-              onChange={(value) => params.setFilter("status", value)}
-            />
-            <SearchFilter
-              label="Email"
-              value={params.value("email")}
-              placeholder="Empieza con…"
-              onSubmit={(value) => params.setFilter("email", value)}
-            />
-          </FilterBar>
+          <>
+            <FilterBar active={params.active} onClear={params.clear} lead={tabs}>
+              <SelectFilter
+                label="Estado"
+                value={params.value("status")}
+                options={STATUS_OPTIONS}
+                allLabel="Todas"
+                onChange={(value) => params.setFilter("status", value)}
+              />
+              <SearchFilter
+                label="Email"
+                value={params.value("email")}
+                placeholder="Empieza con…"
+                onSubmit={(value) => params.setFilter("email", value)}
+              />
+            </FilterBar>
+            <ResellerDirectoryNotice directory={directory} />
+          </>
         }
       />
       {canAct ? (
         <>
-          <CreateInvitationFlow open={creating} resellers={resellers} onClose={onCloseCreate} onCreated={query.reload} />
+          <CreateInvitationFlow open={creating} onClose={onCloseCreate} onCreated={query.reload} />
           <ReasonDialog
             open={revoking !== null}
             title="Revocar invitación"
@@ -138,6 +144,9 @@ export function InvitationList({ tabs, canAct, resellers, creating, onCloseCreat
             tone="danger"
             onConfirm={revoke}
             onClose={() => setRevoking(null)}
+            onSettled={(failure) => {
+              if (isStale(failure)) query.reload();
+            }}
           >
             <p>
               Vas a revocar la invitación de <strong>{revoking?.email}</strong>. Su link deja de funcionar y no se puede volver a abrir.

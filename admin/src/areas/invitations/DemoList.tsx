@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../../../src/components/ui/toast";
+import { isStale, withMessage } from "../../api/errors";
 import { DateText } from "../../components/DateText";
 import { StatusBadge } from "../../components/StatusBadge";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import type { Column } from "../../components/list/DataTable";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { revokeDemo } from "./api";
@@ -15,11 +17,13 @@ import { DEMO_STATUS } from "./labels";
 import { userLabel, type DemoGrant, type DemoGrantStatus } from "./types";
 
 const FILTERS = ["status", "endsBefore"] as const;
+const NO_DEMO = "Ese usuario ya no tiene Demo.";
 
 const STATUS_OPTIONS = (Object.keys(DEMO_STATUS) as DemoGrantStatus[]).map((value) => ({
   value,
   label: DEMO_STATUS[value].label,
 }));
+const RULES: FilterRules = { status: enumOf(STATUS_OPTIONS), endsBefore: { kind: "date" } };
 
 type DemoListProps = {
   tabs: ReactNode;
@@ -30,13 +34,13 @@ type DemoListProps = {
 
 export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProps) {
   const toast = useToast();
-  const { params, query } = useListQuery<DemoGrant>("/admin/demo-grants", FILTERS);
+  const { params, query } = useListQuery<DemoGrant>("/admin/demo-grants", FILTERS, RULES);
   const [extending, setExtending] = useState<DemoGrant | null>(null);
   const [revoking, setRevoking] = useState<DemoGrant | null>(null);
 
   async function revoke(reason: string) {
     if (!revoking) return;
-    await revokeDemo(revoking.userId, reason);
+    await revokeDemo(revoking.userId, reason).catch(withMessage(404, NO_DEMO)).catch(withMessage(409, NO_DEMO));
     toast({ tone: "success", message: `Le quitaste la Demo a ${userLabel(revoking)}.` });
     setRevoking(null);
     query.reload();
@@ -130,6 +134,9 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
             tone="danger"
             onConfirm={revoke}
             onClose={() => setRevoking(null)}
+            onSettled={(failure) => {
+              if (isStale(failure)) query.reload();
+            }}
           >
             <p>
               Vas a quitarle la Demo a <strong>{revoking ? userLabel(revoking) : ""}</strong>. Si no tiene un plan pago, se queda sin

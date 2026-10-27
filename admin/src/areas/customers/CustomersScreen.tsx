@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { Screen } from "../../components/Screen";
@@ -18,9 +19,15 @@ const STATUS_OPTIONS = [
   ...SUBSCRIPTION_STATUSES.map((status) => ({ value: status, label: SUBSCRIPTION_LABELS[status] })),
   { value: NO_SUBSCRIPTION, label: NO_SUBSCRIPTION_LABEL },
 ];
+const RULES: FilterRules = {
+  query: { kind: "query" },
+  plan: enumOf(PLAN_OPTIONS),
+  status: enumOf(STATUS_OPTIONS),
+  ...dateRange("createdFrom", "createdTo"),
+};
 
 export function CustomersScreen() {
-  const { params, query } = useListQuery<CustomerMatch>("/admin/customers", FILTER_KEYS);
+  const { params, query } = useListQuery<CustomerMatch>("/admin/customers", FILTER_KEYS, RULES);
   const item = navItem("customers");
 
   return (

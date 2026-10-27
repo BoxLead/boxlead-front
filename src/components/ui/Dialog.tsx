@@ -8,6 +8,7 @@ type DialogProps = {
   description?: string;
   size?: "sm" | "md" | "lg";
   busy?: boolean;
+  dismissible?: boolean;
   onClose: () => void;
   children: ReactNode;
 };
@@ -18,13 +19,14 @@ function reducedMotion(): boolean {
   return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function Dialog({ open, title, description, size = "md", busy = false, onClose, children }: DialogProps) {
+export function Dialog({ open, title, description, size = "md", busy = false, dismissible = true, onClose, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const pressedOutside = useRef(false);
   const [visible, setVisible] = useState(open);
   if (open && !visible) setVisible(true);
   const titleId = useId();
   const descriptionId = useId();
+  const locked = busy || !dismissible;
 
   useEffect(() => {
     const dialog = ref.current;
@@ -57,13 +59,13 @@ export function Dialog({ open, title, description, size = "md", busy = false, on
       aria-describedby={description ? descriptionId : undefined}
       onCancel={(event) => {
         event.preventDefault();
-        if (!busy) onClose();
+        if (!locked) onClose();
       }}
       onPointerDown={(event) => {
         pressedOutside.current = event.target === event.currentTarget;
       }}
       onClick={(event) => {
-        if (event.target === event.currentTarget && pressedOutside.current && !busy) onClose();
+        if (event.target === event.currentTarget && pressedOutside.current && !locked) onClose();
       }}
     >
       {visible ? (

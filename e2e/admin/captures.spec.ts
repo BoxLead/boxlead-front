@@ -1,11 +1,11 @@
 import type { Page } from "@playwright/test";
 import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
-import { adminMockUrl, enterAdmin, enterCode, expect, INVALID_CODE, openMenu, resetAdmin, signIn, test, VALID_CODE } from "./support.ts";
+import { adminMockUrl, enterAdmin, enterCode, expect, INVALID_CODE, openMenu, resetAdmin, signIn, test, VALID_CODE, settled } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 
 async function shot(page: Page, name: string, scheme: string) {
-  await page.waitForTimeout(500);
+  await settled(page);
   const width = page.viewportSize()?.width ?? 0;
   await page.screenshot({ path: `${DIR}/${name}-${scheme}-${width}.png`, fullPage: true, animations: "disabled" });
 }
@@ -51,8 +51,9 @@ for (const scheme of ["light", "dark"] as const) {
     await shot(page, "08-sin-permiso", scheme);
 
     await page.route(`${ADMIN_MOCK_ORIGIN}/**`, (route) => route.abort("connectionrefused"));
-    await page.reload();
-    await expect(page.getByText("Se cortó la conexión con BoxLead")).toBeVisible();
+    await openMenu(page);
+    await page.getByRole("link", { name: "Usuarios" }).click();
+    await expect(page.getByText("Se cortó la conexión con BoxLead", { exact: true })).toBeVisible();
     await shot(page, "09-sin-conexion", scheme);
   });
 }

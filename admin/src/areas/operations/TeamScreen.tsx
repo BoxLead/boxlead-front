@@ -4,7 +4,7 @@ import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
 import { Tag } from "../../../../src/components/ui/Tag";
 import { useToast } from "../../../../src/components/ui/toast";
 import { adminApi } from "../../api/client";
-import { AdminApiError } from "../../api/errors";
+import { AdminApiError, isStale, withMessage } from "../../api/errors";
 import type { AdminPage, AdminRole } from "../../api/types";
 import { DateText } from "../../components/DateText";
 import { ReasonDialog } from "../../components/ReasonDialog";
@@ -36,9 +36,10 @@ const ROLE_SCOPE: Record<AdminRole, string> = {
 
 type Revoking = { member: TeamMember; role: MemberRole };
 
-function withMessage(status: number, message: string) {
-  return (error: unknown) => {
-    if (error instanceof AdminApiError && error.status === status) throw new AdminApiError(message, status, error.code);
+function useRoleLost() {
+  const { retry } = useSession();
+  return (error: unknown): never => {
+    if (error instanceof AdminApiError && error.code === "ROLE_REQUIRED") void retry();
     throw error;
   };
 }
@@ -61,8 +62,11 @@ function Factor({ member }: { member: TeamMember }) {
   );
 }
 
-function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMember[]; onClose: () => void; onGranted: () => void }) {
+type GrantPanelProps = { members: readonly TeamMember[]; onClose: () => void; onGranted: () => void; onStale: () => void };
+
+function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
   const toast = useToast();
+  const roleLost = useRoleLost();
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<CustomerMatch | null>(null);
   const [role, setRole] = useState<AdminRole>("SUPPORT");
@@ -80,6 +84,7 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
     if (!picked) return;
     await adminApi
       .post<AdminGrant>("/admin/grants", { userId: picked.id, role, reason })
+      .catch(roleLost)
       .catch(withMessage(409, "Esa persona ya tiene ese rol."));
     toast({ tone: "success", message: `${picked.email} ya tiene el rol ${ROLE_LABELS[role]}.` });
     setConfirming(false);
@@ -161,6 +166,9 @@ function GrantPanel({ members, onClose, onGranted }: { members: readonly TeamMem
           confirmLabel={`Otorgar ${ROLE_LABELS[role]}`}
           onConfirm={grant}
           onClose={() => setConfirming(false)}
+          onSettled={(failure) => {
+            if (isStale(failure)) onStale();
+          }}
         >
           <p>
             <strong>{picked.email}</strong> va a tener el rol {ROLE_LABELS[role]}. {ROLE_SCOPE[role]}
@@ -198,6 +206,7 @@ export function TeamScreen() {
   const item = navItem("team");
   const me = useAdmin();
   const { retry } = useSession();
+  const roleLost = useRoleLost();
   const toast = useToast();
   const { params, query } = useListQuery<TeamMember>("/admin/grants", KEYS);
   const [granting, setGranting] = useState(false);
@@ -214,6 +223,8 @@ export function TeamScreen() {
     if (!revoking) return;
     await adminApi
       .delete<void>(`/admin/grants/${revoking.role.grantId}`, { reason })
+      .catch(roleLost)
+      .catch(withMessage(404, "Ese rol ya fue quitado."))
       .catch(withMessage(409, "Es el último Dueño y no se puede quitar. Otorgá Dueño a otra persona primero."));
     toast({ tone: "success", message: `Le quitaste ${ROLE_LABELS[revoking.role.role]} a ${revoking.member.email}.` });
     const self = revoking.member.userId === me.userId;
@@ -293,6 +304,7 @@ export function TeamScreen() {
               setGranting(false);
               query.reload();
             }}
+            onStale={query.reload}
           />
         ) : null}
         <ListView<TeamMember>
@@ -312,6 +324,9 @@ export function TeamScreen() {
         tone="danger"
         onConfirm={revoke}
         onClose={() => setRevoking(null)}
+        onSettled={(failure) => {
+          if (isStale(failure)) query.reload();
+        }}
       >
         {revoking ? (
           <RevokeSummary

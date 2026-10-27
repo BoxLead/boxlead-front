@@ -4,10 +4,11 @@ import { useToast } from "../../../../src/components/ui/toast";
 import type { AdminPage } from "../../api/types";
 import { Bars } from "../../components/Bars";
 import { DateText } from "../../components/DateText";
+import { isUuid } from "../../components/list/filterRules";
 import { DataTable, type Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
-import { useAdminQuery } from "../../components/list/useAdminQuery";
+import { useAdminQuery, type QueryResult } from "../../components/list/useAdminQuery";
 import { Money } from "../../components/Money";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
@@ -15,7 +16,8 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { formatCount, formatDate, formatDateTime } from "../../format";
 import { referralsApi } from "./api";
 import { AttributionDialog, CreatePayoutDialog } from "./dialogs";
-import { useDetailQuery, useReferralRoles, useResellerDirectory } from "./hooks";
+import { useResellerDirectory } from "../../session/resellerDirectory";
+import { useDetailQuery, useReferralRoles } from "./hooks";
 import {
   ATTRIBUTION_SOURCE,
   CODE_STATUS,
@@ -74,12 +76,15 @@ function BillingFacts({ billing }: { billing: ResellerBilling }) {
   );
 }
 
+type Customers = QueryResult<AdminPage<ResellerCustomer>> & { reload: () => void };
+
 type ContentProps = {
   detail: ResellerDetail;
+  customers: Customers;
   reload: () => void;
 };
 
-function ResellerContent({ detail, reload }: ContentProps) {
+function ResellerContent({ detail, customers, reload }: ContentProps) {
   const { owner, finance } = useReferralRoles();
   const directory = useResellerDirectory();
   const [params, setParams] = useSearchParams();
@@ -87,11 +92,6 @@ function ResellerContent({ detail, reload }: ContentProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const { reseller } = detail;
-  const page = Math.max(0, Math.floor(Number(params.get(CUSTOMERS_PAGE)) || 0));
-  const customers = useAdminQuery<AdminPage<ResellerCustomer>>(
-    `/admin/resellers/${encodeURIComponent(reseller.id)}/customers`,
-    page > 0 ? `page=${page}` : "",
-  );
   const codeById = new Map(reseller.codes.map((code) => [code.id, code.code]));
   const codeClicks = clicksByCode(detail);
   const days = clicksByDay(detail);
@@ -373,8 +373,9 @@ function ResellerContent({ detail, reload }: ContentProps) {
   );
 }
 
-export function ResellerDetailScreen() {
-  const { resellerId = "" } = useParams();
+const NOT_FOUND = "No encontramos este revendedor";
+
+function ResellerLoader({ resellerId }: { resellerId: string }) {
   const [params] = useSearchParams();
   const range = new URLSearchParams();
   for (const key of ["from", "to"]) {
@@ -382,13 +383,32 @@ export function ResellerDetailScreen() {
     if (value) range.set(key, value);
   }
   const query = useDetailQuery<ResellerDetail>(`/admin/resellers/${encodeURIComponent(resellerId)}`, range.toString());
+  const page = Math.max(0, Math.floor(Number(params.get(CUSTOMERS_PAGE)) || 0));
+  const customers = useAdminQuery<AdminPage<ResellerCustomer>>(
+    `/admin/resellers/${encodeURIComponent(resellerId)}/customers`,
+    page > 0 ? `page=${page}` : "",
+  );
 
-  if (query.status === "ready") return <ResellerContent detail={query.data} reload={query.reload} />;
+  if (query.status === "ready") return <ResellerContent detail={query.data} customers={customers} reload={query.reload} />;
   return (
     <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
-      <DetailState query={query} notFound="No encontramos este revendedor" back={BACK}>
+      <DetailState query={query} notFound={NOT_FOUND} back={BACK}>
         {() => null}
       </DetailState>
     </Screen>
   );
+}
+
+export function ResellerDetailScreen() {
+  const { resellerId = "" } = useParams();
+  if (!isUuid(resellerId)) {
+    return (
+      <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
+        <DetailState query={{ status: "error", message: NOT_FOUND, notFound: true, reload: () => undefined }} notFound={NOT_FOUND} back={BACK}>
+          {() => null}
+        </DetailState>
+      </Screen>
+    );
+  }
+  return <ResellerLoader key={resellerId} resellerId={resellerId} />;
 }

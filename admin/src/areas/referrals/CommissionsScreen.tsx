@@ -5,20 +5,23 @@ import { DateText } from "../../components/DateText";
 import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { dateRange, enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { Money } from "../../components/Money";
+import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotice";
 import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatMoney } from "../../format";
 import { navItem } from "../../nav";
+import { useResellerDirectory } from "../../session/resellerDirectory";
 import { canHold, canRelease, canReverse, isReleasable, totalsByCurrency, type CommissionAction } from "./api";
 import { ApproveDialog, CommissionDialog } from "./dialogs";
-import { useResellerDirectory } from "./hooks";
 import { COMMISSION_KIND, COMMISSION_STATUS, optionsOf, shortId } from "./labels";
 import type { Commission } from "./types";
 
 const KEYS = ["status", "resellerId", "from", "to"] as const;
 const STATUS_OPTIONS = optionsOf(COMMISSION_STATUS);
+const RULES: FilterRules = { status: enumOf(STATUS_OPTIONS), resellerId: { kind: "uuid", what: "del revendedor" }, ...dateRange("from", "to") };
 
 type Dialog = { kind: "approve"; commissions: Commission[] } | { kind: CommissionAction; commission: Commission };
 
@@ -32,7 +35,7 @@ const DONE: Record<CommissionAction, string> = {
 
 export function CommissionsScreen() {
   const item = navItem("commissions");
-  const { params, query } = useListQuery<Commission>("/admin/commissions", KEYS);
+  const { params, query } = useListQuery<Commission>("/admin/commissions", KEYS, RULES);
   const directory = useResellerDirectory();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [selection, setSelection] = useState<Selection>({ search: "", rows: new Map() });
@@ -159,6 +162,7 @@ export function CommissionsScreen() {
         emptyHint="Se crean solas cuando un cliente atribuido paga."
         filters={
           <>
+            <ResellerDirectoryNotice directory={directory} />
             <FilterBar active={params.active} onClear={params.clear}>
               <SelectFilter label="Estado" value={params.value("status")} options={STATUS_OPTIONS} onChange={(value) => params.setFilter("status", value)} />
               <SelectFilter

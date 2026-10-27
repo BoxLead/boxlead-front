@@ -115,11 +115,24 @@ test("tells an account without a role that it has no access", async ({ page }) =
 test("asks to reload when a request fails without an answer", async ({ page }) => {
   await resetAdmin();
   await enterAdmin(page);
+  await expect(page.getByRole("heading", { level: 1, name: "Inicio" })).toBeVisible();
+  await expect(page.locator(".skeleton")).toHaveCount(0);
   await page.route(`${ADMIN_MOCK_ORIGIN}/**`, (route) => route.abort("connectionrefused"));
-  await page.reload();
-  await expect(page.getByText("Se cortó la conexión con BoxLead")).toBeVisible();
+  await openMenu(page);
+  await page.getByRole("link", { name: "Usuarios" }).click();
+  await expect(page.getByText("Se cortó la conexión con BoxLead", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Recargar" })).toBeVisible();
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+});
+
+test("shows only the entry failure when the connection fails at startup", async ({ page }) => {
+  await resetAdmin();
+  await enterAdmin(page);
+  await page.route(`${ADMIN_MOCK_ORIGIN}/**`, (route) => route.abort("connectionrefused"));
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "No pudimos conectar con BoxLead" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reintentar" })).toBeVisible();
+  await expect(page.getByText("Se cortó la conexión con BoxLead")).toHaveCount(0);
 });
 
 test("signs out of the admin session and of BoxLead", async ({ page }) => {

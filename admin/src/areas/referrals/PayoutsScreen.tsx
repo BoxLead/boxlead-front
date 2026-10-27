@@ -5,23 +5,26 @@ import { DateText } from "../../components/DateText";
 import type { Column } from "../../components/list/DataTable";
 import { FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
+import { enumOf, type FilterRules } from "../../components/list/filterRules";
 import { useListQuery } from "../../components/list/useListQuery";
 import { Money } from "../../components/Money";
+import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotice";
 import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate } from "../../format";
 import { navItem } from "../../nav";
+import { useResellerDirectory } from "../../session/resellerDirectory";
 import { CreatePayoutDialog } from "./dialogs";
-import { useResellerDirectory } from "./hooks";
 import { optionsOf, PAYOUT_STATUS } from "./labels";
 import type { Payout } from "./types";
 
 const KEYS = ["resellerId", "status"] as const;
 const STATUS_OPTIONS = optionsOf(PAYOUT_STATUS);
+const RULES: FilterRules = { resellerId: { kind: "uuid", what: "del revendedor" }, status: enumOf(STATUS_OPTIONS) };
 
 export function PayoutsScreen() {
   const item = navItem("payouts");
-  const { params, query } = useListQuery<Payout>("/admin/payouts", KEYS);
+  const { params, query } = useListQuery<Payout>("/admin/payouts", KEYS, RULES);
   const directory = useResellerDirectory();
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
@@ -75,7 +78,9 @@ export function PayoutsScreen() {
         emptyTitle="Todavía no hay liquidaciones"
         emptyHint="Armá una cuando un revendedor tenga comisiones aprobadas."
         filters={
-          <FilterBar active={params.active} onClear={params.clear}>
+          <>
+            <ResellerDirectoryNotice directory={directory} />
+            <FilterBar active={params.active} onClear={params.clear}>
             <SelectFilter
               label="Revendedor"
               value={params.value("resellerId")}
@@ -83,7 +88,8 @@ export function PayoutsScreen() {
               onChange={(value) => params.setFilter("resellerId", value)}
             />
             <SelectFilter label="Estado" value={params.value("status")} options={STATUS_OPTIONS} onChange={(value) => params.setFilter("status", value)} />
-          </FilterBar>
+            </FilterBar>
+          </>
         }
       />
       {creating ? (

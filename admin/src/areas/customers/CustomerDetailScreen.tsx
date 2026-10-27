@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../../../../src/components/EmptyState/EmptyState";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { messageFor } from "../../api/errors";
+import { isUuid } from "../../components/list/filterRules";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { DateText } from "../../components/DateText";
 import { Screen } from "../../components/Screen";
@@ -136,6 +137,23 @@ function CustomerBody({ file, reload }: { file: CustomerFile; reload: () => void
   );
 }
 
+function NotFoundBody() {
+  return (
+    <div className="panel">
+      <EmptyState
+        illustration="missing"
+        title="No encontramos este usuario"
+        hint="Puede que el link esté mal o que la cuenta ya no exista."
+        action={
+          <Link className="btn btn-secondary" to="/usuarios">
+            Volver a Usuarios
+          </Link>
+        }
+      />
+    </div>
+  );
+}
+
 function CustomerDetail({ userId }: { userId: string }) {
   const query = useAdminQuery<CustomerFile>(`/admin/customers/${encodeURIComponent(userId)}`);
   const [file, setFile] = useState<CustomerFile | null>(null);
@@ -154,20 +172,7 @@ function CustomerDetail({ userId }: { userId: string }) {
       </>
     );
   } else if (query.status === "error" && query.message === NOT_FOUND) {
-    body = (
-      <div className="panel">
-        <EmptyState
-          illustration="missing"
-          title="No encontramos este usuario"
-          hint="Puede que el link esté mal o que la cuenta ya no exista."
-          action={
-            <Link className="btn btn-secondary" to="/usuarios">
-              Volver a Usuarios
-            </Link>
-          }
-        />
-      </div>
-    );
+    body = <NotFoundBody />;
   } else if (query.status === "error") {
     body = <ErrorBlock title="No pudimos cargar el usuario" message={query.message} onRetry={query.reload} />;
   } else {
@@ -192,5 +197,12 @@ function CustomerDetail({ userId }: { userId: string }) {
 
 export function CustomerDetailScreen() {
   const { userId = "" } = useParams();
+  if (!isUuid(userId)) {
+    return (
+      <Screen title={TITLE} back={BACK}>
+        <NotFoundBody />
+      </Screen>
+    );
+  }
   return <CustomerDetail key={userId} userId={userId} />;
 }

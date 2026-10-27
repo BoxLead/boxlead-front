@@ -84,6 +84,27 @@ export async function navLinks(page: Page): Promise<string[]> {
   return page.getByRole("navigation", { name: "Secciones" }).getByRole("link").allTextContents();
 }
 
+export async function settled(page: Page) {
+  await page.evaluate(() =>
+    document.fonts.ready.then(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+          .map((animation) => Promise.race([animation.finished.catch(() => undefined), new Promise((settle) => setTimeout(settle, 3000))])),
+      ),
+    ),
+  );
+}
+
+export async function reauthenticate(page: Page) {
+  const dialog = page.getByRole("dialog", { name: "Tu sesión de administración venció" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Código de 6 números").fill(VALID_CODE);
+  await dialog.getByRole("button", { name: "Seguir" }).click();
+  await expect(dialog).toBeHidden();
+}
+
 export async function horizontalOverflow(page: Page): Promise<number> {
   return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 }

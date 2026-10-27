@@ -3,7 +3,7 @@ import { todayInBuenosAires } from "../../admin/src/areas/operations/usage.ts";
 import { DIRECTORY, OPERATIONS_SCENARIO } from "../admin-mock/operations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import type { AdminScenario } from "./support.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const CORS = {
@@ -49,7 +49,7 @@ async function customerSearch(page: Page) {
 }
 
 async function shot(page: Page, name: string, scheme: string) {
-  await page.waitForTimeout(400);
+  await settled(page);
   const width = page.viewportSize()?.width ?? 0;
   await page.screenshot({ path: `${DIR}/${name}-${scheme}-${width}.png`, fullPage: true, animations: "disabled" });
 }
@@ -110,6 +110,20 @@ test.describe("consumer requests", () => {
 
     await page.getByRole("button", { name: "Resueltos" }).click();
     await expect(page.getByRole("row", { name: /BX-Q4TD8R/ })).toContainText("Cancelamos tu suscripción al final del período.");
+  });
+
+  test("asks for the code and closes the request when the admin session expired in the dialog", async ({ page }) => {
+    await resetOperations({ roles: ["SUPPORT"] });
+    await enterAdmin(page, "/pedidos");
+    await page.getByRole("row", { name: /BX-Q4TD8R/ }).getByRole("button", { name: "Cerrar pedido" }).click();
+    const dialog = page.getByRole("dialog", { name: "Cerrar el pedido BX-Q4TD8R" });
+    await dialog.getByLabel("Respuesta para el cliente").fill("Cancelamos tu suscripción al final del período.");
+    await expireAdminSession();
+    await dialog.getByLabel("Motivo").fill("Baja pedida desde la web");
+    await dialog.getByRole("button", { name: "Resolver baja" }).click();
+    await reauthenticate(page);
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("row", { name: /BX-Q4TD8R/ })).toHaveCount(0);
   });
 
   test("finance resolves a withdrawal after reading that it refunds", async ({ page }) => {
@@ -201,6 +215,8 @@ test.describe("audit", () => {
   test("shows the empty and the error", async ({ page }) => {
     await resetOperations();
     await enterAdmin(page, "/auditoria?targetId=nada");
+    await expect(page.getByText("Elegí el tipo de objetivo para buscar por id.")).toBeVisible();
+    await page.goto("/auditoria?targetType=USER&targetId=nada");
     await expect(page.getByText("Nada coincide con estos filtros")).toBeVisible();
     await answer(page, "/admin/audit", 500, { error: "Internal", message: "boom" });
     await page.reload();

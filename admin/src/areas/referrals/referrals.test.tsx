@@ -13,6 +13,7 @@ const LATER = new Date(Date.now() + 30 * 60_000).toISOString();
 const PAST = new Date(Date.now() - 86_400_000).toISOString();
 const FUTURE = new Date(Date.now() + 86_400_000).toISOString();
 const REASON = "Revisado con el equipo comercial";
+const NORTH = "00000101-0b0e-4000-8000-000000000001";
 
 function me(roles: AdminRole[]): AdminMe {
   return {
@@ -109,7 +110,9 @@ describe("payout export", () => {
     await downloadPayout(PAYOUT, REASON);
 
     expect(calls[0].url.pathname).toBe("/admin/payouts/p-1/export");
-    expect(calls[0].url.searchParams.get("reason")).toBe(REASON);
+    expect(calls[0].method).toBe("POST");
+    expect(calls[0].url.search).toBe("");
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: REASON });
     expect(calls[0].init.credentials).toBe("include");
     expect(calls[0].init.headers).toMatchObject({ "X-Requested-With": "boxlead-web" });
     expect(click).toHaveBeenCalledTimes(1);
@@ -158,27 +161,29 @@ describe("reseller detail", () => {
   it("shows what only finance sees as missing for support and hides owner actions", async () => {
     const detail: ResellerDetail = {
       reseller: {
-        id: "r1",
+        id: NORTH,
         userId: "u9",
         displayName: "Agencia Norte",
         status: "ACTIVE",
         rateBps: 5000,
         maxPaidCycles: 6,
         createdAt: PAST,
-        codes: [{ id: "k1", resellerId: "r1", code: "7KQ2M9XTRB", status: "ACTIVE", disabledAt: null, createdAt: PAST }],
+        codes: [{ id: "k1", resellerId: NORTH, code: "7KQ2M9XTRB", status: "ACTIVE", disabledAt: null, createdAt: PAST }],
       },
       customersCount: 0,
       clicks: [],
       billing: null,
       commissionTotals: null,
     };
-    renderAdmin("/revendedores/r1", ["SUPPORT"], (_method, url) => {
-      if (url.pathname === "/admin/resellers/r1") return json(200, detail);
-      if (url.pathname === "/admin/resellers/r1/customers") return page([]);
+    const calls = renderAdmin(`/revendedores/${NORTH}`, ["SUPPORT"], (_method, url) => {
+      if (url.pathname === `/admin/resellers/${NORTH}`) return json(200, detail);
+      if (url.pathname === `/admin/resellers/${NORTH}/customers`) return page([]);
       if (url.pathname === "/admin/resellers") return page([]);
       return json(404, { error: "Not found", message: "Not found" });
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Agencia Norte" }, { timeout: 5000 })).toBeInTheDocument();
+    const order = calls.map((call) => call.url.pathname);
+    expect(order.indexOf(`/admin/resellers/${NORTH}/customers`)).toBe(order.indexOf(`/admin/resellers/${NORTH}`) + 1);
     expect(screen.getByText("Los datos fiscales y de cobro los ve solo Finanzas.")).toBeInTheDocument();
     expect(screen.getByText("Los totales de comisión los ve solo Finanzas.")).toBeInTheDocument();
     expect(screen.getByText("No hubo clics en este período.")).toBeInTheDocument();
@@ -187,6 +192,12 @@ describe("reseller detail", () => {
     expect(screen.queryByRole("button", { name: "Nuevo código" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Armar liquidación" })).toBeNull();
   }, 20_000);
+
+  it("treats an id that is not a UUID as not found without asking core", async () => {
+    const calls = renderAdmin("/revendedores/abc", ["OWNER"], () => json(500, { error: "boom", message: "boom" }));
+    expect(await screen.findByText("No encontramos este revendedor")).toBeInTheDocument();
+    expect(calls.filter((call) => call.url.pathname.startsWith("/admin/resellers"))).toEqual([]);
+  });
 });
 
 describe("new reseller", () => {

@@ -1,11 +1,13 @@
 import { createContext, useContext } from "react";
 import type { AdminMe } from "../api/types";
 
+export type NoAccessReason = "role" | "mismatch";
+
 export type Stage =
   | { kind: "checking" }
   | { kind: "failed" }
   | { kind: "signed-out"; notice: string | null }
-  | { kind: "no-access"; email: string }
+  | { kind: "no-access"; email: string; reason: NoAccessReason }
   | { kind: "enroll"; me: AdminMe }
   | { kind: "enrollment-closed"; me: AdminMe }
   | { kind: "code"; me: AdminMe; enrolled: boolean }
@@ -43,7 +45,7 @@ export function isFuture(iso: string | null, now = Date.now()): boolean {
 }
 
 export function stageFor(me: AdminMe, enrolled = false, now = Date.now()): Stage {
-  if (me.roles.length === 0) return { kind: "no-access", email: me.email };
+  if (me.roles.length === 0) return { kind: "no-access", email: me.email, reason: "role" };
   if (!me.factorConfirmed) {
     return isFuture(me.enrollmentOpenUntil, now) ? { kind: "enroll", me } : { kind: "enrollment-closed", me };
   }

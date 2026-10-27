@@ -26,6 +26,8 @@ export const RESELLERS = [
 
 const DAY = 86_400_000;
 const PAGE_SIZE = 20;
+const MIN_QUERY_LENGTH = 2;
+const MAX_QUERY_LENGTH = 200;
 const MAX_REASON = 500;
 const MAX_DEMO_DAYS = 365;
 const DEFAULT_DEMO_DAYS = 14;
@@ -420,6 +422,9 @@ function search(query: URLSearchParams): MockReply {
   const to = day(query, "createdTo");
   if (!plans || !statuses || from === undefined || to === undefined || (from && to && from > to)) return badRequest();
   const text = (query.get("query") ?? "").trim().toLowerCase();
+  if (query.get("query") !== null && (text.length < MIN_QUERY_LENGTH || text.length > MAX_QUERY_LENGTH)) {
+    return badRequest(`A search needs between ${MIN_QUERY_LENGTH} and ${MAX_QUERY_LENGTH} characters`);
+  }
   const rows = records
     .map((customer) => matchOf(customer, now))
     .filter((row) => !text || [row.email, row.name ?? "", row.legalName ?? "", row.id].some((value) => value.toLowerCase().includes(text)))

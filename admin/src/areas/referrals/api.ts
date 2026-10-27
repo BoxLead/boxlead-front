@@ -42,7 +42,7 @@ export const referralsApi = {
   markPaid: (payoutId: string, transferReference: string | null, reason: string) =>
     adminApi.post<Payout>(`/admin/payouts/${encodeURIComponent(payoutId)}/paid`, { transferReference, reason }),
   exportPayout: (payoutId: string, reason: string) =>
-    adminApi.blob(`/admin/payouts/${encodeURIComponent(payoutId)}/export`, { query: new URLSearchParams({ reason }) }),
+    adminApi.postBlob(`/admin/payouts/${encodeURIComponent(payoutId)}/export`, { reason }),
   commissions: (query: URLSearchParams) => adminApi.get<AdminPage<Commission>>("/admin/commissions", { query }),
   searchCustomers: (query: string, signal?: AbortSignal) =>
     adminApi.get<AdminPage<CustomerMatch>>("/admin/customers", { query: new URLSearchParams({ query }), signal }),
