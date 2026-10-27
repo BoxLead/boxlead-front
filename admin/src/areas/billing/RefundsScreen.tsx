@@ -47,7 +47,14 @@ export function RefundsScreen() {
       type: "money",
       cell: (row) => <Stack main={<Amount money={row.effectiveAmount} code />} detail={row.amount ? undefined : "Lo que quedaba del pago"} />,
     },
-    { key: "status", header: "Estado", type: "status", cell: (row) => <StatusTag status={refundStatusOf(row)} /> },
+    {
+      key: "status",
+      header: "Estado",
+      type: "status",
+      cell: (row) => (
+        <Stack main={<StatusTag status={refundStatusOf(row)} />} detail={row.status === "REQUESTED" && row.providerRefundId ? "en Mercado Pago" : undefined} />
+      ),
+    },
     {
       key: "provider",
       header: "Mercado Pago",

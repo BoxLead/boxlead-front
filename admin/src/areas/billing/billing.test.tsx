@@ -267,7 +267,7 @@ describe("refunds screen", () => {
     renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
     const rows = await screen.findAllByRole("row");
     const unanswered = rows.find((row) => row.textContent?.includes("Sin respuesta"));
-    const inProcess = rows.find((row) => row.textContent?.includes("En proceso en Mercado Pago"));
+    const inProcess = rows.find((row) => /En proceso\s*en Mercado Pago/.test(row.textContent ?? ""));
     if (!unanswered || !inProcess) throw new Error("missing rows");
     expect(within(unanswered).getByRole("button", { name: /Reintentar el reembolso 7a000000/ })).toBeInTheDocument();
     expect(unanswered).toHaveTextContent("$ 67.000,00ARS");

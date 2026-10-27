@@ -36,7 +36,7 @@ function options<K extends string>(labels: Record<K, StatusLabel | string>): Fil
 
 export const SUBSCRIPTION_STATUS_OPTIONS = options(SUBSCRIPTION_STATUS);
 export const PAYMENT_STATUS_OPTIONS = options(PAYMENT_STATUS);
-export const REFUND_IN_PROCESS: StatusLabel = { label: "En proceso en Mercado Pago", tone: "accent" };
+export const REFUND_IN_PROCESS: StatusLabel = { label: "En proceso", tone: "accent" };
 
 export function refundStatusOf(refund: { status: keyof typeof REFUND_STATUS; providerRefundId: string | null }): StatusLabel {
   return refund.status === "REQUESTED" && refund.providerRefundId ? REFUND_IN_PROCESS : REFUND_STATUS[refund.status];
