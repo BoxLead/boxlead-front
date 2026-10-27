@@ -264,8 +264,8 @@ describe("ConsumerRequestsScreen", () => {
 
 describe("TeamScreen", () => {
   const members: TeamMember[] = [
-    { userId: SELF, email: "equipo@boxlead.app", name: "Equipo", roles: [{ grantId: "g1", role: "OWNER", grantedAt: "2026-06-01T12:00:00Z", grantedBy: null }], factorConfirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: null },
-    { userId: LUCIA, email: "carla@example.com", name: "Carla", roles: [{ grantId: "g2", role: "SUPPORT", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: false, enrollmentOpenUntil: null, lastAdminSessionAt: null },
+    { userId: SELF, email: "equipo@boxlead.app", name: "Equipo", hasPassword: true, roles: [{ grantId: "g1", role: "OWNER", grantedAt: "2026-06-01T12:00:00Z", grantedBy: null }], factorConfirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: null },
+    { userId: LUCIA, email: "carla@example.com", name: "Carla", hasPassword: true, roles: [{ grantId: "g2", role: "SUPPORT", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: false, enrollmentOpenUntil: null, lastAdminSessionAt: null },
   ];
 
   it("keeps the only owner and explains that the last role deletes the factor", async () => {
@@ -295,6 +295,64 @@ describe("TeamScreen", () => {
     await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/grants").length).toBe(listed + 1));
   });
 
+  it("says inside the dialog that the last owner can not be removed and loads the team again on close", async () => {
+    const second: TeamMember = { ...members[1], roles: [{ grantId: "g4", role: "OWNER", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: true };
+    const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method) =>
+      method === "DELETE" ? json(409, { error: "Conflict", message: "The last owner cannot be revoked" }) : json(200, pageOf([members[0], second])),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Dueño a carla@example.com" }));
+    expect(screen.queryByText(/Ningún otro Dueño configuró su factor/)).toBeNull();
+    await userEvent.type(screen.getByLabelText("Motivo"), "Deja de ser Dueña");
+    await userEvent.click(screen.getByRole("button", { name: "Quitar rol", hidden: true }));
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(await within(dialog).findByText("Es el último Dueño y no se puede quitar. Otorgá Dueño a otra persona primero.")).toBeInTheDocument();
+    const listed = calls.filter((call) => call.url.pathname === "/admin/grants" && call.method === "GET").length;
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.url.pathname === "/admin/grants" && call.method === "GET").length).toBe(listed + 1));
+  });
+
+  it("warns when no other owner has a confirmed factor", async () => {
+    const pending: TeamMember = { ...members[1], roles: [{ grantId: "g4", role: "OWNER", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: false };
+    renderScreen(<TeamScreen />, ["OWNER"], "/equipo", () => json(200, pageOf([members[0], pending])));
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Dueño a equipo@boxlead.app" }));
+    expect(screen.getByText(/Ningún otro Dueño configuró su factor/)).toBeInTheDocument();
+  });
+
+  it("links the audit of each person", async () => {
+    renderScreen(<TeamScreen />, ["OWNER"], "/equipo", () => json(200, pageOf(members)));
+    expect(await screen.findByRole("link", { name: "Ver auditoría de carla@example.com" })).toHaveAttribute("href", `/auditoria?actorUserId=${LUCIA}`);
+  });
+
+  it("warns without blocking when the account has no password and keeps an owner from taking the other roles", async () => {
+    renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (_method, url) =>
+      url.pathname === "/admin/customers"
+        ? json(200, {
+            ...pageOf([
+              { id: SELF, email: "equipo@boxlead.app", name: "Equipo", legalName: null, createdAt: "2026-06-01T00:00:00Z", hasPassword: true },
+              { id: LUCIA, email: "carla@example.com", name: "Carla", legalName: null, createdAt: "2026-07-01T00:00:00Z", hasPassword: false },
+            ]),
+            size: 20,
+          })
+        : json(200, pageOf(members)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Otorgar rol" }));
+    await userEvent.type(screen.getByLabelText("Buscar usuario"), "equipo{Enter}");
+    const results = await screen.findByRole("list", { name: "Resultados" });
+    await userEvent.click(within(results).getByRole("button", { name: /equipo@boxlead\.app/ }));
+    const roles = screen.getByRole("group", { name: "Rol" });
+    for (const name of ["Soporte", "Finanzas", "Dueño"]) expect(within(roles).getByRole("button", { name })).toBeDisabled();
+    expect(screen.getByText("Ya es Dueño, que incluye todos los permisos.")).toBeInTheDocument();
+    expect(screen.queryByText(/no tiene contraseña/)).toBeNull();
+
+    await userEvent.click(within(results).getByRole("button", { name: /carla@example\.com/ }));
+    expect(screen.getByText("Esta cuenta no tiene contraseña. Puede entrar si antes abre sesión en boxlead.app con Google.")).toBeInTheDocument();
+    await userEvent.click(within(screen.getByRole("group", { name: "Rol" })).getByRole("button", { name: "Finanzas" }));
+    const open = screen.getByRole("button", { name: "Otorgar Finanzas" });
+    expect(open).toBeEnabled();
+    await userEvent.click(open);
+    expect(screen.getAllByText(/Esta cuenta no tiene contraseña/)).toHaveLength(2);
+  });
+
   it("rebuilds the session when the role was taken away in the middle of an action", async () => {
     retry.mockClear();
     renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method) =>
@@ -310,7 +368,7 @@ describe("TeamScreen", () => {
     const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (method, url) => {
       if (method === "POST") return json(201, { id: "g3", userId: LUCIA, role: "FINANCE", grantedAt: "2026-10-26T12:00:00Z", enrollmentOpenUntil: null });
       if (url.pathname === "/admin/customers") {
-        return json(200, { ...pageOf([{ id: LUCIA, email: "carla@example.com", name: "Carla", legalName: null, createdAt: "2026-07-01T00:00:00Z" }]), size: 20 });
+        return json(200, { ...pageOf([{ id: LUCIA, email: "carla@example.com", name: "Carla", legalName: null, createdAt: "2026-07-01T00:00:00Z", hasPassword: true }]), size: 20 });
       }
       return json(200, pageOf(members));
     });

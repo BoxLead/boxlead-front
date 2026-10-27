@@ -171,10 +171,14 @@ test.describe("team", () => {
     await page.getByLabel("Buscar usuario").fill("sofia");
     await page.getByRole("button", { name: "Buscar" }).click();
     await page.getByRole("list", { name: "Resultados" }).getByRole("button", { name: /sofia@estudio-lago\.example/ }).click();
+    const noPassword = "Esta cuenta no tiene contraseña. Puede entrar si antes abre sesión en boxlead.app con Google.";
+    await expect(page.getByText(noPassword)).toBeVisible();
+    await noSideScroll(page);
     await page.getByRole("group", { name: "Rol" }).getByRole("button", { name: "Finanzas" }).click();
     await page.getByRole("button", { name: "Otorgar Finanzas" }).click();
     const grant = page.getByRole("dialog", { name: "Otorgar rol" });
     await expect(grant.getByText(/tiene 24 horas para hacerlo/)).toBeVisible();
+    await expect(grant.getByText(noPassword)).toBeVisible();
     await grant.getByLabel("Motivo").fill("Se suma a cobranzas");
     await grant.getByRole("button", { name: "Otorgar Finanzas" }).click();
     await expect(grant).toBeHidden();
@@ -188,9 +192,11 @@ test.describe("team", () => {
     await expect(revoke).toBeHidden();
     await expect(page.getByRole("row", { name: /carla@equipo\.example/ })).toHaveCount(0);
 
-    await page.goto("/auditoria");
+    await page.getByRole("link", { name: "Ver auditoría de equipo@boxlead.app" }).click();
+    await expect(page).toHaveURL(/\/auditoria\?actorUserId=0b0e0000-0000-4000-8000-0000000000a1$/);
     await expect(page.getByRole("row", { name: /Rol quitado/ })).toContainText("Dejó el equipo de soporte");
     await expect(page.getByRole("row", { name: /Rol otorgado/ })).toContainText("Se suma a cobranzas");
+    await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toHaveCount(0);
   });
 
   test("shows the error", async ({ page }) => {

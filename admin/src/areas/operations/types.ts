@@ -72,6 +72,7 @@ export type TeamMember = {
   userId: string;
   email: string;
   name: string | null;
+  hasPassword: boolean;
   roles: MemberRole[];
   factorConfirmed: boolean;
   enrollmentOpenUntil: string | null;
@@ -92,6 +93,7 @@ export type CustomerMatch = {
   name: string | null;
   legalName: string | null;
   createdAt: string;
+  hasPassword: boolean;
 };
 
 export type AuditActorType = "USER" | "ADMIN" | "SYSTEM" | "PROVIDER";

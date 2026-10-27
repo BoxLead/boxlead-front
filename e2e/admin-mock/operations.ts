@@ -29,12 +29,12 @@ function id(group: string, n: number): string {
 }
 
 export const DIRECTORY: readonly CustomerMatch[] = [
-  { id: id("001", 1), email: "lucia@agencia-norte.example", name: "Lucía Paz", legalName: null, createdAt: "2026-08-02T13:00:00Z" },
-  { id: id("001", 2), email: "martin@tienda-sur.example", name: "Martín Gil", legalName: null, createdAt: "2026-08-20T15:30:00Z" },
-  { id: id("001", 3), email: "sofia@estudio-lago.example", name: "Sofía Ríos", legalName: null, createdAt: "2026-09-05T12:10:00Z" },
-  { id: id("001", 4), email: "pablo@equipo.example", name: "Pablo Sosa", legalName: null, createdAt: "2026-07-01T10:00:00Z" },
-  { id: id("001", 5), email: "carla@equipo.example", name: "Carla Vera", legalName: null, createdAt: "2026-07-10T10:00:00Z" },
-  { id: id("001", 6), email: "diego@equipo.example", name: "Diego Luna", legalName: null, createdAt: "2026-07-15T10:00:00Z" },
+  { id: id("001", 1), email: "lucia@agencia-norte.example", name: "Lucía Paz", legalName: null, hasPassword: true, createdAt: "2026-08-02T13:00:00Z" },
+  { id: id("001", 2), email: "martin@tienda-sur.example", name: "Martín Gil", legalName: null, hasPassword: true, createdAt: "2026-08-20T15:30:00Z" },
+  { id: id("001", 3), email: "sofia@estudio-lago.example", name: "Sofía Ríos", legalName: null, hasPassword: false, createdAt: "2026-09-05T12:10:00Z" },
+  { id: id("001", 4), email: "pablo@equipo.example", name: "Pablo Sosa", legalName: null, hasPassword: true, createdAt: "2026-07-01T10:00:00Z" },
+  { id: id("001", 5), email: "carla@equipo.example", name: "Carla Vera", legalName: null, hasPassword: true, createdAt: "2026-07-10T10:00:00Z" },
+  { id: id("001", 6), email: "diego@equipo.example", name: "Diego Luna", legalName: null, hasPassword: true, createdAt: "2026-07-15T10:00:00Z" },
 ];
 
 type Grant = { id: string; userId: string; role: AdminRole; grantedAt: string; grantedBy: string | null; enrollmentOpenUntil: string | null; revoked: boolean };
@@ -346,10 +346,10 @@ function ensureSelf(admin: AdminIdentity) {
   state.factors.set(admin.userId, { confirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: new Date().toISOString() });
 }
 
-function person(userId: string, admin: AdminIdentity): { email: string; name: string | null } {
-  if (userId === admin.userId) return { email: admin.email, name: "Equipo BoxLead" };
+function person(userId: string, admin: AdminIdentity): { email: string; name: string | null; hasPassword: boolean } {
+  if (userId === admin.userId) return { email: admin.email, name: "Equipo BoxLead", hasPassword: true };
   const entry = DIRECTORY.find((candidate) => candidate.id === userId);
-  return { email: entry?.email ?? "sin-email@example.com", name: entry?.name ?? null };
+  return { email: entry?.email ?? "sin-email@example.com", name: entry?.name ?? null, hasPassword: entry?.hasPassword ?? true };
 }
 
 function members(query: URLSearchParams, admin: AdminIdentity): MockReply {

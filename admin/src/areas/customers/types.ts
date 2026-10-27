@@ -56,6 +56,7 @@ export type CustomerMatch = {
   createdAt: string;
   planCode: PlanCode | null;
   subscriptionStatus: SubscriptionStatus | null;
+  hasPassword: boolean;
 };
 
 export type BillingProfile = {
