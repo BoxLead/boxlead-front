@@ -1,0 +1,15 @@
+var ORIGIN_HEADER = ${jsonencode(header_name)};
+var ORIGIN_VALUES = ${jsonencode(header_values)};
+var APP_SHELL = '/index.html';
+
+function handler(event) {
+  var request = event.request;
+  var secret = request.headers[ORIGIN_HEADER];
+  if (!secret || ORIGIN_VALUES.indexOf(secret.value) === -1) {
+    return { statusCode: 403, statusDescription: 'Forbidden' };
+  }
+  var uri = request.uri;
+  var last = uri.slice(uri.lastIndexOf('/') + 1);
+  if (!last.includes('.')) request.uri = APP_SHELL;
+  return request;
+}

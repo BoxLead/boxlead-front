@@ -106,6 +106,8 @@ Pushing to `master` runs [.github/workflows/deploy.yml](.github/workflows/deploy
 2. Records the last commit of every source file for the sitemap, builds the image with the `VITE_*` values read from SSM, verifies the generated site and smoke-tests the image, including the 404 status and a redirect.
 3. Exports the static files from the same build, syncs them to S3 with `Cache-Control` per kind and invalidates CloudFront.
 
+The backoffice deploys on its own with [.github/workflows/deploy-admin.yml](.github/workflows/deploy-admin.yml) when a push to `master` touches `admin/` or the code it shares. It runs the same tests, exports the `admin-export` target, checks `noindex`, `robots.txt` and that no file points to third party origins, and syncs to the bucket and distribution in `ADMIN_S3_BUCKET_NAME` and `ADMIN_CLOUDFRONT_DISTRIBUTION_ID`.
+
 Infrastructure lives in [terraform/](terraform/README.md).
 
 ## OAuth
