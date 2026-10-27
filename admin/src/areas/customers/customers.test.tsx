@@ -425,6 +425,19 @@ describe("CustomerDetailScreen", () => {
     expect(within(dialog).getByLabelText("Valor")).toHaveValue(null);
   });
 
+  it("takes an override back with a reason and loads the detail again", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar el ajuste de agentes" }));
+    expect(within(dialogOf("Quitar ajuste")).getByText("Agentes deja de valer 5 y vuelve al valor del plan.")).toBeInTheDocument();
+    const loads = detailLoads(calls);
+    await confirmIn("Quitar ajuste", "Quitar ajuste");
+    const removed = calls.find((call) => call.method === "DELETE");
+    expect(removed?.url.pathname).toBe(`${DETAIL_PATH}/overrides/AGENTS_MAX`);
+    expect(JSON.parse(String(removed?.init.body))).toEqual({ reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Quitamos el ajuste.")).toBeInTheDocument();
+    expect(detailLoads(calls)).toBe(loads + 1);
+  }, 15_000);
+
   it("starts a switch adjustment on the value that rules today", async () => {
     const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
     await userEvent.click(await screen.findByRole("button", { name: "Ajustar categorización automática" }));
