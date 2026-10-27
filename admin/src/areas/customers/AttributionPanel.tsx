@@ -4,7 +4,7 @@ import { adminApi } from "../../api/client";
 import type { AdminPage } from "../../api/types";
 import { useAdminQuery, type QueryResult } from "../../components/list/useAdminQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { formatDateTime } from "../../format";
+import { DateText } from "../../components/DateText";
 import { SOURCE_LABELS } from "./labels";
 import { Facts, LoadingBlock, Muted, Section } from "./parts";
 import type { Attribution, ResellerOption } from "./types";
@@ -96,9 +96,10 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
   ) : null;
 
   return (
-    <Section title="Quién lo refirió" actions={actions}>
+    <Section title="Quién lo refirió" actions={actions} wide>
       {attribution ? (
         <Facts
+          columns={2}
           items={[
             {
               label: "Revendedor",
@@ -109,7 +110,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
               ),
             },
             { label: "Origen", value: SOURCE_LABELS[attribution.source] },
-            { label: "Desde", value: formatDateTime(attribution.createdAt) },
+            { label: "Desde", value: <DateText value={attribution.createdAt} time /> },
             attribution.sequence > 1 ? { label: "Correcciones", value: String(attribution.sequence - 1) } : null,
             attribution.reason ? { label: "Motivo", value: attribution.reason } : null,
           ]}

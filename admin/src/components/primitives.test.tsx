@@ -36,7 +36,7 @@ describe("primitives", () => {
   it("moves between months in Spanish without passing the limit", async () => {
     const onChange = vi.fn();
     render(<MonthPicker value="2026-10" max="2026-10" onChange={onChange} />);
-    expect(screen.getByText("octubre de 2026")).toBeInTheDocument();
+    expect(screen.getByText("Octubre de 2026")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Mes siguiente|No hay un mes siguiente/ })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: /Mes anterior/ }));
     expect(onChange).toHaveBeenCalledWith("2026-09");

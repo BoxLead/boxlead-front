@@ -1,7 +1,9 @@
-import { Tag } from "../../../../src/components/ui/Tag";
+import { DateText } from "../../components/DateText";
 import { DataTable } from "../../components/list/DataTable";
-import { formatDateTime, formatMoney } from "../../format";
-import { INVOICE_LABELS, PAYMENT_LABELS, PAYMENT_TONES } from "./labels";
+import { Money } from "../../components/Money";
+import { StatusBadge } from "../../components/StatusBadge";
+import { PAYMENT_STATUS } from "../../status";
+import { INVOICE_LABELS } from "./labels";
 import { Muted, Section } from "./parts";
 import type { Payment } from "./types";
 
@@ -11,44 +13,35 @@ function invoiceText(payment: Payment): string {
   return payment.invoice.invoiceNumber ? `${status}, ${payment.invoice.invoiceNumber}` : status;
 }
 
-function money(value: Payment["amount"] | null): string {
-  return value ? `${formatMoney(value)} ${value.currency}` : "—";
-}
-
 export function PaymentsPanel({ payments }: { payments: Payment[] }) {
   return (
-    <Section title="Pagos" hint="Los últimos 20, con su factura.">
+    <Section title="Pagos" hint="Los últimos 20, con su factura." flush wide>
       {payments.length === 0 ? (
         <Muted>Todavía no tiene pagos.</Muted>
       ) : (
-        <div className="customer-table">
-          <DataTable
-            caption="Pagos del usuario"
-            rows={payments}
-            rowKey={(row) => row.id}
-            columns={[
-              { key: "date", header: "Fecha", cell: (row) => formatDateTime(row.approvedAt ?? row.createdAt) },
-              { key: "amount", header: "Monto", align: "end", cell: (row) => money(row.amount) },
-              {
-                key: "refunded",
-                header: "Reembolsado",
-                align: "end",
-                cell: (row) => (row.refunded.amountMinor > 0 ? money(row.refunded) : "—"),
-              },
-              { key: "fee", header: "Costo de Mercado Pago", align: "end", cell: (row) => money(row.providerFee) },
-              {
-                key: "status",
-                header: "Estado",
-                cell: (row) => (
-                  <span>
-                    <Tag tone={PAYMENT_TONES[row.status]}>{PAYMENT_LABELS[row.status]}</Tag>
-                  </span>
-                ),
-              },
-              { key: "invoice", header: "Factura", cell: invoiceText },
-            ]}
-          />
-        </div>
+        <DataTable
+          caption="Pagos del usuario"
+          rows={payments}
+          rowKey={(row) => row.id}
+          columns={[
+            { key: "date", header: "Fecha", type: "date", cell: (row) => <DateText value={row.approvedAt ?? row.createdAt} time /> },
+            { key: "amount", header: "Monto", type: "money", cell: (row) => <Money money={row.amount} code /> },
+            {
+              key: "refunded",
+              header: "Reembolsado",
+              type: "money",
+              cell: (row) => (row.refunded.amountMinor > 0 ? <Money money={row.refunded} /> : "—"),
+            },
+            { key: "fee", header: "Costo de Mercado Pago", type: "money", cell: (row) => (row.providerFee ? <Money money={row.providerFee} /> : "—") },
+            {
+              key: "status",
+              header: "Estado",
+              type: "status",
+              cell: (row) => <StatusBadge status={PAYMENT_STATUS[row.status]} detail={row.statusDetail} />,
+            },
+            { key: "invoice", header: "Factura", cell: invoiceText },
+          ]}
+        />
       )}
     </Section>
   );

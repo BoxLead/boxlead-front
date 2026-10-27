@@ -291,7 +291,7 @@ describe("CustomerDetailScreen", () => {
   it("shows no action to finance", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], detailHandler);
     expect(await screen.findByRole("heading", { name: "Suscripción" })).toBeInTheDocument();
-    expect(screen.queryAllByRole("button").filter((button) => button.closest(".customer-section"))).toEqual([]);
+    expect(screen.queryAllByRole("button").filter((button) => button.closest(".section"))).toEqual([]);
   });
 
   it("says when the user does not exist", async () => {

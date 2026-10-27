@@ -4,23 +4,65 @@ import { EmptyState } from "../../../../src/components/EmptyState/EmptyState";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { messageFor } from "../../api/errors";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
+import { DateText } from "../../components/DateText";
 import { Screen } from "../../components/Screen";
-import { formatDate, formatDateTime } from "../../format";
+import { StatusBadge } from "../../components/StatusBadge";
 import { canAccess } from "../../session/roles";
-import { useAdmin } from "../../session/session";
+import { isFuture, useAdmin } from "../../session/session";
+import { SUBSCRIPTION_STATUS } from "../../status";
 import { AttributionPanel } from "./AttributionPanel";
 import { DemoPanel } from "./DemoPanel";
 import { ACCESS_LABELS, planLabel, PLAN_SOURCE_LABELS } from "./labels";
 import { LimitsPanel } from "./LimitsPanel";
-import { ErrorBlock, Facts, LoadingBlock, Muted, Section } from "./parts";
+import { ErrorBlock, Facts, LoadingBlock, Muted, Section, SectionGrid } from "./parts";
 import { PaymentsPanel } from "./PaymentsPanel";
 import { SubscriptionPanel } from "./SubscriptionPanel";
 import type { CustomerFile } from "./types";
 import { UsagePanel } from "./UsagePanel";
+import "./customers.css";
 
 const TITLE = "Detalle de usuario";
 const BACK = { to: "/usuarios", label: "Usuarios" };
 const NOT_FOUND = messageFor(404, null);
+
+function Summary({ file }: { file: CustomerFile }) {
+  const { subscription, entitlements, demo } = file;
+  const demoRunning = demo !== null && isFuture(demo.endsAt);
+  return (
+    <dl className="customer-summary">
+      <div>
+        <dt>Plan</dt>
+        <dd>{planLabel(entitlements.plan.code)}</dd>
+      </div>
+      <div>
+        <dt>Suscripción</dt>
+        <dd>{subscription ? <StatusBadge status={SUBSCRIPTION_STATUS[subscription.status]} /> : <span className="muted-text">Sin suscripción</span>}</dd>
+      </div>
+      <div>
+        <dt>Próximo cobro</dt>
+        <dd>
+          <DateText value={subscription?.providerNextPaymentAt ?? subscription?.currentPeriodEnd} />
+        </dd>
+      </div>
+      <div>
+        <dt>Demo</dt>
+        <dd>{demoRunning ? <>Hasta el <DateText value={demo.endsAt} /></> : <span className="muted-text">Sin Demo vigente</span>}</dd>
+      </div>
+      <div>
+        <dt>Referido por</dt>
+        <dd>
+          {file.attribution ? (
+            <Link className="customer-link" to={`/revendedores/${file.attribution.resellerId}`}>
+              Ver revendedor
+            </Link>
+          ) : (
+            <span className="muted-text">Nadie</span>
+          )}
+        </dd>
+      </div>
+    </dl>
+  );
+}
 
 function ProfilePanel({ file }: { file: CustomerFile }) {
   const profile = file.billingProfile;
@@ -28,15 +70,17 @@ function ProfilePanel({ file }: { file: CustomerFile }) {
   return (
     <Section title="Perfil">
       <Facts
+        columns={2}
         items={[
           { label: "Email", value: file.email },
           { label: "Nombre", value: file.name ?? "—" },
-          { label: "Alta", value: formatDateTime(file.createdAt) },
-          { label: "Id", value: <code className="customer-code">{file.id}</code> },
+          { label: "Alta", value: <DateText value={file.createdAt} time /> },
+          { label: "Id", value: <code className="mono-text">{file.id}</code> },
         ]}
       />
       {profile ? (
         <Facts
+          columns={2}
           items={[
             { label: "Razón social", value: profile.legalName ?? "—" },
             taxId ? { label: "Identificación fiscal", value: taxId } : null,
@@ -56,11 +100,12 @@ function PlanPanel({ file }: { file: CustomerFile }) {
   return (
     <Section title="Plan" hint="Lo que rige hoy según su suscripción, su Demo y sus ajustes.">
       <Facts
+        columns={2}
         items={[
           { label: "Plan", value: planLabel(plan.code) },
           { label: "Viene de", value: PLAN_SOURCE_LABELS[plan.source] },
           { label: "Acceso", value: enforced ? ACCESS_LABELS[access] : `${ACCESS_LABELS[access]}, todavía sin aplicar` },
-          { label: "Período", value: `${formatDate(period.start)} al ${formatDate(period.end)}` },
+          { label: "Período", value: <><DateText value={period.start} /> al <DateText value={period.end} /></> },
         ]}
       />
     </Section>
@@ -72,30 +117,22 @@ function CustomerBody({ file, reload }: { file: CustomerFile; reload: () => void
   const owner = canAccess(me.roles, ["OWNER"]);
   const support = canAccess(me.roles, ["SUPPORT"]);
   return (
-    <div className="customer-grid">
+    <SectionGrid>
       <ProfilePanel file={file} />
       <PlanPanel file={file} />
       <SubscriptionPanel userId={file.id} subscription={file.subscription} canOperate={owner} onChanged={reload} />
       <DemoPanel userId={file.id} demo={file.demo} canOperate={support} onChanged={reload} />
-      <div className="customer-wide">
-        <PaymentsPanel payments={file.payments} />
-      </div>
-      <div className="customer-wide">
-        <LimitsPanel userId={file.id} entitlements={file.entitlements} overrides={file.overrides} canOperate={owner} onChanged={reload} />
-      </div>
-      <div className="customer-wide">
-        <UsagePanel userId={file.id} entitlements={file.entitlements} />
-      </div>
-      <div className="customer-wide">
-        <AttributionPanel
-          userId={file.id}
-          attribution={file.attribution}
-          resellerId={file.resellerId}
-          canOperate={owner}
-          onChanged={reload}
-        />
-      </div>
-    </div>
+      <PaymentsPanel payments={file.payments} />
+      <LimitsPanel userId={file.id} entitlements={file.entitlements} overrides={file.overrides} canOperate={owner} onChanged={reload} />
+      <UsagePanel userId={file.id} entitlements={file.entitlements} />
+      <AttributionPanel
+        userId={file.id}
+        attribution={file.attribution}
+        resellerId={file.resellerId}
+        canOperate={owner}
+        onChanged={reload}
+      />
+    </SectionGrid>
   );
 }
 
@@ -135,14 +172,19 @@ function CustomerDetail({ userId }: { userId: string }) {
     body = <ErrorBlock title="No pudimos cargar el usuario" message={query.message} onRetry={query.reload} />;
   } else {
     body = (
-      <div className="panel">
+      <div className="panel customer-loading">
         <LoadingBlock rows={6} />
       </div>
     );
   }
 
   return (
-    <Screen title={TITLE} description={file?.email} back={BACK}>
+    <Screen
+      title={file ? file.email : TITLE}
+      description={file ? file.name ?? "Sin nombre cargado" : undefined}
+      back={BACK}
+      meta={file ? <Summary file={file} /> : undefined}
+    >
       {body}
     </Screen>
   );

@@ -9,7 +9,8 @@ type MonthPickerProps = {
 };
 
 export function MonthPicker({ value, max, onChange }: MonthPickerProps) {
-  const label = formatMonth(value);
+  const month = formatMonth(value);
+  const label = month.charAt(0).toUpperCase() + month.slice(1);
   const atMax = value >= max;
   return (
     <div className="month-picker" role="group" aria-label="Mes">

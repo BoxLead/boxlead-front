@@ -14,9 +14,10 @@
 
 .stat-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--signal-space-3);
+  gap: var(--signal-space-1) var(--signal-space-3);
 }
 
 .stat-label {

@@ -1,16 +1,20 @@
-import { useId } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EmptyState } from "../../../../src/components/EmptyState/EmptyState";
-import type { Money } from "../../api/types";
+import type { Money as MoneyValue } from "../../api/types";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { DataTable } from "../../components/list/DataTable";
+import { Money } from "../../components/Money";
+import { MonthPicker } from "../../components/MonthPicker";
 import { Screen } from "../../components/Screen";
-import { formatCount, formatMoney } from "../../format";
+import { CardsSkeleton } from "../../components/Skeleton";
+import { StatCard, StatGrid } from "../../components/StatCard";
+import { formatCount, formatMonth } from "../../format";
 import { navItem } from "../../nav";
-import { currentMonth, formatMonth, isMonth } from "./dates";
+import { currentMonth, isMonth } from "./dates";
 import { planLabel, SUBSCRIPTION_LABELS } from "./labels";
-import { ErrorBlock, LoadingBlock, Muted, Section } from "./parts";
+import { ErrorBlock, Muted, Section, SectionGrid } from "./parts";
 import { SUBSCRIPTION_STATUSES, type Overview, type Revenue } from "./types";
+import "./customers.css";
 
 const MONTH_PARAM = "month";
 
@@ -23,16 +27,6 @@ function isEmpty(overview: Overview): boolean {
     overview.demos.active === 0 &&
     overview.payments.approvedInMonth === 0 &&
     overview.payments.rejectedInMonth === 0
-  );
-}
-
-function Stat({ label, value, detail }: { label: string; value: number; detail?: string }) {
-  return (
-    <div className="panel overview-stat">
-      <p className="panel-title">{label}</p>
-      <p className="overview-stat-value num">{formatCount(value)}</p>
-      {detail ? <p className="overview-stat-detail">{detail}</p> : null}
-    </div>
   );
 }
 
@@ -50,17 +44,17 @@ function Counts({ caption, rows, empty }: { caption: string; rows: { label: stri
   );
 }
 
-function MoneyList({ label, amounts }: { label: string; amounts: Money[] }) {
+function MoneyList({ label, amounts }: { label: string; amounts: MoneyValue[] }) {
   return (
     <div className="overview-money">
-      <p className="panel-title">{label}</p>
+      <p className="overview-money-label">{label}</p>
       {amounts.length === 0 ? (
         <Muted>Nada pendiente.</Muted>
       ) : (
         <ul>
           {amounts.map((amount) => (
-            <li key={amount.currency} className="num">
-              {formatMoney(amount)} <span className="overview-currency">{amount.currency}</span>
+            <li key={amount.currency}>
+              <Money money={amount} code strong />
             </li>
           ))}
         </ul>
@@ -72,24 +66,22 @@ function MoneyList({ label, amounts }: { label: string; amounts: Money[] }) {
 function RevenueTable({ revenue }: { revenue: Revenue[] }) {
   if (revenue.length === 0) return <Muted>No hubo cobros en este mes.</Muted>;
   return (
-    <div className="customer-table">
-      <DataTable
-        caption="Ingresos del mes por moneda"
-        rows={revenue}
-        rowKey={(row) => row.currency}
-        columns={[
-          { key: "currency", header: "Moneda", cell: (row) => row.currency },
-          { key: "gross", header: "Cobrado", align: "end", cell: (row) => formatMoney(row.gross) },
-          { key: "refunded", header: "Reembolsado", align: "end", cell: (row) => formatMoney(row.refunded) },
-          { key: "fees", header: "Costo de Mercado Pago", align: "end", cell: (row) => formatMoney(row.providerFees) },
-          { key: "net", header: "Neto", align: "end", cell: (row) => <strong>{formatMoney(row.net)}</strong> },
-        ]}
-      />
-    </div>
+    <DataTable
+      caption="Ingresos del mes por moneda"
+      rows={revenue}
+      rowKey={(row) => row.currency}
+      columns={[
+        { key: "currency", header: "Moneda", type: "id", cell: (row) => row.currency },
+        { key: "gross", header: "Cobrado", type: "money", cell: (row) => <Money money={row.gross} /> },
+        { key: "refunded", header: "Reembolsado", type: "money", cell: (row) => <Money money={row.refunded} /> },
+        { key: "fees", header: "Costo de Mercado Pago", type: "money", cell: (row) => <Money money={row.providerFees} /> },
+        { key: "net", header: "Neto", type: "money", cell: (row) => <Money money={row.net} strong /> },
+      ]}
+    />
   );
 }
 
-function OverviewBody({ overview }: { overview: Overview }) {
+function OverviewBody({ overview, month }: { overview: Overview; month: string }) {
   const byStatus = SUBSCRIPTION_STATUSES.flatMap((status) => {
     const count = overview.subscriptions.byStatus[status] ?? 0;
     return count > 0 ? [{ label: SUBSCRIPTION_LABELS[status], count }] : [];
@@ -99,26 +91,27 @@ function OverviewBody({ overview }: { overview: Overview }) {
     .map(([code, count]) => ({ label: planLabel(code), count }));
   const { revenue, commissions } = overview;
   const finance = revenue !== null;
+  const period = formatMonth(month);
 
   return (
     <div className="overview">
-      <div className="overview-stats">
-        <Stat label="Usuarios" value={overview.users.total} detail={`${formatCount(overview.users.newInMonth)} nuevos en el mes`} />
-        <Stat label="Demos vigentes" value={overview.demos.active} detail="Hoy" />
-        <Stat label="Pagos aprobados" value={overview.payments.approvedInMonth} detail="En el mes" />
-        <Stat label="Pagos rechazados" value={overview.payments.rejectedInMonth} detail="En el mes" />
-      </div>
-      <div className="overview-grid">
+      <StatGrid>
+        <StatCard label="Usuarios" value={formatCount(overview.users.total)} period="Hoy" delta={{ value: overview.users.newInMonth, label: "nuevos en el mes" }} />
+        <StatCard label="Demos vigentes" value={formatCount(overview.demos.active)} period="Hoy" />
+        <StatCard label="Pagos aprobados" value={formatCount(overview.payments.approvedInMonth)} period={period} />
+        <StatCard label="Pagos rechazados" value={formatCount(overview.payments.rejectedInMonth)} period={period} tone="danger" />
+      </StatGrid>
+      <SectionGrid>
         <Section title="Suscripciones por estado" hint="Cómo están hoy.">
           <Counts caption="Suscripciones por estado" rows={byStatus} empty="Todavía no hay suscripciones." />
         </Section>
         <Section title="Suscripciones por plan" hint="Las que no están canceladas, hoy.">
           <Counts caption="Suscripciones por plan" rows={byPlan} empty="Ninguna suscripción vigente." />
         </Section>
-      </div>
+      </SectionGrid>
       {finance ? (
         <>
-          <Section title="Ingresos del mes" hint="Con IVA incluido. El neto descuenta reembolsos y el costo de Mercado Pago.">
+          <Section title="Ingresos del mes" hint="Con IVA incluido. El neto descuenta reembolsos y el costo de Mercado Pago." flush>
             <RevenueTable revenue={revenue} />
           </Section>
           <Section title="Comisiones" hint="Lo que falta liquidar a los revendedores.">
@@ -131,27 +124,6 @@ function OverviewBody({ overview }: { overview: Overview }) {
       ) : (
         <Muted>Los ingresos y las comisiones los ven Finanzas y Dueño.</Muted>
       )}
-    </div>
-  );
-}
-
-function MonthPicker({ value, onChange }: { value: string; onChange: (month: string) => void }) {
-  const id = useId();
-  return (
-    <div className="field overview-month">
-      <label className="field-label" htmlFor={id}>
-        Mes
-      </label>
-      <input
-        id={id}
-        className="input"
-        type="month"
-        value={value}
-        max={currentMonth()}
-        onChange={(event) => {
-          if (isMonth(event.target.value)) onChange(event.target.value);
-        }}
-      />
     </div>
   );
 }
@@ -169,24 +141,21 @@ export function OverviewScreen() {
   }
 
   return (
-    <Screen title={item.label} description={item.description} actions={<MonthPicker value={shown} onChange={changeMonth} />}>
-      <p className="overview-period">Datos de {formatMonth(shown)}</p>
+    <Screen title={item.label} description={item.description} actions={<MonthPicker value={shown} max={currentMonth()} onChange={changeMonth} />}>
       {query.status === "loading" ? (
-        <div className="panel">
-          <LoadingBlock />
-        </div>
+        <CardsSkeleton />
       ) : query.status === "error" ? (
         <ErrorBlock title="No pudimos cargar el inicio" message={query.message} onRetry={query.reload} />
       ) : isEmpty(query.data) ? (
         <div className="panel">
           <EmptyState
-            illustration="search"
+            illustration="metrics"
             title="Todavía no hay nada para mostrar acá"
             hint="En este mes no hubo usuarios, suscripciones ni pagos."
           />
         </div>
       ) : (
-        <OverviewBody overview={query.data} />
+        <OverviewBody overview={query.data} month={shown} />
       )}
     </Screen>
   );
