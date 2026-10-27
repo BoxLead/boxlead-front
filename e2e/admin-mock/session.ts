@@ -107,7 +107,7 @@ function enrollmentOpen(): boolean {
 
 function verify(code: unknown): MockReply | null {
   if (state.lockedUntil > Date.now()) return failure(423, "Too many wrong codes, the factor is locked for a while", "MFA_LOCKED");
-  if (typeof code !== "string" || !/^\d{6}$/.test(code)) return failure(400, "Invalid code");
+  if (typeof code !== "string" || !/^\d{6}$/.test(code)) return MALFORMED_CODE;
   if (code === VALID_CODE) {
     state.failures = 0;
     return null;
@@ -122,6 +122,10 @@ function verify(code: unknown): MockReply | null {
 }
 
 const ROLE_REQUIRED = failure(403, "This action needs another admin role", "ROLE_REQUIRED");
+const MALFORMED_CODE: MockReply = {
+  status: 400,
+  body: { error: "Validation failed", message: "Validation failed", fields: [{ field: "code", message: 'must match "\\d{6}"' }] },
+};
 
 export function sessionRoute(
   method: string,

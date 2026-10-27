@@ -420,6 +420,7 @@ function audit(query: URLSearchParams): MockReply {
   const actions = query.getAll("action");
   const from = query.get("from");
   const to = query.get("to");
+  if (targetId && !targetType) return badRequest("A target id needs its target type");
   if (targetType && !(targetType in TARGET_LABELS)) return badRequest("Unknown targetType");
   if (actions.some((action) => !(action in ACTION_LABELS))) return badRequest("Unknown action");
   if (actorUserId && !UUID.test(actorUserId)) return badRequest("Invalid actorUserId");

@@ -278,4 +278,10 @@ describe("AuditScreen", () => {
     expect(await screen.findByText("El id del actor no tiene el formato correcto.")).toBeInTheDocument();
     expect(calls).toHaveLength(0);
   });
+
+  it("asks for the target type before searching by target id", async () => {
+    const calls = renderScreen(<AuditScreen />, ["OWNER"], "/auditoria?targetId=abc", () => json(200, pageOf([])));
+    expect(await screen.findByText("Elegí el tipo de objetivo para buscar por id.")).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+  });
 });

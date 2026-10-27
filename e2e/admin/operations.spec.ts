@@ -201,6 +201,8 @@ test.describe("audit", () => {
   test("shows the empty and the error", async ({ page }) => {
     await resetOperations();
     await enterAdmin(page, "/auditoria?targetId=nada");
+    await expect(page.getByText("Elegí el tipo de objetivo para buscar por id.")).toBeVisible();
+    await page.goto("/auditoria?targetType=USER&targetId=nada");
     await expect(page.getByText("Nada coincide con estos filtros")).toBeVisible();
     await answer(page, "/admin/audit", 500, { error: "Internal", message: "boom" });
     await page.reload();
