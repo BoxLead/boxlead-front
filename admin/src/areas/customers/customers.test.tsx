@@ -435,6 +435,11 @@ describe("CustomerDetailScreen", () => {
     expect(JSON.parse(String(put?.init.body))).toEqual({ value: 1, reason: "Lo pidió el cliente por mail" });
   }, 15_000);
 
+  it("links to every payment of the user in Pagos", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
+    expect(await screen.findByRole("link", { name: "Ver todos en Pagos" })).toHaveAttribute("href", `/pagos?userId=${USER_ID}`);
+  });
+
   it("words the cancel by status and says an active plan ends right away", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
     await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));

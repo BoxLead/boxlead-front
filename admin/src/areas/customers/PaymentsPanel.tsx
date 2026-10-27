@@ -1,3 +1,4 @@
+import { Link, useParams } from "react-router-dom";
 import { DateText } from "../../components/DateText";
 import { DataTable } from "../../components/list/DataTable";
 import { Money } from "../../components/Money";
@@ -15,7 +16,7 @@ function invoiceText(payment: Payment): string {
 
 export function PaymentsPanel({ payments }: { payments: Payment[] }) {
   return (
-    <Section title="Pagos" hint="Los últimos 20, con su factura." flush wide>
+    <Section title="Pagos" hint="Los últimos 20, con su factura." flush wide actions={payments.length > 0 ? <AllPaymentsLink /> : null}>
       {payments.length === 0 ? (
         <Muted>Todavía no tiene pagos.</Muted>
       ) : (
@@ -44,5 +45,14 @@ export function PaymentsPanel({ payments }: { payments: Payment[] }) {
         />
       )}
     </Section>
+  );
+}
+
+function AllPaymentsLink() {
+  const { userId = "" } = useParams();
+  return (
+    <Link className="btn btn-secondary btn-sm" to={`/pagos?${new URLSearchParams({ userId }).toString()}`}>
+      Ver todos en Pagos
+    </Link>
   );
 }
