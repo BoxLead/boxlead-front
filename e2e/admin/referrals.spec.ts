@@ -346,8 +346,12 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(page.getByText("ana@example.com")).toBeVisible();
     await shot("12-revendedor");
     await page.goto("/revendedores");
+    await mockCustomerSearch(page);
     await page.getByRole("button", { name: "Nuevo revendedor" }).click();
     await shot("13-nuevo-revendedor");
+    await searchUser(page, "oeste");
+    await dialog(page).getByRole("radio", { name: /oeste@example\.com/ }).check();
+    await shot("13b-usuario-elegido");
     await page.keyboard.press("Escape");
 
     await page.goto("/comisiones");
