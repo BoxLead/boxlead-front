@@ -433,6 +433,25 @@ describe("CustomerDetailScreen", () => {
     expect(JSON.parse(String(put?.init.body))).toEqual({ value: 1, reason: "Lo pidió el cliente por mail" });
   }, 15_000);
 
+  it("words the cancel by status and says an active plan ends right away", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const active = dialogOf("Cancelar suscripción");
+    expect(within(active).getByText(/no se vuelve a cobrar\. Pierde el plan en el acto/)).toBeInTheDocument();
+    expect(within(active).getByText(/87\.000,00 ARS por período/)).toBeInTheDocument();
+    await userEvent.click(within(active).getByRole("button", { name: "Cancelar", hidden: true }));
+  });
+
+  it("does not talk about charges when canceling a subscription that was never paid", async () => {
+    const incomplete = { ...file().subscription!, status: "INCOMPLETE" as const };
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ subscription: incomplete }));
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const dialog = dialogOf("Cancelar suscripción");
+    expect(within(dialog).getByText(/Todavía no se cobró nada/)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/no se vuelve a cobrar/)).toBeNull();
+    expect(within(dialog).queryByText(/por período/)).toBeNull();
+  });
+
   it("shows the last day of the period instead of its exclusive end", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
     for (const title of ["Plan", "Uso"]) {

@@ -35,6 +35,18 @@ function yes(value: boolean): string {
   return value ? "Sí" : "No";
 }
 
+function pauseText(subscription: Subscription): string {
+  const access = subscription.status === "SUSPENDED" ? "el acceso sigue restringido" : "el acceso queda restringido";
+  return `Hoy se cobra ${chargeText(subscription)} por período. Mientras esté pausada no se cobra y ${access}.`;
+}
+
+function cancelText(subscription: Subscription): string {
+  if (subscription.status === "INCOMPLETE") {
+    return "Se cancela en Mercado Pago y la suscripción se cierra. Todavía no se cobró nada, así que no hay nada para devolver.";
+  }
+  return "Se cancela en Mercado Pago, la suscripción se cierra y no se vuelve a cobrar. Pierde el plan en el acto, aunque el período esté pago. No devuelve plata, para eso está el reembolso.";
+}
+
 export function SubscriptionPanel({ userId, subscription, canOperate, onChanged }: SubscriptionPanelProps) {
   const dialogs = useActionDialogs<Dialog>(onChanged);
   const base = `/admin/customers/${userId}/subscription`;
@@ -95,7 +107,7 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
             onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/pause`, { reason }), "La suscripción quedó pausada.")}
           >
             <p>Primero se pausa el cobro en Mercado Pago y después la suscripción pasa a pausada.</p>
-            <p>Hoy se cobra {chargeText(subscription)} por período. Mientras esté pausada no se cobra y el acceso queda restringido.</p>
+            <p>{pauseText(subscription)}</p>
           </ReasonDialog>
           <ReasonDialog
             open={dialogs.open === "resume"}
@@ -116,9 +128,9 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
             onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/cancel`, { reason }), "La suscripción quedó cancelada.")}
           >
             <p>
-              Se cancela en Mercado Pago, la suscripción se cierra y no se vuelve a cobrar. No devuelve plata, para eso está el reembolso.
+              {cancelText(subscription)}
             </p>
-            <p>Hoy se cobra {chargeText(subscription)} por período.</p>
+            {subscription.status === "INCOMPLETE" ? null : <p>Hoy se cobra {chargeText(subscription)} por período.</p>}
           </ReasonDialog>
         </>
       ) : null}
