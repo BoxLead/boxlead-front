@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test as base, type Page } from "@playwright/test";
 import type { BillingOptions } from "./mock-api/billing.ts";
-import type { Scenario } from "./mock-api/fixtures.ts";
+import type { Scenario, SeedOptions } from "./mock-api/fixtures.ts";
 import { MOCK_API_ORIGIN, mockApiPortOf } from "./ports.ts";
 
 export { expect };
@@ -28,7 +28,9 @@ export const test = base.extend({
   },
 });
 
-export async function resetApi(scenario: Scenario = "default", now?: Date, options: BillingOptions = {}) {
+export type ResetOptions = BillingOptions & SeedOptions;
+
+export async function resetApi(scenario: Scenario = "default", now?: Date, options: ResetOptions = {}) {
   const res = await fetch(`${mockApiUrl()}/__reset`, {
     method: "POST",
     headers: CSRF_HEADERS,

@@ -12,13 +12,16 @@ import type {
   SalesStage,
 } from "../../src/api/types.ts";
 import {
+  ago,
   buildState,
+  clockNow,
   emptyActivityDetail,
   MELI_SELLER_ID,
   nextId,
   setClock,
   type MockState,
   type Scenario,
+  type SeedOptions,
   type StoredConversation,
   WHATSAPP_TEMPLATES,
 } from "./fixtures.ts";
@@ -221,7 +224,7 @@ function templateReply(
     fail(res, 400, `The template needs ${template.parameterCount} values`);
     return null;
   }
-  const now = new Date().toISOString();
+  const now = ago(0);
   return {
     id: nextId("5e55"),
     conversationId: conversation.id,
@@ -285,7 +288,7 @@ function outbound(
   content: string,
   extra: Partial<MessageResponse> = {},
 ): MessageResponse {
-  const now = new Date().toISOString();
+  const now = ago(0);
   return {
     id: nextId("5e55"),
     conversationId: conversation.id,
@@ -329,7 +332,7 @@ function instagramDirectReply(
   content: string,
 ): MessageResponse | null {
   const all = messagesOf(conversation.id);
-  const now = Date.now();
+  const now = clockNow();
   const lastText = all.filter((m) => m.direction === "INBOUND" && m.kind !== "COMMENT").at(-1);
   if (lastText && now - Date.parse(lastText.createdAt) < MESSAGING_WINDOW) return outbound(conversation, content);
   const privatelyAnswered = new Set(
@@ -357,7 +360,7 @@ function messengerReply(res: ServerResponse, conversation: StoredConversation, c
     return null;
   }
   const lastText = messagesOf(conversation.id).filter((m) => m.direction === "INBOUND").at(-1);
-  if (!lastText || Date.now() - Date.parse(lastText.createdAt) >= MESSAGING_WINDOW) {
+  if (!lastText || clockNow() - Date.parse(lastText.createdAt) >= MESSAGING_WINDOW) {
     fail(res, 409, "Cannot send Messenger message: the reply window is closed, the customer has to write first");
     return null;
   }
@@ -445,12 +448,16 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const body = await readBody(req);
     const scenario = (body.scenario as Scenario | undefined) ?? "default";
     setClock(typeof body.now === "string" ? body.now : null);
+    const seed: SeedOptions = {
+      messengerLastMessageMinutes:
+        typeof body.messengerLastMessageMinutes === "number" ? body.messengerLastMessageMinutes : undefined,
+    };
     state =
       scenario === "showcase"
         ? buildShowcase()
         : isBillingScenario(scenario)
-          ? withPlanAgents(buildState("agents"))
-          : buildState(scenario);
+          ? withPlanAgents(buildState("agents", seed))
+          : buildState(scenario, seed);
     billing = buildBilling(scenario, {
       pendingLegal: body.pendingLegal === true,
       entitlementsUnavailable: body.entitlementsUnavailable === true,
@@ -611,7 +618,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       const name = (body.name as string).trim();
       if (nameTaken(name, null)) return fail(res, 409, NAME_IN_USE);
-      const now = new Date().toISOString();
+      const now = ago(0);
       const created = {
         id: nextId("ca7e"),
         name,
@@ -637,7 +644,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       if (typeof body.description === "string") category.description = normalizeDescription(body.description);
       if (typeof body.color === "string") category.color = body.color as CategoryColor;
-      category.updatedAt = new Date().toISOString();
+      category.updatedAt = ago(0);
       return send(res, 200, withLeadCount(category));
     }
     if (method === "DELETE") {
@@ -659,7 +666,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         return fail(res, 400, "Category not found or does not belong to you");
       }
       leadRef.categoryId = categoryId;
-      leadRef.updatedAt = new Date().toISOString();
+      leadRef.updatedAt = ago(0);
       return send(res, 200, leadRef);
     }
     if (parts[2] === "temperature" && method === "PUT") {
@@ -671,7 +678,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         return fail(res, 400, "Invalid temperature");
       }
       leadRef.temperature = temperature as LeadTemperature | null;
-      leadRef.updatedAt = new Date().toISOString();
+      leadRef.updatedAt = ago(0);
       return send(res, 200, leadRef);
     }
     if (parts.length === 1 && method === "GET") {
@@ -703,7 +710,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       for (const key of ["name", "email", "phone"] as const) {
         if (typeof body[key] === "string") patch[key] = body[key];
       }
-      Object.assign(leadRef, patch, { updatedAt: new Date().toISOString() });
+      Object.assign(leadRef, patch, { updatedAt: ago(0) });
       return send(res, 200, leadRef);
     }
     if (parts.length === 2 && method === "DELETE") {
@@ -735,7 +742,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const body = await readBody(req);
       const leadRef = state.leads.find((l) => l.id === body.leadId);
       if (!leadRef) return fail(res, 404, "Lead not found");
-      const now = new Date().toISOString();
+      const now = ago(0);
       const created: StoredConversation = {
         id: nextId("c0ff"),
         leadId: leadRef.id,
@@ -759,7 +766,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 204);
     }
     if (parts[2] === "read" && method === "POST") {
-      conversation.lastReadAt = new Date().toISOString();
+      conversation.lastReadAt = ago(0);
       return send(res, 204);
     }
     if (parts[2] === "context" && method === "GET") {
@@ -831,8 +838,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
           content,
           contextRef: null,
           replyToExternalId: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: ago(0),
+          updatedAt: ago(0),
         };
       }
       state.messages.push(created);
@@ -881,7 +888,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         platform,
         externalAccountId,
         displayName: platform === "MELI" ? "TIENDA_NORTE" : `Cuenta ${platform.toLowerCase()}`,
-        connectedAt: new Date().toISOString(),
+        connectedAt: ago(0),
         needsReconnection: false,
         lastEventAt: null,
         failedEventCount: 0,

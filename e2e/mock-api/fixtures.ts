@@ -113,9 +113,19 @@ export function setClock(iso: string | null) {
   fixedNow = iso ? Date.parse(iso) : null;
 }
 
-export function ago(minutes: number): string {
-  return new Date((fixedNow ?? Date.now()) - minutes * MINUTE).toISOString();
+export function clockNow(): number {
+  return fixedNow ?? Date.now();
 }
+
+export function ago(minutes: number): string {
+  return new Date(clockNow() - minutes * MINUTE).toISOString();
+}
+
+export type SeedOptions = {
+  messengerLastMessageMinutes?: number;
+};
+
+const MESSENGER_LAST_MESSAGE_MINUTES = 60 * 50;
 
 let sequence = 0;
 
@@ -252,9 +262,9 @@ export function emptyState(): MockState {
   };
 }
 
-export function buildState(scenario: Scenario): MockState {
+export function buildState(scenario: Scenario, options: SeedOptions = {}): MockState {
   if (scenario === "empty") return emptyState();
-  if (scenario === "agents" || scenario === "agents-limited") return withAgents(buildState("default"), scenario);
+  if (scenario === "agents" || scenario === "agents-limited") return withAgents(buildState("default", options), scenario);
 
   const state = emptyState();
 
@@ -409,14 +419,15 @@ export function buildState(scenario: Scenario): MockState {
     message(instagram, "OUTBOUND", "¡Hola Sofi! Por ahora solo en azul y negro.", 170),
   );
 
-  const julian = lead("META", null, "6012345678901234", 60 * 50);
-  const messenger = conversation(julian, `${PAGE_ID}_6012345678901234`, 60 * 50);
+  const messengerMinutes = options.messengerLastMessageMinutes ?? MESSENGER_LAST_MESSAGE_MINUTES;
+  const julian = lead("META", null, "6012345678901234", messengerMinutes);
+  const messenger = conversation(julian, `${PAGE_ID}_6012345678901234`, messengerMinutes);
   state.leads.push(julian);
   state.conversations.push(messenger);
   state.messages.push(
-    message(messenger, "INBOUND", "¿Tienen local para retirar?", 60 * 50, {}),
+    message(messenger, "INBOUND", "¿Tienen local para retirar?", messengerMinutes, {}),
   );
-  messenger.lastReadAt = ago(60 * 49);
+  messenger.lastReadAt = ago(Math.max(messengerMinutes - 60, 0));
 
   const reel: ContextItem = {
     kind: "POST",
