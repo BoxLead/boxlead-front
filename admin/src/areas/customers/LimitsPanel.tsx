@@ -44,7 +44,7 @@ function parseValue(key: EntitlementKey, raw: string): number {
 function initialValue(row: Row): string {
   const current = row.value ?? 0;
   if (isSwitch(row.key)) return current > 0 ? "0" : "1";
-  if (row.value === null) return "";
+  if (row.value === null || row.value === undefined) return "";
   return row.key === "LLM_COST_CAP_MICROS" ? String(current / MICROS) : String(current);
 }
 
@@ -69,7 +69,7 @@ function OverrideDialog({ userId, row, onClose, run }: { userId: string; row: Ro
   return (
     <ReasonDialog open title={`Ajustar ${lower(label)}`} confirmLabel="Guardar ajuste" onClose={onClose} onConfirm={confirm}>
       <p>
-        Hoy rige {formatLimit(row.key, row.value)}. El ajuste pisa el valor del plan solo para este usuario
+        {row.value === undefined ? "Hoy no rige ningún valor porque no tiene plan" : `Hoy rige ${formatLimit(row.key, row.value)}`}. El ajuste pisa el valor del plan solo para este usuario
         {row.override ? " y reemplaza el ajuste que tiene" : ""}.
       </p>
       {switchKey ? (
@@ -127,11 +127,11 @@ function OverrideDialog({ userId, row, onClose, run }: { userId: string; row: Ro
 
 export function LimitsPanel({ userId, entitlements, overrides, canOperate, onChanged }: LimitsPanelProps) {
   const dialogs = useActionDialogs<Dialog>(onChanged);
-  const rows: Row[] = USER_LIMIT_KEYS.map((key) => ({
-    key,
-    value: entitlements.limits[key],
-    override: overrides.find((override) => override.key === key),
-  }));
+  const planless = entitlements.plan.source === "NONE";
+  const rows: Row[] = USER_LIMIT_KEYS.map((key) => {
+    const override = overrides.find((item) => item.key === key);
+    return { key, value: planless && !override ? undefined : entitlements.limits[key], override };
+  });
   const editing = rows.find((row) => dialogs.open === `set:${row.key}`);
   const revoking = rows.find((row) => dialogs.open === `revoke:${row.key}`);
 

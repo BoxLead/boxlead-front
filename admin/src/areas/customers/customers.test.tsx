@@ -404,6 +404,25 @@ describe("CustomerDetailScreen", () => {
     expect(detailLoads(calls)).toBe(loads + 1);
   }, 15_000);
 
+  it("shows a dash for the limits of a user without a plan except the ones adjusted", async () => {
+    const entitlements = {
+      ...file().entitlements,
+      access: "RESTRICTED" as const,
+      plan: { code: null, versionId: null, source: "NONE" as const },
+      limits: { AGENT_REPLIES_PER_PERIOD: 0, AGENTS_MAX: 5, PLAYGROUND_RUNS_PER_HOUR: 0, LLM_COST_CAP_MICROS: 0, AUTO_CATEGORIZE: 0 },
+    };
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ entitlements, subscription: null }));
+    const table = await screen.findByRole("table", { name: "Límites" });
+    const rowOf = (label: string) => within(within(table).getByRole("cell", { name: label }).closest("tr") as HTMLElement);
+    expect(rowOf("Respuestas del agente por período").getAllByRole("cell")[1]).toHaveTextContent("—");
+    expect(rowOf("Categorización automática").getAllByRole("cell")[1]).toHaveTextContent("—");
+    expect(rowOf("Agentes").getAllByRole("cell")[1]).toHaveTextContent("5");
+    await userEvent.click(screen.getByRole("button", { name: "Ajustar respuestas del agente por período" }));
+    const dialog = dialogOf("Ajustar respuestas del agente por período");
+    expect(within(dialog).getByText(/Hoy no rige ningún valor porque no tiene plan/)).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Valor")).toHaveValue(null);
+  });
+
   it("shows the last day of the period instead of its exclusive end", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
     for (const title of ["Plan", "Uso"]) {
