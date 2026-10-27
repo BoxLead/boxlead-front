@@ -4,6 +4,7 @@ import { useToast } from "../../../../src/components/ui/toast";
 import type { AdminPage } from "../../api/types";
 import { Bars } from "../../components/Bars";
 import { DateText } from "../../components/DateText";
+import { isUuid } from "../../components/list/filterRules";
 import { DataTable, type Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
@@ -373,8 +374,9 @@ function ResellerContent({ detail, reload }: ContentProps) {
   );
 }
 
-export function ResellerDetailScreen() {
-  const { resellerId = "" } = useParams();
+const NOT_FOUND = "No encontramos este revendedor";
+
+function ResellerLoader({ resellerId }: { resellerId: string }) {
   const [params] = useSearchParams();
   const range = new URLSearchParams();
   for (const key of ["from", "to"]) {
@@ -386,9 +388,23 @@ export function ResellerDetailScreen() {
   if (query.status === "ready") return <ResellerContent detail={query.data} reload={query.reload} />;
   return (
     <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
-      <DetailState query={query} notFound="No encontramos este revendedor" back={BACK}>
+      <DetailState query={query} notFound={NOT_FOUND} back={BACK}>
         {() => null}
       </DetailState>
     </Screen>
   );
+}
+
+export function ResellerDetailScreen() {
+  const { resellerId = "" } = useParams();
+  if (!isUuid(resellerId)) {
+    return (
+      <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
+        <DetailState query={{ status: "error", message: NOT_FOUND, notFound: true, reload: () => undefined }} notFound={NOT_FOUND} back={BACK}>
+          {() => null}
+        </DetailState>
+      </Screen>
+    );
+  }
+  return <ResellerLoader key={resellerId} resellerId={resellerId} />;
 }

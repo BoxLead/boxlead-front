@@ -298,4 +298,10 @@ describe("CustomerDetailScreen", () => {
     renderAt(`/usuarios/${USER_ID}`, ["OWNER"], () => json(404, { error: "Not found", message: "User not found" }));
     expect(await screen.findByText("No encontramos este usuario")).toBeInTheDocument();
   });
+
+  it("treats an id that is not a UUID as not found without asking core", async () => {
+    const calls = renderAt("/usuarios/abc", ["OWNER"], () => json(400, { error: "Bad request", message: "Invalid value for parameter 'userId'" }));
+    expect(await screen.findByText("No encontramos este usuario")).toBeInTheDocument();
+    expect(calls).toEqual([]);
+  });
 });
