@@ -190,7 +190,7 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 - The session is an `httpOnly`, `Secure` cookie set by the API. The frontend never stores or reads the token and does not use `localStorage` for anything but the theme, the sidebar and the analytics consent; the user lives in memory and comes from `GET /auth/me`. The backoffice uses no browser storage at all.
 - `AuthProvider` asks `GET /auth/me` only on `/app`, `/login`, `/register` and `/invitacion`, and shows a loader there until it answers, so the landing never calls the API.
 - Every request sends `credentials: "include"` and `X-Requested-With: boxlead-web` (the API's CSRF check). The API must allow the app origin with credentials in CORS.
-- Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked. The Google Analytics origins are only added when `VITE_GA_MEASUREMENT_ID` is set.
+- Production builds inject a Content Security Policy `<meta>` from `vite.config.ts`. A new external origin (script, API, frame) must be added there or it will be blocked. The Google Analytics origins are only added when `VITE_GA_MEASUREMENT_ID` is set. The Cloudflare Web Analytics beacon, which Cloudflare injects at the edge and which uses no cookies, is always allowed.
 - No third-party assets besides the Facebook SDK (WhatsApp signup); fonts are self-hosted.
 - OAuth redirects go through `beginOAuthRedirect` and are checked on return with `consumeOAuthSession` (`state` validation).
 - Never render API or user content as HTML, and never accept `postMessage` data without an exact origin check.
