@@ -5,6 +5,7 @@ import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFil
 
 const ANA = "0c000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
+const ELENA = "0c000000-0000-4000-8000-000000000005";
 const CLIENT_08 = "0c000000-0000-4000-8000-000000000008";
 const REASON = "Lo pidió el cliente por mail";
 
@@ -255,6 +256,27 @@ test("support grants, extends and takes back a Demo and sees nothing else", asyn
 
   await demo.getByRole("button", { name: "Quitar Demo" }).click();
   await confirm(page, "Quitar Demo", "Quitar Demo", `/admin/customers/${CLIENT_08}/demo/revoke`);
+  await expect(demo).toContainText("No tiene Demo");
+});
+
+test("support reads that a Demo already ended before extending or taking it away", async ({ page }) => {
+  await resetCustomers(["SUPPORT"]);
+  await enterAdmin(page, `/usuarios/${ELENA}`);
+  const demo = section(page, "Demo");
+  await expect(demo).toContainText("Terminada");
+  await demo.getByRole("button", { name: "Extender" }).click();
+  const extend = page.getByRole("dialog", { name: "Extender Demo" });
+  await expect(extend).toContainText("Terminó el");
+  await expect(extend).toContainText("Vuelve a estar vigente desde ahora");
+  await expect(extend).not.toContainText("Termina el");
+  await extend.getByRole("button", { name: "Cancelar" }).click();
+  await expect(extend).toBeHidden();
+
+  await demo.getByRole("button", { name: "Quitar Demo" }).click();
+  const revoke = page.getByRole("dialog", { name: "Quitar Demo" });
+  await expect(revoke).toContainText("La Demo ya terminó, así que su acceso no cambia.");
+  await expect(revoke).not.toContainText("termina ahora");
+  await confirm(page, "Quitar Demo", "Quitar Demo", `/admin/customers/${ELENA}/demo/revoke`);
   await expect(demo).toContainText("No tiene Demo");
 });
 
