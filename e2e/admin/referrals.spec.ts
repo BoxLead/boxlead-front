@@ -188,6 +188,32 @@ test("a commissions range that ends before it starts is caught before core and c
   expect(sameDay.status()).toBe(200);
 });
 
+function dayInBuenosAires(daysAgo: number): string {
+  return new Date(Date.now() - daysAgo * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+}
+
+test("the mock answers with the codes core sends", async ({ page }) => {
+  await seed(["OWNER"]);
+  await enterAdmin(page, "/revendedores");
+  const post = (path: string, data: unknown) => page.request.post(`${adminMockUrl()}${path}`, { headers: MOCK_HEADERS, data });
+  const nothing = await post("/admin/payouts", { resellerId: "00000102-0b0e-4000-8000-000000000002", periodEnd: dayInBuenosAires(0), reason: REASON });
+  expect([nothing.status(), (await nothing.json()).code]).toEqual([409, "PAYOUT_NOTHING_TO_PAY"]);
+  const existing = await post("/admin/resellers", {
+    userId: "00000201-0b0e-4000-8000-000000000001",
+    displayName: "Otra",
+    legalName: "Otra SRL",
+    taxId: "30-1",
+    vatCondition: "MONOTRIBUTO",
+    reason: REASON,
+  });
+  expect([existing.status(), (await existing.json()).code]).toEqual([409, "RESELLER_EXISTS"]);
+  const paidAccrual = "00000606-0b0e-4000-8000-000000000006";
+  const first = await post(`/admin/commissions/${paidAccrual}/reverse`, { reason: REASON });
+  expect(first.status()).toBe(200);
+  const again = await post(`/admin/commissions/${paidAccrual}/reverse`, { reason: REASON });
+  expect([again.status(), (await again.json()).code]).toEqual([409, "COMMISSION_NOTHING_TO_REVERSE"]);
+});
+
 test.describe("owner actions", () => {
   test("creates a reseller, issues and disables a code and corrects an attribution", async ({ page }) => {
     await seed(["OWNER"]);

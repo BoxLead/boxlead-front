@@ -248,7 +248,7 @@ function createReseller({ body }: MockRequest): MockReply {
   const taxId = text(body, "taxId");
   const vatCondition = text(body, "vatCondition");
   if (!userId || !displayName || !legalName || !taxId || !vatCondition) return failure(400, "Missing reseller data");
-  if (state.resellers.some((reseller) => reseller.userId === userId)) return failure(409, "The user is already a reseller");
+  if (state.resellers.some((reseller) => reseller.userId === userId)) return failure(409, "That user is already a reseller", "RESELLER_EXISTS");
   const reseller: StoredReseller = {
     id: randomUUID(),
     userId,
@@ -360,14 +360,17 @@ function changeCommission({ match, body }: MockRequest): MockReply {
     return ok(row);
   }
   if (row.kind !== "ACCRUAL") return NOT_RELEASABLE;
-  if (row.status === "REVERSED") return failure(409, "The commission has nothing left to reverse");
+  const remaining = state.commissions
+    .filter((entry) => entry.reversesEntryId === row.id)
+    .reduce((sum, entry) => sum + entry.amount.amountMinor, row.amount.amountMinor);
+  if (row.status === "REVERSED" || remaining <= 0) return failure(409, "The commission has nothing left to reverse", "COMMISSION_NOTHING_TO_REVERSE");
   const settled = row.status === "PAID" || row.payoutId !== null;
   const reversal: Commission = {
     ...row,
     id: randomUUID(),
     kind: "REVERSAL",
     reversesEntryId: row.id,
-    amount: money(-row.amount.amountMinor),
+    amount: money(-remaining),
     status: settled ? "ACCRUED" : "REVERSED",
     releaseAt: iso(Date.now()),
     payoutId: null,
@@ -409,9 +412,10 @@ function createPayout({ body }: MockRequest): MockReply {
   const approved = state.commissions.filter(
     (row) => row.resellerId === reseller.id && row.status === "APPROVED" && row.payoutId === null && Date.parse(row.releaseAt) < end,
   );
-  if (approved.length === 0) return failure(409, "There are no approved commissions to pay");
+  if (approved.length === 0) return failure(409, "There are no approved commissions to pay", "PAYOUT_NOTHING_TO_PAY");
+  if (new Set(approved.map((row) => row.amount.currency)).size > 1) return failure(409, "The approved commissions mix currencies", "PAYOUT_MIXED_CURRENCIES");
   const total = approved.reduce((sum, row) => sum + row.amount.amountMinor, 0);
-  if (total <= 0) return failure(409, "The approved balance is not positive, it carries over to the next payout");
+  if (total <= 0) return failure(409, "The approved balance is not positive, it carries over to the next payout", "PAYOUT_NOT_POSITIVE");
   const payout: Payout = {
     id: randomUUID(),
     resellerId: reseller.id,
