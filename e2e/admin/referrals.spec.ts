@@ -304,9 +304,17 @@ test.describe("finance actions", () => {
     await expect(dialog(page).getByText("No se puede deshacer.", { exact: false })).toBeVisible();
     await expect(dialog(page).getByText("ya está en una liquidación, armada o pagada, la reversa queda para la próxima liquidación", { exact: false })).toBeVisible();
     await expect(dialog(page).getByText("Si ya se pagó", { exact: false })).toHaveCount(0);
-    const reversed = await confirmWithReason(page, "Revertir", "/reverse");
+    const [reversed, answer] = await Promise.all([
+      confirmWithReason(page, "Revertir", "/reverse"),
+      page.waitForResponse((response) => response.url().includes("/reverse")),
+    ]);
     expect(reversed.postDataJSON()).toEqual({ reason: REASON });
     await expect(page.getByText("Agregamos la reversa de la comisión.")).toBeVisible();
+    const reversal = (await answer.json()) as { paymentId: string | null; reversesEntryId: string };
+    const listed = await page.request.get(`${adminMockUrl()}/admin/commissions?resellerId=${NORTH}`, { headers: { "X-Requested-With": "boxlead-web" } });
+    const original = ((await listed.json()) as { items: { id: string; paymentId: string }[] }).items.find((row) => row.id === reversal.reversesEntryId);
+    expect(reversal.paymentId).toBeTruthy();
+    expect(reversal.paymentId).toBe(original?.paymentId);
   });
 
   test("builds a payout, exports its CSV and marks it paid", async ({ page }) => {

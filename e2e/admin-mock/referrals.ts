@@ -366,7 +366,6 @@ function changeCommission({ match, body }: MockRequest): MockReply {
     id: randomUUID(),
     kind: "REVERSAL",
     reversesEntryId: row.id,
-    paymentId: null,
     amount: money(-row.amount.amountMinor),
     status: settled ? "ACCRUED" : "REVERSED",
     releaseAt: iso(Date.now()),
