@@ -119,6 +119,9 @@ describe("messageFor", () => {
     "COMMISSION_NOTHING_TO_REVERSE",
     "CONCURRENT_CHANGE",
     "INVITATION_RESELLER_INVALID",
+    "SUBSCRIPTION_CHANGED",
+    "REFUND_ALREADY_ANSWERED",
+    "INVOICE_NOT_ISSUED",
   ])("has its own message for %s instead of the status fallback", (code) => {
     expect(messageFor(409, code)).not.toBe(messageFor(409, null));
     expect(messageFor(409, code)).not.toBe(messageFor(500, null));

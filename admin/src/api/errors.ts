@@ -20,6 +20,9 @@ export type AdminErrorCode =
   | "PAYOUT_MIXED_CURRENCIES"
   | "PAYOUT_NOT_POSITIVE"
   | "COMMISSION_NOTHING_TO_REVERSE"
+  | "SUBSCRIPTION_CHANGED"
+  | "REFUND_ALREADY_ANSWERED"
+  | "INVOICE_NOT_ISSUED"
   | "CONCURRENT_CHANGE";
 
 const CODE_MESSAGES: Record<AdminErrorCode, string> = {
@@ -44,6 +47,9 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   PAYOUT_MIXED_CURRENCIES: "Las comisiones aprobadas están en más de una moneda y una liquidación lleva una sola. Armá una por moneda.",
   PAYOUT_NOT_POSITIVE: "El total de la liquidación no es positivo. Revisá las reversas antes de armarla.",
   COMMISSION_NOTHING_TO_REVERSE: "Esa comisión ya fue revertida y no queda nada por revertir.",
+  SUBSCRIPTION_CHANGED: "La suscripción de este cliente cambió desde que abriste la lista. No tocamos nada, recargá y revisala antes de seguir.",
+  REFUND_ALREADY_ANSWERED: "Mercado Pago ya respondió este reembolso, así que no hace falta reintentarlo. Recargá para ver su estado.",
+  INVOICE_NOT_ISSUED: "Solo se puede anular una factura emitida. Recargá para ver su estado.",
   CONCURRENT_CHANGE: "Otra persona cambió esto al mismo tiempo. Recargá para ver lo último y volvé a intentar.",
 };
 
