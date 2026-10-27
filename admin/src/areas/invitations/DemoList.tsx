@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Tag } from "../../../../src/components/ui/Tag";
 import { useToast } from "../../../../src/components/ui/toast";
+import { DateText } from "../../components/DateText";
+import { StatusBadge } from "../../components/StatusBadge";
 import { DateFilter, FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import type { Column } from "../../components/list/DataTable";
 import { useListQuery } from "../../components/list/useListQuery";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { formatDate } from "../../format";
 import { revokeDemo } from "./api";
 import { ExtendDemoFlow } from "./ExtendDemoFlow";
 import { GrantDemoFlow } from "./GrantDemoFlow";
@@ -24,12 +24,13 @@ const STATUS_OPTIONS = (Object.keys(DEMO_STATUS) as DemoGrantStatus[]).map((valu
 type DemoListProps = {
   tabs: ReactNode;
   canAct: boolean;
+  creating: boolean;
+  onCloseCreate: () => void;
 };
 
-export function DemoList({ tabs, canAct }: DemoListProps) {
+export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProps) {
   const toast = useToast();
   const { params, query } = useListQuery<DemoGrant>("/admin/demo-grants", FILTERS);
-  const [granting, setGranting] = useState(false);
   const [extending, setExtending] = useState<DemoGrant | null>(null);
   const [revoking, setRevoking] = useState<DemoGrant | null>(null);
 
@@ -45,6 +46,7 @@ export function DemoList({ tabs, canAct }: DemoListProps) {
     {
       key: "user",
       header: "Usuario",
+      width: "lg",
       cell: (row) => (
         <Link className="invitations-email" to={`/usuarios/${row.userId}`}>
           {userLabel(row)}
@@ -54,15 +56,20 @@ export function DemoList({ tabs, canAct }: DemoListProps) {
     {
       key: "status",
       header: "Estado",
+      type: "status",
       cell: (row) => (
         <span className="invitations-status">
-          <Tag tone={DEMO_STATUS[row.status].tone}>{DEMO_STATUS[row.status].label}</Tag>
-          {row.revokedAt ? <span className="invitations-note">El {formatDate(row.revokedAt)}</span> : null}
+          <StatusBadge status={DEMO_STATUS[row.status]} />
+          {row.revokedAt ? (
+            <span className="invitations-note">
+              El <DateText value={row.revokedAt} />
+            </span>
+          ) : null}
         </span>
       ),
     },
-    { key: "starts", header: "Inicio", cell: (row) => formatDate(row.startsAt) },
-    { key: "ends", header: "Fin", cell: (row) => formatDate(row.endsAt) },
+    { key: "starts", header: "Inicio", type: "date", cell: (row) => <DateText value={row.startsAt} /> },
+    { key: "ends", header: "Fin", type: "date", cell: (row) => <DateText value={row.endsAt} /> },
     { key: "origin", header: "Origen", cell: (row) => (row.invitationId ? "Invitación" : "Otorgada a mano") },
   ];
 
@@ -70,12 +77,12 @@ export function DemoList({ tabs, canAct }: DemoListProps) {
     columns.push({
       key: "actions",
       header: "Acciones",
-      align: "end",
+      type: "actions",
       cell: (row) =>
         row.status === "REVOKED" ? (
           <span className="invitations-note">—</span>
         ) : (
-          <span className="invitations-actions">
+          <span className="row-actions">
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setExtending(row)}>
               Extender
             </button>
@@ -89,14 +96,6 @@ export function DemoList({ tabs, canAct }: DemoListProps) {
 
   return (
     <>
-      <div className="invitations-toolbar">
-        {tabs}
-        {canAct ? (
-          <button type="button" className="btn btn-primary" onClick={() => setGranting(true)}>
-            Otorgar Demo
-          </button>
-        ) : null}
-      </div>
       <ListView
         caption="Demos"
         query={query}
@@ -108,7 +107,7 @@ export function DemoList({ tabs, canAct }: DemoListProps) {
         emptyTitle="Todavía no hay Demos"
         emptyHint="Aparecen cuando alguien acepta una invitación o cuando le otorgás una Demo a un usuario."
         filters={
-          <FilterBar active={params.active} onClear={params.clear}>
+          <FilterBar active={params.active} onClear={params.clear} lead={tabs}>
             <SelectFilter
               label="Estado"
               value={params.value("status")}
@@ -122,7 +121,7 @@ export function DemoList({ tabs, canAct }: DemoListProps) {
       />
       {canAct ? (
         <>
-          <GrantDemoFlow open={granting} onClose={() => setGranting(false)} onGranted={query.reload} />
+          <GrantDemoFlow open={creating} onClose={onCloseCreate} onGranted={query.reload} />
           <ExtendDemoFlow grant={extending} onClose={() => setExtending(null)} onExtended={query.reload} />
           <ReasonDialog
             open={revoking !== null}

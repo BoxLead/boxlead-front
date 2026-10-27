@@ -136,24 +136,24 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
   const revoking = rows.find((row) => dialogs.open === `revoke:${row.key}`);
 
   return (
-    <Section title="Límites" hint="Lo que rige hoy, con los ajustes vigentes de este usuario.">
+    <Section title="Límites" hint="Lo que rige hoy, con los ajustes vigentes de este usuario." flush wide>
       {entitlements.enforced ? null : <Muted>Los límites todavía no se aplican a nadie. Igual se pueden ajustar.</Muted>}
-      <div className="customer-table">
-        <DataTable
+      <DataTable
           caption="Límites"
           rows={rows}
           rowKey={(row) => row.key}
           columns={[
-            { key: "label", header: "Límite", cell: (row) => LIMIT_LABELS[row.key] },
-            { key: "value", header: "Rige", align: "end", cell: (row) => formatLimit(row.key, row.value) },
+            { key: "label", header: "Límite", width: "md", cell: (row) => LIMIT_LABELS[row.key] },
+            { key: "value", header: "Rige", type: "number", cell: (row) => formatLimit(row.key, row.value) },
             {
               key: "override",
               header: "Ajuste",
+              width: "md",
               cell: (row) => (
-                <div className="customer-cell">
+                <span className="cell-stack">
                   <span>{overrideText(row)}</span>
-                  {row.override ? <span className="customer-cell-sub">{row.override.reason}</span> : null}
-                </div>
+                  {row.override ? <span className="sub-text">{row.override.reason}</span> : null}
+                </span>
               ),
             },
             ...(canOperate
@@ -161,6 +161,7 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
                   {
                     key: "actions",
                     header: "Acciones",
+                    type: "actions" as const,
                     cell: (row: Row) => (
                       <div className="customer-row-actions">
                         <button
@@ -188,7 +189,6 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
               : []),
           ]}
         />
-      </div>
       {editing ? <OverrideDialog userId={userId} row={editing} onClose={dialogs.close} run={dialogs.run} /> : null}
       <ReasonDialog
         open={revoking !== undefined}

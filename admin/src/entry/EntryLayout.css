@@ -54,6 +54,8 @@
 .entry-secret code {
   color: var(--signal-heading);
   font-family: var(--signal-mono);
-  font-size: var(--signal-text-sm);
+  font-size: var(--signal-text-md);
+  letter-spacing: var(--signal-tracking-wide);
   overflow-wrap: anywhere;
+  user-select: all;
 }

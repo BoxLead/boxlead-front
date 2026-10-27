@@ -47,7 +47,7 @@ export function RetryRefundDialog({ refund, open, onClose, onDone }: RetryRefund
       {refund.amount ? (
         <p>Es un reembolso parcial.</p>
       ) : full.status === "loading" ? (
-        <p className="billing-detail" role="status">
+        <p className="sub-text" role="status">
           Buscando cuánto quedaba del pago…
         </p>
       ) : full.status === "ready" ? (

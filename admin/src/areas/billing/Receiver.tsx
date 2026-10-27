@@ -7,7 +7,7 @@ function receiverName(receiver: InvoiceReceiver | null): string | null {
 
 export function Receiver({ receiver }: { receiver: InvoiceReceiver | null }) {
   const name = receiverName(receiver);
-  if (!receiver || !name) return <p className="billing-detail">El cliente no tenía datos fiscales cuando se registró el pago.</p>;
+  if (!receiver || !name) return <p className="sub-text">El cliente no tenía datos fiscales cuando se registró el pago.</p>;
   const tax = receiver.taxId ? `${receiver.taxIdType ?? "CUIT"} ${receiver.taxIdType === "CUIT" || !receiver.taxIdType ? formatCuit(receiver.taxId) : receiver.taxId}` : null;
   return (
     <dl className="billing-facts">
@@ -33,11 +33,11 @@ export function Receiver({ receiver }: { receiver: InvoiceReceiver | null }) {
 
 export function ReceiverCell({ receiver }: { receiver: InvoiceReceiver | null }) {
   const name = receiverName(receiver);
-  if (!receiver || !name) return <span className="billing-detail">Sin datos fiscales</span>;
+  if (!receiver || !name) return <span className="sub-text">Sin datos fiscales</span>;
   return (
-    <span className="billing-stack">
+    <span className="cell-stack">
       <span>{name}</span>
-      {receiver.vatCondition ? <span className="billing-detail">{vatConditionLabel(receiver.vatCondition)}</span> : null}
+      {receiver.vatCondition ? <span className="sub-text">{vatConditionLabel(receiver.vatCondition)}</span> : null}
     </span>
   );
 }

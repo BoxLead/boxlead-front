@@ -2,13 +2,10 @@ import { useId, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { EmptyState } from "../../../../src/components/EmptyState/EmptyState";
 import { Banner } from "../../../../src/components/ui/Banner";
-import { Tag, type TagTone } from "../../../../src/components/ui/Tag";
+import { FactsSkeleton } from "../../components/Skeleton";
 import type { DetailResult } from "./hooks";
+export { Facts, Muted, Section, SectionGrid, type Fact } from "../../components/Section";
 import "./referrals.css";
-
-export function StatusTag({ value }: { value: { label: string; tone: TagTone } }) {
-  return <Tag tone={value.tone}>{value.label}</Tag>;
-}
 
 type DetailStateProps<T> = {
   query: DetailResult<T> & { reload: () => void };
@@ -19,14 +16,7 @@ type DetailStateProps<T> = {
 
 export function DetailState<T>({ query, notFound, back, children }: DetailStateProps<T>) {
   if (query.status === "loading") {
-    return (
-      <div className="ref-loading" role="status">
-        <span className="skeleton ref-skeleton-title" />
-        <span className="skeleton ref-skeleton-block" />
-        <span className="skeleton ref-skeleton-block" />
-        <span className="visually-hidden">Cargando…</span>
-      </div>
-    );
+    return <FactsSkeleton rows={6} />;
   }
   if (query.status === "error") {
     if (query.notFound) {
@@ -62,36 +52,8 @@ export function DetailState<T>({ query, notFound, back, children }: DetailStateP
   return <>{children(query.data)}</>;
 }
 
-export function Facts({ children }: { children: ReactNode }) {
-  return <dl className="ref-facts">{children}</dl>;
-}
-
-export function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="ref-fact">
-      <dt>{label}</dt>
-      <dd>{children}</dd>
-    </div>
-  );
-}
-
-export function Section({ title, actions, children }: { title: string; actions?: ReactNode; children: ReactNode }) {
-  const id = useId();
-  return (
-    <section className="panel ref-section" aria-labelledby={id}>
-      <header className="ref-section-head">
-        <h2 id={id} className="ref-section-title">
-          {title}
-        </h2>
-        {actions ? <div className="ref-section-actions">{actions}</div> : null}
-      </header>
-      <div className="ref-section-body">{children}</div>
-    </section>
-  );
-}
-
 export function FinanceOnly({ what }: { what: string }) {
-  return <p className="ref-restricted">{what} los ve solo Finanzas.</p>;
+  return <p className="restricted-text">{what} los ve solo Finanzas.</p>;
 }
 
 type TextFieldProps = {

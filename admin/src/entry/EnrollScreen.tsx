@@ -11,7 +11,8 @@ import { QrCode } from "./QrCode";
 
 function secretOf(uri: string): string {
   try {
-    return new URL(uri).searchParams.get("secret") ?? "";
+    const secret = new URL(uri).searchParams.get("secret") ?? "";
+    return secret.match(/.{1,4}/g)?.join(" ") ?? "";
   } catch {
     return "";
   }

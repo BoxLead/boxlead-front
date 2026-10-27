@@ -25,8 +25,9 @@ export function UsagePanel({ userId, entitlements }: { userId: string; entitleme
   const replies = entitlements.usage[REPLIES] ?? 0;
 
   return (
-    <Section title="Uso" hint={`Respuestas del período y uso de IA de los últimos ${DAYS} días.`}>
+    <Section title="Uso" hint={`Respuestas del período y uso de IA de los últimos ${DAYS} días.`} wide>
       <Facts
+        columns={2}
         items={[
           {
             label: "Respuestas del agente en el período",
@@ -47,13 +48,14 @@ export function UsagePanel({ userId, entitlements }: { userId: string; entitleme
             caption="Uso de IA por día y modelo"
             rows={query.data.items}
             rowKey={(row) => `${row.day}-${row.agentId ?? ""}-${row.model}`}
+            dense
             columns={[
-              { key: "day", header: "Día", cell: (row) => formatDate(row.day) },
-              { key: "model", header: "Modelo", cell: (row) => row.model },
-              { key: "runs", header: "Corridas", align: "end", cell: (row) => formatCount(row.runs) },
-              { key: "input", header: "Tokens de entrada", align: "end", cell: (row) => formatCount(row.inputTokens) },
-              { key: "output", header: "Tokens de salida", align: "end", cell: (row) => formatCount(row.outputTokens) },
-              { key: "cost", header: "Costo estimado", align: "end", cell: cost },
+              { key: "day", header: "Día", type: "date", cell: (row) => formatDate(row.day) },
+              { key: "model", header: "Modelo", type: "id", cell: (row) => row.model },
+              { key: "runs", header: "Corridas", type: "number", cell: (row) => formatCount(row.runs) },
+              { key: "input", header: "Tokens de entrada", type: "number", cell: (row) => formatCount(row.inputTokens) },
+              { key: "output", header: "Tokens de salida", type: "number", cell: (row) => formatCount(row.outputTokens) },
+              { key: "cost", header: "Costo estimado", type: "money", cell: cost },
             ]}
           />
           {query.data.totalItems > query.data.items.length ? (

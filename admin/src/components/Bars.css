@@ -1,0 +1,30 @@
+.bars {
+  display: grid;
+  gap: var(--signal-space-2);
+  margin: 0;
+  min-width: 0;
+}
+
+.bars-chart {
+  display: block;
+  width: 100%;
+  height: calc(var(--signal-control-lg) + var(--signal-space-4));
+  overflow: visible;
+}
+
+.bars-bar {
+  fill: var(--signal-accent);
+  opacity: 0.85;
+}
+
+.bars-bar:hover {
+  opacity: 1;
+}
+
+.bars-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--signal-space-3);
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-xs);
+}

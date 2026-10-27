@@ -1,22 +1,18 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Tag } from "../../../../src/components/ui/Tag";
-import type { Money } from "../../api/types";
-import { formatMoney } from "../../format";
+import type { Money as MoneyValue } from "../../api/types";
+import { Money } from "../../components/Money";
+import { StatusBadge } from "../../components/StatusBadge";
 import type { StatusLabel } from "./labels";
 import "./Billing.css";
 
-export function StatusTag({ status }: { status: StatusLabel }) {
-  return (
-    <span className="billing-tag">
-      <Tag tone={status.tone}>{status.label}</Tag>
-    </span>
-  );
+export function StatusTag({ status, detail }: { status: StatusLabel; detail?: string | null }) {
+  return <StatusBadge status={status} detail={detail} />;
 }
 
 export function ShortId({ id }: { id: string }) {
   return (
-    <span className="billing-id num" title={id}>
+    <span className="billing-id" title={id}>
       {id.slice(0, 8)}
     </span>
   );
@@ -24,29 +20,29 @@ export function ShortId({ id }: { id: string }) {
 
 export function CustomerCell({ userId, email }: { userId: string; email?: string | null }) {
   return (
-    <Link className="billing-customer" to={`/usuarios/${encodeURIComponent(userId)}`}>
+    <Link className="entity-link" to={`/usuarios/${encodeURIComponent(userId)}`}>
       {email ?? <ShortId id={userId} />}
     </Link>
   );
 }
 
-export function Amount({ money }: { money: Money }) {
-  return <span className="num billing-amount">{formatMoney(money)}</span>;
+export function Amount({ money, code = false }: { money: MoneyValue; code?: boolean }) {
+  return <Money money={money} code={code} />;
 }
 
 export function Stack({ main, detail }: { main: ReactNode; detail?: ReactNode }) {
   return (
-    <span className="billing-stack">
+    <span className="cell-stack">
       <span>{main}</span>
-      {detail ? <span className="billing-detail">{detail}</span> : null}
+      {detail ? <span className="sub-text">{detail}</span> : null}
     </span>
   );
 }
 
 export function RowActions({ children }: { children: ReactNode }) {
-  return <span className="billing-actions">{children}</span>;
+  return <span className="row-actions">{children}</span>;
 }
 
 export function NoAction() {
-  return <span className="billing-detail">—</span>;
+  return <span className="sub-text">—</span>;
 }

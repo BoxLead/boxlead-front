@@ -1,8 +1,11 @@
-import { Tag } from "../../../../src/components/ui/Tag";
 import { adminApi } from "../../api/client";
+import { DateText } from "../../components/DateText";
+import { Money } from "../../components/Money";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { formatDate, formatDateTime, formatMoney } from "../../format";
-import { cancelReasonLabel, CHECKOUT_LABELS, SUBSCRIPTION_LABELS, SUBSCRIPTION_TONES } from "./labels";
+import { StatusBadge } from "../../components/StatusBadge";
+import { formatDate, formatMoney } from "../../format";
+import { SUBSCRIPTION_STATUS } from "../../status";
+import { cancelReasonLabel, CHECKOUT_LABELS } from "./labels";
 import { Facts, Muted, Section } from "./parts";
 import type { Subscription } from "./types";
 import { useActionDialogs } from "./useActionDialogs";
@@ -61,25 +64,22 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
     <Section title="Suscripción" hint="La última que tuvo." actions={actions}>
       {subscription ? (
         <Facts
+          columns={2}
           items={[
-            {
-              label: "Estado",
-              value: <Tag tone={SUBSCRIPTION_TONES[subscription.status]}>{SUBSCRIPTION_LABELS[subscription.status]}</Tag>,
-            },
-            { label: "Precio", value: `${formatMoney(subscription.price)} ${subscription.price.currency}` },
-            subscription.charge ? { label: "Cobro", value: `${formatMoney(subscription.charge)} ${subscription.charge.currency}` } : null,
+            { label: "Estado", value: <StatusBadge status={SUBSCRIPTION_STATUS[subscription.status]} detail={subscription.providerStatus} /> },
+            { label: "Precio", value: <Money money={subscription.price} code /> },
+            subscription.charge ? { label: "Cobro", value: <Money money={subscription.charge} code /> } : null,
             period(subscription) ? { label: "Período", value: period(subscription) } : null,
-            subscription.paidThrough ? { label: "Pagada hasta", value: formatDate(subscription.paidThrough) } : null,
-            subscription.graceUntil ? { label: "Gracia hasta", value: formatDate(subscription.graceUntil) } : null,
-            subscription.suspendedUntil ? { label: "Suspendida hasta", value: formatDate(subscription.suspendedUntil) } : null,
-            subscription.providerNextPaymentAt ? { label: "Próximo cobro", value: formatDate(subscription.providerNextPaymentAt) } : null,
+            subscription.paidThrough ? { label: "Pagada hasta", value: <DateText value={subscription.paidThrough} /> } : null,
+            subscription.graceUntil ? { label: "Gracia hasta", value: <DateText value={subscription.graceUntil} /> } : null,
+            subscription.suspendedUntil ? { label: "Suspendida hasta", value: <DateText value={subscription.suspendedUntil} /> } : null,
+            subscription.providerNextPaymentAt ? { label: "Próximo cobro", value: <DateText value={subscription.providerNextPaymentAt} /> } : null,
             { label: "Cancela al terminar el período", value: yes(subscription.cancelAtPeriodEnd) },
             subscription.disputed ? { label: "En disputa", value: "Sí" } : null,
             subscription.lastCheckoutStatus ? { label: "Último checkout", value: CHECKOUT_LABELS[subscription.lastCheckoutStatus] } : null,
-            subscription.providerStatus ? { label: "Estado en Mercado Pago", value: subscription.providerStatus } : null,
-            subscription.canceledAt ? { label: "Cancelada el", value: formatDateTime(subscription.canceledAt) } : null,
+            subscription.canceledAt ? { label: "Cancelada el", value: <DateText value={subscription.canceledAt} time /> } : null,
             subscription.cancelReason ? { label: "Motivo de la baja", value: cancelReasonLabel(subscription.cancelReason) } : null,
-            { label: "Creada el", value: formatDateTime(subscription.createdAt) },
+            { label: "Creada el", value: <DateText value={subscription.createdAt} time /> },
           ]}
         />
       ) : (

@@ -1,7 +1,7 @@
 import type { Page, Request } from "@playwright/test";
 import { RESELLERS } from "../admin-mock/customers.ts";
 import { resetCustomers, routeResellers, routeUsage, section } from "./customers-support.ts";
-import { enterAdmin, expect, expectAccessible, horizontalOverflow, test } from "./support.ts";
+import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
 
 const ANA = "0c000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
@@ -23,8 +23,8 @@ test("the overview shows the month and its amounts to finance", async ({ page })
   await resetCustomers(["FINANCE"]);
   await enterAdmin(page, "/");
   await expect(page.getByRole("heading", { level: 1, name: "Inicio" })).toBeVisible();
-  await expect(page.locator(".overview-stat").filter({ hasText: "Usuarios" })).toContainText("24");
-  await expect(section(page, "Suscripciones por estado")).toContainText("Con pago vencido");
+  await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("24");
+  await expect(section(page, "Suscripciones por estado")).toContainText("Cuota impaga");
   await expect(section(page, "Ingresos del mes")).toBeVisible();
   await expect(section(page, "Comisiones")).toContainText("Aprobadas sin liquidar");
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
@@ -36,10 +36,12 @@ test("the overview keeps the amounts away from support and changes the month", a
   await enterAdmin(page, "/");
   await expect(page.getByText("Los ingresos y las comisiones los ven Finanzas y Dueño.")).toBeVisible();
   await expect(section(page, "Ingresos del mes")).toHaveCount(0);
-  await page.getByLabel("Mes").fill("2025-01");
+  await page.goto("/?month=2025-02");
+  await expect(page.getByRole("group", { name: "Mes" })).toContainText("Febrero de 2025");
+  await page.getByRole("button", { name: /Mes anterior/ }).click();
   await expect(page).toHaveURL(/month=2025-01/);
-  await expect(page.getByText("Datos de enero de 2025")).toBeVisible();
-  await expect(page.locator(".overview-stat").filter({ hasText: "Usuarios" })).toContainText("0");
+  await expect(page.getByRole("group", { name: "Mes" })).toContainText("Enero de 2025");
+  await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("0");
 });
 
 test("the overview says when there is nothing yet", async ({ page }) => {
@@ -65,13 +67,14 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await expect(page.getByText("1 a 20 de 24")).toBeVisible();
   await page.getByRole("button", { name: "Siguiente" }).click();
   await expect(page.getByText("21 a 24 de 24")).toBeVisible();
+  await openFilters(page);
   await page.getByLabel("Suscripción").selectOption("PAUSED");
   await expect(page.getByRole("link", { name: "diego.fernandez@example.com" })).toBeVisible();
   await expect(page.getByText("1 a 1 de 1")).toBeVisible();
   await page.getByRole("searchbox", { name: "Buscar" }).fill("nadie");
   await page.getByRole("button", { name: "Buscar" }).click();
   await expect(page.getByText("Nada coincide con estos filtros")).toBeVisible();
-  await page.getByRole("button", { name: "Limpiar filtros" }).first().click();
+  await page.getByRole("button", { name: "Limpiar", exact: true }).first().click();
   await expect(page.getByText("1 a 20 de 24")).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "Buscar" })).toHaveValue("");
   await page.getByRole("searchbox", { name: "Buscar" }).fill("ruiz");
@@ -79,9 +82,9 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await expect(page.getByText("1 a 1 de 1")).toBeVisible();
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   await page.getByRole("link", { name: "carla.ruiz@example.com" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Detalle de usuario" })).toBeVisible();
-  await expect(page.locator(".page-header-desc")).toHaveText("carla.ruiz@example.com");
-  await expect(section(page, "Suscripción")).toContainText("Con pago vencido");
+  await expect(page.getByRole("heading", { level: 1, name: "carla.ruiz@example.com" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Ubicación" })).toContainText("Usuarios");
+  await expect(section(page, "Suscripción")).toContainText("Cuota impaga");
 });
 
 test("users show an empty list and an error", async ({ page }) => {
@@ -191,7 +194,7 @@ test("finance sees the detail without actions", async ({ page }) => {
   await resetCustomers(["FINANCE"]);
   await enterAdmin(page, `/usuarios/${ANA}`);
   await expect(section(page, "Pagos")).toContainText("0003-00000002");
-  await expect(page.locator(".customer-section").getByRole("button")).toHaveCount(0);
+  await expect(page.locator(".section").getByRole("button")).toHaveCount(0);
 });
 
 test("the owner corrects who referred a user", async ({ page }) => {

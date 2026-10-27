@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../../../../src/components/ui/toast";
+import { DateText } from "../../components/DateText";
 import type { Column } from "../../components/list/DataTable";
 import { FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
+import { Money } from "../../components/Money";
 import { Screen } from "../../components/Screen";
-import { formatDate, formatDateTime, formatMoney } from "../../format";
+import { StatusBadge } from "../../components/StatusBadge";
+import { formatDate } from "../../format";
 import { navItem } from "../../nav";
 import { CreatePayoutDialog } from "./dialogs";
 import { useResellerDirectory } from "./hooks";
 import { optionsOf, PAYOUT_STATUS } from "./labels";
-import { StatusTag } from "./parts";
 import type { Payout } from "./types";
 
 const KEYS = ["resellerId", "status"] as const;
@@ -29,8 +31,9 @@ export function PayoutsScreen() {
     {
       key: "period",
       header: "Cierre",
+      type: "date",
       cell: (row) => (
-        <Link className="ref-link" to={`/liquidaciones/${row.id}`}>
+        <Link className="entity-link" to={`/liquidaciones/${row.id}`}>
           {formatDate(row.periodEnd)}
         </Link>
       ),
@@ -38,25 +41,17 @@ export function PayoutsScreen() {
     {
       key: "reseller",
       header: "Revendedor",
+      width: "md",
       cell: (row) => (
-        <Link className="ref-link" to={`/revendedores/${row.resellerId}`}>
+        <Link className="entity-link" to={`/revendedores/${row.resellerId}`}>
           {directory.nameOf(row.resellerId)}
         </Link>
       ),
     },
-    {
-      key: "total",
-      header: "Total",
-      align: "end",
-      cell: (row) => (
-        <span className="num">
-          {formatMoney(row.total)} <span className="ref-muted">{row.total.currency}</span>
-        </span>
-      ),
-    },
-    { key: "status", header: "Estado", cell: (row) => <StatusTag value={PAYOUT_STATUS[row.status]} /> },
-    { key: "paidAt", header: "Pagada", cell: (row) => formatDateTime(row.paidAt) },
-    { key: "createdAt", header: "Armada", cell: (row) => formatDateTime(row.createdAt) },
+    { key: "total", header: "Total", type: "money", cell: (row) => <Money money={row.total} code /> },
+    { key: "status", header: "Estado", type: "status", cell: (row) => <StatusBadge status={PAYOUT_STATUS[row.status]} /> },
+    { key: "createdAt", header: "Armada", type: "date", cell: (row) => <DateText value={row.createdAt} time /> },
+    { key: "paidAt", header: "Pagada", type: "date", cell: (row) => <DateText value={row.paidAt} time /> },
   ];
 
   return (

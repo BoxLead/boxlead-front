@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
 import { Screen } from "../../components/Screen";
@@ -25,6 +26,7 @@ export function InvitationsScreen() {
   const resellers = useResellers();
   const [params, setParams] = useSearchParams();
   const view: View = params.get(VIEW_PARAM) === "demos" ? "demos" : "invitaciones";
+  const [creating, setCreating] = useState(false);
 
   const tabs = (
     <ChoiceGroup
@@ -32,16 +34,32 @@ export function InvitationsScreen() {
       variant="segmented"
       choices={VIEWS}
       value={view}
-      onChange={(next) => setParams(next === "demos" ? { [VIEW_PARAM]: next } : {})}
+      onChange={(next) => {
+        setCreating(false);
+        setParams(next === "demos" ? { [VIEW_PARAM]: next } : {});
+      }}
     />
   );
 
+  const action = canAct ? (
+    <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
+      {view === "demos" ? "Otorgar Demo" : "Nueva invitación"}
+    </button>
+  ) : null;
+
   return (
-    <Screen title={item.label} description={item.description}>
+    <Screen title={item.label} description={item.description} actions={action}>
       {view === "demos" ? (
-        <DemoList key="demos" tabs={tabs} canAct={canAct} />
+        <DemoList key="demos" tabs={tabs} canAct={canAct} creating={creating} onCloseCreate={() => setCreating(false)} />
       ) : (
-        <InvitationList key="invitations" tabs={tabs} canAct={canAct} resellers={resellers} />
+        <InvitationList
+          key="invitations"
+          tabs={tabs}
+          canAct={canAct}
+          resellers={resellers}
+          creating={creating}
+          onCloseCreate={() => setCreating(false)}
+        />
       )}
     </Screen>
   );

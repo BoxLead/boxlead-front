@@ -1,0 +1,18 @@
+.money {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--signal-space-1);
+  white-space: nowrap;
+}
+
+.money-strong {
+  color: var(--signal-heading);
+  font-weight: var(--signal-weight-semibold);
+}
+
+.money-code {
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-wide);
+}

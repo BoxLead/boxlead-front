@@ -31,7 +31,3 @@ export function isDay(value: string): boolean {
 export function isMonth(value: string): boolean {
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 }
-
-export function formatMonth(month: string): string {
-  return new Date(`${month}-15T12:00:00${OFFSET}`).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: TIME_ZONE });
-}

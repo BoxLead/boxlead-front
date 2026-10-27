@@ -3,7 +3,7 @@ import { todayInBuenosAires } from "../../admin/src/areas/operations/usage.ts";
 import { DIRECTORY, OPERATIONS_SCENARIO } from "../admin-mock/operations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import type { AdminScenario } from "./support.ts";
-import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test } from "./support.ts";
+import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const CORS = {
@@ -187,6 +187,7 @@ test.describe("audit", () => {
     await resetOperations();
     await enterAdmin(page, "/auditoria");
     await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toBeVisible();
+    await openFilters(page);
     await page.getByLabel("Acción").selectOption("CONSUMER_REQUEST_RESOLVED");
     await expect(page.getByRole("row", { name: /Suscripción pausada/ })).toHaveCount(0);
     await page.getByRole("button", { name: "Ver antes y después" }).click();

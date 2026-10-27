@@ -2,13 +2,17 @@ import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useToast } from "../../../../src/components/ui/toast";
 import type { AdminPage } from "../../api/types";
+import { Bars } from "../../components/Bars";
+import { DateText } from "../../components/DateText";
 import { DataTable, type Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
+import { Money } from "../../components/Money";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { Screen } from "../../components/Screen";
-import { formatCount, formatDate, formatDateTime, formatMoney } from "../../format";
+import { StatusBadge } from "../../components/StatusBadge";
+import { formatCount, formatDate, formatDateTime } from "../../format";
 import { referralsApi } from "./api";
 import { AttributionDialog, CreatePayoutDialog } from "./dialogs";
 import { useDetailQuery, useReferralRoles, useResellerDirectory } from "./hooks";
@@ -22,11 +26,12 @@ import {
   SUBSCRIPTION_STATUS,
   vatLabel,
 } from "./labels";
-import { DetailState, Fact, Facts, FinanceOnly, Section, StatusTag } from "./parts";
+import { DetailState, Facts, FinanceOnly, Muted, Section, SectionGrid } from "./parts";
 import type { ReferralCode, ResellerBilling, ResellerCustomer, ResellerDetail } from "./types";
 
 const BACK = { to: "/revendedores", label: "Revendedores" };
 const CUSTOMERS_PAGE = "clientes";
+const DESCRIPTION = "Códigos, clics, clientes y comisiones del revendedor.";
 
 type Dialog =
   | { kind: "code" }
@@ -46,22 +51,26 @@ function clicksByDay(detail: ResellerDetail): { day: string; clicks: number }[] 
   for (const click of detail.clicks) totals.set(click.day, (totals.get(click.day) ?? 0) + click.clicks);
   return [...totals.entries()]
     .filter(([, clicks]) => clicks > 0)
-    .sort(([a], [b]) => b.localeCompare(a))
+    .sort(([a], [b]) => a.localeCompare(b))
     .map(([day, clicks]) => ({ day, clicks }));
 }
 
 function BillingFacts({ billing }: { billing: ResellerBilling }) {
   return (
-    <Facts>
-      <Fact label="Razón social">{billing.legalName ?? "—"}</Fact>
-      <Fact label="CUIT">{billing.taxId ?? "—"}</Fact>
-      <Fact label="Condición frente al IVA">{vatLabel(billing.vatCondition)}</Fact>
-      <Fact label="Medio de cobro">{billing.payoutMethod ?? "Sin cargar"}</Fact>
-      <Fact label="Dato de cobro">{billing.payoutReference ?? "Sin cargar"}</Fact>
-      <Fact label="Términos aceptados">
-        {billing.termsVersion ? `Versión ${billing.termsVersion} el ${formatDateTime(billing.termsAcceptedAt)}` : "Todavía no los aceptó"}
-      </Fact>
-    </Facts>
+    <Facts
+      columns={2}
+      items={[
+        { label: "Razón social", value: billing.legalName ?? "—" },
+        { label: "CUIT", value: billing.taxId ?? "—" },
+        { label: "Condición frente al IVA", value: vatLabel(billing.vatCondition) },
+        { label: "Medio de cobro", value: billing.payoutMethod ?? "Sin cargar" },
+        { label: "Dato de cobro", value: billing.payoutReference ?? "Sin cargar" },
+        {
+          label: "Términos aceptados",
+          value: billing.termsVersion ? `Versión ${billing.termsVersion} el ${formatDateTime(billing.termsAcceptedAt)}` : "Todavía no los aceptó",
+        },
+      ]}
+    />
   );
 }
 
@@ -108,23 +117,24 @@ function ResellerContent({ detail, reload }: ContentProps) {
   }
 
   const codeColumns: Column<ReferralCode>[] = [
-    { key: "code", header: "Código", cell: (row) => <code className="ref-code">{row.code}</code> },
-    { key: "status", header: "Estado", cell: (row) => <StatusTag value={CODE_STATUS[row.status]} /> },
-    { key: "clicks", header: "Clics en el período", align: "end", cell: (row) => formatCount(codeClicks.get(row.id) ?? 0) },
-    { key: "createdAt", header: "Alta", cell: (row) => formatDate(row.createdAt) },
-    { key: "disabledAt", header: "Desactivado", cell: (row) => formatDate(row.disabledAt) },
+    { key: "code", header: "Código", type: "id", cell: (row) => <code className="ref-code">{row.code}</code> },
+    { key: "status", header: "Estado", type: "status", cell: (row) => <StatusBadge status={CODE_STATUS[row.status]} /> },
+    { key: "clicks", header: "Clics en el período", type: "number", cell: (row) => formatCount(codeClicks.get(row.id) ?? 0) },
+    { key: "createdAt", header: "Alta", type: "date", cell: (row) => <DateText value={row.createdAt} /> },
+    { key: "disabledAt", header: "Desactivado", type: "date", cell: (row) => <DateText value={row.disabledAt} /> },
   ];
   if (owner) {
     codeColumns.push({
       key: "actions",
       header: "Acciones",
+      type: "actions",
       cell: (row) =>
         row.status === "ACTIVE" ? (
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "disable", code: row })}>
             Desactivar
           </button>
         ) : (
-          <span className="ref-muted">—</span>
+          <span className="sub-text">—</span>
         ),
     });
   }
@@ -133,8 +143,9 @@ function ResellerContent({ detail, reload }: ContentProps) {
     {
       key: "email",
       header: "Cliente",
+      width: "md",
       cell: (row) => (
-        <Link className="ref-link" to={`/usuarios/${row.userId}`}>
+        <Link className="entity-link" to={`/usuarios/${row.userId}`}>
           {row.email}
         </Link>
       ),
@@ -143,20 +154,23 @@ function ResellerContent({ detail, reload }: ContentProps) {
     {
       key: "code",
       header: "Código",
+      type: "id",
       cell: (row) => (row.referralCodeId ? <code className="ref-code">{codeById.get(row.referralCodeId) ?? "—"}</code> : "—"),
     },
-    { key: "attributedAt", header: "Atribuido", cell: (row) => formatDate(row.attributedAt) },
+    { key: "attributedAt", header: "Atribuido", type: "date", cell: (row) => <DateText value={row.attributedAt} /> },
     { key: "plan", header: "Plan", cell: (row) => planName(row.planCode) },
     {
       key: "subscription",
       header: "Suscripción",
-      cell: (row) => (row.subscriptionStatus ? SUBSCRIPTION_STATUS[row.subscriptionStatus] : "Sin suscripción"),
+      type: "status",
+      cell: (row) => (row.subscriptionStatus ? <StatusBadge status={SUBSCRIPTION_STATUS[row.subscriptionStatus]} /> : <span className="sub-text">Sin suscripción</span>),
     },
   ];
   if (owner) {
     customerColumns.push({
       key: "actions",
       header: "Acciones",
+      type: "actions",
       cell: (row) => (
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "move", customer: row })}>
           Cambiar revendedor
@@ -166,132 +180,134 @@ function ResellerContent({ detail, reload }: ContentProps) {
   }
 
   return (
-    <div className="ref-stack">
-      <section className="panel ref-summary" aria-label="Resumen">
-        <Facts>
-          <Fact label="Estado">
-            <StatusTag value={RESELLER_STATUS[reseller.status]} />
-          </Fact>
-          <Fact label="Comisión">{formatRate(reseller.rateBps)}</Fact>
-          <Fact label="Ciclos pagos">{reseller.maxPaidCycles}</Fact>
-          <Fact label="Clientes atribuidos">{formatCount(detail.customersCount)}</Fact>
-          <Fact label="Alta">{formatDate(reseller.createdAt)}</Fact>
-          <Fact label="Usuario">
-            <Link className="ref-link" to={`/usuarios/${reseller.userId}`}>
-              Ver usuario
-            </Link>
-          </Fact>
-        </Facts>
-      </section>
+    <Screen
+      title={reseller.displayName}
+      description={DESCRIPTION}
+      back={BACK}
+      meta={
+        <Facts
+          strip
+          label="Resumen"
+          items={[
+            { label: "Estado", value: <StatusBadge status={RESELLER_STATUS[reseller.status]} /> },
+            { label: "Comisión", value: formatRate(reseller.rateBps) },
+            { label: "Ciclos pagos", value: reseller.maxPaidCycles },
+            { label: "Clientes atribuidos", value: formatCount(detail.customersCount) },
+            { label: "Alta", value: <DateText value={reseller.createdAt} /> },
+            {
+              label: "Usuario",
+              value: (
+                <Link className="entity-link" to={`/usuarios/${reseller.userId}`}>
+                  Ver usuario
+                </Link>
+              ),
+            },
+          ]}
+        />
+      }
+    >
+      <SectionGrid>
+        <Section
+          title="Códigos"
+          flush
+          wide
+          actions={
+            owner ? (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "code" })}>
+                Nuevo código
+              </button>
+            ) : null
+          }
+        >
+          {reseller.codes.length === 0 ? (
+            <Muted>Todavía no tiene códigos.</Muted>
+          ) : (
+            <DataTable caption="Códigos" columns={codeColumns} rows={reseller.codes} rowKey={(row) => row.id} />
+          )}
+        </Section>
 
-      <Section
-        title="Códigos"
-        actions={
-          owner ? (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "code" })}>
-              Nuevo código
-            </button>
-          ) : null
-        }
-      >
-        {reseller.codes.length === 0 ? (
-          <p className="ref-muted ref-pad">Todavía no tiene códigos.</p>
-        ) : (
-          <DataTable caption="Códigos" columns={codeColumns} rows={reseller.codes} rowKey={(row) => row.id} />
-        )}
-      </Section>
-
-      <Section title="Clics por día">
-        <div className="ref-pad ref-stack-sm">
-          <FilterBar
-            active={datesActive}
-            onClear={() => setParam({ from: null, to: null })}
-          >
+        <Section
+          title="Clics por día"
+          wide
+          hint={
+            <>
+              {datesActive ? "En el período elegido" : "En los últimos 30 días"} hubo <strong className="num">{formatCount(totalClicks)}</strong> clics.
+            </>
+          }
+        >
+          <FilterBar active={datesActive} onClear={() => setParam({ from: null, to: null })}>
             <DateFilter label="Desde" value={params.get("from") ?? ""} onChange={(value) => setParam({ from: value })} />
             <DateFilter label="Hasta" value={params.get("to") ?? ""} onChange={(value) => setParam({ to: value })} />
           </FilterBar>
-          <p className="ref-muted">
-            {datesActive ? "En el período elegido" : "En los últimos 30 días"} hubo <strong className="num">{formatCount(totalClicks)}</strong> clics.
-          </p>
-        </div>
-        {days.length === 0 ? (
-          <p className="ref-muted ref-pad">No hubo clics en este período.</p>
-        ) : (
-          <ul className="ref-days" aria-label="Clics por día">
-            {days.map((row) => (
-              <li key={row.day}>
-                <span>{formatDate(row.day)}</span>
-                <strong className="num">{formatCount(row.clicks)}</strong>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <div className="ref-columns">
-        <Section title="Datos fiscales y de cobro">
-          <div className="ref-pad">{detail.billing ? <BillingFacts billing={detail.billing} /> : <FinanceOnly what="Los datos fiscales y de cobro" />}</div>
+          {days.length === 0 ? (
+            <Muted>No hubo clics en este período.</Muted>
+          ) : (
+            <Bars caption="Clics por día" unit="clics" items={days.map((row) => ({ key: row.day, label: formatDate(row.day), value: row.clicks }))} />
+          )}
         </Section>
+
+        <Section title="Datos fiscales y de cobro">
+          {detail.billing ? <BillingFacts billing={detail.billing} /> : <FinanceOnly what="Los datos fiscales y de cobro" />}
+        </Section>
+
         <Section
           title="Comisiones"
           actions={
             finance ? (
               <>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "payout" })}>
-                  Armar liquidación
-                </button>
                 <Link className="btn btn-ghost btn-sm" to={`/comisiones?resellerId=${reseller.id}`}>
                   Ver comisiones
                 </Link>
                 <Link className="btn btn-ghost btn-sm" to={`/liquidaciones?resellerId=${reseller.id}`}>
                   Ver liquidaciones
                 </Link>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "payout" })}>
+                  Armar liquidación
+                </button>
               </>
             ) : null
           }
         >
-          <div className="ref-pad">
-            {detail.commissionTotals === null ? (
-              <FinanceOnly what="Los totales de comisión" />
-            ) : detail.commissionTotals.length === 0 ? (
-              <p className="ref-muted">Todavía no tiene comisiones.</p>
-            ) : (
-              <ul className="ref-totals">
-                {detail.commissionTotals.map((total) => (
-                  <li key={`${total.status}-${total.amount.currency}`}>
-                    <StatusTag value={COMMISSION_STATUS[total.status]} />
-                    <span className="num">
-                      {formatMoney(total.amount)} <span className="ref-muted">{total.amount.currency}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {detail.commissionTotals === null ? (
+            <FinanceOnly what="Los totales de comisión" />
+          ) : detail.commissionTotals.length === 0 ? (
+            <Muted>Todavía no tiene comisiones.</Muted>
+          ) : (
+            <ul className="ref-totals">
+              {detail.commissionTotals.map((total) => (
+                <li key={`${total.status}-${total.amount.currency}`}>
+                  <StatusBadge status={COMMISSION_STATUS[total.status]} />
+                  <Money money={total.amount} code />
+                </li>
+              ))}
+            </ul>
+          )}
         </Section>
-      </div>
 
-      <section className="ref-stack-sm" aria-labelledby="ref-customers-title">
-        <header className="ref-list-head">
-          <h2 id="ref-customers-title" className="ref-section-title">
-            Clientes atribuidos
-          </h2>
-          {owner ? (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "attribute" })}>
-              Atribuir cliente
-            </button>
-          ) : null}
-        </header>
-        <ListView
-          caption="Clientes atribuidos"
-          query={customers}
-          columns={customerColumns}
-          rowKey={(row) => row.userId}
-          onPageChange={(target) => setParam({ [CUSTOMERS_PAGE]: target > 0 ? String(target) : null })}
-          emptyTitle="Todavía no tiene clientes"
-          emptyHint="Aparecen cuando alguien se registra con su link o su invitación."
-        />
-      </section>
+        <Section
+          title="Clientes atribuidos"
+          flush
+          wide
+          actions={
+            owner ? (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: "attribute" })}>
+                Atribuir cliente
+              </button>
+            ) : null
+          }
+        >
+          <ListView
+            caption="Clientes atribuidos"
+            query={customers}
+            columns={customerColumns}
+            rowKey={(row) => row.userId}
+            onPageChange={(target) => setParam({ [CUSTOMERS_PAGE]: target > 0 ? String(target) : null })}
+            emptyTitle="Todavía no tiene clientes"
+            emptyHint="Aparecen cuando alguien se registra con su link o su invitación."
+            plain
+          />
+        </Section>
+      </SectionGrid>
 
       {dialog?.kind === "code" ? (
         <ReasonDialog
@@ -353,7 +369,7 @@ function ResellerContent({ detail, reload }: ContentProps) {
           }}
         />
       ) : null}
-    </div>
+    </Screen>
   );
 }
 
@@ -366,12 +382,12 @@ export function ResellerDetailScreen() {
     if (value) range.set(key, value);
   }
   const query = useDetailQuery<ResellerDetail>(`/admin/resellers/${encodeURIComponent(resellerId)}`, range.toString());
-  const title = query.status === "ready" ? query.data.reseller.displayName : "Detalle de revendedor";
 
+  if (query.status === "ready") return <ResellerContent detail={query.data} reload={query.reload} />;
   return (
-    <Screen title={title} description="Códigos, clics, clientes y comisiones del revendedor." back={BACK}>
+    <Screen title="Revendedor" description={DESCRIPTION} back={BACK}>
       <DetailState query={query} notFound="No encontramos este revendedor" back={BACK}>
-        {(detail) => <ResellerContent detail={detail} reload={query.reload} />}
+        {() => null}
       </DetailState>
     </Screen>
   );

@@ -50,7 +50,7 @@ test("detail screens and unknown addresses render inside the layout", async ({ p
   await resetAdmin();
   await enterAdmin(page, "/usuarios/0b0e0000-0000-4000-8000-000000000001");
   await expect(page.getByRole("heading", { level: 1, name: "Detalle de usuario" })).toBeVisible();
-  await page.locator(".screen-back").click();
+  await page.getByRole("navigation", { name: "Ubicación" }).getByRole("link", { name: "Usuarios" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Usuarios" })).toBeVisible();
   await page.goto("/no-existe");
   await expect(page.getByRole("heading", { level: 1, name: "No encontramos esta pantalla" })).toBeVisible();

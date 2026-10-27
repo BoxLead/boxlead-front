@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
-import { Tag } from "../../../../src/components/ui/Tag";
 import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
+import { DateText } from "../../components/DateText";
 import { Screen } from "../../components/Screen";
-import { formatDate } from "../../format";
+import { StatusBadge } from "../../components/StatusBadge";
 import { navItem } from "../../nav";
-import { NO_SUBSCRIPTION, PLAN_LABELS, planLabel, SUBSCRIPTION_LABELS, SUBSCRIPTION_TONES } from "./labels";
+import { NO_SUBSCRIPTION_LABEL, SUBSCRIPTION_STATUS } from "../../status";
+import { NO_SUBSCRIPTION, PLAN_LABELS, planLabel, SUBSCRIPTION_LABELS } from "./labels";
 import { PLAN_CODES, SUBSCRIPTION_STATUSES, type CustomerMatch } from "./types";
 import "./customers.css";
 
@@ -15,17 +16,8 @@ const FILTER_KEYS = ["query", "plan", "status", "createdFrom", "createdTo"] as c
 const PLAN_OPTIONS = PLAN_CODES.map((code) => ({ value: code, label: PLAN_LABELS[code] }));
 const STATUS_OPTIONS = [
   ...SUBSCRIPTION_STATUSES.map((status) => ({ value: status, label: SUBSCRIPTION_LABELS[status] })),
-  { value: NO_SUBSCRIPTION, label: "Sin suscripción" },
+  { value: NO_SUBSCRIPTION, label: NO_SUBSCRIPTION_LABEL },
 ];
-
-function SubscriptionTag({ row }: { row: CustomerMatch }) {
-  if (!row.subscriptionStatus) return <span className="customer-muted-inline">Sin suscripción</span>;
-  return (
-    <span>
-      <Tag tone={SUBSCRIPTION_TONES[row.subscriptionStatus]}>{SUBSCRIPTION_LABELS[row.subscriptionStatus]}</Tag>
-    </span>
-  );
-}
 
 export function CustomersScreen() {
   const { params, query } = useListQuery<CustomerMatch>("/admin/customers", FILTER_KEYS);
@@ -75,18 +67,29 @@ export function CustomersScreen() {
           {
             key: "email",
             header: "Usuario",
+            width: "lg",
             cell: (row) => (
-              <div className="customer-cell">
-                <Link className="customer-link" to={`/usuarios/${row.id}`}>
+              <span className="cell-stack">
+                <Link className="entity-link" to={`/usuarios/${row.id}`}>
                   {row.email}
                 </Link>
-                {row.name || row.legalName ? <span className="customer-cell-sub">{row.legalName ?? row.name}</span> : null}
-              </div>
+                {row.name || row.legalName ? <span className="sub-text">{row.legalName ?? row.name}</span> : null}
+              </span>
             ),
           },
-          { key: "plan", header: "Plan", cell: (row) => planLabel(row.planCode) },
-          { key: "status", header: "Suscripción", cell: (row) => <SubscriptionTag row={row} /> },
-          { key: "createdAt", header: "Alta", cell: (row) => formatDate(row.createdAt) },
+          { key: "plan", header: "Plan", width: "xs", cell: (row) => planLabel(row.planCode) },
+          {
+            key: "status",
+            header: "Suscripción",
+            type: "status",
+            cell: (row) =>
+              row.subscriptionStatus ? (
+                <StatusBadge status={SUBSCRIPTION_STATUS[row.subscriptionStatus]} />
+              ) : (
+                <span className="muted-text">{NO_SUBSCRIPTION_LABEL}</span>
+              ),
+          },
+          { key: "createdAt", header: "Alta", type: "date", cell: (row) => <DateText value={row.createdAt} /> },
         ]}
       />
     </Screen>

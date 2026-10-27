@@ -5,7 +5,7 @@ import type { Column } from "../../components/list/DataTable";
 import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
-import { formatDateTime } from "../../format";
+import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
 import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
@@ -52,32 +52,36 @@ export function PaymentsScreen() {
     {
       key: "customer",
       header: "Cliente",
+      width: "md",
       cell: (row) => <Stack main={<CustomerCell userId={row.userId} email={row.email} />} detail={<ShortId id={row.id} />} />,
     },
     {
       key: "amount",
       header: "Monto",
-      align: "end",
-      cell: (row) => <Stack main={<Amount money={row.amount} />} detail={<RefundedDetail row={row} />} />,
+      type: "money",
+      cell: (row) => <Stack main={<Amount money={row.amount} code />} detail={<RefundedDetail row={row} />} />,
     },
     {
       key: "status",
       header: "Estado",
-      cell: (row) => <Stack main={<StatusTag status={PAYMENT_STATUS[row.status]} />} detail={row.statusDetail ?? undefined} />,
+      type: "status",
+      cell: (row) => <StatusTag status={PAYMENT_STATUS[row.status]} detail={row.statusDetail} />,
     },
     {
       key: "date",
       header: "Fecha",
-      cell: (row) => <Stack main={formatDateTime(row.approvedAt ?? row.createdAt)} detail={row.approvedAt ? "Aprobado" : "Creado"} />,
+      type: "date",
+      cell: (row) => <Stack main={<DateText value={row.approvedAt ?? row.createdAt} time />} detail={row.approvedAt ? "Aprobado" : "Creado"} />,
     },
     {
       key: "invoice",
       header: "Factura",
+      type: "status",
       cell: (row) =>
         row.invoice ? (
           <Stack main={<StatusTag status={INVOICE_STATUS[row.invoice.status]} />} detail={row.invoice.invoiceNumber ?? undefined} />
         ) : (
-          <span className="billing-detail">Sin factura</span>
+          <span className="sub-text">Sin factura</span>
         ),
     },
   ];
@@ -86,6 +90,7 @@ export function PaymentsScreen() {
     columns.push({
       key: "actions",
       header: "Acciones",
+      type: "actions",
       cell: (row) =>
         canRefund(row) ? (
           <button

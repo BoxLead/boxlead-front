@@ -1,8 +1,10 @@
 import { useId, useState } from "react";
-import { Tag } from "../../../../src/components/ui/Tag";
 import { adminApi } from "../../api/client";
+import { DateText } from "../../components/DateText";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { formatDate, formatDateTime } from "../../format";
+import { StatusBadge } from "../../components/StatusBadge";
+import { formatDate } from "../../format";
+import { DEMO_STATUS } from "../../status";
 import { addDays, dayOf, endOfDay, isDay, today } from "./dates";
 import { Facts, Muted, Section } from "./parts";
 import type { DemoGrant } from "./types";
@@ -121,10 +123,11 @@ export function DemoPanel({ userId, demo, canOperate, onChanged }: DemoPanelProp
     <Section title="Demo" actions={actions}>
       {demo ? (
         <Facts
+          columns={2}
           items={[
-            { label: "Estado", value: running(demo) ? <Tag tone="success">Vigente</Tag> : <Tag>Terminada</Tag> },
-            { label: "Empezó", value: formatDateTime(demo.startsAt) },
-            { label: running(demo) ? "Termina" : "Terminó", value: formatDateTime(demo.endsAt) },
+            { label: "Estado", value: <StatusBadge status={running(demo) ? DEMO_STATUS.ACTIVE : DEMO_STATUS.ENDED} /> },
+            { label: "Empezó", value: <DateText value={demo.startsAt} time /> },
+            { label: running(demo) ? "Termina" : "Terminó", value: <DateText value={demo.endsAt} time /> },
             { label: "Origen", value: demo.invitationId ? "Invitación" : "La otorgó el equipo" },
           ]}
         />

@@ -1,3 +1,4 @@
+import { labelsOf, REQUEST_KIND } from "../../status.ts";
 import type { AuditActorType, ConsumerRequestKind, ConsumerRequestStatus, UsageGrouping } from "./types";
 
 export const GROUPING_LABELS: Record<UsageGrouping, string> = {
@@ -6,10 +7,7 @@ export const GROUPING_LABELS: Record<UsageGrouping, string> = {
   MODEL: "Modelo",
 };
 
-export const KIND_LABELS: Record<ConsumerRequestKind, string> = {
-  WITHDRAWAL: "Arrepentimiento",
-  CANCELLATION: "Baja",
-};
+export const KIND_LABELS: Record<ConsumerRequestKind, string> = labelsOf(REQUEST_KIND);
 
 export const REQUEST_STATUS_LABELS: Record<ConsumerRequestStatus, string> = {
   RECEIVED: "Pendientes",

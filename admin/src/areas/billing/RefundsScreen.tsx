@@ -6,9 +6,9 @@ import type { Column } from "../../components/list/DataTable";
 import { FilterBar, SelectFilter } from "../../components/list/Filters";
 import { ListView } from "../../components/list/ListView";
 import { useListQuery } from "../../components/list/useListQuery";
-import { formatDateTime } from "../../format";
+import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
-import { Amount, CustomerCell, NoAction, ShortId, Stack, StatusTag } from "./cells";
+import { Amount, CustomerCell, RowActions, ShortId, Stack, StatusTag } from "./cells";
 import { REFUND_STATUS, REFUND_STATUS_OPTIONS } from "./labels";
 import { RetryRefundDialog } from "./RetryRefundDialog";
 import type { RefundResult, RefundRow } from "./types";
@@ -36,39 +36,28 @@ export function RefundsScreen() {
   }
 
   const columns: Column<RefundRow>[] = [
-    {
-      key: "payment",
-      header: "Pago",
-      cell: (row) => (
-        <Stack
-          main={<ShortId id={row.paymentId} />}
-          detail={
-            <Link className="billing-link" to={`/pagos?userId=${encodeURIComponent(row.userId)}`}>
-              Ver pagos del cliente
-            </Link>
-          }
-        />
-      ),
-    },
-    { key: "customer", header: "Cliente", cell: (row) => <CustomerCell userId={row.userId} /> },
+    { key: "payment", header: "Pago", type: "id", cell: (row) => <ShortId id={row.paymentId} /> },
+    { key: "customer", header: "Cliente", type: "id", cell: (row) => <CustomerCell userId={row.userId} /> },
     {
       key: "amount",
       header: "Monto",
-      align: "end",
-      cell: (row) => (row.amount ? <Amount money={row.amount} /> : "Lo que quedaba del pago"),
+      type: "money",
+      cell: (row) => (row.amount ? <Amount money={row.amount} code /> : <span className="sub-text">Lo que quedaba del pago</span>),
     },
-    { key: "status", header: "Estado", cell: (row) => <StatusTag status={REFUND_STATUS[row.status]} /> },
+    { key: "status", header: "Estado", type: "status", cell: (row) => <StatusTag status={REFUND_STATUS[row.status]} /> },
     {
       key: "provider",
-      header: "Id en Mercado Pago",
-      cell: (row) => (row.providerRefundId ? <span className="num">{row.providerRefundId}</span> : <span className="billing-detail">Sin id</span>),
+      header: "Mercado Pago",
+      type: "id",
+      cell: (row) => (row.providerRefundId ? <ShortId id={row.providerRefundId} /> : <span className="sub-text">Sin id</span>),
     },
     {
       key: "requested",
       header: "Pedido",
+      type: "date",
       cell: (row) => (
         <Stack
-          main={formatDateTime(row.createdAt)}
+          main={<DateText value={row.createdAt} time />}
           detail={row.requestedBy ? (
             <>
               Por <ShortId id={row.requestedBy} />
@@ -82,23 +71,28 @@ export function RefundsScreen() {
     {
       key: "actions",
       header: "Acciones",
-      cell: (row) =>
-        row.status === "REQUESTED" ? (
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            aria-label={`Reintentar el reembolso ${row.id.slice(0, 8)}`}
-            onClick={() => {
-              setTarget(row);
-              setAttempt((value) => value + 1);
-              setOpen(true);
-            }}
-          >
-            Reintentar
-          </button>
-        ) : (
-          <NoAction />
-        ),
+      type: "actions",
+      cell: (row) => (
+        <RowActions>
+          <Link className="btn btn-ghost btn-sm" to={`/pagos?userId=${encodeURIComponent(row.userId)}`}>
+            Pagos
+          </Link>
+          {row.status === "REQUESTED" ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              aria-label={`Reintentar el reembolso ${row.id.slice(0, 8)}`}
+              onClick={() => {
+                setTarget(row);
+                setAttempt((value) => value + 1);
+                setOpen(true);
+              }}
+            >
+              Reintentar
+            </button>
+          ) : null}
+        </RowActions>
+      ),
     },
   ];
 
