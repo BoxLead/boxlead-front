@@ -193,7 +193,7 @@ test("Messenger explains that the 24 hour window is closed instead of failing si
 });
 
 test("Messenger delivers a reply while the person's last message is recent", async ({ page }) => {
-  await resetApi("default", new Date(Date.now() + 49 * 60 * 60 * 1000));
+  await resetApi("default", undefined, { messengerLastMessageMinutes: 30 });
   await login(page);
   await openConversation(page, "Contacto de Messenger");
   await page.getByLabel("Responder a Contacto de Messenger").fill("Sí, tenemos local.");
