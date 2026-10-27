@@ -1,10 +1,8 @@
 import { readConsent, writeConsent, type Consent } from "./consent";
 
-type DataLayerEntry = unknown[];
-
 declare global {
   interface Window {
-    dataLayer?: DataLayerEntry[];
+    dataLayer?: IArguments[];
   }
 }
 
@@ -21,10 +19,12 @@ export type EventParams = Record<string, string>;
 let loaded = false;
 let prepared = false;
 
-function push(...args: unknown[]): void {
+type Command = (...args: unknown[]) => void;
+
+const push: Command = function () {
   window.dataLayer ??= [];
-  window.dataLayer.push(args);
-}
+  window.dataLayer.push(arguments);
+};
 
 export function isPublicPath(pathname: string): boolean {
   return !APP_PREFIX.test(pathname);
