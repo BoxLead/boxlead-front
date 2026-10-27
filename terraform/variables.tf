@@ -54,8 +54,8 @@ variable "auth0_client_id" {
 
 variable "ga_measurement_id" {
   type        = string
-  description = "Google Analytics 4 measurement id baked into the public pages (stored in SSM as VITE_GA_MEASUREMENT_ID). Empty ships no analytics."
-  default     = ""
+  description = "Google Analytics 4 measurement id baked into the public pages (stored in SSM as VITE_GA_MEASUREMENT_ID). Public value. Empty ships no analytics."
+  default     = "G-V8C8SV97VC"
 }
 
 variable "google_site_verification" {
