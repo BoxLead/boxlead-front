@@ -5,6 +5,7 @@ import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFil
 
 const ANA = "0c000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
+const ELENA = "0c000000-0000-4000-8000-000000000005";
 const CLIENT_08 = "0c000000-0000-4000-8000-000000000008";
 const REASON = "Lo pidió el cliente por mail";
 
@@ -44,11 +45,28 @@ test("the overview keeps the amounts away from support and changes the month", a
   await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("0");
 });
 
-test("the overview says when there is nothing yet", async ({ page }) => {
+test("the overview of a past month counts the users at its close", async ({ page }) => {
+  await resetCustomers(["FINANCE"]);
+  const past = new Date(Date.now() - 100 * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).slice(0, 7);
+  const label = new Date(`${past}-15T12:00:00-03:00`).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "America/Argentina/Buenos_Aires" });
+  await enterAdmin(page, `/?month=${past}`);
+  const users = page.locator(".stat-card").filter({ hasText: "Usuarios" });
+  await expect(users).toContainText(label);
+  await expect(users).not.toContainText("Hoy");
+  await expect(users.locator(".stat-value")).not.toHaveText("24");
+  await expect(page.locator(".stat-card").filter({ hasText: "Demos vigentes" })).toContainText("Hoy");
+  await expect(section(page, "Ingresos del mes")).toContainText("No hubo cobros en este mes.");
+  await expect(section(page, "Comisiones")).toContainText("13.050,00");
+  await expect(section(page, "Comisiones")).not.toContainText("19.140,00");
+});
+
+test("the overview shows zeros when there is nothing yet", async ({ page }) => {
   await resetCustomers(["OWNER"], "default");
   await enterAdmin(page, "/");
-  await expect(page.getByText("Todavía no hay nada para mostrar acá")).toBeVisible();
-  await expect(page.getByText("En este mes no hubo usuarios, suscripciones ni pagos.")).toBeVisible();
+  await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("0");
+  await expect(section(page, "Suscripciones por estado")).toContainText("Todavía no hay suscripciones.");
+  await expect(section(page, "Ingresos del mes")).toContainText("No hubo cobros en este mes.");
+  await expect(page.getByText("Todavía no hay nada para mostrar acá")).toHaveCount(0);
 });
 
 test("the overview shows an error and loads again", async ({ page }) => {
@@ -191,15 +209,15 @@ test("the owner adjusts a limit and takes the adjustment back", async ({ page })
   await resetCustomers(["OWNER"]);
   await enterAdmin(page, `/usuarios/${ANA}`);
   const limits = section(page, "Límites");
-  const agents = limits.getByRole("row").filter({ hasText: "Pruebas en el playground por hora" });
+  const agents = limits.getByRole("row").filter({ hasText: "Pruebas del agente por hora" });
   await expect(agents).toContainText("60");
 
-  await limits.getByRole("button", { name: "Ajustar pruebas en el playground por hora" }).click();
-  const dialog = page.getByRole("dialog", { name: "Ajustar pruebas en el playground por hora" });
+  await limits.getByRole("button", { name: "Ajustar pruebas del agente por hora" }).click();
+  const dialog = page.getByRole("dialog", { name: "Ajustar pruebas del agente por hora" });
   await dialog.getByLabel("Valor").fill("90");
   const set = await confirm(
     page,
-    "Ajustar pruebas en el playground por hora",
+    "Ajustar pruebas del agente por hora",
     "Guardar ajuste",
     `/admin/customers/${ANA}/overrides/PLAYGROUND_RUNS_PER_HOUR`,
   );
@@ -208,7 +226,7 @@ test("the owner adjusts a limit and takes the adjustment back", async ({ page })
   await expect(agents).toContainText("90");
   await expect(agents).toContainText(REASON);
 
-  await limits.getByRole("button", { name: "Quitar el ajuste de pruebas en el playground por hora" }).click();
+  await limits.getByRole("button", { name: "Quitar el ajuste de pruebas del agente por hora" }).click();
   const revoked = await confirm(page, "Quitar ajuste", "Quitar ajuste", `/admin/customers/${ANA}/overrides/PLAYGROUND_RUNS_PER_HOUR`);
   expect(revoked.method()).toBe("DELETE");
   expect(revoked.postDataJSON()).toEqual({ reason: REASON });
@@ -238,6 +256,27 @@ test("support grants, extends and takes back a Demo and sees nothing else", asyn
 
   await demo.getByRole("button", { name: "Quitar Demo" }).click();
   await confirm(page, "Quitar Demo", "Quitar Demo", `/admin/customers/${CLIENT_08}/demo/revoke`);
+  await expect(demo).toContainText("No tiene Demo");
+});
+
+test("support reads that a Demo already ended before extending or taking it away", async ({ page }) => {
+  await resetCustomers(["SUPPORT"]);
+  await enterAdmin(page, `/usuarios/${ELENA}`);
+  const demo = section(page, "Demo");
+  await expect(demo).toContainText("Terminada");
+  await demo.getByRole("button", { name: "Extender" }).click();
+  const extend = page.getByRole("dialog", { name: "Extender Demo" });
+  await expect(extend).toContainText("Terminó el");
+  await expect(extend).toContainText("Vuelve a estar vigente desde ahora");
+  await expect(extend).not.toContainText("Termina el");
+  await extend.getByRole("button", { name: "Cancelar" }).click();
+  await expect(extend).toBeHidden();
+
+  await demo.getByRole("button", { name: "Quitar Demo" }).click();
+  const revoke = page.getByRole("dialog", { name: "Quitar Demo" });
+  await expect(revoke).toContainText("La Demo ya terminó, así que su acceso no cambia.");
+  await expect(revoke).not.toContainText("termina ahora");
+  await confirm(page, "Quitar Demo", "Quitar Demo", `/admin/customers/${ELENA}/demo/revoke`);
   await expect(demo).toContainText("No tiene Demo");
 });
 

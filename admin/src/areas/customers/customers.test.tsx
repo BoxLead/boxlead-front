@@ -183,7 +183,7 @@ describe("OverviewScreen", () => {
     expect(screen.getByText("24")).toBeInTheDocument();
   });
 
-  it("asks for the month in the URL and shows an empty month", async () => {
+  it("asks for the month in the URL and shows an empty month with zeros and its users at the end of that month", async () => {
     const calls = renderAt("/?month=2026-09", ["OWNER"], () =>
       json(200, {
         ...overview(true),
@@ -192,9 +192,18 @@ describe("OverviewScreen", () => {
         subscriptions: { byStatus: {}, byPlan: {} },
         demos: { active: 0 },
         payments: { approvedInMonth: 0, rejectedInMonth: 0 },
+        revenue: [],
+        commissions: { approvedUnpaid: [ars(1305000)], accruedReleasable: [] },
       }),
     );
-    expect(await screen.findByText("Todavía no hay nada para mostrar acá")).toBeInTheDocument();
+    const users = (await screen.findByText("Usuarios", { selector: ".stat-label" })).closest("article") as HTMLElement;
+    expect(within(users).getByText("septiembre de 2026")).toBeInTheDocument();
+    expect(within(users).queryByText("Hoy")).toBeNull();
+    expect(within(users).getByText("0", { selector: ".stat-value" })).toBeInTheDocument();
+    expect(screen.getByText("Todavía no hay suscripciones.")).toBeInTheDocument();
+    expect(screen.getByText("No hubo cobros en este mes.")).toBeInTheDocument();
+    expect(screen.getByText("Aprobadas sin liquidar")).toBeInTheDocument();
+    expect(screen.queryByText("Todavía no hay nada para mostrar acá")).toBeNull();
     expect(calls[0].url.search).toBe("?month=2026-09");
   });
 
@@ -236,10 +245,55 @@ describe("CustomersScreen", () => {
     expect(await screen.findByRole("link", { name: "ana.gomez@example.com" })).toHaveAttribute("href", `/usuarios/${USER_ID}`);
     expect(screen.getByRole("cell", { name: "Starter" })).toBeInTheDocument();
     expect(calls[0].url.search).toBe("?status=ACTIVE");
+    expect(screen.getByRole("searchbox", { name: "Buscar" })).toHaveAttribute("placeholder", "Email, nombre o id, distingue tildes");
     await userEvent.selectOptions(screen.getByLabelText("Plan"), "DEMO");
     expect(calls.at(-1)?.url.search).toBe("?plan=DEMO&status=ACTIVE");
   });
 });
+
+const DETAIL_PATH = `/admin/customers/${USER_ID}`;
+const HOUR = 3_600_000;
+
+function demoOf(endsAt: number): CustomerFile["demo"] {
+  return {
+    id: "d1",
+    userId: USER_ID,
+    invitationId: null,
+    planVersionId: "v0",
+    startsAt: new Date(endsAt - 14 * 24 * HOUR).toISOString(),
+    endsAt: new Date(endsAt).toISOString(),
+    revokedAt: null,
+  };
+}
+
+function handlerWith(change: Partial<CustomerFile>, replies: Record<string, Reply> = {}) {
+  return (method: string, url: URL): Reply => {
+    if (method === "GET" && url.pathname === DETAIL_PATH) return json(200, { ...file(), ...change });
+    if (method === "GET" && url.pathname === "/admin/resellers") {
+      return json(200, {
+        items: [
+          { id: "r1", displayName: "Agencia Norte", status: "ACTIVE" },
+          { id: "r2", displayName: "Estudio Delta", status: "ACTIVE" },
+        ],
+        page: 0,
+        size: 50,
+        totalItems: 2,
+      });
+    }
+    if (method === "GET") return json(200, EMPTY_PAGE);
+    return replies[`${method} ${url.pathname}`] ?? json(204);
+  };
+}
+
+function detailLoads(calls: { method: string; url: URL }[]): number {
+  return calls.filter((call) => call.method === "GET" && call.url.pathname === DETAIL_PATH).length;
+}
+
+async function confirmIn(title: string, button: string, reason = "Lo pidió el cliente por mail") {
+  const dialog = dialogOf(title);
+  await userEvent.type(within(dialog).getByLabelText("Motivo"), reason);
+  await userEvent.click(within(dialog).getByRole("button", { name: button, hidden: true }));
+}
 
 describe("CustomerDetailScreen", () => {
   it("gives the owner every action and sends the reason", async () => {
@@ -281,6 +335,158 @@ describe("CustomerDetailScreen", () => {
     const put = calls.find((call) => call.method === "PUT");
     expect(put?.url.pathname).toBe(`/admin/customers/${USER_ID}/overrides/LLM_COST_CAP_MICROS`);
     expect(JSON.parse(String(put?.init.body))).toEqual({ value: 12_500_000, reason: "Cliente con mucho volumen este mes" });
+  });
+
+  it("grants a Demo with its days and loads the detail again before the notice", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: null }));
+    await userEvent.click(await screen.findByRole("button", { name: "Otorgar Demo" }));
+    const loads = detailLoads(calls);
+    await userEvent.type(within(dialogOf("Otorgar Demo")).getByLabelText("Días de Demo"), "10");
+    await confirmIn("Otorgar Demo", "Otorgar Demo");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/demo`);
+    expect(JSON.parse(String(post?.init.body))).toEqual({ demoDays: 10, reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Le otorgamos la Demo.")).toBeInTheDocument();
+    expect(detailLoads(calls)).toBe(loads + 1);
+  }, 15_000);
+
+  it("extends a running Demo and says when it ends", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: demoOf(Date.now() + 3 * 24 * HOUR) }));
+    await userEvent.click(await screen.findByRole("button", { name: "Extender" }));
+    const dialog = dialogOf("Extender Demo");
+    expect(within(dialog).getByText(/^Termina el .+\. Pasa a terminar al final del día que elijas/)).toBeInTheDocument();
+    const day = (within(dialog).getByLabelText("Nuevo fin") as HTMLInputElement).value;
+    await confirmIn("Extender Demo", "Extender");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/demo/extend`);
+    expect(JSON.parse(String(post?.init.body))).toEqual({ endsAt: new Date(`${day}T23:59:59-03:00`).toISOString(), reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Extendimos la Demo.")).toBeInTheDocument();
+  }, 15_000);
+
+  it("takes away a running Demo and says the access ends now", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: demoOf(Date.now() + 3 * 24 * HOUR) }));
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Demo" }));
+    expect(within(dialogOf("Quitar Demo")).getByText(/La Demo termina ahora/)).toBeInTheDocument();
+    await confirmIn("Quitar Demo", "Quitar Demo");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/demo/revoke`);
+    expect(await screen.findByText("Le quitamos la Demo.")).toBeInTheDocument();
+  }, 15_000);
+
+  it("words the extend and the take away of a Demo that already ended", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], handlerWith({ demo: demoOf(Date.now() - 2 * 24 * HOUR) }));
+    await userEvent.click(await screen.findByRole("button", { name: "Extender" }));
+    const extend = dialogOf("Extender Demo");
+    expect(within(extend).getByText(/^Terminó el .+\. Vuelve a estar vigente desde ahora/)).toBeInTheDocument();
+    expect(within(extend).queryByText(/^Termina el/)).toBeNull();
+    await userEvent.click(within(extend).getByRole("button", { name: "Cancelar", hidden: true }));
+    await userEvent.click(screen.getByRole("button", { name: "Quitar Demo" }));
+    const revoke = dialogOf("Quitar Demo");
+    expect(within(revoke).getByText("La Demo ya terminó, así que su acceso no cambia. Quitarla deja lugar para otorgarle otra.")).toBeInTheDocument();
+    expect(within(revoke).queryByText(/La Demo termina ahora/)).toBeNull();
+  });
+
+  it("corrects the attribution, says where the commissions go and loads the detail again", async () => {
+    const attribution = { id: "a1", userId: USER_ID, resellerId: "r1", referralCodeId: "c1", source: "COOKIE" as const, sequence: 1, reason: null, createdAt: "2026-06-01T15:00:00Z" };
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ attribution }));
+    await userEvent.click(await screen.findByRole("button", { name: "Corregir atribución" }));
+    const dialog = dialogOf("Corregir atribución");
+    expect(
+      within(dialog).getByText(/Las comisiones ya generadas quedan con el revendedor anterior\. Las próximas van al nuevo\./),
+    ).toBeInTheDocument();
+    await userEvent.selectOptions(await within(dialog).findByLabelText("Revendedor"), "r2");
+    const loads = detailLoads(calls);
+    await confirmIn("Corregir atribución", "Corregir");
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.url.pathname).toBe(`${DETAIL_PATH}/attribution`);
+    expect(JSON.parse(String(post?.init.body))).toEqual({ resellerId: "r2", reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Corregimos la atribución.")).toBeInTheDocument();
+    expect(detailLoads(calls)).toBe(loads + 1);
+  }, 15_000);
+
+  it("shows a dash for the limits of a user without a plan except the ones adjusted", async () => {
+    const entitlements = {
+      ...file().entitlements,
+      access: "RESTRICTED" as const,
+      plan: { code: null, versionId: null, source: "NONE" as const },
+      limits: { AGENT_REPLIES_PER_PERIOD: 0, AGENTS_MAX: 5, PLAYGROUND_RUNS_PER_HOUR: 0, LLM_COST_CAP_MICROS: 0, AUTO_CATEGORIZE: 0 },
+    };
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ entitlements, subscription: null }));
+    const table = await screen.findByRole("table", { name: "Límites" });
+    const rowOf = (label: string) => within(within(table).getByRole("cell", { name: label }).closest("tr") as HTMLElement);
+    expect(rowOf("Respuestas del agente por período").getAllByRole("cell")[1]).toHaveTextContent("—");
+    expect(rowOf("Categorización automática").getAllByRole("cell")[1]).toHaveTextContent("—");
+    expect(rowOf("Agentes").getAllByRole("cell")[1]).toHaveTextContent("5");
+    expect(within(table).queryByText(/playground/i)).toBeNull();
+    expect(rowOf("Pruebas del agente por hora").getAllByRole("cell")[1]).toHaveTextContent("—");
+    await userEvent.click(screen.getByRole("button", { name: "Ajustar respuestas del agente por período" }));
+    const dialog = dialogOf("Ajustar respuestas del agente por período");
+    expect(within(dialog).getByText(/Hoy no rige ningún valor porque no tiene plan/)).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Valor")).toHaveValue(null);
+  });
+
+  it("takes an override back with a reason and loads the detail again", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar el ajuste de agentes" }));
+    expect(within(dialogOf("Quitar ajuste")).getByText("Agentes deja de valer 5 y vuelve al valor del plan.")).toBeInTheDocument();
+    const loads = detailLoads(calls);
+    await confirmIn("Quitar ajuste", "Quitar ajuste");
+    const removed = calls.find((call) => call.method === "DELETE");
+    expect(removed?.url.pathname).toBe(`${DETAIL_PATH}/overrides/AGENTS_MAX`);
+    expect(JSON.parse(String(removed?.init.body))).toEqual({ reason: "Lo pidió el cliente por mail" });
+    expect(await screen.findByText("Quitamos el ajuste.")).toBeInTheDocument();
+    expect(detailLoads(calls)).toBe(loads + 1);
+  }, 15_000);
+
+  it("starts a switch adjustment on the value that rules today", async () => {
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
+    await userEvent.click(await screen.findByRole("button", { name: "Ajustar categorización automática" }));
+    const dialog = dialogOf("Ajustar categorización automática");
+    expect(within(dialog).getByLabelText("Valor")).toHaveValue("1");
+    await confirmIn("Ajustar categorización automática", "Guardar ajuste");
+    const put = calls.find((call) => call.method === "PUT");
+    expect(JSON.parse(String(put?.init.body))).toEqual({ value: 1, reason: "Lo pidió el cliente por mail" });
+  }, 15_000);
+
+  it("links to every payment of the user in Pagos", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
+    expect(await screen.findByRole("link", { name: "Ver todos en Pagos" })).toHaveAttribute("href", `/pagos?userId=${USER_ID}`);
+  });
+
+  it("words the cancel by status and says an active plan ends right away", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({}));
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const active = dialogOf("Cancelar suscripción");
+    expect(within(active).getByText(/no se vuelve a cobrar\. Pierde el plan en el acto/)).toBeInTheDocument();
+    expect(within(active).getByText(/87\.000,00 ARS por período/)).toBeInTheDocument();
+    await userEvent.click(within(active).getByRole("button", { name: "Cancelar", hidden: true }));
+  });
+
+  it("does not talk about charges when canceling a subscription that was never paid", async () => {
+    const incomplete = { ...file().subscription!, status: "INCOMPLETE" as const };
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ subscription: incomplete }));
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const dialog = dialogOf("Cancelar suscripción");
+    expect(within(dialog).getByText(/Todavía no se cobró nada/)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/no se vuelve a cobrar/)).toBeNull();
+    expect(within(dialog).queryByText(/por período/)).toBeNull();
+  });
+
+  it("shows the last day of the period instead of its exclusive end", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({}));
+    for (const title of ["Plan", "Uso"]) {
+      const section = (await screen.findByRole("heading", { name: title })).closest("section") as HTMLElement;
+      const period = within(section).getByText("Período").parentElement as HTMLElement;
+      expect(period).toHaveTextContent("16 oct 2026 al 14 nov 2026");
+    }
+  });
+
+  it("shows no next charge for a subscription that is not charging", async () => {
+    const paused = { ...file().subscription!, status: "PAUSED" as const, providerNextPaymentAt: "2026-11-15T03:00:00Z" };
+    renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({ subscription: paused }));
+    const summary = await screen.findByLabelText("Resumen");
+    const next = within(summary).getByText("Próximo cobro").parentElement as HTMLElement;
+    expect(within(next).getByText("—")).toBeInTheDocument();
   });
 
   it("gives support only the Demo actions and finance none", async () => {

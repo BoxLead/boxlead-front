@@ -12,6 +12,7 @@ import { canAccess } from "../../session/roles";
 import { isFuture, useAdmin } from "../../session/session";
 import { SUBSCRIPTION_STATUS } from "../../status";
 import { AttributionPanel } from "./AttributionPanel";
+import { lastMomentBefore } from "./dates";
 import { DemoPanel } from "./DemoPanel";
 import { ACCESS_LABELS, planLabel, PLAN_SOURCE_LABELS } from "./labels";
 import { LimitsPanel } from "./LimitsPanel";
@@ -26,6 +27,13 @@ const TITLE = "Detalle de usuario";
 const BACK = { to: "/usuarios", label: "Usuarios" };
 const NOT_FOUND = messageFor(404, null);
 
+const CHARGING: readonly string[] = ["ACTIVE", "PAST_DUE"];
+
+function nextCharge(subscription: CustomerFile["subscription"]): string | null {
+  if (!subscription || !CHARGING.includes(subscription.status)) return null;
+  return subscription.providerNextPaymentAt ?? subscription.currentPeriodEnd;
+}
+
 function Summary({ file }: { file: CustomerFile }) {
   const { subscription, entitlements, demo } = file;
   const demoRunning = demo !== null && isFuture(demo.endsAt);
@@ -39,7 +47,7 @@ function Summary({ file }: { file: CustomerFile }) {
           label: "Suscripción",
           value: subscription ? <StatusBadge status={SUBSCRIPTION_STATUS[subscription.status]} /> : <span className="sub-text">Sin suscripción</span>,
         },
-        { label: "Próximo cobro", value: <DateText value={subscription?.providerNextPaymentAt ?? subscription?.currentPeriodEnd} /> },
+        { label: "Próximo cobro", value: <DateText value={nextCharge(subscription)} /> },
         {
           label: "Demo",
           value: demoRunning ? (
@@ -106,7 +114,7 @@ function PlanPanel({ file }: { file: CustomerFile }) {
           { label: "Plan", value: planLabel(plan.code) },
           { label: "Viene de", value: PLAN_SOURCE_LABELS[plan.source] },
           { label: "Acceso", value: enforced ? ACCESS_LABELS[access] : `${ACCESS_LABELS[access]}, todavía sin aplicar` },
-          { label: "Período", value: <><DateText value={period.start} /> al <DateText value={period.end} /></> },
+          { label: "Período", value: <><DateText value={period.start} /> al <DateText value={lastMomentBefore(period.end)} /></> },
         ]}
       />
     </Section>

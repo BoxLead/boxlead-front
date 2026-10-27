@@ -46,7 +46,7 @@ export function CustomersScreen() {
             <SearchFilter
               label="Buscar"
               value={params.value("query")}
-              placeholder="Email, nombre o id"
+              placeholder="Email, nombre o id, distingue tildes"
               onSubmit={(value) => params.setFilter("query", value)}
             />
             <SelectFilter

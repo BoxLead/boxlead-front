@@ -38,7 +38,7 @@ for (const scheme of ["light", "dark"] as const) {
     await resetCustomers(["OWNER"], "default");
     await page.context().clearCookies();
     await enterAdmin(page, "/");
-    await expect(page.getByText("Todavía no hay nada para mostrar acá")).toBeVisible();
+    await expect(section(page, "Suscripciones por estado")).toContainText("Todavía no hay suscripciones.");
     await shot(page, "13-inicio-vacio", scheme);
     await resetCustomers(["OWNER"]);
     await page.context().clearCookies();

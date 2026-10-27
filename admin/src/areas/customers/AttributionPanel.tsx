@@ -56,7 +56,7 @@ function CorrectDialog({ userId, current, directory, onClose, run }: CorrectDial
     <ReasonDialog open title="Corregir atribución" confirmLabel="Corregir" onClose={onClose} onConfirm={confirm}>
       <p>
         {current
-          ? `Hoy lo refirió ${resellerName(directory, current.resellerId)}. La atribución nueva pasa a ser la vigente y la anterior queda en el historial.`
+          ? `Hoy lo refirió ${resellerName(directory, current.resellerId)}. La atribución nueva pasa a ser la vigente y la anterior queda en el historial. Las comisiones ya generadas quedan con el revendedor anterior. Las próximas van al nuevo.`
           : "Hoy nadie lo refirió. La atribución nueva pasa a ser la vigente."}
       </p>
       {directory.status === "loading" ? (

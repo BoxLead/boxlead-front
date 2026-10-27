@@ -24,8 +24,8 @@ export function formatMicros(micros: number, currency: string): string {
 
 export function formatLimit(key: EntitlementKey, value: number | null | undefined): string {
   if (value === null) return "Sin tope";
-  const amount = value ?? 0;
-  if (isSwitch(key)) return amount > 0 ? "Sí" : "No";
-  if (key === "LLM_COST_CAP_MICROS") return formatMicros(amount, COST_CAP_CURRENCY);
-  return formatCount(amount);
+  if (value === undefined) return "—";
+  if (isSwitch(key)) return value > 0 ? "Sí" : "No";
+  if (key === "LLM_COST_CAP_MICROS") return formatMicros(value, COST_CAP_CURRENCY);
+  return formatCount(value);
 }
