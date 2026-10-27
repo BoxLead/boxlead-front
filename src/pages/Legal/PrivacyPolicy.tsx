@@ -97,6 +97,16 @@ export function PrivacyPolicy() {
           acts as a data processor under our instructions.
         </li>
         <li>
+          <strong>Analytics</strong> — Cloudflare Web Analytics measures visits
+          to the public pages without cookies or identifiers. Google Analytics
+          runs only if you accept it in the cookie notice and receives the page
+          visited, the browser, the device and the approximate city with a
+          shortened IP address, which we see in aggregate for 14 months. It
+          never receives your name, your email or your conversations, and
+          nothing is measured inside the app. You can change your choice from
+          Cookie preferences at the bottom of the public pages.
+        </li>
+        <li>
           <strong>Legal requirements</strong> — if required by applicable law,
           regulation, or valid legal process.
         </li>

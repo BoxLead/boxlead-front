@@ -1,0 +1,149 @@
+name: Test, build, and deploy backoffice
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "admin/**"
+      - "src/design/**"
+      - "src/components/ui/**"
+      - "src/components/AuthLayout/**"
+      - "src/components/EmptyState/**"
+      - "src/components/Logo/**"
+      - "src/components/icons/**"
+      - "src/components/Loading.tsx"
+      - "src/util/classNames.ts"
+      - "src/util/company.ts"
+      - "src/index.css"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.admin.config.ts"
+      - "tsconfig.admin.json"
+      - "Dockerfile"
+      - "e2e/admin-mock/**"
+      - ".github/workflows/deploy-admin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-admin-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SIGNAL_FRONT_SSM_PREFIX: /signal-front/
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Lint and unit tests
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          target: test
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Read the API origin from SSM
+        id: config
+        run: |
+          set -euo pipefail
+          api=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_API_BASE_URL" --query Parameter.Value --output text)
+          echo "api_base_url=$api" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Export backoffice files
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          target: admin-export
+          push: false
+          outputs: type=local,dest=dist-admin
+          build-args: |
+            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
+          cache-from: type=gha
+
+      - name: Smoke test backoffice files
+        env:
+          API_BASE_URL: ${{ steps.config.outputs.api_base_url }}
+        run: |
+          set -euo pipefail
+          test -f dist-admin/index.html || { echo "::error::dist-admin has no index.html"; exit 1; }
+          grep -q '<meta name="robots" content="noindex' dist-admin/index.html || { echo "::error::index.html lacks the noindex meta"; exit 1; }
+          grep -qx 'Disallow: /' dist-admin/robots.txt || { echo "::error::robots.txt does not disallow everything"; exit 1; }
+          api_origin=$(printf '%s' "$API_BASE_URL" | grep -oE '^https://[^/]+')
+          third_party=$(grep -rhoIE '(https?|wss?)://[A-Za-z0-9.-]+(:[0-9]+)?' dist-admin | sort -u | grep -vxF -e "$api_origin" -e http://www.w3.org -e http://localhost -e https://react.dev -e https://reactrouter.com || true)
+          if [ -n "$third_party" ]; then
+            echo "::error::The backoffice references third party origins"
+            echo "$third_party"
+            exit 1
+          fi
+
+      - name: Upload dist-admin
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dist-admin
+          path: dist-admin/
+
+  deploy:
+    name: Deploy to S3 and invalidate CloudFront
+    needs: build
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download dist-admin
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: dist-admin
+          path: dist-admin/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Sync to S3 and invalidate CloudFront
+        run: |
+          set -euo pipefail
+          BUCKET_PARAM="${SIGNAL_FRONT_SSM_PREFIX}ADMIN_S3_BUCKET_NAME"
+          DIST_PARAM="${SIGNAL_FRONT_SSM_PREFIX}ADMIN_CLOUDFRONT_DISTRIBUTION_ID"
+          missing=$(aws ssm get-parameters --names "$BUCKET_PARAM" "$DIST_PARAM" --query InvalidParameters --output text)
+          if [ -n "$missing" ]; then
+            echo "::error::Missing SSM parameters $missing. Apply the backoffice Terraform of boxlead-front before deploying the backoffice."
+            exit 1
+          fi
+          BUCKET=$(aws ssm get-parameter --name "$BUCKET_PARAM" --query Parameter.Value --output text)
+          DIST_ID=$(aws ssm get-parameter --name "$DIST_PARAM" --query Parameter.Value --output text)
+          aws s3 sync dist-admin/assets/ "s3://$BUCKET/assets/" --delete --cache-control "public, max-age=31536000, immutable"
+          aws s3 sync dist-admin/ "s3://$BUCKET" --delete --exclude "assets/*" --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --cache-control "public, max-age=86400"
+          aws s3 sync dist-admin/ "s3://$BUCKET" --exclude "*" --include "*.html" --include "*.xml" --include "*.txt" --cache-control "no-cache"
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"

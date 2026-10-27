@@ -43,3 +43,28 @@ output "ssm_parameter_prefix" {
   description = "Must match SIGNAL_FRONT_SSM_PREFIX in .github/workflows/deploy.yml."
   value       = local.ssm_dir
 }
+
+output "admin_s3_bucket_name" {
+  description = "Backoffice S3 bucket name (also in SSM as ADMIN_S3_BUCKET_NAME)."
+  value       = aws_s3_bucket.admin.bucket
+}
+
+output "admin_cloudfront_distribution_id" {
+  description = "Backoffice CloudFront distribution ID (also in SSM as ADMIN_CLOUDFRONT_DISTRIBUTION_ID)."
+  value       = aws_cloudfront_distribution.admin.id
+}
+
+output "admin_cloudfront_domain_name" {
+  description = "Backoffice CloudFront hostname, the target of the proxied admin CNAME in Cloudflare."
+  value       = aws_cloudfront_distribution.admin.domain_name
+}
+
+output "admin_custom_domain_url" {
+  description = "HTTPS URL of the backoffice once the Cloudflare CNAME is in place."
+  value       = "https://${var.admin_domain_name}"
+}
+
+output "admin_acm_validation_records" {
+  description = "DNS validation CNAME(s) for the backoffice certificate (us-east-1). Add them in Cloudflare as DNS only, not proxied."
+  value       = aws_acm_certificate.admin.domain_validation_options
+}
