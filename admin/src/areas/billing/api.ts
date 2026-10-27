@@ -1,5 +1,5 @@
 import { adminApi } from "../../api/client";
-import { AdminApiError } from "../../api/errors";
+import { AdminApiError, isStale } from "../../api/errors";
 import type { Money } from "../../api/types";
 import type { InvoiceRow, RefundResult } from "./types";
 
@@ -45,4 +45,8 @@ export function markInvoiceVoided(invoiceId: string, reason: string): Promise<In
 
 export function invalidInput(message: string): AdminApiError {
   return new AdminApiError(message, 400, null);
+}
+
+export function changedUnderneath(failure: unknown): boolean {
+  return isStale(failure) || (failure instanceof AdminApiError && failure.status === 422);
 }

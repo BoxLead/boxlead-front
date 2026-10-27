@@ -3,7 +3,6 @@ import { ReasonDialog } from "../../components/ReasonDialog";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { retryRefund } from "./api";
 import { ShortId } from "./cells";
-import { refundable } from "./money";
 import type { PaymentRow, RefundResult, RefundRow } from "./types";
 
 type RetryRefundDialogProps = {
@@ -21,7 +20,7 @@ function useFullAmount(refund: RefundRow) {
   if (refund.amount) return { status: "ready" as const, amount: refund.amount };
   if (lookup.status !== "ready") return { status: lookup.status, amount: undefined };
   const payment = lookup.data.items.find((item) => item.id === refund.paymentId);
-  return { status: payment ? ("ready" as const) : ("missing" as const), amount: payment ? refundable(payment) : undefined };
+  return { status: payment ? ("ready" as const) : ("missing" as const), amount: payment ? payment.refundable : undefined };
 }
 
 export function RetryRefundDialog({ refund, open, onClose, onDone }: RetryRefundDialogProps) {

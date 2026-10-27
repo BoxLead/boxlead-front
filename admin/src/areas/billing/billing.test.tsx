@@ -24,6 +24,7 @@ const PAYMENT: PaymentRow = {
   statusDetail: "partially_refunded",
   amount: ars(8700000),
   refunded: ars(2000000),
+  refundable: ars(5700000),
   providerFee: ars(435000),
   approvedAt: "2026-10-20T15:00:00Z",
   createdAt: "2026-10-20T15:00:00Z",
@@ -100,11 +101,12 @@ describe("refund dialog", () => {
     return calls;
   }
 
-  it("shows what is left and sends a total refund without amount", async () => {
+  it("shows what core says is left and sends a total refund without amount", async () => {
     const onDone = vi.fn();
     const calls = renderRefund(onDone);
     const left = screen.getByText("Queda para reembolsar").closest("div");
-    expect(left).toHaveTextContent("67.000,00");
+    expect(left).toHaveTextContent("57.000,00");
+    expect(screen.getByText("Pedido y sin acreditar").closest("div")).toHaveTextContent("10.000,00");
     expect(screen.getByText("ARS")).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
     await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
@@ -129,6 +131,47 @@ describe("refund dialog", () => {
       amount: { amountMinor: 100050, currency: "ARS" },
       reason: "Descuento acordado con el cliente",
     });
+  });
+
+  it("keeps the dialog open with the reason when core says the refund exceeds what is left", async () => {
+    mockFetch(() => json(422, { error: "Unprocessable", message: "exceeds", code: "REFUND_EXCEEDS_PAYMENT" }));
+    const onDone = vi.fn();
+    renderAs(["FINANCE"], <RefundDialog payment={PAYMENT} open onClose={vi.fn()} onDone={onDone} />);
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("El reembolso supera lo que queda del pago.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reembolsar pago", hidden: true })).toBeInTheDocument();
+    expect(screen.getByLabelText("Motivo")).toHaveValue("El cliente pidió la baja");
+    expect(onDone).not.toHaveBeenCalled();
+  });
+});
+
+describe("payments screen", () => {
+  it("offers a refund only when core leaves something to refund and shows what is in progress", async () => {
+    const waiting: PaymentRow = { ...PAYMENT, id: "9e000000-0000-4000-8000-000000000002", status: "APPROVED", refunded: ars(0), refundable: ars(0) };
+    mockFetch(() => page([PAYMENT, waiting]));
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    expect(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Reembolsar el pago/ })).toHaveLength(1);
+    const rows = screen.getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("Reembolsado $ 20.000,00");
+    expect(rows[1]).toHaveTextContent("Pedido y sin acreditar $ 10.000,00");
+    expect(rows[2]).toHaveTextContent("Pedido y sin acreditar $ 87.000,00");
+    expect(within(rows[2]).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("reloads the list when the refund dialog closes after core refused the amount", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(422, { error: "Unprocessable", message: "exceeds", code: "REFUND_EXCEEDS_PAYMENT" }) : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("El reembolso supera lo que queda del pago.")).toBeInTheDocument();
+    const loads = calls.filter((call) => call.method === "GET").length;
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET").length).toBe(loads + 1));
   });
 });
 

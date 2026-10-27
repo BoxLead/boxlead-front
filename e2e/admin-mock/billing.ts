@@ -33,9 +33,11 @@ const usd = (amountMinor: number): Money => ({ amountMinor, currency: "USD" });
 const STARTER = { price: usd(6000), charge: ars(8700000) };
 const BUSINESS = { price: usd(20000), charge: ars(29000000) };
 
+type StoredPayment = Omit<PaymentRow, "refundable">;
+
 type State = {
   subscriptions: SubscriptionRow[];
-  payments: PaymentRow[];
+  payments: StoredPayment[];
   refunds: RefundRow[];
   invoices: InvoiceRow[];
 };
@@ -116,7 +118,7 @@ function seed(now: Date): State {
     refundedMinor: number,
     createdDays: number,
     statusDetail: string,
-  ): PaymentRow => ({
+  ): StoredPayment => ({
     id: id("9e", n),
     userId: user.userId,
     email: user.email,
@@ -236,6 +238,25 @@ function listSubscriptions({ query }: MockRequest): MockReply {
   return page(newestFirst(rows), query, 50);
 }
 
+function isRefundable(payment: StoredPayment): boolean {
+  return payment.status === "APPROVED" || payment.status === "PARTIALLY_REFUNDED";
+}
+
+function committed(payment: StoredPayment): number {
+  return state.refunds
+    .filter((refund) => refund.paymentId === payment.id && refund.status !== "REJECTED")
+    .reduce((sum, refund) => sum + (refund.amount?.amountMinor ?? payment.amount.amountMinor), 0);
+}
+
+function remaining(payment: StoredPayment): number {
+  return payment.amount.amountMinor - Math.max(payment.refunded.amountMinor, committed(payment));
+}
+
+function withRefundable(payment: StoredPayment): PaymentRow {
+  const left = isRefundable(payment) ? Math.max(0, remaining(payment)) : 0;
+  return { ...payment, refundable: { amountMinor: left, currency: payment.amount.currency } };
+}
+
 function listPayments({ query }: MockRequest): MockReply {
   const status = enumFilter<PaymentStatus>(query, "status", PAYMENT_STATUSES);
   if ("error" in status) return status.error;
@@ -250,7 +271,7 @@ function listPayments({ query }: MockRequest): MockReply {
       (!userId || row.userId === userId) &&
       within(query, row.createdAt),
   );
-  return page(newestFirst(rows), query, 50);
+  return page(newestFirst(rows).map(withRefundable), query, 50);
 }
 
 function listRefunds({ query }: MockRequest): MockReply {
@@ -306,18 +327,6 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
   return { status: 204 };
 }
 
-function committed(payment: PaymentRow): number {
-  const waiting = state.refunds
-    .filter((refund) => refund.paymentId === payment.id && refund.status === "REQUESTED")
-    .reduce((sum, refund) => sum + (refund.amount?.amountMinor ?? payment.amount.amountMinor - payment.refunded.amountMinor), 0);
-  return payment.refunded.amountMinor + waiting;
-}
-
-function applyRefund(payment: PaymentRow, amountMinor: number) {
-  payment.refunded = { amountMinor: payment.refunded.amountMinor + amountMinor, currency: payment.amount.currency };
-  payment.status = payment.refunded.amountMinor >= payment.amount.amountMinor ? "REFUNDED" : "PARTIALLY_REFUNDED";
-}
-
 function refundResult(refund: RefundRow) {
   return {
     id: refund.id,
@@ -329,7 +338,7 @@ function refundResult(refund: RefundRow) {
   };
 }
 
-function isLatestApproval(payment: PaymentRow): boolean {
+function isLatestApproval(payment: StoredPayment): boolean {
   const approved = state.payments
     .filter((row) => row.subscriptionId === payment.subscriptionId && row.approvedAt)
     .sort((a, b) => Date.parse(b.approvedAt ?? "") - Date.parse(a.approvedAt ?? ""));
@@ -351,21 +360,14 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
   if (!payment) return failure(404, "Payment not found");
   const self = selfOperation(admin, payment.userId);
   if (self) return self;
-  if (payment.status !== "APPROVED" && payment.status !== "PARTIALLY_REFUNDED") return failure(409, "The payment cannot be refunded");
+  if (!isRefundable(payment)) return failure(409, "The payment cannot be refunded");
   const amount = moneyOf(body.amount);
   if (amount === "invalid") return failure(400, "Invalid amount");
   if (amount && amount.currency !== payment.amount.currency) return failure(400, "A refund must be in the currency of its payment");
-  const left = payment.amount.amountMinor - committed(payment);
+  const left = remaining(payment);
   const requested = amount ? amount.amountMinor : left;
   if (requested <= 0 || requested > left) return failure(422, "The refund exceeds the payment", "REFUND_EXCEEDS_PAYMENT");
-  if (requested === left && isLatestApproval(payment)) {
-    const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
-    if (subscription) {
-      subscription.status = "CANCELED";
-      subscription.canceledAt = new Date().toISOString();
-      subscription.cancelReason = "REFUNDED";
-    }
-  }
+  const closesTheSubscription = requested === left && isLatestApproval(payment);
   sequence += 1;
   const refund: RefundRow = {
     id: id("7b", sequence),
@@ -377,8 +379,15 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
     requestedBy: admin.userId,
     createdAt: new Date().toISOString(),
   };
-  applyRefund(payment, requested);
   state.refunds.push(refund);
+  if (closesTheSubscription) {
+    const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
+    if (subscription) {
+      subscription.status = "CANCELED";
+      subscription.canceledAt = new Date().toISOString();
+      subscription.cancelReason = "REFUNDED";
+    }
+  }
   return { status: 201, body: refundResult(refund) };
 }
 
@@ -387,8 +396,6 @@ function retryRefund({ match, body }: MockRequest): MockReply {
   const refund = state.refunds.find((row) => row.id === decodeURIComponent(match[1]));
   if (!refund) return failure(404, "Refund not found");
   if (refund.status !== "REQUESTED") return failure(409, "The provider already answered this refund");
-  const payment = state.payments.find((row) => row.id === refund.paymentId);
-  if (payment) applyRefund(payment, refund.amount?.amountMinor ?? payment.amount.amountMinor - payment.refunded.amountMinor);
   refund.status = "APPROVED";
   refund.providerRefundId = `rf-${3500 + state.refunds.indexOf(refund)}`;
   return ok(refundResult(refund));

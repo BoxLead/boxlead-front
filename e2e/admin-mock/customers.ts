@@ -167,6 +167,10 @@ function payment(n: number, charge: Money, at: number, status: Payment["status"]
     statusDetail: status === "REJECTED" ? "cc_rejected_insufficient_amount" : "accredited",
     amount: charge,
     refunded: { amountMinor: refunded, currency: charge.currency },
+    refundable: {
+      amountMinor: status === "APPROVED" || status === "PARTIALLY_REFUNDED" ? charge.amountMinor - refunded : 0,
+      currency: charge.currency,
+    },
     providerFee: status === "REJECTED" ? null : { amountMinor: Math.round(charge.amountMinor * 0.07), currency: charge.currency },
     approvedAt: status === "REJECTED" ? null : iso(at),
     createdAt: iso(at),

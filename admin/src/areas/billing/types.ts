@@ -53,6 +53,7 @@ export type PaymentRow = {
   statusDetail: string | null;
   amount: Money;
   refunded: Money;
+  refundable: Money;
   providerFee: Money;
   approvedAt: string | null;
   createdAt: string;

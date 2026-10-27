@@ -145,6 +145,7 @@ function file(): CustomerFile {
         statusDetail: "accredited",
         amount: ars(8700000),
         refunded: ars(0),
+        refundable: ars(8700000),
         providerFee: ars(609000),
         approvedAt: "2026-10-16T12:00:00Z",
         createdAt: "2026-10-16T12:00:00Z",

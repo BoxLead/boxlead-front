@@ -106,7 +106,7 @@ test("only an owner sees the subscription actions and only finance refunds", asy
   await expect(page.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
 });
 
-test("finance refunds part of a payment with the amount in view", async ({ page }) => {
+test("finance refunds part of a payment and the row keeps what Mercado Pago has not credited yet", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/pagos");
   const carla = row(page, "carla@example.com");
@@ -125,19 +125,43 @@ test("finance refunds part of a payment with the amount in view", async ({ page 
   await expectAccessible(page);
   expect(await confirmWithReason(page, "Reembolsar")).toEqual({ amount: { amountMinor: 1000000, currency: "ARS" }, reason: REASON });
   await expect(page.getByText("Mercado Pago aprobó el reembolso.")).toBeVisible();
-  await expect(carla).toContainText("30.000,00");
+  await expect(carla).toContainText("Reembolsado $ 20.000,00");
+  await expect(carla).toContainText("Pedido y sin acreditar $ 10.000,00");
+
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const again = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await expect(again.locator(".billing-facts")).toContainText("Pedido y sin acreditar");
+  await expect(again.locator(".reason-amount")).toContainText("57.000,00");
+  await again.getByRole("button", { name: "Cancelar", exact: true }).click();
 });
 
-test("a total refund goes without amount and core refuses money already committed", async ({ page }) => {
+test("a payment with a total refund on the way offers nothing more to refund", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/pagos?userId=0c78dde6-0000-4000-8000-000000000004");
   await expect(page.locator("tbody tr")).toHaveCount(2);
-  await page.locator("tbody tr").nth(1).getByRole("button", { name: "Reembolsar" }).click();
-  const body = await confirmWithReason(page, "Reembolsar");
-  expect(body).toEqual({ reason: REASON });
-  await expect(page.getByRole("dialog")).toContainText("El reembolso supera lo que queda del pago.");
-  await page.getByRole("dialog").getByRole("button", { name: "Cancelar" }).click();
+  const older = page.locator("tbody tr").nth(1);
+  await expect(older).toContainText("Pedido y sin acreditar $ 290.000,00");
+  await expect(older.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
+});
+
+test("a total refund goes without amount and core refuses money another admin already committed", async ({ page }) => {
+  await resetBilling(["FINANCE"]);
+  await enterAdmin(page, "/pagos");
+  const carla = row(page, "carla@example.com");
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await expect(dialog.locator(".reason-amount")).toContainText("67.000,00");
+  const other = await page.request.post(`${ADMIN_MOCK_ORIGIN}/admin/payments/9e78dde6-0000-4000-8000-000000000004/refunds`, {
+    headers: { "X-Requested-With": "boxlead-web" },
+    data: { reason: "Otro administrador lo reembolsó antes" },
+  });
+  expect(other.status()).toBe(201);
+  expect(await confirmWithReason(page, "Reembolsar")).toEqual({ reason: REASON });
+  await expect(dialog).toContainText("El reembolso supera lo que queda del pago.");
+  await dialog.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(carla).toContainText("Pedido y sin acreditar $ 67.000,00");
+  await expect(carla.getByRole("button", { name: "Reembolsar" })).toHaveCount(0);
 });
 
 test("finance retries a refund that Mercado Pago did not answer", async ({ page }) => {

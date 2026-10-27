@@ -12,7 +12,8 @@ import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
 import { Amount, CustomerCell, NoAction, ShortId, Stack, StatusTag } from "./cells";
 import { INVOICE_STATUS, PAYMENT_STATUS, PAYMENT_STATUS_OPTIONS } from "./labels";
-import { canRefund } from "./money";
+import { changedUnderneath } from "./api";
+import { canRefund, refundInProgress } from "./money";
 import { RefundDialog } from "./RefundDialog";
 import type { PaymentRow, RefundResult } from "./types";
 
@@ -26,10 +27,20 @@ const REFUND_NOTICE: Record<RefundResult["status"], { tone: "success" | "info" |
 };
 
 function RefundedDetail({ row }: { row: PaymentRow }) {
-  if (row.refunded.amountMinor <= 0) return null;
+  const waiting = refundInProgress(row);
+  if (row.refunded.amountMinor <= 0 && waiting.amountMinor <= 0) return null;
   return (
     <>
-      Reembolsado <Amount money={row.refunded} />
+      {row.refunded.amountMinor > 0 ? (
+        <span className="billing-line">
+          Reembolsado <Amount money={row.refunded} />
+        </span>
+      ) : null}
+      {waiting.amountMinor > 0 ? (
+        <span className="billing-line">
+          Pedido y sin acreditar <Amount money={waiting} />
+        </span>
+      ) : null}
     </>
   );
 }
@@ -145,7 +156,16 @@ export function PaymentsScreen() {
         }
       />
       {target ? (
-        <RefundDialog key={attempt} payment={target} open={open} onClose={() => setOpen(false)} onDone={done} />
+        <RefundDialog
+          key={attempt}
+          payment={target}
+          open={open}
+          onClose={() => setOpen(false)}
+          onDone={done}
+          onSettled={(failure) => {
+            if (changedUnderneath(failure)) query.reload();
+          }}
+        />
       ) : null}
     </Screen>
   );
