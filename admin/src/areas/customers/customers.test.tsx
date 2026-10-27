@@ -386,6 +386,14 @@ describe("CustomerDetailScreen", () => {
     expect(within(revoke).queryByText(/La Demo termina ahora/)).toBeNull();
   });
 
+  it("shows no next charge for a subscription that is not charging", async () => {
+    const paused = { ...file().subscription!, status: "PAUSED" as const, providerNextPaymentAt: "2026-11-15T03:00:00Z" };
+    renderAt(`/usuarios/${USER_ID}`, ["FINANCE"], handlerWith({ subscription: paused }));
+    const summary = await screen.findByLabelText("Resumen");
+    const next = within(summary).getByText("Próximo cobro").parentElement as HTMLElement;
+    expect(within(next).getByText("—")).toBeInTheDocument();
+  });
+
   it("gives support only the Demo actions and finance none", async () => {
     renderAt(`/usuarios/${USER_ID}`, ["SUPPORT"], detailHandler);
     expect(await screen.findByRole("button", { name: "Otorgar Demo" })).toBeInTheDocument();

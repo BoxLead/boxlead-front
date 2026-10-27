@@ -26,6 +26,13 @@ const TITLE = "Detalle de usuario";
 const BACK = { to: "/usuarios", label: "Usuarios" };
 const NOT_FOUND = messageFor(404, null);
 
+const CHARGING: readonly string[] = ["ACTIVE", "PAST_DUE"];
+
+function nextCharge(subscription: CustomerFile["subscription"]): string | null {
+  if (!subscription || !CHARGING.includes(subscription.status)) return null;
+  return subscription.providerNextPaymentAt ?? subscription.currentPeriodEnd;
+}
+
 function Summary({ file }: { file: CustomerFile }) {
   const { subscription, entitlements, demo } = file;
   const demoRunning = demo !== null && isFuture(demo.endsAt);
@@ -39,7 +46,7 @@ function Summary({ file }: { file: CustomerFile }) {
           label: "Suscripción",
           value: subscription ? <StatusBadge status={SUBSCRIPTION_STATUS[subscription.status]} /> : <span className="sub-text">Sin suscripción</span>,
         },
-        { label: "Próximo cobro", value: <DateText value={subscription?.providerNextPaymentAt ?? subscription?.currentPeriodEnd} /> },
+        { label: "Próximo cobro", value: <DateText value={nextCharge(subscription)} /> },
         {
           label: "Demo",
           value: demoRunning ? (
