@@ -190,7 +190,7 @@ function ResellerContent({ detail, customers, reload }: ContentProps) {
           label="Resumen"
           items={[
             { label: "Estado", value: <StatusBadge status={RESELLER_STATUS[reseller.status]} /> },
-            { label: "Comisión", value: formatRate(reseller.rateBps) },
+            { label: "Tasa", value: formatRate(reseller.rateBps) },
             { label: "Ciclos pagos", value: reseller.maxPaidCycles },
             { label: "Clientes atribuidos", value: formatCount(detail.customersCount) },
             { label: "Alta", value: <DateText value={reseller.createdAt} /> },

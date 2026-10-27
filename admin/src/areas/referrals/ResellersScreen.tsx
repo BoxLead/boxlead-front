@@ -46,7 +46,7 @@ const COLUMNS: readonly Column<Reseller>[] = [
         </ul>
       ),
   },
-  { key: "rate", header: "Comisión", type: "number", cell: (row) => formatRate(row.rateBps) },
+  { key: "rate", header: "Tasa", type: "number", cell: (row) => formatRate(row.rateBps) },
   { key: "cycles", header: "Ciclos pagos", type: "number", cell: (row) => row.maxPaidCycles },
   { key: "createdAt", header: "Alta", type: "date", cell: (row) => <DateText value={row.createdAt} /> },
 ];

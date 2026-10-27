@@ -112,8 +112,11 @@ test.describe("roles", () => {
     await enterAdmin(page, "/revendedores");
     await expect(page.getByRole("link", { name: "Agencia Norte" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nuevo revendedor" })).toHaveCount(0);
+    await expect(page.getByRole("columnheader", { name: "Tasa" })).toHaveCount(1);
+    await expect(page.getByRole("columnheader", { name: "Comisión" })).toHaveCount(0);
     await page.getByRole("link", { name: "Agencia Norte" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Agencia Norte" })).toBeVisible();
+    await expect(page.locator(".fact").filter({ hasText: "Tasa" })).toContainText("50");
     await expect(page.getByText("Los datos fiscales y de cobro los ve solo Finanzas.")).toBeVisible();
     await expect(page.getByText("Los totales de comisión los ve solo Finanzas.")).toBeVisible();
     await expect(page.getByText("30-11111111-9")).toHaveCount(0);
