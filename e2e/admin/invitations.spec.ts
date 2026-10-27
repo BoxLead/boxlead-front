@@ -127,6 +127,7 @@ test("revokes an open invitation with a reason and filters the list", async ({ p
   await confirmWithReason(page, "Revocar invitación", "Revocar");
   await expect(row(page, "nora@panaderiadelbarrio.com")).toContainText("Revocada");
   await expect(row(page, "nora@panaderiadelbarrio.com").getByRole("button")).toHaveCount(0);
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
 
   await page.getByLabel("Estado").selectOption({ label: "Vencida" });
   await expect(page.getByRole("row")).toHaveCount(2);
@@ -180,11 +181,16 @@ test("shows the loading, empty and error states", async ({ page }) => {
   await expect(page.getByText("Todavía no hay Demos")).toBeVisible();
 
   let answer: () => void = () => undefined;
+  let reached: () => void = () => undefined;
+  const requested = new Promise<void>((resolve) => (reached = resolve));
   await page.route(INVITATIONS, async (route) => {
-    await new Promise<void>((resolve) => (answer = resolve));
+    const held = new Promise<void>((resolve) => (answer = resolve));
+    reached();
+    await held;
     await route.fulfill({ status: 500, contentType: "application/json", headers: CORS, body: JSON.stringify({ error: "Internal", message: "boom" }) });
   });
   await page.getByRole("button", { name: "Invitaciones" }).click();
+  await requested;
   await expect(page.getByRole("status").filter({ hasText: "Cargando…" })).toBeAttached();
   answer();
   await expect(page.getByText("No pudimos cargar la lista")).toBeVisible();

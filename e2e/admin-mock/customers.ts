@@ -502,9 +502,9 @@ function reasonOf(body: Record<string, unknown>): string | null {
 type Action = (customer: Customer, reason: string, request: MockRequest) => MockReply;
 
 function action(handle: Action) {
-  return (request: MockRequest): MockReply => {
+  return (request: MockRequest): MockReply | null => {
     const customer = records.find((row) => row.id === request.match[1]);
-    if (!customer) return notFound();
+    if (!customer) return null;
     if (customer.id === request.admin.userId && !request.admin.roles.includes("OWNER")) {
       return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
     }
