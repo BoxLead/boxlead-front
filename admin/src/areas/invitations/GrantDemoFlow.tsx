@@ -3,7 +3,7 @@ import { useToast } from "../../../../src/components/ui/toast";
 import { SearchIcon } from "../../../../src/components/icons/UiIcons";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { errorText } from "../../api/errors";
-import { planLabel } from "../../status";
+import { planLabel, SUBSCRIPTION_STATUS, type SubscriptionStatus } from "../../status";
 import type { AdminPage } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { grantDemo, searchCustomers } from "./api";
@@ -25,6 +25,14 @@ type GrantDemoFlowProps = {
 
 function planText(planCode: string | null): string {
   return planCode ? `Plan ${planLabel(planCode)}` : planLabel(null);
+}
+
+const ACCESS_STATUSES: readonly string[] = ["ACTIVE", "PAST_DUE", "SUSPENDED", "PAUSED"] satisfies SubscriptionStatus[];
+
+function liveSubscription(customer: CustomerMatch): SubscriptionStatus | null {
+  const status = customer.subscriptionStatus;
+  if (!status || !ACCESS_STATUSES.includes(status) || !customer.planCode || customer.planCode === "DEMO") return null;
+  return status as SubscriptionStatus;
 }
 
 function customerName(customer: CustomerMatch): string | null {
@@ -54,6 +62,7 @@ export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) 
   }
 
   const daysProblem = demoDaysProblem(days);
+  const live = selected ? liveSubscription(selected) : null;
   const userProblem = selected ? null : "Buscá y elegí un usuario.";
 
   function runSearch() {
@@ -140,10 +149,16 @@ export function GrantDemoFlow({ open, onClose, onGranted }: GrantDemoFlowProps) 
           <Summary
             rows={[
               ["Usuario", selected.email],
+              ...(live ? [["Suscripción", `Plan ${planLabel(selected.planCode)} · ${SUBSCRIPTION_STATUS[live].label}`] as [string, string]] : []),
               ["Demo", daysText(demoDaysValue(days))],
               ["Arranca", "Ahora"],
             ]}
           />
+        ) : null}
+        {live ? (
+          <Banner tone="warning" title="Tiene una suscripción que le da acceso">
+            La suscripción gana sobre la Demo, así que BoxLead va a rechazar el pedido mientras siga viva.
+          </Banner>
         ) : null}
         <p>Un usuario tiene una sola Demo. Si ya tuvo una, primero hay que quitarla.</p>
       </ReasonDialog>

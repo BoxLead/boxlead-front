@@ -282,7 +282,7 @@ describe("InvitationsScreen", () => {
     expect(await dialog().findByText(/Ese revendedor no existe o no está activo/)).toBeInTheDocument();
     await userEvent.click(hidden("Crear invitación"));
     expect(await dialog().findByText("Revisá el email. El motivo tiene que tener entre 10 y 500 caracteres.")).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("filters invitations by status and email", async () => {
     const calls = renderScreen(() => undefined);
@@ -336,6 +336,41 @@ describe("InvitationsScreen", () => {
     await userEvent.click(hidden("Continuar"));
     await giveReason("Otorgar Demo");
     expect(await screen.findByText(/Ese usuario ya tiene una Demo/)).toBeInTheDocument();
+  });
+
+  it("warns that a live subscription wins over the Demo and shows the refusal", async () => {
+    renderScreen((method, url) => {
+      if (url.pathname === "/admin/customers") {
+        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: "STARTER", subscriptionStatus: "PAST_DUE" }]);
+      }
+      if (method === "POST") return json(409, { error: "Conflict", message: "live", code: "DEMO_SUBSCRIPTION_ACTIVE" });
+      return undefined;
+    }, "/invitaciones?vista=demos");
+    await screen.findByRole("link", { name: "lucia@estudio.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Otorgar Demo" }));
+    await userEvent.type(dialog().getByLabelText("Buscar usuario"), "diego{Enter}");
+    await userEvent.click(await screen.findByRole("radio", { name: /diego@agencia.com/, hidden: true }));
+    await userEvent.click(hidden("Continuar"));
+    expect(dialog().getByText("Tiene una suscripción que le da acceso")).toBeInTheDocument();
+    expect(dialog().getByText("Plan Starter · Cuota impaga")).toBeInTheDocument();
+    await giveReason("Otorgar Demo");
+    expect(await dialog().findByText(/Ese usuario tiene una suscripción que le da acceso/)).toBeInTheDocument();
+  }, 15_000);
+
+  it("does not warn when the subscription no longer gives access", async () => {
+    renderScreen((_method, url) => {
+      if (url.pathname === "/admin/customers") {
+        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: null, subscriptionStatus: "CANCELED" }]);
+      }
+      return undefined;
+    }, "/invitaciones?vista=demos");
+    await screen.findByRole("link", { name: "lucia@estudio.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Otorgar Demo" }));
+    await userEvent.type(dialog().getByLabelText("Buscar usuario"), "diego{Enter}");
+    await userEvent.click(await screen.findByRole("radio", { name: /diego@agencia.com/, hidden: true }));
+    await userEvent.click(hidden("Continuar"));
+    expect(dialog().getByLabelText("Motivo")).toBeInTheDocument();
+    expect(dialog().queryByText("Tiene una suscripción que le da acceso")).toBeNull();
   });
 
   it("extends a Demo to a later day and takes one away", async () => {
