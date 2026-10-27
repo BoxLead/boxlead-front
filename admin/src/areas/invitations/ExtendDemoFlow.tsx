@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "../../../../src/components/ui/toast";
 import { ReasonDialog } from "../../components/ReasonDialog";
-import { formatDate } from "../../format";
+import { formatDate, formatDateTime } from "../../format";
 import { extendDemo } from "./api";
 import { addDays, dayInBuenosAires, endOfDay, todayInBuenosAires } from "./dates";
 import { Field, FormDialog, Summary } from "./FormDialog";
@@ -13,6 +13,11 @@ type ExtendDemoFlowProps = {
   onClose: () => void;
   onExtended: () => void;
 };
+
+function currentText(grant: DemoGrant): string {
+  if (grant.status === "ENDED") return `La Demo de ${userLabel(grant)} terminó el ${formatDateTime(grant.endsAt)}.`;
+  return `${userLabel(grant)} tiene la Demo hasta el ${formatDateTime(grant.endsAt)}.`;
+}
 
 export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowProps) {
   const toast = useToast();
@@ -50,7 +55,7 @@ export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowPro
       <FormDialog
         open={grant !== null && !confirming}
         title="Extender Demo"
-        description={grant ? `${userLabel(grant)} tiene la Demo hasta el ${formatDate(grant.endsAt)}.` : undefined}
+        description={grant ? currentText(grant) : undefined}
         submitLabel="Continuar"
         onSubmit={next}
         onClose={onClose}
@@ -79,7 +84,7 @@ export function ExtendDemoFlow({ grant, onClose, onExtended }: ExtendDemoFlowPro
           <Summary
             rows={[
               ["Usuario", userLabel(grant)],
-              ["Fin actual", formatDate(grant.endsAt)],
+              [grant.status === "ENDED" ? "Terminó" : "Fin actual", formatDateTime(grant.endsAt)],
               ["Nuevo fin", formatDate(day)],
             ]}
           />

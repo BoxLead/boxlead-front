@@ -393,6 +393,20 @@ describe("InvitationsScreen", () => {
     expect(JSON.parse(String(revoke?.init.body))).toEqual({ reason: REASON });
   });
 
+  it("shows the hour a Demo starts and ends and explains how to take away one that ended", async () => {
+    const ended: DemoGrant = { ...ACTIVE, id: "g2", userId: "u3", email: "martin@ferreteria.com", invitationId: null, status: "ENDED", startsAt: "2029-12-01T13:00:00Z", endsAt: "2029-12-15T13:00:00Z" };
+    renderScreen((_method, url) => (url.pathname === "/admin/demo-grants" ? pageOf([ACTIVE, ended]) : undefined), "/invitaciones?vista=demos");
+    const row = within((await screen.findByRole("link", { name: "martin@ferreteria.com" })).closest("tr") as HTMLElement);
+    expect(row.getByText(/1 dic 2029, 10:00/)).toBeInTheDocument();
+    expect(row.getByText(/15 dic 2029, 10:00/)).toBeInTheDocument();
+    await userEvent.click(row.getByRole("button", { name: "Extender" }));
+    expect(dialog().getByText(/La Demo de martin@ferreteria.com terminó el 15 dic 2029, 10:00/)).toBeInTheDocument();
+    await userEvent.click(hidden("Cancelar"));
+    await userEvent.click(row.getByRole("button", { name: "Quitar" }));
+    expect(dialog().getByText(/ya terminó. Quitarla no cambia su plan y deja lugar para otorgarle otra/)).toBeInTheDocument();
+    expect(dialog().queryByText(/se queda sin plan desde ahora/)).toBeNull();
+  });
+
   it("shows the empty and error states of each list", async () => {
     let fail = true;
     renderScreen((_method, url) => {

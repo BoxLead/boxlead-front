@@ -72,8 +72,8 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
         </span>
       ),
     },
-    { key: "starts", header: "Inicio", type: "date", cell: (row) => <DateText value={row.startsAt} /> },
-    { key: "ends", header: "Fin", type: "date", cell: (row) => <DateText value={row.endsAt} /> },
+    { key: "starts", header: "Inicio", type: "date", cell: (row) => <DateText value={row.startsAt} time /> },
+    { key: "ends", header: "Fin", type: "date", cell: (row) => <DateText value={row.endsAt} time /> },
     { key: "origin", header: "Origen", cell: (row) => (row.invitationId ? "Invitación" : "Otorgada a mano") },
   ];
 
@@ -138,10 +138,16 @@ export function DemoList({ tabs, canAct, creating, onCloseCreate }: DemoListProp
               if (isStale(failure)) query.reload();
             }}
           >
-            <p>
-              Vas a quitarle la Demo a <strong>{revoking ? userLabel(revoking) : ""}</strong>. Si no tiene un plan pago, se queda sin
-              plan desde ahora. Después le podés otorgar otra.
-            </p>
+            {revoking?.status === "ENDED" ? (
+              <p>
+                La Demo de <strong>{userLabel(revoking)}</strong> ya terminó. Quitarla no cambia su plan y deja lugar para otorgarle otra.
+              </p>
+            ) : (
+              <p>
+                Vas a quitarle la Demo a <strong>{revoking ? userLabel(revoking) : ""}</strong>. Si no tiene un plan pago, se queda sin
+                plan desde ahora. Después le podés otorgar otra.
+              </p>
+            )}
           </ReasonDialog>
         </>
       ) : null}
