@@ -3,6 +3,7 @@ import { useToast } from "../../../../src/components/ui/toast";
 import { SearchIcon } from "../../../../src/components/icons/UiIcons";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { errorText } from "../../api/errors";
+import { planLabel } from "../../status";
 import type { AdminPage } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { grantDemo, searchCustomers } from "./api";
@@ -22,15 +23,8 @@ type GrantDemoFlowProps = {
   onGranted: () => void;
 };
 
-const PLAN_LABELS: Record<string, string> = {
-  DEMO: "Demo",
-  STARTER: "Starter",
-  BUSINESS: "Business",
-  ENTERPRISE: "Enterprise",
-};
-
 function planText(planCode: string | null): string {
-  return planCode ? `Plan ${PLAN_LABELS[planCode] ?? planCode}` : "Sin plan";
+  return planCode ? `Plan ${planLabel(planCode)}` : planLabel(null);
 }
 
 function customerName(customer: CustomerMatch): string | null {
