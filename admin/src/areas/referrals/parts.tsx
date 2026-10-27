@@ -65,10 +65,11 @@ type TextFieldProps = {
   type?: "text" | "date";
   optional?: boolean;
   maxLength?: number;
+  max?: string;
   autoComplete?: string;
 };
 
-export function TextField({ label, value, onChange, error, help, type = "text", optional, maxLength, autoComplete = "off" }: TextFieldProps) {
+export function TextField({ label, value, onChange, error, help, type = "text", optional, maxLength, max, autoComplete = "off" }: TextFieldProps) {
   const id = useId();
   const helpId = useId();
   const message = error ?? help;
@@ -84,6 +85,7 @@ export function TextField({ label, value, onChange, error, help, type = "text", 
         type={type}
         value={value}
         maxLength={maxLength}
+        max={max}
         autoComplete={autoComplete}
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? helpId : undefined}

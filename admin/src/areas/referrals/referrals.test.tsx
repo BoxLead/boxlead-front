@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -6,8 +6,8 @@ import App from "../../App";
 import type { AdminMe, AdminRole } from "../../api/types";
 import { SessionProvider } from "../../session/SessionProvider";
 import { json, mockFetch, type Reply } from "../../test/fetch";
-import { canHold, canRelease, canReverse, clickRangeProblem, downloadPayout, isReleasable, releasedBy } from "./api";
-import type { Commission, Payout, ResellerDetail } from "./types";
+import { canHold, canRelease, canReverse, clickRangeProblem, downloadPayout, isReleasable, releasedBy, todayInBuenosAires } from "./api";
+import type { Commission, Payout, Reseller, ResellerDetail } from "./types";
 
 const LATER = new Date(Date.now() + 30 * 60_000).toISOString();
 const PAST = new Date(Date.now() - 86_400_000).toISOString();
@@ -288,4 +288,69 @@ describe("new reseller", () => {
     expect(searches).toEqual(["oeste"]);
     expect(created).toMatchObject({ userId: "u-west", displayName: "Martín Oeste", legalName: "Agencia Oeste SRL", vatCondition: "EXENTO", reason: REASON });
   }, 20_000);
+});
+
+const NORTH_RESELLER: Reseller = {
+  id: NORTH,
+  userId: "u9",
+  displayName: "Agencia Norte",
+  status: "ACTIVE",
+  rateBps: 5000,
+  maxPaidCycles: 6,
+  createdAt: PAST,
+  codes: [],
+};
+
+function dialogTitled(title: string): HTMLElement {
+  const dialog = screen.getByText(title, { selector: "h2" }).closest("dialog");
+  if (!dialog) throw new Error(`The dialog ${title} did not open`);
+  return dialog;
+}
+
+function buildPayout(approved: Commission[], answer: () => Reply = () => json(201, { ...PAYOUT, resellerId: NORTH })) {
+  const posted: unknown[] = [];
+  const asked: URLSearchParams[] = [];
+  const calls = renderAdmin("/liquidaciones", ["FINANCE"], (method, url, body) => {
+    if (url.pathname === "/admin/resellers") return page([NORTH_RESELLER]);
+    if (method === "POST" && url.pathname === "/admin/payouts") {
+      posted.push(body);
+      return answer();
+    }
+    if (url.pathname === "/admin/payouts") return page([]);
+    if (url.pathname === "/admin/commissions") {
+      asked.push(url.searchParams);
+      return page(approved);
+    }
+    return json(404, { error: "Not found", message: "Not found" });
+  });
+  return { calls, posted, asked };
+}
+
+async function openBuildDialog() {
+  await userEvent.click(await screen.findByRole("button", { name: "Armar liquidación" }, { timeout: 5000 }));
+  const box = within(dialogTitled("Armar liquidación"));
+  await userEvent.selectOptions(box.getByLabelText("Revendedor"), NORTH);
+  return box;
+}
+
+async function confirmBuild(box: ReturnType<typeof within>) {
+  await userEvent.type(box.getByLabelText("Motivo"), REASON);
+  await userEvent.click(box.getByRole("button", { name: "Armar liquidación", hidden: true }));
+}
+
+describe("build a payout", () => {
+  it("does not accept a period end after today in Buenos Aires", async () => {
+    const { posted, asked } = buildPayout([commission({ resellerId: NORTH, status: "APPROVED" })]);
+    const box = await openBuildDialog();
+    await box.findByText(/1 movimiento\./);
+    const field = box.getByLabelText("Cierre del período");
+    expect(field).toHaveAttribute("max", todayInBuenosAires());
+    const before = asked.length;
+    fireEvent.change(field, { target: { value: "2999-01-01" } });
+    expect(box.getAllByText("El cierre del período no puede ser posterior a hoy.").length).toBeGreaterThan(0);
+    await confirmBuild(box);
+    expect(posted).toEqual([]);
+    expect(asked).toHaveLength(before);
+  }, 20_000);
+
 });
