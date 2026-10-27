@@ -327,16 +327,15 @@ test("every billing screen has its loading, empty and error states", async ({ pa
   await expectAccessible(page);
 });
 
-test("the billing screens with data pass the accessibility checks", async ({ page }) => {
-  await resetBilling(["OWNER"]);
-  await enterAdmin(page, "/suscripciones");
-  for (const screen of SCREENS) {
-    await page.goto(screen.path);
+for (const screen of SCREENS) {
+  test(`${screen.title} with data passes the accessibility checks`, async ({ page }) => {
+    await resetBilling(["OWNER"]);
+    await enterAdmin(page, screen.path);
     await expect(page.locator("tbody tr").first()).toBeVisible();
     await expectFitsTheScreen(page);
     await expectAccessible(page);
-  }
-});
+  });
+}
 
 async function shot(page: Page, name: string, scheme: string) {
   await settled(page);
