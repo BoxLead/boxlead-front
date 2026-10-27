@@ -169,6 +169,25 @@ test("a clicks range that ends before it starts warns in its section and keeps t
   await expect(clicks.getByText("En los últimos 30 días", { exact: false })).toBeVisible();
 });
 
+const MOCK_HEADERS = { "X-Requested-With": "boxlead-web" };
+
+test("a commissions range that ends before it starts is caught before core and core refuses it too", async ({ page }) => {
+  await seed(["FINANCE"]);
+  await enterAdmin(page, "/comisiones");
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/admin/commissions") asked.push(new URL(request.url()).search);
+  });
+  await page.goto("/comisiones?from=2026-10-20&to=2026-10-10");
+  await expect(page.getByText("La fecha de inicio tiene que ser anterior a la de fin.")).toBeVisible();
+  expect(asked).toEqual([]);
+  const refused = await page.request.get(`${adminMockUrl()}/admin/commissions?from=2026-10-20&to=2026-10-10`, { headers: MOCK_HEADERS });
+  expect(refused.status()).toBe(400);
+  const sameDay = await page.request.get(`${adminMockUrl()}/admin/commissions?from=2026-10-10&to=2026-10-10`, { headers: MOCK_HEADERS });
+  expect(sameDay.status()).toBe(200);
+});
+
 test.describe("owner actions", () => {
   test("creates a reseller, issues and disables a code and corrects an attribution", async ({ page }) => {
     await seed(["OWNER"]);

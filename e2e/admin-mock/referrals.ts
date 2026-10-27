@@ -318,6 +318,7 @@ function commissions({ query }: MockRequest): MockReply {
   const resellerId = query.get("resellerId");
   const from = query.get("from");
   const to = query.get("to");
+  if (from && to && from > to) return failure(400, "The range needs a start date before its end date");
   const rows = state.commissions.filter(
     (row) =>
       (statuses.length === 0 || statuses.includes(row.status)) &&
