@@ -1,12 +1,13 @@
 import type { Page } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
 import { PROVIDER_DOWN_SCENARIO, REFUND_IN_PROCESS_SCENARIO } from "../admin-mock/billing.ts";
-import { ADMIN_MOCK_ORIGIN } from "../ports.ts";
+import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const DIR = process.env.SCREENSHOT_DIR;
 const REASON = "Pedido del cliente por mail";
 const ANA_SUBSCRIPTION = "5b538453-0000-4000-8000-000000000007";
+const ADMIN_APP_ORIGIN = `http://localhost:${ADMIN_APP_PORT}`;
 
 async function resetBilling(roles: AdminRole[], scenario = "default") {
   const res = await fetch(`${adminMockUrl()}/__reset`, {
@@ -65,25 +66,28 @@ test("an owner pauses, resumes and cancels subscriptions with a reason", async (
 
 test("an owner acting on a subscription that changed meanwhile gets a conflict and a fresh list", async ({ page }) => {
   await resetBilling(["OWNER"]);
-  await page.route(
-    `${ADMIN_MOCK_ORIGIN}/admin/subscriptions*`,
-    async (route) => {
-      const response = await route.fetch();
-      const body = (await response.json()) as { items: { id: string }[] };
-      const items = body.items.map((item) => (item.id === ANA_SUBSCRIPTION ? { ...item, id: "5b000000-0000-4000-8000-000000000099" } : item));
-      await route.fulfill({ response, json: { ...body, items } });
-    },
-    { times: 1 },
-  );
+  let lists = 0;
+  page.on("request", (request) => {
+    if (request.method() === "GET" && new URL(request.url()).pathname === "/admin/subscriptions") lists += 1;
+  });
   await enterAdmin(page, "/suscripciones");
+  await page.route("**/admin/customers/*/subscription/cancel", (route) =>
+    route.fulfill({
+      status: 409,
+      headers: { "Access-Control-Allow-Origin": ADMIN_APP_ORIGIN, "Access-Control-Allow-Credentials": "true" },
+      contentType: "application/json",
+      json: { error: "Conflict", message: "The live subscription is not the one you saw", code: "SUBSCRIPTION_CHANGED" },
+    }),
+  );
   const ana = row(page, "ana@example.com");
   await ana.getByRole("button", { name: "Cancelar" }).click();
   const dialog = page.getByRole("dialog", { name: "Cancelar suscripción" });
-  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: "5b000000-0000-4000-8000-000000000099" });
+  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
   await expect(dialog).toContainText("La suscripción de este cliente cambió desde que abriste la lista. No tocamos nada");
-  const reload = page.waitForResponse((res) => res.url().startsWith(`${ADMIN_MOCK_ORIGIN}/admin/subscriptions`));
+  await page.unrouteAll({ behavior: "wait" });
+  const before = lists;
   await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-  await reload;
+  await expect.poll(() => lists).toBeGreaterThan(before);
   await expect(ana).toContainText("Activa");
   await ana.getByRole("button", { name: "Pausar" }).click();
   expect(await confirmWithReason(page, "Pausar")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
@@ -180,11 +184,12 @@ test("a total refund goes without amount and core refuses money another admin al
   await carla.getByRole("button", { name: "Reembolsar" }).click();
   const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
   await expect(dialog.locator(".reason-amount")).toContainText("67.000,00");
-  const other = await page.request.post(`${ADMIN_MOCK_ORIGIN}/admin/payments/9e78dde6-0000-4000-8000-000000000004/refunds`, {
-    headers: { "X-Requested-With": "boxlead-web" },
-    data: { reason: "Otro administrador lo reembolsó antes" },
-  });
-  expect(other.status()).toBe(201);
+  const other = await page.context().newPage();
+  await other.goto("/pagos");
+  await row(other, "carla@example.com").getByRole("button", { name: "Reembolsar" }).click();
+  await confirmWithReason(other, "Reembolsar");
+  await expect(other.getByText("Mercado Pago aprobó el reembolso.")).toBeVisible();
+  await other.close();
   expect(await confirmWithReason(page, "Reembolsar")).toEqual({ reason: REASON });
   await expect(dialog).toContainText("El reembolso supera lo que queda del pago.");
   await dialog.getByRole("button", { name: "Cancelar" }).click();
@@ -199,15 +204,15 @@ test("a refund Mercado Pago is processing waits in Reembolsos without a retry", 
   const carla = row(page, "carla@example.com");
   await carla.getByRole("button", { name: "Reembolsar" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Parcial" }).click();
-  await page.getByRole("dialog").getByLabel("Monto a reembolsar en ARS").fill("5.000");
+  await page.getByRole("dialog").getByLabel("Monto a reembolsar en ARS").fill("4.000");
   await confirmWithReason(page, "Reembolsar");
   await expect(page.getByText("Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos.")).toBeVisible();
   await expect(carla).toContainText("Reembolsado $ 20.000,00");
-  await expect(carla).toContainText("Pedido y sin acreditar $ 5.000,00");
+  await expect(carla).toContainText("Pedido y sin acreditar $ 4.000,00");
 
   await page.goto("/reembolsos");
-  const processing = page.locator("tbody tr").filter({ hasText: "5.000,00" });
-  await expect(processing).toContainText("En proceso en Mercado Pago");
+  const processing = page.locator("tbody tr").filter({ hasText: "4.000,00" });
+  await expect(processing).toContainText(/En proceso\s*en Mercado Pago/);
   await expect(processing.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
 });
 
@@ -218,18 +223,18 @@ test("a refund that Mercado Pago did not answer stays asked for and can be retri
   await carla.getByRole("button", { name: "Reembolsar" }).click();
   const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
   await dialog.getByRole("button", { name: "Parcial" }).click();
-  await dialog.getByLabel("Monto a reembolsar en ARS").fill("5.000");
+  await dialog.getByLabel("Monto a reembolsar en ARS").fill("4.000");
   await confirmWithReason(page, "Reembolsar");
   await expect(dialog).toContainText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.");
   await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-  await expect(carla).toContainText("Pedido y sin acreditar $ 5.000,00");
+  await expect(carla).toContainText("Pedido y sin acreditar $ 4.000,00");
 
   await page.goto("/reembolsos");
-  const unanswered = page.locator("tbody tr").filter({ hasText: "5.000,00" });
+  const unanswered = page.locator("tbody tr").filter({ hasText: "4.000,00" });
   await expect(unanswered).toContainText("Sin respuesta");
   await unanswered.getByRole("button", { name: "Reintentar" }).click();
   const retry = page.getByRole("dialog", { name: "Reintentar reembolso" });
-  await expect(retry.locator(".reason-amount")).toContainText("5.000,00");
+  await expect(retry.locator(".reason-amount")).toContainText("4.000,00");
   await confirmWithReason(page, "Reintentar");
   await expect(retry).toContainText("Mercado Pago no respondió y el reembolso sigue pedido.");
 });
@@ -241,7 +246,7 @@ test("finance retries a refund that Mercado Pago did not answer", async ({ page 
   const waiting = page.locator("tbody tr").filter({ hasText: "Sin respuesta" });
   await expect(waiting).toContainText("Lo que quedaba del pago");
   await expect(waiting).toContainText("290.000,00");
-  const inProcess = page.locator("tbody tr").filter({ hasText: "En proceso en Mercado Pago" });
+  const inProcess = page.locator("tbody tr").filter({ hasText: /En proceso\s*en Mercado Pago/ });
   await expect(inProcess).toContainText("10.000,00");
   await expect(inProcess.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
   await expectFitsTheScreen(page);
