@@ -474,6 +474,7 @@ function markVoided({ match, body, admin }: MockRequest): MockReply {
   const invoice = state.invoices.find((row) => row.id === decodeURIComponent(match[1]));
   if (!invoice) return failure(404, "Invoice not found");
   if (invoice.status === "VOIDED") return failure(409, "The invoice is already voided");
+  if (invoice.status !== "ISSUED") return failure(409, "Only an issued invoice can be voided", "INVOICE_NOT_ISSUED");
   invoice.status = "VOIDED";
   invoice.voidedAt = new Date().toISOString();
   invoice.voidedBy = admin.userId;

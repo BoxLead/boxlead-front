@@ -43,7 +43,7 @@ export const NAV: NavSection[] = [
       { id: "subscriptions", path: "/suscripciones", label: "Suscripciones", description: "Suscripciones por estado, plan y período.", access: "ANY" },
       { id: "payments", path: "/pagos", label: "Pagos", description: "Pagos con su estado, su monto y su factura.", access: "ANY" },
       { id: "refunds", path: "/reembolsos", label: "Reembolsos", description: "Reembolsos pedidos y su respuesta de Mercado Pago.", access: ["FINANCE"] },
-      { id: "invoices", path: "/facturas", label: "Facturas", description: "Facturas para emitir, emitidas y anuladas.", access: ["FINANCE"] },
+      { id: "invoices", path: "/facturas", label: "Facturas", description: "Facturas para emitir, emitidas y anuladas, de la más vieja a la más nueva.", access: ["FINANCE"] },
     ],
   },
   {

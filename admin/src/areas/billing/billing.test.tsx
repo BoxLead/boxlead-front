@@ -7,12 +7,14 @@ import { ToastProvider } from "../../../../src/components/ui/ToastProvider";
 import type { AdminRole } from "../../api/types";
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
+import { InvoiceDialog } from "./InvoiceDialog";
+import { InvoicesScreen } from "./InvoicesScreen";
 import { PaymentsScreen } from "./PaymentsScreen";
 import { RefundDialog } from "./RefundDialog";
 import { RefundsScreen } from "./RefundsScreen";
 import { RetryRefundDialog } from "./RetryRefundDialog";
 import { SubscriptionsScreen } from "./SubscriptionsScreen";
-import type { PaymentRow, RefundRow, SubscriptionRow } from "./types";
+import type { InvoiceRow, PaymentRow, RefundRow, SubscriptionRow } from "./types";
 
 const ars = (amountMinor: number) => ({ amountMinor, currency: "ARS" });
 
@@ -51,6 +53,39 @@ const IN_PROCESS: RefundRow = {
   amount: ars(1000000),
   effectiveAmount: ars(1000000),
   providerRefundId: "rf-2003",
+};
+
+const PENDING_INVOICE: InvoiceRow = {
+  id: "1f000000-0000-4000-8000-000000000001",
+  paymentId: PAYMENT.id,
+  userId: PAYMENT.userId,
+  status: "PENDING",
+  amount: ars(8700000),
+  invoiceNumber: null,
+  issuedAt: null,
+  issuedBy: null,
+  voidedAt: null,
+  voidedBy: null,
+  receiver: { legalName: "Ana Pérez", taxIdType: "CUIT", taxId: "20123456786", vatCondition: "MONOTRIBUTO" },
+  createdAt: "2026-10-20T15:00:00Z",
+};
+
+const ISSUED_INVOICE: InvoiceRow = {
+  ...PENDING_INVOICE,
+  id: "1f000000-0000-4000-8000-000000000002",
+  status: "ISSUED",
+  invoiceNumber: "0003-00000011",
+  issuedAt: "2026-10-21T15:00:00Z",
+  issuedBy: "a2",
+};
+
+const VOIDED_INVOICE: InvoiceRow = {
+  ...ISSUED_INVOICE,
+  id: "1f000000-0000-4000-8000-000000000003",
+  status: "VOIDED",
+  invoiceNumber: "0003-00000010",
+  voidedAt: "2026-10-22T15:00:00Z",
+  voidedBy: "a2",
 };
 
 const SUBSCRIPTION: SubscriptionRow = {
@@ -283,6 +318,65 @@ describe("retry refund dialog", () => {
     expect(calls[0].url.pathname).toBe(`/admin/refunds/${UNANSWERED.id}/retry`);
     expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: "Mercado Pago no contestó ayer" });
     expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ status: "APPROVED" }));
+  });
+});
+
+describe("invoices screen", () => {
+  it("issues a pending invoice, voids only an issued one and says the list goes from oldest to newest", async () => {
+    mockFetch(() => page([PENDING_INVOICE, ISSUED_INVOICE, VOIDED_INVOICE]));
+    renderAs(["FINANCE"], <InvoicesScreen />, "/facturas");
+    const rows = await screen.findAllByRole("row");
+    const [pending, issued, voided] = rows.slice(1);
+    expect(within(pending).getByRole("button", { name: /Marcar emitida/ })).toBeInTheDocument();
+    expect(within(pending).queryByRole("button", { name: /Anular/ })).not.toBeInTheDocument();
+    expect(within(issued).getByRole("button", { name: "Anular la factura 0003-00000011" })).toBeInTheDocument();
+    expect(within(issued).queryByRole("button", { name: /Marcar emitida/ })).not.toBeInTheDocument();
+    expect(within(voided).queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByText(/de la más vieja a la más nueva/)).toBeInTheDocument();
+  });
+
+  it("reloads the list when core says the invoice is not issued anymore", async () => {
+    const calls = mockFetch((method) =>
+      method === "POST" ? json(409, { error: "Conflict", message: "not issued", code: "INVOICE_NOT_ISSUED" }) : page([ISSUED_INVOICE]),
+    );
+    renderAs(["FINANCE"], <InvoicesScreen />, "/facturas");
+    await userEvent.click(await screen.findByRole("button", { name: "Anular la factura 0003-00000011" }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Se emitió con el CUIT equivocado");
+    await userEvent.click(screen.getByRole("button", { name: "Anular factura", hidden: true }));
+    expect(await screen.findByText("Solo se puede anular una factura emitida. Recargá para ver su estado.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+  });
+});
+
+describe("invoice dialog", () => {
+  it("voids an issued invoice saying it does not go back", async () => {
+    const calls = mockFetch(() => json(200, { ...ISSUED_INVOICE, status: "VOIDED" }));
+    const onDone = vi.fn();
+    renderAs(["FINANCE"], <InvoiceDialog invoice={ISSUED_INVOICE} action="void" open today="2026-10-27" onClose={vi.fn()} onDone={onDone} />);
+    expect(screen.getByText(/0003-00000011 queda anulada en BoxLead y no vuelve atrás/)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Motivo"), "Se emitió con el CUIT equivocado");
+    await userEvent.click(screen.getByRole("button", { name: "Anular factura", hidden: true }));
+    expect(calls[0].url.pathname).toBe(`/admin/invoices/${ISSUED_INVOICE.id}/voided`);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ reason: "Se emitió con el CUIT equivocado" });
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it("asks for the number before marking an invoice issued and sends the date in Buenos Aires", async () => {
+    const calls = mockFetch(() => json(200, ISSUED_INVOICE));
+    renderAs(["FINANCE"], <InvoiceDialog invoice={PENDING_INVOICE} action="issue" open today="2026-10-27" onClose={vi.fn()} onDone={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("Motivo"), "Factura emitida en ARCA hoy");
+    await userEvent.click(screen.getByRole("button", { name: "Marcar emitida", hidden: true }));
+    expect(await screen.findAllByText("Ingresá el número de la factura.")).not.toHaveLength(0);
+    expect(calls).toHaveLength(0);
+    await userEvent.type(screen.getByLabelText("Número de factura"), "0003-00000020");
+    await userEvent.type(screen.getByLabelText("Fecha de emisión"), "2026-10-26");
+    await userEvent.click(screen.getByRole("button", { name: "Marcar emitida", hidden: true }));
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({
+      invoiceNumber: "0003-00000020",
+      issuedAt: "2026-10-26T00:00:00-03:00",
+      reason: "Factura emitida en ARCA hoy",
+    });
   });
 });
 

@@ -9,6 +9,7 @@ import { useListQuery } from "../../components/list/useListQuery";
 import { DateText } from "../../components/DateText";
 import { formatDate } from "../../format";
 import { navItem } from "../../nav";
+import { changedUnderneath } from "./api";
 import { Amount, CustomerCell, NoAction, RowActions, Stack, StatusTag } from "./cells";
 import { InvoiceDialog, type InvoiceAction } from "./InvoiceDialog";
 import { INVOICE_STATUS, INVOICE_STATUS_OPTIONS } from "./labels";
@@ -76,12 +77,10 @@ export function InvoicesScreen() {
       key: "actions",
       header: "Acciones",
       type: "actions",
-      cell: (row) =>
-        row.status === "VOIDED" ? (
-          <NoAction />
-        ) : (
-          <RowActions>
-            {row.status === "PENDING" ? (
+      cell: (row) => {
+        if (row.status === "PENDING") {
+          return (
+            <RowActions>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
@@ -90,17 +89,25 @@ export function InvoicesScreen() {
               >
                 Marcar emitida
               </button>
-            ) : null}
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              aria-label={`Anular la factura ${row.invoiceNumber ?? row.id.slice(0, 8)}`}
-              onClick={() => start(row, "void")}
-            >
-              Anular
-            </button>
-          </RowActions>
-        ),
+            </RowActions>
+          );
+        }
+        if (row.status === "ISSUED") {
+          return (
+            <RowActions>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                aria-label={`Anular la factura ${row.invoiceNumber ?? row.id.slice(0, 8)}`}
+                onClick={() => start(row, "void")}
+              >
+                Anular
+              </button>
+            </RowActions>
+          );
+        }
+        return <NoAction />;
+      },
     },
   ];
 
@@ -139,6 +146,9 @@ export function InvoicesScreen() {
           today={todayInBuenosAires()}
           onClose={() => setOpen(false)}
           onDone={done}
+          onSettled={(failure) => {
+            if (changedUnderneath(failure)) query.reload();
+          }}
         />
       ) : null}
     </Screen>

@@ -259,7 +259,9 @@ test("finance retries a refund that Mercado Pago did not answer", async ({ page 
 test("finance marks an invoice issued with its number and voids another", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/facturas?status=PENDING");
+  await expect(page.getByText("Facturas para emitir, emitidas y anuladas, de la más vieja a la más nueva.")).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /Anular/ })).toHaveCount(0);
   await expectFitsTheScreen(page);
   const first = page.locator("tbody tr").first();
   await first.getByRole("button", { name: "Marcar emitida" }).click();
@@ -278,7 +280,7 @@ test("finance marks an invoice issued with its number and voids another", async 
   await page.getByLabel("Estado").selectOption("ISSUED");
   const issued = page.locator("tbody tr").filter({ hasText: "0003-00000020" });
   await issued.getByRole("button", { name: "Anular" }).click();
-  await expect(page.getByRole("dialog", { name: "Anular factura" })).toContainText("nota de crédito");
+  await expect(page.getByRole("dialog", { name: "Anular factura" })).toContainText("no vuelve atrás");
   expect(await confirmWithReason(page, "Anular factura")).toEqual({ reason: REASON });
   await expect(page.getByText("Anulamos la factura.")).toBeVisible();
   await expect(issued).toHaveCount(0);
