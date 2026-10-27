@@ -417,6 +417,8 @@ describe("CustomerDetailScreen", () => {
     expect(rowOf("Respuestas del agente por período").getAllByRole("cell")[1]).toHaveTextContent("—");
     expect(rowOf("Categorización automática").getAllByRole("cell")[1]).toHaveTextContent("—");
     expect(rowOf("Agentes").getAllByRole("cell")[1]).toHaveTextContent("5");
+    expect(within(table).queryByText(/playground/i)).toBeNull();
+    expect(rowOf("Pruebas del agente por hora").getAllByRole("cell")[1]).toHaveTextContent("—");
     await userEvent.click(screen.getByRole("button", { name: "Ajustar respuestas del agente por período" }));
     const dialog = dialogOf("Ajustar respuestas del agente por período");
     expect(within(dialog).getByText(/Hoy no rige ningún valor porque no tiene plan/)).toBeInTheDocument();

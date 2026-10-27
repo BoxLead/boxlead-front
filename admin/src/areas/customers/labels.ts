@@ -45,7 +45,7 @@ export const ACCESS_LABELS: Record<Access, string> = {
 export const LIMIT_LABELS: Record<EntitlementKey, string> = {
   AGENT_REPLIES_PER_PERIOD: "Respuestas del agente por período",
   AGENTS_MAX: "Agentes",
-  PLAYGROUND_RUNS_PER_HOUR: "Pruebas en el playground por hora",
+  PLAYGROUND_RUNS_PER_HOUR: "Pruebas del agente por hora",
   LLM_COST_CAP_MICROS: "Tope de costo de IA del período",
   METRICS_HISTORY_DAYS: "Días de historial de métricas",
   PUBLIC_COMMENT_REPLIES: "Respuestas a comentarios públicos",

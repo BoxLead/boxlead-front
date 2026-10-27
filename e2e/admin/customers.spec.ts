@@ -208,15 +208,15 @@ test("the owner adjusts a limit and takes the adjustment back", async ({ page })
   await resetCustomers(["OWNER"]);
   await enterAdmin(page, `/usuarios/${ANA}`);
   const limits = section(page, "Límites");
-  const agents = limits.getByRole("row").filter({ hasText: "Pruebas en el playground por hora" });
+  const agents = limits.getByRole("row").filter({ hasText: "Pruebas del agente por hora" });
   await expect(agents).toContainText("60");
 
-  await limits.getByRole("button", { name: "Ajustar pruebas en el playground por hora" }).click();
-  const dialog = page.getByRole("dialog", { name: "Ajustar pruebas en el playground por hora" });
+  await limits.getByRole("button", { name: "Ajustar pruebas del agente por hora" }).click();
+  const dialog = page.getByRole("dialog", { name: "Ajustar pruebas del agente por hora" });
   await dialog.getByLabel("Valor").fill("90");
   const set = await confirm(
     page,
-    "Ajustar pruebas en el playground por hora",
+    "Ajustar pruebas del agente por hora",
     "Guardar ajuste",
     `/admin/customers/${ANA}/overrides/PLAYGROUND_RUNS_PER_HOUR`,
   );
@@ -225,7 +225,7 @@ test("the owner adjusts a limit and takes the adjustment back", async ({ page })
   await expect(agents).toContainText("90");
   await expect(agents).toContainText(REASON);
 
-  await limits.getByRole("button", { name: "Quitar el ajuste de pruebas en el playground por hora" }).click();
+  await limits.getByRole("button", { name: "Quitar el ajuste de pruebas del agente por hora" }).click();
   const revoked = await confirm(page, "Quitar ajuste", "Quitar ajuste", `/admin/customers/${ANA}/overrides/PLAYGROUND_RUNS_PER_HOUR`);
   expect(revoked.method()).toBe("DELETE");
   expect(revoked.postDataJSON()).toEqual({ reason: REASON });
