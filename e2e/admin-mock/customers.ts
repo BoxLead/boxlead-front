@@ -100,7 +100,14 @@ type Customer = {
   replies: number;
 };
 
+type StoredRefund = { paymentId: string; amount: Money | null; status: "REQUESTED" | "APPROVED" | "REJECTED"; createdAt: string };
+
+type StoredCommission = { status: "ACCRUED" | "APPROVED" | "PAID" | "REVERSED" | "HELD"; amount: Money; payoutId: string | null; releaseAt: string };
+
 let records: Customer[] = [];
+let refunds: StoredRefund[] = [];
+let commissions: StoredCommission[] = [];
+let providerUpdates = new Map<string, string>();
 
 function uuid(prefix: string, n: number): string {
   return `${prefix}000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -308,6 +315,22 @@ function seed(now: number): Customer[] {
   return [ana, bruno, carla, diego, elena, federico, gabriela, ...others];
 }
 
+function seedRefunds(now: number): StoredRefund[] {
+  return [
+    { paymentId: uuid("0f", 7), amount: ars(4350000), status: "APPROVED", createdAt: iso(now - 2 * DAY) },
+    { paymentId: uuid("0f", 3), amount: ars(1000000), status: "REJECTED", createdAt: iso(now - 1 * DAY) },
+  ];
+}
+
+function seedCommissions(now: number): StoredCommission[] {
+  return [
+    { status: "APPROVED", amount: ars(1305000), payoutId: null, releaseAt: iso(now - 20 * DAY) },
+    { status: "APPROVED", amount: ars(609000), payoutId: uuid("2a", 1), releaseAt: iso(now - 50 * DAY) },
+    { status: "ACCRUED", amount: ars(609000), payoutId: null, releaseAt: iso(now - 1 * DAY) },
+    { status: "ACCRUED", amount: ars(300000), payoutId: null, releaseAt: iso(now + 10 * DAY) },
+  ];
+}
+
 function currentDemo(customer: Customer): DemoGrant | null {
   return customer.demos.find((demo) => demo.revokedAt === null) ?? null;
 }
@@ -435,11 +458,28 @@ function search(query: URLSearchParams): MockReply {
   return page(rows, query, PAGE_SIZE);
 }
 
-function sum(amounts: readonly Money[], currency: string): Money {
-  return {
-    amountMinor: amounts.filter((money) => money.currency === currency).reduce((total, money) => total + money.amountMinor, 0),
-    currency,
-  };
+function add(totals: Map<string, number>, money: Money, sign = 1) {
+  totals.set(money.currency, (totals.get(money.currency) ?? 0) + sign * money.amountMinor);
+}
+
+function refundedWhere(inMonth: (at: string | null) => boolean, payments: readonly Payment[]): Map<string, number> {
+  const totals = new Map<string, number>();
+  const approved = refunds.filter((row) => row.status === "APPROVED" && inMonth(row.createdAt));
+  for (const row of approved) if (row.amount) add(totals, row.amount);
+  const whole = new Set(approved.filter((row) => row.amount === null).map((row) => row.paymentId));
+  for (const row of payments) if (whole.has(row.id)) add(totals, row.amount);
+  for (const row of refunds) if (row.amount && row.status !== "REJECTED" && whole.has(row.paymentId)) add(totals, row.amount, -1);
+  return totals;
+}
+
+function moneyOf(totals: Map<string, number>): Money[] {
+  return [...totals.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([currency, amountMinor]) => ({ amountMinor, currency }));
+}
+
+function commissionsWhere(matches: (row: StoredCommission) => boolean): Money[] {
+  const totals = new Map<string, number>();
+  for (const row of commissions.filter(matches)) add(totals, row.amount);
+  return moneyOf(totals);
 }
 
 function overview(query: URLSearchParams, admin: AdminIdentity): MockReply {
@@ -454,31 +494,26 @@ function overview(query: URLSearchParams, admin: AdminIdentity): MockReply {
   for (const status of SUBSCRIPTION_STATUSES) byStatus[status] = subscriptions.filter((row) => row.status === status).length;
   for (const row of subscriptions.filter((item) => item.status !== "CANCELED")) byPlan[row.planCode] = (byPlan[row.planCode] ?? 0) + 1;
   const payments = records.flatMap((customer) => customer.payments);
-  const approved = payments.filter((row) => row.status !== "REJECTED" && inMonth(row.approvedAt));
+  const approved = payments.filter((row) => inMonth(row.approvedAt));
   const finance = hasRole(admin, "FINANCE");
-  const currencies = [...new Set(approved.map((row) => row.amount.currency))];
+  const gross = new Map<string, number>();
+  const fees = new Map<string, number>();
+  for (const row of approved) {
+    add(gross, row.amount);
+    if (row.providerFee) add(fees, row.providerFee);
+  }
+  const refunded = refundedWhere(inMonth, payments);
+  const currencies = [...new Set([...gross.keys(), ...refunded.keys()])].sort();
   const revenue = currencies.map((currency) => {
-    const gross = sum(
-      approved.map((row) => row.amount),
-      currency,
-    );
-    const refunded = sum(
-      approved.map((row) => row.refunded),
-      currency,
-    );
-    const providerFees = sum(
-      approved.flatMap((row) => (row.providerFee ? [row.providerFee] : [])),
-      currency,
-    );
+    const money = (totals: Map<string, number>) => ({ amountMinor: totals.get(currency) ?? 0, currency });
+    const row = { gross: money(gross), refunded: money(refunded), providerFees: money(fees) };
     return {
       currency,
-      gross,
-      refunded,
-      providerFees,
-      net: { amountMinor: gross.amountMinor - refunded.amountMinor - providerFees.amountMinor, currency },
+      ...row,
+      net: { amountMinor: row.gross.amountMinor - row.refunded.amountMinor - row.providerFees.amountMinor, currency },
     };
   });
-  const seeded = records.length > 0;
+  const nowTime = now.getTime();
   return ok({
     month,
     users: {
@@ -486,15 +521,15 @@ function overview(query: URLSearchParams, admin: AdminIdentity): MockReply {
       newInMonth: records.filter((row) => inMonth(row.createdAt)).length,
     },
     subscriptions: { byStatus, byPlan },
-    demos: { active: records.filter((row) => demoRunning(row, now.getTime())).length },
+    demos: { active: records.filter((row) => demoRunning(row, nowTime)).length },
     payments: {
       approvedInMonth: approved.length,
-      rejectedInMonth: payments.filter((row) => row.status === "REJECTED" && inMonth(row.createdAt)).length,
+      rejectedInMonth: payments.filter((row) => row.status === "REJECTED" && inMonth(providerUpdates.get(row.id) ?? row.createdAt)).length,
     },
     revenue: finance ? revenue : null,
     commissions: {
-      approvedUnpaid: finance ? (seeded ? [ars(1305000)] : []) : null,
-      accruedReleasable: finance ? (seeded ? [ars(609000)] : []) : null,
+      approvedUnpaid: finance ? commissionsWhere((row) => row.status === "APPROVED" && row.payoutId === null) : null,
+      accruedReleasable: finance ? commissionsWhere((row) => row.status === "ACCRUED" && Date.parse(row.releaseAt) <= nowTime) : null,
     },
   });
 }
@@ -679,6 +714,10 @@ export const customers: MockArea = {
     { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/attribution$`), access: ["OWNER"], handle: action(correctAttribution) },
   ],
   reset: ({ scenario, now }) => {
-    records = scenario === CUSTOMERS_SCENARIO ? seed(now.getTime()) : [];
+    const seeded = scenario === CUSTOMERS_SCENARIO;
+    records = seeded ? seed(now.getTime()) : [];
+    refunds = seeded ? seedRefunds(now.getTime()) : [];
+    commissions = seeded ? seedCommissions(now.getTime()) : [];
+    providerUpdates = new Map(seeded ? [[uuid("0f", 5), iso(now.getTime() - 1 * DAY + 2 * 3_600_000)]] : []);
   },
 };

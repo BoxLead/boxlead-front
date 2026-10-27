@@ -44,6 +44,21 @@ test("the overview keeps the amounts away from support and changes the month", a
   await expect(page.locator(".stat-card").filter({ hasText: "Usuarios" })).toContainText("0");
 });
 
+test("the overview of a past month counts the users at its close", async ({ page }) => {
+  await resetCustomers(["FINANCE"]);
+  const past = new Date(Date.now() - 100 * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).slice(0, 7);
+  const label = new Date(`${past}-15T12:00:00-03:00`).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "America/Argentina/Buenos_Aires" });
+  await enterAdmin(page, `/?month=${past}`);
+  const users = page.locator(".stat-card").filter({ hasText: "Usuarios" });
+  await expect(users).toContainText(label);
+  await expect(users).not.toContainText("Hoy");
+  await expect(users.locator(".stat-value")).not.toHaveText("24");
+  await expect(page.locator(".stat-card").filter({ hasText: "Demos vigentes" })).toContainText("Hoy");
+  await expect(section(page, "Ingresos del mes")).toContainText("No hubo cobros en este mes.");
+  await expect(section(page, "Comisiones")).toContainText("13.050,00");
+  await expect(section(page, "Comisiones")).not.toContainText("19.140,00");
+});
+
 test("the overview shows zeros when there is nothing yet", async ({ page }) => {
   await resetCustomers(["OWNER"], "default");
   await enterAdmin(page, "/");
