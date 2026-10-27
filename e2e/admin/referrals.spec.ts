@@ -296,7 +296,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.keyboard.press("Escape");
 
     await page.goto("/liquidaciones");
-    await expect(page.getByText("Laura Gómez CM").first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Laura Gómez CM" }).first()).toBeVisible();
     await shot("16-liquidaciones");
     await page.goto(`/liquidaciones/${EXPORTED_PAYOUT}`);
     await expect(page.getByText("Exportada", { exact: true })).toBeVisible();
