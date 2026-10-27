@@ -10,6 +10,8 @@ const MERCADOLIBRE_IMAGES = 'https://*.mlstatic.com'
 const INSTAGRAM_IMAGES = 'https://*.cdninstagram.com'
 const ANALYTICS_TAG = 'https://www.googletagmanager.com'
 const ANALYTICS_COLLECT = 'https://*.google-analytics.com https://*.analytics.google.com'
+const CLOUDFLARE_BEACON = 'https://static.cloudflareinsights.com'
+const CLOUDFLARE_INSIGHTS = 'https://cloudflareinsights.com'
 
 const ROUTE_ENTRIES: Record<string, string[]> = {
   '/': ['src/landing/LandingPage.tsx'],
@@ -71,11 +73,11 @@ export function contentSecurityPolicy(
   const analyticsImages = analytics ? ANALYTICS_COLLECT : ''
   return [
     "default-src 'self'",
-    `script-src 'self' ${hashes} https://connect.facebook.net ${analyticsScript}`,
+    `script-src 'self' ${hashes} https://connect.facebook.net ${CLOUDFLARE_BEACON} ${analyticsScript}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     `img-src 'self' data: ${FACEBOOK_SOURCES} ${MERCADOLIBRE_IMAGES} ${INSTAGRAM_IMAGES} ${analyticsImages}`,
-    `connect-src 'self' ${apiOrigin} ${agentApiOrigin} ${auth0Origin} ${FACEBOOK_SOURCES} ${analyticsConnect}`,
+    `connect-src 'self' ${apiOrigin} ${agentApiOrigin} ${auth0Origin} ${FACEBOOK_SOURCES} ${CLOUDFLARE_INSIGHTS} ${analyticsConnect}`,
     "media-src 'self'",
     "worker-src 'self'",
     "manifest-src 'self'",
