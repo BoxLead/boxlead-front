@@ -1,70 +1,23 @@
-import type { TagTone } from "../../../../src/components/ui/Tag";
-import type {
-  Access,
-  AttributionSource,
-  CheckoutStatus,
-  EntitlementKey,
-  InvoiceStatus,
-  PaymentStatus,
-  PlanCode,
-  PlanSource,
-  SubscriptionStatus,
-} from "./types";
+import {
+  INVOICE_STATUS,
+  labelsOf,
+  PAYMENT_STATUS,
+  PLAN_LABELS,
+  planLabel,
+  SUBSCRIPTION_STATUS,
+  tonesOf,
+} from "../../status";
+import type { Access, AttributionSource, CheckoutStatus, EntitlementKey, PlanSource, SubscriptionStatus } from "./types";
 
 export const NO_SUBSCRIPTION = "NONE";
 
-export const PLAN_LABELS: Record<PlanCode, string> = {
-  DEMO: "Demo",
-  STARTER: "Starter",
-  BUSINESS: "Business",
-  ENTERPRISE: "Enterprise",
-};
+export { PLAN_LABELS, planLabel };
 
-export const SUBSCRIPTION_LABELS: Record<SubscriptionStatus, string> = {
-  INCOMPLETE: "Incompleta",
-  ACTIVE: "Activa",
-  PAST_DUE: "Con pago vencido",
-  SUSPENDED: "Suspendida",
-  PAUSED: "Pausada",
-  CANCELED: "Cancelada",
-};
-
-export const SUBSCRIPTION_TONES: Record<SubscriptionStatus, TagTone> = {
-  INCOMPLETE: "neutral",
-  ACTIVE: "success",
-  PAST_DUE: "warning",
-  SUSPENDED: "danger",
-  PAUSED: "warning",
-  CANCELED: "neutral",
-};
-
-export const PAYMENT_LABELS: Record<PaymentStatus, string> = {
-  PENDING: "Pendiente",
-  APPROVED: "Aprobado",
-  REJECTED: "Rechazado",
-  REFUNDED: "Reembolsado",
-  PARTIALLY_REFUNDED: "Reembolsado en parte",
-  CHARGED_BACK: "Contracargo",
-  IN_MEDIATION: "En mediación",
-  CANCELLED: "Cancelado",
-};
-
-export const PAYMENT_TONES: Record<PaymentStatus, TagTone> = {
-  PENDING: "neutral",
-  APPROVED: "success",
-  REJECTED: "danger",
-  REFUNDED: "warning",
-  PARTIALLY_REFUNDED: "warning",
-  CHARGED_BACK: "danger",
-  IN_MEDIATION: "warning",
-  CANCELLED: "neutral",
-};
-
-export const INVOICE_LABELS: Record<InvoiceStatus, string> = {
-  PENDING: "Para emitir",
-  ISSUED: "Emitida",
-  VOIDED: "Anulada",
-};
+export const SUBSCRIPTION_LABELS = labelsOf(SUBSCRIPTION_STATUS);
+export const SUBSCRIPTION_TONES = tonesOf(SUBSCRIPTION_STATUS);
+export const PAYMENT_LABELS = labelsOf(PAYMENT_STATUS);
+export const PAYMENT_TONES = tonesOf(PAYMENT_STATUS);
+export const INVOICE_LABELS = labelsOf(INVOICE_STATUS);
 
 export const CHECKOUT_LABELS: Record<CheckoutStatus, string> = {
   WAITING: "Esperando el pago",
@@ -114,11 +67,6 @@ const CANCEL_LABELS: Record<string, string> = {
 
 export function cancelReasonLabel(cause: string): string {
   return CANCEL_LABELS[cause] ?? cause;
-}
-
-export function planLabel(code: string | null): string {
-  if (!code) return "Sin plan";
-  return code in PLAN_LABELS ? PLAN_LABELS[code as PlanCode] : code;
 }
 
 export function subscriptionLabel(status: string): string {

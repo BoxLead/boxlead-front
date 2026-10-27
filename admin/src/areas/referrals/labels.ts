@@ -1,46 +1,23 @@
-import type { TagTone } from "../../../../src/components/ui/Tag";
 import type { FilterOption } from "../../components/list/Filters";
-import type {
-  AttributionSource,
-  CommissionKind,
-  CommissionStatus,
-  PayoutStatus,
-  ReferralCodeStatus,
-  ResellerStatus,
-  CustomerMatch,
-  SubscriptionStatus,
-} from "./types";
+import {
+  CODE_STATUS,
+  COMMISSION_STATUS,
+  labelsOf,
+  PAYOUT_STATUS,
+  planLabel,
+  RESELLER_STATUS,
+  SUBSCRIPTION_STATUS as SUBSCRIPTION_TABLE,
+  type StatusLabel,
+} from "../../status";
+import type { AttributionSource, CommissionKind, CustomerMatch } from "./types";
 
-type Label = { label: string; tone: TagTone };
+type Label = StatusLabel;
 
-export const RESELLER_STATUS: Record<ResellerStatus, Label> = {
-  ACTIVE: { label: "Activo", tone: "success" },
-  SUSPENDED: { label: "Suspendido", tone: "warning" },
-  CLOSED: { label: "Cerrado", tone: "neutral" },
-};
-
-export const CODE_STATUS: Record<ReferralCodeStatus, Label> = {
-  ACTIVE: { label: "Activo", tone: "success" },
-  DISABLED: { label: "Desactivado", tone: "neutral" },
-};
-
-export const COMMISSION_STATUS: Record<CommissionStatus, Label> = {
-  ACCRUED: { label: "Devengada", tone: "accent" },
-  APPROVED: { label: "Aprobada", tone: "success" },
-  PAID: { label: "Pagada", tone: "neutral" },
-  REVERSED: { label: "Revertida", tone: "danger" },
-  HELD: { label: "Retenida", tone: "warning" },
-};
+export { CODE_STATUS, COMMISSION_STATUS, PAYOUT_STATUS, RESELLER_STATUS };
 
 export const COMMISSION_KIND: Record<CommissionKind, string> = {
   ACCRUAL: "Comisión",
   REVERSAL: "Reversa",
-};
-
-export const PAYOUT_STATUS: Record<PayoutStatus, Label> = {
-  DRAFT: { label: "Armada", tone: "accent" },
-  EXPORTED: { label: "Exportada", tone: "warning" },
-  PAID: { label: "Pagada", tone: "success" },
 };
 
 export const ATTRIBUTION_SOURCE: Record<AttributionSource, string> = {
@@ -49,26 +26,9 @@ export const ATTRIBUTION_SOURCE: Record<AttributionSource, string> = {
   ADMIN: "Corrección",
 };
 
-export const SUBSCRIPTION_STATUS: Record<SubscriptionStatus, string> = {
-  INCOMPLETE: "Incompleta",
-  ACTIVE: "Activa",
-  PAST_DUE: "Con deuda",
-  SUSPENDED: "Suspendida",
-  PAUSED: "Pausada",
-  CANCELED: "Cancelada",
-};
+export const SUBSCRIPTION_STATUS = labelsOf(SUBSCRIPTION_TABLE);
 
-const PLAN_NAMES: Record<string, string> = {
-  DEMO: "Demo",
-  STARTER: "Starter",
-  BUSINESS: "Business",
-  ENTERPRISE: "Enterprise",
-};
-
-export function planName(code: string | null): string {
-  if (!code) return "Sin plan";
-  return PLAN_NAMES[code] ?? code;
-}
+export const planName = planLabel;
 
 export function optionsOf(labels: Record<string, Label>): FilterOption[] {
   return Object.entries(labels).map(([value, { label }]) => ({ value, label }));

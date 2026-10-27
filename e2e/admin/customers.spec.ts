@@ -24,7 +24,7 @@ test("the overview shows the month and its amounts to finance", async ({ page })
   await enterAdmin(page, "/");
   await expect(page.getByRole("heading", { level: 1, name: "Inicio" })).toBeVisible();
   await expect(page.locator(".overview-stat").filter({ hasText: "Usuarios" })).toContainText("24");
-  await expect(section(page, "Suscripciones por estado")).toContainText("Con pago vencido");
+  await expect(section(page, "Suscripciones por estado")).toContainText("Cuota impaga");
   await expect(section(page, "Ingresos del mes")).toBeVisible();
   await expect(section(page, "Comisiones")).toContainText("Aprobadas sin liquidar");
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
@@ -81,7 +81,7 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await page.getByRole("link", { name: "carla.ruiz@example.com" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Detalle de usuario" })).toBeVisible();
   await expect(page.locator(".page-header-desc")).toHaveText("carla.ruiz@example.com");
-  await expect(section(page, "Suscripción")).toContainText("Con pago vencido");
+  await expect(section(page, "Suscripción")).toContainText("Cuota impaga");
 });
 
 test("users show an empty list and an error", async ({ page }) => {
