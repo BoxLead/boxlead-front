@@ -253,6 +253,37 @@ describe("InvitationsScreen", () => {
     expect(await screen.findByText("Ese email ya tiene una invitación abierta.")).toBeInTheDocument();
   });
 
+  it("explains the codes and the field problems core answers when creating", async () => {
+    const day = addDays(todayInBuenosAires(), 3);
+    const replies = [
+      json(400, { error: "past", message: "past", code: "INVITATION_EXPIRY_PAST" }),
+      json(400, { error: "email", message: "email", code: "INVITATION_EMAIL_INVALID" }),
+      json(409, { error: "reseller", message: "reseller", code: "INVITATION_RESELLER_INVALID" }),
+      json(400, {
+        error: "Validation failed",
+        message: "Validation failed",
+        fields: [
+          { field: "email", message: "must be a well-formed email address" },
+          { field: "reason", message: "size must be between 10 and 500" },
+        ],
+      }),
+    ];
+    renderScreen((method, url) => (method === "POST" && url.pathname === "/admin/invitations" ? replies.shift() : undefined));
+    await screen.findByRole("cell", { name: "nora@panaderia.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Nueva invitación" }));
+    await userEvent.type(dialog().getByLabelText("Email"), "pablo@talleres.com");
+    await userEvent.type(dialog().getByLabelText("La invitación vence el"), day);
+    await userEvent.click(hidden("Continuar"));
+    await giveReason("Crear invitación");
+    expect(await dialog().findByText("El vencimiento ya pasó. Elegí hoy o un día que todavía no pasó.")).toBeInTheDocument();
+    await userEvent.click(hidden("Crear invitación"));
+    expect(await dialog().findByText("Ese email no es válido. Revisalo y volvé a intentar.")).toBeInTheDocument();
+    await userEvent.click(hidden("Crear invitación"));
+    expect(await dialog().findByText(/Ese revendedor no existe o no está activo/)).toBeInTheDocument();
+    await userEvent.click(hidden("Crear invitación"));
+    expect(await dialog().findByText("Revisá el email. El motivo tiene que tener entre 10 y 500 caracteres.")).toBeInTheDocument();
+  });
+
   it("filters invitations by status and email", async () => {
     const calls = renderScreen(() => undefined);
     await screen.findByRole("cell", { name: "nora@panaderia.com" });

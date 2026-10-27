@@ -10,6 +10,9 @@ export type AdminErrorCode =
   | "INVITATION_CLOSED"
   | "INVITATION_RESELLER_INVALID"
   | "DEMO_ALREADY_USED"
+  | "DEMO_SUBSCRIPTION_ACTIVE"
+  | "INVITATION_EXPIRY_PAST"
+  | "INVITATION_EMAIL_INVALID"
   | "SUBSCRIPTION_NOT_ACTIVE"
   | "RESELLER_EXISTS"
   | "INVOICE_NUMBER_TAKEN"
@@ -31,6 +34,9 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   INVITATION_CLOSED: "La invitación ya está cerrada.",
   INVITATION_RESELLER_INVALID: "Ese revendedor no existe o no está activo. Elegí otro o creá la invitación sin revendedor.",
   DEMO_ALREADY_USED: "Ese usuario ya tiene una Demo, aunque haya terminado. Quitala antes de otorgarle otra.",
+  DEMO_SUBSCRIPTION_ACTIVE: "Ese usuario tiene una suscripción que le da acceso. La Demo no tendría efecto y gastaría la única que puede tener.",
+  INVITATION_EXPIRY_PAST: "El vencimiento ya pasó. Elegí hoy o un día que todavía no pasó.",
+  INVITATION_EMAIL_INVALID: "Ese email no es válido. Revisalo y volvé a intentar.",
   SUBSCRIPTION_NOT_ACTIVE: "Esa suscripción ya no está activa, así que esta acción no aplica. Recargá para ver lo último.",
   RESELLER_EXISTS: "Ese usuario ya es revendedor.",
   INVOICE_NUMBER_TAKEN: "Ese número de factura ya está usado en otra factura. Revisalo y cargá el correcto.",
@@ -52,15 +58,19 @@ const STATUS_MESSAGES: Record<number, string> = {
 
 const FALLBACK = "Algo falló en BoxLead. Probá de nuevo en unos minutos.";
 
+export type FieldProblem = { field: string; message: string };
+
 export class AdminApiError extends Error {
   readonly status: number;
   readonly code: string | null;
+  readonly fields: readonly FieldProblem[];
 
-  constructor(message: string, status: number, code: string | null) {
+  constructor(message: string, status: number, code: string | null, fields: readonly FieldProblem[] = []) {
     super(message);
     this.name = "AdminApiError";
     this.status = status;
     this.code = code;
+    this.fields = fields;
   }
 }
 
@@ -80,6 +90,15 @@ export function codeOf(body: unknown): string | null {
   return typeof body.code === "string" ? body.code : null;
 }
 
+function isFieldProblem(value: unknown): value is FieldProblem {
+  return !!value && typeof value === "object" && "field" in value && typeof value.field === "string" && "message" in value && typeof value.message === "string";
+}
+
+export function fieldsOf(body: unknown): FieldProblem[] {
+  if (!body || typeof body !== "object" || !("fields" in body) || !Array.isArray(body.fields)) return [];
+  return body.fields.filter(isFieldProblem);
+}
+
 export function messageFor(status: number, code: string | null): string {
   if (code && isKnownCode(code)) return CODE_MESSAGES[code];
   return STATUS_MESSAGES[status] ?? FALLBACK;
@@ -87,7 +106,7 @@ export function messageFor(status: number, code: string | null): string {
 
 export function toAdminError(status: number, body: unknown): AdminApiError {
   const code = codeOf(body);
-  return new AdminApiError(messageFor(status, code), status, code);
+  return new AdminApiError(messageFor(status, code), status, code, fieldsOf(body));
 }
 
 export function isStale(error: unknown): boolean {
@@ -96,7 +115,7 @@ export function isStale(error: unknown): boolean {
 
 export function withMessage(status: number, message: string) {
   return (error: unknown): never => {
-    if (error instanceof AdminApiError && error.status === status) throw new AdminApiError(message, status, error.code);
+    if (error instanceof AdminApiError && error.status === status) throw new AdminApiError(message, status, error.code, error.fields);
     throw error;
   };
 }
