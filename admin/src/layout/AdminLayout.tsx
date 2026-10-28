@@ -19,6 +19,7 @@ export function AdminLayout() {
   const [leaving, setLeaving] = useState(false);
   const menuId = useId();
   const navRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const sections = useMemo(
     () =>
       NAV.map((section) => ({
@@ -32,7 +33,9 @@ export function AdminLayout() {
     if (!menuOpen) return;
     navRef.current?.querySelector<HTMLElement>("a")?.focus();
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      toggleRef.current?.focus();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -52,6 +55,7 @@ export function AdminLayout() {
             <span className="admin-brand-text">Backoffice</span>
           </span>
           <button
+            ref={toggleRef}
             type="button"
             className="btn btn-secondary btn-sm admin-menu-toggle"
             aria-expanded={menuOpen}
