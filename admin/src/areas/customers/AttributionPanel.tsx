@@ -6,7 +6,7 @@ import { ResellerDirectoryNotice } from "../../components/ResellerDirectoryNotic
 import { DateText } from "../../components/DateText";
 import { useResellerDirectory, type ResellerDirectory } from "../../session/resellerDirectory";
 import { SOURCE_LABELS } from "./labels";
-import { Facts, LoadingBlock, Muted, Section } from "./parts";
+import { Facts, LoadingBlock, Muted, ResellerLink, Section } from "./parts";
 import type { Attribution, ResellerOption } from "./types";
 import { invalid, useActionDialogs } from "./useActionDialogs";
 
@@ -102,11 +102,7 @@ export function AttributionPanel({ userId, attribution, resellerId, canOperate, 
           items={[
             {
               label: "Revendedor",
-              value: (
-                <Link className="entity-link" to={`/revendedores/${attribution.resellerId}`}>
-                  {resellerName(directory, attribution.resellerId)}
-                </Link>
-              ),
+              value: <ResellerLink id={attribution.resellerId} />,
             },
             { label: "Origen", value: SOURCE_LABELS[attribution.source] },
             { label: "Desde", value: <DateText value={attribution.createdAt} time /> },
