@@ -107,6 +107,19 @@ test("with a session on another email the mismatch is explained", async ({ page 
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("an account whose subscription already gives the plan is told so and keeps the invitation", async ({ page }) => {
+  await resetApi("billing-active");
+  await login(page);
+  await page.goto(`/invitacion#${INVITATION_TOKENS.valid}`);
+  const answer = page.waitForResponse((response) => response.url().endsWith("/invitations/accept"));
+  await page.getByRole("button", { name: "Activar la Beta en esta cuenta" }).click();
+  expect((await answer).status()).toBe(409);
+  await expect(page.getByRole("alert")).toHaveText(
+    "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.",
+  );
+  await expectNoHorizontalScroll(page);
+});
+
 test("an account that already used the demo is told so", async ({ page }) => {
   await resetApi("billing-demo");
   await login(page);

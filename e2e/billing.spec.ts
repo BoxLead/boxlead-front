@@ -190,7 +190,7 @@ test("changing plan, undoing a downgrade and canceling", async ({ page }) => {
 
   await page.getByRole("button", { name: "Cambiar a Business" }).click();
   const upgrade = page.getByRole("dialog", { name: "¿Pasar a Business?" });
-  await expect(upgrade).toContainText("El cambio rige ahora");
+  await expect(upgrade).toContainText("Si es la primera vez que subís de plan, el cambio rige ahora.");
   await shoot(page, "billing-change-plan");
   await upgrade.getByRole("button", { name: "Pasar a Business" }).click();
   await expect(page.getByText("Ahora tenés Business.")).toBeVisible();
@@ -220,6 +220,58 @@ test("changing plan, undoing a downgrade and canceling", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Cambiar a Starter" })).toBeDisabled();
   await expect(page.getByText(/^Podés volver a contratar después del/)).toBeVisible();
   await shoot(page, "billing-canceled");
+});
+
+test("a second upgrade waits for the charge at the new amount and can be undone", async ({ page }) => {
+  test.slow();
+  await resetApi("billing-active");
+  await login(page, "/app/billing");
+  for (const [target, result] of [
+    ["Business", "Ahora tenés Business."],
+    ["Starter", "Ahora tenés Starter."],
+  ] as const) {
+    await page.getByRole("button", { name: `Cambiar a ${target}` }).click();
+    await page.getByRole("dialog", { name: `¿Pasar a ${target}?` }).getByRole("button", { name: `Pasar a ${target}` }).click();
+    await expect(page.getByText(result)).toBeVisible();
+  }
+  await page.getByRole("button", { name: "Cambiar a Business" }).click();
+  await page.getByRole("dialog", { name: "¿Pasar a Business?" }).getByRole("button", { name: "Pasar a Business" }).click();
+  const current = page.getByRole("region", { name: "Tu plan" });
+  await expect(current.locator(".billing-current-name")).toHaveText("Starter");
+  await expect(current.getByText(/^Pasás a Business el/)).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "Business" }).getByText(/^Desde el/)).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await current.getByRole("button", { name: "Seguir en Starter" }).click();
+  await expect(page.getByText("Seguís en Starter.")).toBeVisible();
+  await expect(current.getByText(/^Pasás a Business el/)).toHaveCount(0);
+});
+
+test("a cancellation Mercado Pago does not confirm yet shows as requested", async ({ page }) => {
+  await resetApi("billing-active", undefined, { providerDown: true });
+  await login(page, "/app/billing");
+  await page.getByRole("button", { name: "Dar de baja" }).click();
+  const cancel = page.getByRole("dialog", { name: "¿Dar de baja tu plan?" });
+  const answer = page.waitForResponse((response) => response.url().endsWith("/billing/subscription/cancel"));
+  await cancel.getByRole("button", { name: "Dar de baja" }).click();
+  expect((await answer).status()).toBe(502);
+  await expect(page.getByText("Pediste la baja. Mercado Pago la confirma en unos minutos. Si en un rato no la ves acá, pedila de nuevo.")).toBeVisible();
+  await expect(cancel).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Dar de baja" })).toBeVisible();
+  await expectNoHorizontalScroll(page);
+});
+
+test("a checkout with a payment in process asks to wait before paying another plan", async ({ page }) => {
+  await resetApi("billing-checkout-pending");
+  await interceptMercadoPago(page);
+  await login(page, "/app/billing");
+  await page.getByRole("button", { name: "Contratar Business" }).click();
+  const dialog = page.getByRole("dialog", { name: "Contratar Business" });
+  await dialog.getByRole("checkbox").check();
+  await dialog.getByRole("button", { name: "Ir a pagar" }).click();
+  await expect(
+    dialog.getByText("Tenés un pago en proceso en Mercado Pago. Esperá a que se confirme antes de pagar otro plan o con otro email."),
+  ).toBeVisible();
+  await expectNoHorizontalScroll(page);
 });
 
 test("a past due plan points to Mercado Pago to change the payment method", async ({ page }) => {

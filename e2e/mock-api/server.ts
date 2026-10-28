@@ -466,6 +466,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       agentReplies: typeof body.agentReplies === "number" ? body.agentReplies : undefined,
       overrides: limitOverrides(body.overrides),
       enforced: body.enforced !== false,
+      providerDown: body.providerDown === true,
     });
     return send(res, 200, { scenario });
   }

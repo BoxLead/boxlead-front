@@ -44,6 +44,7 @@ export type BillingOptions = {
   agentReplies?: number;
   overrides?: PlanLimits;
   enforced?: boolean;
+  providerDown?: boolean;
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -193,6 +194,7 @@ export type BillingState = {
   team: boolean;
   overrides: PlanLimits;
   enforced: boolean;
+  providerDown: boolean;
   entitlementsUnavailable: boolean;
   subscription: StoredSubscription | null;
   demo: { endsAt: string } | null;
@@ -355,6 +357,7 @@ function disabled(): BillingState {
     team: false,
     overrides: {},
     enforced: true,
+    providerDown: false,
     entitlementsUnavailable: false,
     subscription: null,
     demo: null,
@@ -437,6 +440,7 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
   if (typeof options.agentReplies === "number") state.agentReplies = options.agentReplies;
   if (options.overrides) state.overrides = options.overrides;
   if (options.enforced === false) state.enforced = false;
+  if (options.providerDown) state.providerDown = true;
   if (scenario === "reseller") {
     state.referrals = true;
     state.reseller = true;
@@ -633,6 +637,9 @@ async function checkout(state: BillingState, req: MockRequest): Promise<MockRepl
   if (current?.status === "INCOMPLETE" && current.planCode === planCode && current.payerEmail === payerEmail) {
     return ok({ checkoutUrl: checkoutUrl(current) });
   }
+  if (current?.status === "INCOMPLETE" && current.checkoutStatus === "PENDING") {
+    return error(409, "The checkout has a payment in process", "CHECKOUT_PENDING");
+  }
   const created: StoredSubscription = {
     ...subscription(planCode, "INCOMPLETE"),
     payerEmail,
@@ -658,9 +665,15 @@ async function changePlan(state: BillingState, req: MockRequest): Promise<MockRe
     sub.price = priceOf(sub.planCode);
     return ok(summary(state));
   }
+  const upgrade = PLAN_RANK[planCode] > PLAN_RANK[sub.planCode];
   const upgradedThisPeriod = sub.lastUpgradeAt !== null && sub.lastUpgradeAt >= sub.currentPeriodStart;
-  if (PLAN_RANK[planCode] > PLAN_RANK[sub.planCode] || upgradedThisPeriod) {
-    if (PLAN_RANK[planCode] > PLAN_RANK[sub.planCode]) sub.lastUpgradeAt = ago(0);
+  if (upgrade && sub.lastUpgradeAt !== null) {
+    sub.pendingPlanCode = planCode;
+    sub.price = priceOf(planCode);
+    return ok(summary(state));
+  }
+  if (upgrade || upgradedThisPeriod) {
+    if (upgrade) sub.lastUpgradeAt = ago(0);
     sub.planCode = planCode;
     sub.pendingPlanCode = null;
     sub.price = priceOf(planCode);
@@ -677,6 +690,7 @@ function cancel(state: BillingState): MockReply {
     return error(409, "The subscription is not active", "SUBSCRIPTION_NOT_ACTIVE");
   }
   if (sub.cancelAtPeriodEnd) return error(409, "The subscription is being canceled", "SUBSCRIPTION_CANCELING");
+  if (state.providerDown) return error(502, "Mercado Pago did not confirm the cancellation", "PROVIDER_UNAVAILABLE");
   sub.cancelAtPeriodEnd = true;
   sub.pendingPlanCode = null;
   return ok(summary(state));
@@ -689,6 +703,7 @@ function acceptInvitation(state: BillingState, req: MockRequest): MockReply {
     return error(403, "The invitation belongs to another email", "INVITATION_EMAIL_MISMATCH");
   }
   if (state.demoUsed) return error(409, "The demo was already used", "DEMO_ALREADY_USED");
+  if (liveSubscription(state)) return error(409, "A live subscription already gives the plan", "DEMO_SUBSCRIPTION_ACTIVE");
   invitation.usable = false;
   state.demo = { endsAt: inDays(DEMO_DAYS) };
   state.demoUsed = true;

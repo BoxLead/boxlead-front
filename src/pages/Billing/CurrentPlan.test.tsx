@@ -79,6 +79,21 @@ describe("CurrentPlan", () => {
     expect(screen.getByText("Tus agentes están apagados hasta que se regularice el pago.")).toBeInTheDocument();
   });
 
+  it("shows a scheduled upgrade like any pending change and offers to undo it", () => {
+    const starter: Plan = { code: "STARTER", name: "Starter", source: "SUBSCRIPTION" };
+    render(
+      <CurrentPlan
+        summary={summary(starter, { subscription: { ...SUSPENDED, status: "ACTIVE", updatePaymentUrl: null, pendingPlanCode: "BUSINESS" } })}
+        planName={(code) => (code === "BUSINESS" ? "Business" : "Starter")}
+        busy={false}
+        onCancel={() => undefined}
+        onKeep={() => undefined}
+      />,
+    );
+    expect(screen.getByText(/^Pasás a Business el/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Seguir en Starter" })).toBeEnabled();
+  });
+
   it("keeps a team account without an active Business version readable", () => {
     renderPlan(summary({ code: null, name: null, source: "TEAM" }, { limits: { AGENT_REPLIES_PER_PERIOD: 0 } }));
     expect(screen.getByText("Equipo de BoxLead")).toBeInTheDocument();

@@ -16,6 +16,8 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "ACCOUNT_EXISTS_WITH_PASSWORD",
   "BILLING_PROFILE_REQUIRED",
   "PROVIDER_UNAVAILABLE",
+  "CHECKOUT_PENDING",
+  "DEMO_SUBSCRIPTION_ACTIVE",
 ];
 
 function errorBody(error: unknown): object | null {

@@ -21,6 +21,9 @@ describe("acceptInvitationError", () => {
       "Ya usaste la Beta con esta cuenta. Elegí un plan para seguir.",
     );
     expect(acceptInvitationError(coded(410, "INVITATION_INVALID"), null)).toBe(INVITATION_INVALID_MESSAGE);
+    expect(acceptInvitationError(coded(409, "DEMO_SUBSCRIPTION_ACTIVE"), null)).toBe(
+      "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.",
+    );
     expect(acceptInvitationError(new Error("network"), null)).toBe("No pudimos activar la Beta. Probá de nuevo en un rato.");
   });
 });

@@ -17,6 +17,7 @@ export function acceptInvitationError(error: unknown, invitedEmail: string | nul
       : "Esta invitación es para otro email. Salí y entrá con el email invitado para activar la Beta.";
   }
   if (code === "DEMO_ALREADY_USED") return "Ya usaste la Beta con esta cuenta. Elegí un plan para seguir.";
+  if (code === "DEMO_SUBSCRIPTION_ACTIVE") return "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.";
   if (code === "INVITATION_INVALID") return INVITATION_INVALID_MESSAGE;
   if (error instanceof ApiError && error.status === 429) return error.message;
   return "No pudimos activar la Beta. Probá de nuevo en un rato.";

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ApiError } from "../../api/client";
 import type { BillingPlan, BillingSummary, PaidPlanCode } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { CardIcon } from "../../components/icons/UiIcons";
@@ -8,6 +9,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/toast";
 import { useAuth } from "../../context/auth";
 import { BILLING_SUMMARY_KEY, isTeamPlan } from "../../data/billing";
+import { invalidateQueries } from "../../data/queryCache";
 import { PLANS_PATH } from "../../data/plans";
 import { cancelSubscription, changePlan } from "../../data/subscription";
 import { useApiQuery } from "../../hooks/useApiQuery";
@@ -15,7 +17,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { paidPlanCode } from "../../util/checkout";
 import { SUPPORT_EMAIL } from "../../util/company";
 import { planPrice } from "../../util/planPrice";
-import { billingErrorMessage, PLAN_RANK, rateNote } from "./billingLabels";
+import { billingErrorMessage, CANCEL_REQUESTED, PLAN_RANK, rateNote } from "./billingLabels";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { CheckoutNotice } from "./CheckoutNotice";
 import { CurrentPlan } from "./CurrentPlan";
@@ -94,15 +96,26 @@ export function Billing() {
   }
 
   async function cancel() {
-    const done = await run(
-      cancelSubscription,
-      (result) =>
-        result.subscription
+    setBusy(true);
+    try {
+      const result = await cancelSubscription();
+      toast({
+        message: result.subscription?.cancelAtPeriodEnd
           ? `Diste de baja tu plan. Tenés acceso hasta el ${longDate(result.subscription.currentPeriodEnd)}.`
-          : "Diste de baja tu plan.",
-      "No pudimos dar de baja el plan. Probá de nuevo.",
-    );
-    if (done) setConfirmCancel(false);
+          : CANCEL_REQUESTED,
+      });
+      setConfirmCancel(false);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 502) {
+        toast({ message: CANCEL_REQUESTED });
+        setConfirmCancel(false);
+        void invalidateQueries(BILLING_SUMMARY_KEY);
+      } else {
+        toast({ tone: "danger", message: billingErrorMessage(error, "No pudimos dar de baja el plan. Probá de nuevo.") });
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   const upgrade = change && currentCode ? PLAN_RANK[change.code] > PLAN_RANK[currentCode] : false;
@@ -231,8 +244,8 @@ export function Billing() {
       >
         {upgrade ? (
           <p>
-            El cambio rige ahora. Desde la próxima cuota pagás {changeLabel}, sin cobros extra por lo que queda de este
-            período.
+            Desde la próxima cuota pagás {changeLabel}, sin cobros extra por lo que queda de este período. Si es la primera vez
+            que subís de plan, el cambio rige ahora. Si ya subiste antes, rige cuando se cobre la cuota con el monto nuevo.
           </p>
         ) : (
           <p>
