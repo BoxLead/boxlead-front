@@ -24,7 +24,7 @@ import {
   CODE_STATUS,
   COMMISSION_STATUS,
   formatRate,
-  planName,
+  planOf,
   RESELLER_STATUS,
   SUBSCRIPTION_STATUS,
   vatLabel,
@@ -160,7 +160,7 @@ function ResellerContent({ detail, customers, clicksProblem, reload }: ContentPr
       cell: (row) => (row.referralCodeId ? <code className="ref-code">{codeById.get(row.referralCodeId) ?? "—"}</code> : "—"),
     },
     { key: "attributedAt", header: "Atribuido", type: "date", cell: (row) => <DateText value={row.attributedAt} /> },
-    { key: "plan", header: "Plan", cell: (row) => planName(row.planCode) },
+    { key: "plan", header: "Plan", cell: (row) => planOf(row.planCode, row.planSource) },
     {
       key: "subscription",
       header: "Suscripción",

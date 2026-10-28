@@ -22,7 +22,7 @@ import { formatDateTime } from "../../format";
 import { navItem } from "../../nav";
 import { ROLE_LABELS } from "../../session/roles";
 import { isFuture, useAdmin, useSession } from "../../session/session";
-import { FACTOR_STATUS } from "../../status";
+import { FACTOR_STATUS, PLAN_SOURCE_LABELS, TEAM_LABEL } from "../../status";
 import type { AdminGrant, CustomerMatch, MemberRole, TeamMember } from "./types";
 import "./Operations.css";
 
@@ -301,6 +301,23 @@ export function TeamScreen() {
       ),
     },
     { key: "factor", header: "Factor", type: "status", cell: (row) => <Factor member={row} /> },
+    {
+      key: "plan",
+      header: "Plan",
+      width: "sm",
+      cell: (row) =>
+        row.planSource === "TEAM" ? (
+          <span className="cell-stack">
+            <span>{TEAM_LABEL}</span>
+            <span className="sub-text">Límites de Business sin pagar</span>
+          </span>
+        ) : (
+          <span className="cell-stack">
+            <span>{PLAN_SOURCE_LABELS[row.planSource]}</span>
+            <span className="sub-text">Pasa a {TEAM_LABEL} cuando configure su factor</span>
+          </span>
+        ),
+    },
     {
       key: "session",
       header: "Última sesión",

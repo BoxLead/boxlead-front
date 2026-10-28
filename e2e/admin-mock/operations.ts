@@ -371,6 +371,7 @@ function members(query: URLSearchParams, admin: AdminIdentity): MockReply {
         factorConfirmed: factor.confirmed,
         enrollmentOpenUntil: factor.confirmed ? null : factor.enrollmentOpenUntil,
         lastAdminSessionAt: factor.lastAdminSessionAt,
+        planSource: factor.confirmed ? "TEAM" : "NONE",
       });
     }
     people.get(grant.userId)?.roles.push({ grantId: grant.id, role: grant.role, grantedAt: grant.grantedAt, grantedBy: grant.grantedBy });

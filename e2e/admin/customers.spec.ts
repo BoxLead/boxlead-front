@@ -1,5 +1,5 @@
 import type { Page, Request } from "@playwright/test";
-import { RESELLERS } from "../admin-mock/customers.ts";
+import { RESELLERS, TEAM_CUSTOMER } from "../admin-mock/customers.ts";
 import { resetCustomers, routeResellers, routeUsage, section } from "./customers-support.ts";
 import { enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, expireAdminSession, reauthenticate } from "./support.ts";
 
@@ -120,6 +120,30 @@ test("users search, filter, page and open a detail", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "carla.ruiz@example.com" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Ubicación" })).toContainText("Usuarios");
   await expect(section(page, "Suscripción")).toContainText("Cuota impaga");
+});
+
+test("users show team access as Equipo, filter by it and explain it in the detail", async ({ page }) => {
+  await resetCustomers(["OWNER"]);
+  await enterAdmin(page, "/usuarios");
+  await expect(page.getByText("1 a 20 de 24")).toBeVisible();
+  await openFilters(page);
+  await page.getByLabel("Plan").selectOption("TEAM");
+  await expect(page.getByText("1 a 1 de 1")).toBeVisible();
+  await expect(page).toHaveURL(/plan=TEAM/);
+  const row = page.getByRole("row", { name: new RegExp(TEAM_CUSTOMER.email) });
+  await expect(row.getByRole("cell", { name: "Equipo" })).toBeVisible();
+  await page.getByLabel("Plan").selectOption("BUSINESS");
+  await expect(page.getByRole("link", { name: TEAM_CUSTOMER.email })).toHaveCount(0);
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+
+  await page.goto(`/usuarios/${TEAM_CUSTOMER.id}`);
+  const plan = section(page, "Plan");
+  await expect(plan).toContainText("Business");
+  await expect(plan).toContainText("Equipo");
+  await expect(plan).toContainText("usa BoxLead sin pagar con los límites de Business");
+  await expect(section(page, "Límites")).toContainText("Es del equipo, así que rigen los límites de Business con sus ajustes.");
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await expectAccessible(page);
 });
 
 test("users keep their filters and page through a reload and going back", async ({ page }) => {

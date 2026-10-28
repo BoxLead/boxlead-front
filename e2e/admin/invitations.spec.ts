@@ -28,6 +28,7 @@ async function routeDirectory(page: Page) {
       legalName: null,
       createdAt: "2026-09-01T12:00:00Z",
       planCode: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.planCode : null,
+      planSource: user.id === MOCK_SUBSCRIBED.userId ? "SUBSCRIPTION" : "NONE",
       subscriptionStatus: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.subscriptionStatus : null,
     }));
     return fulfill(route, { items, page: 0, size: 20, totalItems: items.length });

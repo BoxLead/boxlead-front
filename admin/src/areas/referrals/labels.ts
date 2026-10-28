@@ -3,7 +3,7 @@ import {
   CODE_STATUS,
   COMMISSION_STATUS,
   PAYOUT_STATUS,
-  planLabel,
+  planWithSource,
   RESELLER_STATUS,
   SUBSCRIPTION_STATUS,
   type StatusLabel,
@@ -25,7 +25,7 @@ export const ATTRIBUTION_SOURCE: Record<AttributionSource, string> = {
   ADMIN: "Corrección",
 };
 
-export const planName = planLabel;
+export const planOf = planWithSource;
 
 export function optionsOf(labels: Record<string, Label>): FilterOption[] {
   return Object.entries(labels).map(([value, { label }]) => ({ value, label }));

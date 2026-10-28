@@ -130,7 +130,8 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
   const planless = entitlements.plan.source === "NONE";
   const rows: Row[] = USER_LIMIT_KEYS.map((key) => {
     const override = overrides.find((item) => item.key === key);
-    return { key, value: planless && !override ? undefined : entitlements.limits[key], override };
+    const ruling = !planless || override !== undefined || key === "METRICS_HISTORY_DAYS";
+    return { key, value: ruling ? entitlements.limits[key] : undefined, override };
   });
   const editing = rows.find((row) => dialogs.open === `set:${row.key}`);
   const revoking = rows.find((row) => dialogs.open === `revoke:${row.key}`);
@@ -138,6 +139,8 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
   return (
     <Section title="Límites" hint="Lo que rige hoy, con los ajustes vigentes de este usuario." flush wide>
       {entitlements.enforced ? null : <Muted>Los límites todavía no se aplican a nadie. Igual se pueden ajustar.</Muted>}
+      {entitlements.plan.source === "TEAM" ? <Muted>Es del equipo, así que rigen los límites de Business con sus ajustes.</Muted> : null}
+      {planless ? <Muted>Sin plan solo rige el historial de métricas de la Demo, salvo los ajustes.</Muted> : null}
       <DataTable
           caption="Límites"
           rows={rows}

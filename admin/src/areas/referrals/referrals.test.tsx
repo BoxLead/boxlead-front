@@ -232,6 +232,40 @@ describe("reseller detail", () => {
     expect(detailCalls.map((call) => call.url.search)).toEqual([""]);
   }, 20_000);
 
+  it("shows a team member among the customers as Equipo", async () => {
+    const detail: ResellerDetail = {
+      reseller: {
+        id: NORTH,
+        userId: "u9",
+        displayName: "Agencia Norte",
+        status: "ACTIVE",
+        rateBps: 5000,
+        maxPaidCycles: 6,
+        createdAt: PAST,
+        codes: [],
+      },
+      customersCount: 2,
+      clicks: [],
+      billing: null,
+      commissionTotals: null,
+    };
+    const customer = { email: "", source: "COOKIE", referralCodeId: null, attributedAt: PAST, subscriptionStatus: null };
+    renderAdmin(`/revendedores/${NORTH}`, ["OWNER"], (_method, url) => {
+      if (url.pathname === `/admin/resellers/${NORTH}`) return json(200, detail);
+      if (url.pathname === `/admin/resellers/${NORTH}/customers`) {
+        return page([
+          { ...customer, userId: "u1", email: "pablo@boxlead.app", planCode: "BUSINESS", planSource: "TEAM" },
+          { ...customer, userId: "u2", email: "ana@example.com", planCode: "BUSINESS", planSource: "SUBSCRIPTION", subscriptionStatus: "ACTIVE" },
+        ]);
+      }
+      if (url.pathname === "/admin/resellers") return page([]);
+      return json(404, { error: "Not found", message: "Not found" });
+    });
+    const team = await screen.findByRole("row", { name: /pablo@boxlead\.app/ }, { timeout: 5000 });
+    expect(within(team).getByRole("cell", { name: "Equipo" })).toBeInTheDocument();
+    expect(within(screen.getByRole("row", { name: /ana@example\.com/ })).getByRole("cell", { name: "Business" })).toBeInTheDocument();
+  }, 20_000);
+
   it("checks the clicks range against today when it has no end", () => {
     expect(clickRangeProblem("", "", "2026-10-27")).toBeNull();
     expect(clickRangeProblem("2026-10-01", "2026-10-01", "2026-10-27")).toBeNull();
@@ -263,6 +297,7 @@ describe("new reseller", () => {
             legalName: "Agencia Oeste SRL",
             createdAt: PAST,
             planCode: "STARTER",
+            planSource: "SUBSCRIPTION",
             subscriptionStatus: "ACTIVE",
           },
         ]);

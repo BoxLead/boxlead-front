@@ -262,8 +262,8 @@ describe("ConsumerRequestsScreen", { timeout: 20_000 }, () => {
 
 describe("TeamScreen", { timeout: 20_000 }, () => {
   const members: TeamMember[] = [
-    { userId: SELF, email: "equipo@boxlead.app", name: "Equipo", hasPassword: true, roles: [{ grantId: "g1", role: "OWNER", grantedAt: "2026-06-01T12:00:00Z", grantedBy: null }], factorConfirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: null },
-    { userId: LUCIA, email: "carla@example.com", name: "Carla", hasPassword: true, roles: [{ grantId: "g2", role: "SUPPORT", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: false, enrollmentOpenUntil: null, lastAdminSessionAt: null },
+    { userId: SELF, email: "equipo@boxlead.app", name: "Equipo", hasPassword: true, roles: [{ grantId: "g1", role: "OWNER", grantedAt: "2026-06-01T12:00:00Z", grantedBy: null }], factorConfirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: null, planSource: "TEAM" },
+    { userId: LUCIA, email: "carla@example.com", name: "Carla", hasPassword: true, roles: [{ grantId: "g2", role: "SUPPORT", grantedAt: "2026-10-25T12:00:00Z", grantedBy: SELF }], factorConfirmed: false, enrollmentOpenUntil: null, lastAdminSessionAt: null, planSource: "NONE" },
   ];
 
   it("keeps the only owner and explains that the last role deletes the factor", async () => {
@@ -314,6 +314,15 @@ describe("TeamScreen", { timeout: 20_000 }, () => {
     renderScreen(<TeamScreen />, ["OWNER"], "/equipo", () => json(200, pageOf([members[0], pending])));
     await userEvent.click(await screen.findByRole("button", { name: "Quitar Dueño a equipo@boxlead.app" }));
     expect(screen.getByText(/Ningún otro Dueño configuró su factor/)).toBeInTheDocument();
+  });
+
+  it("shows who uses BoxLead as a team member and who still needs the factor", async () => {
+    renderScreen(<TeamScreen />, ["OWNER"], "/equipo", () => json(200, pageOf(members)));
+    const self = await screen.findByRole("row", { name: /equipo@boxlead\.app/ });
+    expect(within(self).getByText("Límites de Business sin pagar").previousElementSibling).toHaveTextContent("Equipo");
+    const pending = screen.getByRole("row", { name: /carla@example\.com/ });
+    expect(within(pending).getByText("Sin plan")).toBeInTheDocument();
+    expect(within(pending).getByText("Pasa a Equipo cuando configure su factor")).toBeInTheDocument();
   });
 
   it("links the audit of each person", async () => {

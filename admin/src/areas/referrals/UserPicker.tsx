@@ -4,7 +4,7 @@ import { Banner } from "../../../../src/components/ui/Banner";
 import { errorText } from "../../api/errors";
 import type { AdminPage } from "../../api/types";
 import { referralsApi } from "./api";
-import { customerName, planName } from "./labels";
+import { customerName, planOf } from "./labels";
 import type { CustomerMatch } from "./types";
 
 type Search =
@@ -98,7 +98,7 @@ export function UserPicker({ selected, onSelect, error }: UserPickerProps) {
               <input type="radio" name={group} checked={selected?.id === customer.id} onChange={() => onSelect(customer)} />
               <span className="ref-result-body">
                 <span className="ref-result-email">{customer.email}</span>
-                <span className="ref-sub">{[customerName(customer), planName(customer.planCode)].filter(Boolean).join(" · ")}</span>
+                <span className="ref-sub">{[customerName(customer), planOf(customer.planCode, customer.planSource)].filter(Boolean).join(" · ")}</span>
               </span>
             </label>
           ))}

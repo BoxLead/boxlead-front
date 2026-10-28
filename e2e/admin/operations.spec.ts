@@ -165,6 +165,8 @@ test.describe("team", () => {
     await enterAdmin(page, "/equipo");
     await expect(page.getByText("Único Dueño")).toBeVisible();
     await expect(page.getByText("Ventana vencida")).toBeVisible();
+    await expect(page.getByRole("row", { name: /equipo@boxlead\.app/ })).toContainText("Límites de Business sin pagar");
+    await expect(page.getByRole("row", { name: /diego@equipo\.example/ })).toContainText("Pasa a Equipo cuando configure su factor");
     await noSideScroll(page);
 
     await page.getByRole("button", { name: "Otorgar rol" }).click();

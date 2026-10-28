@@ -29,7 +29,7 @@ async function mockCustomerSearch(page: Page, fail = false) {
     if (fail) return route.fulfill({ status: 500, contentType: "application/json", body: '{"error":"boom","message":"boom"}' });
     const items = [WEST, EMMA]
       .filter((user) => `${user.email} ${user.name}`.toLowerCase().includes(query.toLowerCase()))
-      .map((user) => ({ ...user, createdAt: "2026-10-01T12:00:00Z", planCode: "STARTER", subscriptionStatus: "ACTIVE" }));
+      .map((user) => ({ ...user, createdAt: "2026-10-01T12:00:00Z", planCode: "STARTER", planSource: "SUBSCRIPTION", subscriptionStatus: "ACTIVE" }));
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items, page: 0, size: 20, totalItems: items.length }) });
   });
   return queries;
@@ -121,6 +121,8 @@ test.describe("roles", () => {
     await expect(page.getByText("Los datos fiscales y de cobro los ve solo Finanzas.")).toBeVisible();
     await expect(page.getByText("Los totales de comisión los ve solo Finanzas.")).toBeVisible();
     await expect(page.getByText("30-11111111-9")).toHaveCount(0);
+    await expect(page.getByRole("row", { name: /carla@example\.com/ }).getByRole("cell", { name: "Equipo" })).toBeVisible();
+    await expect(page.getByRole("row", { name: /ana@example\.com/ }).getByRole("cell", { name: "Business" })).toBeVisible();
     for (const name of ["Nuevo código", "Desactivar", "Atribuir cliente", "Cambiar revendedor", "Armar liquidación"]) {
       await expect(page.getByRole("button", { name })).toHaveCount(0);
     }

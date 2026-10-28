@@ -235,6 +235,7 @@ describe("CustomersScreen", () => {
             legalName: null,
             createdAt: "2026-06-01T15:00:00Z",
             planCode: "STARTER",
+            planSource: "SUBSCRIPTION",
             subscriptionStatus: "ACTIVE",
           },
         ],
@@ -249,6 +250,76 @@ describe("CustomersScreen", () => {
     expect(screen.getByRole("searchbox", { name: "Buscar" })).toHaveAttribute("placeholder", "Email, nombre o id, distingue tildes");
     await userEvent.selectOptions(screen.getByLabelText("Plan"), "DEMO");
     expect(calls.at(-1)?.url.search).toBe("?plan=DEMO&status=ACTIVE");
+  });
+});
+
+describe("team access", () => {
+  const TEAM_FILE: Partial<CustomerFile> = {
+    subscription: null,
+    payments: [],
+    overrides: [],
+    entitlements: {
+      ...file().entitlements,
+      plan: { code: "BUSINESS", versionId: "v3", source: "TEAM" },
+      limits: { AGENT_REPLIES_PER_PERIOD: 5000, AGENTS_MAX: 10, METRICS_HISTORY_DAYS: 180 },
+    },
+  };
+
+  it("shows a team row as Equipo and filters by it", async () => {
+    const calls = renderAt("/usuarios", ["SUPPORT"], () =>
+      json(200, {
+        items: [
+          {
+            id: USER_ID,
+            email: "pablo@boxlead.app",
+            name: "Pablo",
+            legalName: null,
+            createdAt: "2026-06-01T15:00:00Z",
+            planCode: "BUSINESS",
+            planSource: "TEAM",
+            subscriptionStatus: null,
+            hasPassword: true,
+          },
+        ],
+        page: 0,
+        size: 20,
+        totalItems: 1,
+      }),
+    );
+    expect(await screen.findByRole("cell", { name: "Equipo" })).toBeInTheDocument();
+    expect(screen.queryByRole("cell", { name: "Business" })).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText("Plan"), "TEAM");
+    expect(calls.at(-1)?.url.search).toBe("?plan=TEAM");
+  });
+
+  it("explains in the detail that a team member uses BoxLead for free on the Business limits", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith(TEAM_FILE));
+    const plan = await screen.findByRole("region", { name: "Plan" });
+    expect(within(plan).getByText("Business")).toBeInTheDocument();
+    expect(within(plan).getByText("Equipo")).toBeInTheDocument();
+    expect(within(plan).getByText(/usa BoxLead sin pagar con los límites de Business/)).toBeInTheDocument();
+    expect(screen.getByText("Es del equipo, así que rigen los límites de Business con sus ajustes.")).toBeInTheDocument();
+  });
+
+  it("shows the Demo metrics history that rules without a plan", async () => {
+    renderAt(
+      `/usuarios/${USER_ID}`,
+      ["OWNER"],
+      handlerWith({
+        subscription: null,
+        payments: [],
+        overrides: [],
+        entitlements: {
+          ...file().entitlements,
+          access: "RESTRICTED",
+          plan: { code: null, versionId: null, source: "NONE" },
+          limits: { AGENT_REPLIES_PER_PERIOD: 0, AGENTS_MAX: 0, METRICS_HISTORY_DAYS: 30 },
+        },
+      }),
+    );
+    const metrics = await screen.findByRole("row", { name: /Días de historial de métricas/ });
+    expect(within(metrics).getByText("30")).toBeInTheDocument();
+    expect(within(screen.getByRole("row", { name: /^Agentes/ })).getAllByRole("cell")[1]).toHaveTextContent("—");
   });
 });
 
