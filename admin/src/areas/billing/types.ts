@@ -58,6 +58,7 @@ export type PaymentRow = {
   approvedAt: string | null;
   createdAt: string;
   invoice: PaymentInvoice | null;
+  refundNeeded: boolean;
 };
 
 export type RefundRow = {
@@ -72,6 +73,8 @@ export type RefundRow = {
   createdAt: string;
 };
 
+export type SubscriptionCancellation = "NOT_NEEDED" | "CANCELED" | "FAILED";
+
 export type RefundResult = {
   id: string;
   paymentId: string;
@@ -79,6 +82,7 @@ export type RefundResult = {
   status: RefundStatus;
   providerRefundId: string | null;
   createdAt: string;
+  subscriptionCancellation: SubscriptionCancellation;
 };
 
 export type InvoiceReceiver = {

@@ -6,6 +6,7 @@ export type AdminErrorCode =
   | "MFA_INVALID"
   | "REFUND_EXCEEDS_PAYMENT"
   | "COMMISSION_NOT_RELEASABLE"
+  | "COMMISSION_REFUND_IN_PROGRESS"
   | "INVITATION_ALREADY_OPEN"
   | "INVITATION_CLOSED"
   | "INVITATION_RESELLER_INVALID"
@@ -39,6 +40,8 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   MFA_INVALID: "El código no es válido. Revisá que la hora del teléfono esté bien y probá con el próximo.",
   REFUND_EXCEEDS_PAYMENT: "El reembolso supera lo que queda del pago.",
   COMMISSION_NOT_RELEASABLE: "Esa comisión todavía no se puede liberar.",
+  COMMISSION_REFUND_IN_PROGRESS:
+    "El pago de alguna de esas comisiones tiene un reembolso en curso. Esperá a que Mercado Pago lo responda antes de aprobarla.",
   INVITATION_ALREADY_OPEN: "Ese email ya tiene una invitación abierta.",
   INVITATION_CLOSED: "La invitación ya está cerrada.",
   INVITATION_RESELLER_INVALID: "Ese revendedor no existe o no está activo. Elegí otro o creá la invitación sin revendedor.",

@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
-import { PROVIDER_DOWN_SCENARIO, REFUND_IN_PROCESS_SCENARIO } from "../admin-mock/billing.ts";
+import { CANCEL_FAILS_SCENARIO, PROVIDER_DOWN_SCENARIO, REFUND_IN_PROCESS_SCENARIO } from "../admin-mock/billing.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
@@ -166,6 +166,27 @@ test("finance refunds part of a payment and the row keeps what Mercado Pago has 
   await expect(again.locator(".billing-facts")).toContainText("Pedido y sin acreditar");
   await expect(again.locator(".reason-amount")).toContainText("57.000,00");
   await again.getByRole("button", { name: "Cancelar", exact: true }).click();
+});
+
+test("a payment charged after its subscription was canceled shows it has to be given back", async ({ page }) => {
+  await resetBilling(["FINANCE"]);
+  await enterAdmin(page, "/pagos");
+  const elena = row(page, "elena@example.com").filter({ hasText: "Para devolver" });
+  await expect(elena).toHaveCount(1);
+  await expect(elena.getByRole("button", { name: "Reembolsar" })).toBeVisible();
+  await expect(row(page, "ana@example.com").filter({ hasText: "Para devolver" })).toHaveCount(0);
+  await expectFitsTheScreen(page);
+  await expectAccessible(page);
+});
+
+test("a refund that could not cancel the subscription says an owner has to cancel it", async ({ page }) => {
+  await resetBilling(["FINANCE"], CANCEL_FAILS_SCENARIO);
+  await enterAdmin(page, "/pagos");
+  await row(page, "ana@example.com").first().getByRole("button", { name: "Reembolsar" }).click();
+  expect(await confirmWithReason(page, "Reembolsar")).toEqual({ reason: REASON });
+  await expect(
+    page.getByText(/Mercado Pago no confirmó la cancelación de la suscripción, así que sigue viva y puede volver a cobrar\. La tiene que cancelar un Dueño desde Suscripciones\./),
+  ).toBeVisible();
 });
 
 test("a payment with a total refund on the way offers nothing more to refund", async ({ page }) => {

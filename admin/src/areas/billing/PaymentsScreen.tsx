@@ -11,7 +11,7 @@ import { navItem } from "../../nav";
 import { canAccess } from "../../session/roles";
 import { useAdmin } from "../../session/session";
 import { Amount, CustomerCell, NoAction, ShortId, Stack, StatusTag } from "./cells";
-import { INVOICE_STATUS, PAYMENT_STATUS, PAYMENT_STATUS_OPTIONS } from "./labels";
+import { INVOICE_STATUS, PAYMENT_STATUS, PAYMENT_STATUS_OPTIONS, REFUND_NEEDED, withCancellation, type RefundNotice } from "./labels";
 import { changedUnderneath } from "./api";
 import { canRefund, refundInProgress } from "./money";
 import { RefundDialog } from "./RefundDialog";
@@ -20,9 +20,11 @@ import type { PaymentRow, RefundResult } from "./types";
 const FILTERS = ["status", "userId", "from", "to"] as const;
 const RULES: FilterRules = { status: enumOf(PAYMENT_STATUS_OPTIONS), userId: { kind: "uuid", what: "de usuario" }, ...dateRange("from", "to") };
 
-type Notice = { tone: "success" | "info" | "danger"; message: string };
+function refundNotice(result: RefundResult): RefundNotice {
+  return withCancellation(refundOutcome(result), result.subscriptionCancellation);
+}
 
-function refundNotice(result: RefundResult): Notice {
+function refundOutcome(result: RefundResult): RefundNotice {
   if (result.status === "APPROVED") return { tone: "success", message: "Mercado Pago aprobó el reembolso." };
   if (result.status === "REJECTED") return { tone: "danger", message: "Mercado Pago rechazó el reembolso. No se devolvió plata." };
   if (result.providerRefundId) return { tone: "info", message: "Mercado Pago está procesando el reembolso. Vas a ver la respuesta en Reembolsos." };
@@ -87,7 +89,15 @@ export function PaymentsScreen() {
       key: "status",
       header: "Estado",
       type: "status",
-      cell: (row) => <StatusTag status={PAYMENT_STATUS[row.status]} detail={row.statusDetail} />,
+      cell: (row) =>
+        row.refundNeeded ? (
+          <Stack
+            main={<StatusTag status={PAYMENT_STATUS[row.status]} />}
+            detail={<StatusTag status={REFUND_NEEDED} detail="Se cobró con la suscripción ya cancelada" />}
+          />
+        ) : (
+          <StatusTag status={PAYMENT_STATUS[row.status]} detail={row.statusDetail} />
+        ),
     },
     {
       key: "date",

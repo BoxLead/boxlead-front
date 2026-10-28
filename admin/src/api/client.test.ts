@@ -124,6 +124,7 @@ describe("messageFor", () => {
     "INVOICE_NOT_ISSUED",
     "DEMO_TEAM_MEMBER",
     "ATTRIBUTION_SELF_REFERRAL",
+    "COMMISSION_REFUND_IN_PROGRESS",
   ])("has its own message for %s instead of the status fallback", (code) => {
     expect(messageFor(409, code)).not.toBe(messageFor(409, null));
     expect(messageFor(409, code)).not.toBe(messageFor(500, null));

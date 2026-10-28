@@ -34,7 +34,7 @@ const usd = (amountMinor: number): Money => ({ amountMinor, currency: "USD" });
 const STARTER = { price: usd(6000), charge: ars(8700000) };
 const BUSINESS = { price: usd(20000), charge: ars(29000000) };
 
-type StoredPayment = Omit<PaymentRow, "refundable">;
+type StoredPayment = Omit<PaymentRow, "refundable" | "refundNeeded">;
 type StoredRefund = Omit<RefundRow, "effectiveAmount">;
 
 type State = {
@@ -144,6 +144,7 @@ function seed(now: Date): State {
     payment(6, elena, id("5b", 3), "REFUNDED", STARTER.charge, STARTER.charge.amountMinor, -35, "refunded"),
     payment(7, diego, id("5b", 4), "APPROVED", BUSINESS.charge, 0, -34, "accredited"),
     payment(8, ana, id("5b", 7), "APPROVED", STARTER.charge, 0, -32, "accredited"),
+    payment(9, elena, id("5b", 3), "APPROVED", STARTER.charge, 0, -3, "accredited"),
   ];
 
   const invoice = (n: number, paymentIndex: number, status: InvoiceRow["status"], extra: Partial<InvoiceRow>, who: ReturnType<typeof receiver> | null) => {
@@ -188,15 +189,18 @@ function seed(now: Date): State {
 
 export const REFUND_IN_PROCESS_SCENARIO = "billing-refund-in-process";
 export const PROVIDER_DOWN_SCENARIO = "billing-provider-down";
+export const CANCEL_FAILS_SCENARIO = "billing-cancel-fails";
 
 type ProviderAnswer = "APPROVED" | "IN_PROCESS" | "DOWN";
 
 let state: State = seed(new Date());
 let provider: ProviderAnswer = "APPROVED";
+let cancelFails = false;
 
 function reset({ scenario, now }: ResetOptions) {
   sequence = 0;
   state = scenario === "empty" ? { subscriptions: [], payments: [], refunds: [], invoices: [] } : seed(now);
+  cancelFails = scenario === CANCEL_FAILS_SCENARIO;
   provider = scenario === REFUND_IN_PROCESS_SCENARIO ? "IN_PROCESS" : scenario === PROVIDER_DOWN_SCENARIO ? "DOWN" : "APPROVED";
 }
 
@@ -273,7 +277,9 @@ function remaining(payment: StoredPayment): number {
 
 function withRefundable(payment: StoredPayment): PaymentRow {
   const left = isRefundable(payment) ? Math.max(0, remaining(payment)) : 0;
-  return { ...payment, refundable: { amountMinor: left, currency: payment.amount.currency } };
+  const canceled = state.subscriptions.some((row) => row.id === payment.subscriptionId && row.status === "CANCELED");
+  const refundNeeded = canceled && payment.status === "APPROVED" && payment.invoice === null && left > 0;
+  return { ...payment, refundable: { amountMinor: left, currency: payment.amount.currency }, refundNeeded };
 }
 
 function listPayments({ query }: MockRequest): MockReply {
@@ -368,8 +374,21 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
   return { status: 204 };
 }
 
-function refundResult(refund: StoredRefund) {
+type SubscriptionCancellation = "NOT_NEEDED" | "CANCELED" | "FAILED";
+
+function closeSubscription(payment: StoredPayment): SubscriptionCancellation {
+  const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
+  if (!subscription) return "NOT_NEEDED";
+  if (cancelFails) return "FAILED";
+  subscription.status = "CANCELED";
+  subscription.canceledAt = new Date().toISOString();
+  subscription.cancelReason = "REFUNDED";
+  return "CANCELED";
+}
+
+function refundResult(refund: StoredRefund, subscriptionCancellation: SubscriptionCancellation) {
   return {
+    subscriptionCancellation,
     id: refund.id,
     paymentId: refund.paymentId,
     amount: refund.amount,
@@ -423,15 +442,8 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
   state.refunds.push(refund);
   const down = answer(refund, `rf-${3000 + sequence}`);
   if (down) return down;
-  if (closesTheSubscription) {
-    const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
-    if (subscription) {
-      subscription.status = "CANCELED";
-      subscription.canceledAt = new Date().toISOString();
-      subscription.cancelReason = "REFUNDED";
-    }
-  }
-  return { status: 201, body: refundResult(refund) };
+  const cancellation = closesTheSubscription ? closeSubscription(payment) : "NOT_NEEDED";
+  return { status: 201, body: refundResult(refund, cancellation) };
 }
 
 function retryRefund({ match, body, admin }: MockRequest): MockReply {
@@ -444,7 +456,8 @@ function retryRefund({ match, body, admin }: MockRequest): MockReply {
   if (refund.providerRefundId) return failure(409, "The provider already answered this refund", "REFUND_ALREADY_ANSWERED");
   const down = answer(refund, `rf-${3500 + state.refunds.indexOf(refund)}`);
   if (down) return down;
-  return ok(refundResult(refund));
+  const closes = payment !== undefined && refund.amount === null && isLatestApproval(payment);
+  return ok(refundResult(refund, closes && payment ? closeSubscription(payment) : "NOT_NEEDED"));
 }
 
 function syncPayment(invoice: InvoiceRow) {

@@ -344,6 +344,18 @@ test.describe("finance actions", () => {
     await expect(page.getByRole("checkbox")).toHaveCount(0);
   });
 
+  test("explains a commission whose payment has a refund in progress", async ({ page }) => {
+    await seed(["FINANCE"]);
+    await enterAdmin(page, "/comisiones");
+    await page.route(/\/admin\/commissions\/approve$/, (route) =>
+      route.fulfill({ status: 409, contentType: "application/json", body: '{"error":"x","message":"x","code":"COMMISSION_REFUND_IN_PROGRESS"}' }),
+    );
+    await page.getByRole("button", { name: "Elegir las liberables" }).click();
+    await page.getByRole("button", { name: "Aprobar elegidas" }).click();
+    await confirmWithReason(page, "Aprobar 2 comisiones", "/admin/commissions/approve");
+    await expect(dialog(page).getByText(/El pago de alguna de esas comisiones tiene un reembolso en curso/)).toBeVisible();
+  });
+
   test("explains a commission that can not change", async ({ page }) => {
     await seed(["FINANCE"]);
     await enterAdmin(page, "/comisiones?status=HELD");
