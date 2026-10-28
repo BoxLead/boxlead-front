@@ -51,6 +51,7 @@ import {
   missingLegal,
   playgroundLimit,
   sessionFields,
+  setBillingEnabled,
   settleCheckout,
   startInvitedDemo,
   withPlanAgents,
@@ -466,6 +467,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       overrides: limitOverrides(body.overrides),
     });
     return send(res, 200, { scenario });
+  }
+  if (path === "/__billing/enabled" && method === "POST") {
+    return reply(res, setBillingEnabled(billing, (await readBody(req)).enabled === true));
   }
   if (path === "/__billing/checkout-result" && method === "POST") {
     return reply(res, settleCheckout(billing, (await readBody(req)).status));

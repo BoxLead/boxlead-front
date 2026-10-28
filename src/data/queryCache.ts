@@ -41,6 +41,16 @@ function defaultFetcher(key: string): Promise<unknown> {
 
 let fetcher: (key: string) => Promise<unknown> = defaultFetcher;
 
+type ErrorListener = (key: string, error: unknown) => void;
+const errorListeners = new Set<ErrorListener>();
+
+export function onQueryError(listener: ErrorListener): () => void {
+  errorListeners.add(listener);
+  return () => {
+    errorListeners.delete(listener);
+  };
+}
+
 function entryFor(key: string): Entry {
   let entry = entries.get(key);
   if (!entry) {
@@ -117,6 +127,7 @@ export function fetchQuery(key: string): Promise<void> {
         fetching: false,
         fetchedAt: Date.now(),
       });
+      errorListeners.forEach((listener) => listener(key, error));
     },
   );
   entry.inflight = run.finally(() => {
@@ -160,6 +171,13 @@ export function setQueryData<T>(key: string, updater: (current: T | undefined) =
     error: null,
     errorStatus: null,
   });
+}
+
+export function discardQueryData(key: string) {
+  const entry = entries.get(key);
+  if (!entry || entry.state.data === undefined) return;
+  entry.generation += 1;
+  update(entry, { data: undefined, status: entry.state.error ? "error" : "idle", fetchedAt: 0 });
 }
 
 export function invalidateQueries(prefix: string): Promise<void[]> {

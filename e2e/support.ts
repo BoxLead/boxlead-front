@@ -48,6 +48,15 @@ export async function settleCheckout(status: "APPROVED" | "PENDING" | "REJECTED"
   expect(res.ok).toBe(true);
 }
 
+export async function setBillingEnabled(enabled: boolean) {
+  const res = await fetch(`${mockApiUrl()}/__billing/enabled`, {
+    method: "POST",
+    headers: CSRF_HEADERS,
+    body: JSON.stringify({ enabled }),
+  });
+  expect(res.ok).toBe(true);
+}
+
 export async function login(page: Page, path = "/app/inbox") {
   const session = await page.context().request.post(`${mockApiUrl()}/auth/login`, {
     headers: CSRF_HEADERS,

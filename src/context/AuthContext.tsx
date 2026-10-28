@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -10,7 +11,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError, clearAuth } from "../api/client";
 import type { AuthUser, LegalVersion, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
-import { clearQueryCache } from "../data/queryCache";
+import { clearQueryCache, sameData } from "../data/queryCache";
+import { onSessionRefresh } from "../data/session";
 import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
 import { AuthContext, sessionFlags } from "./auth";
 
@@ -24,6 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const needsSession = SESSION_ROUTES.test(pathname);
+  const signedIn = user !== null;
+  const syncing = useRef(false);
 
   useEffect(() => {
     if (sessionChecked || !needsSession) return;
@@ -44,6 +48,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [sessionChecked, needsSession]);
+
+  const syncSession = useCallback(() => {
+    if (syncing.current) return;
+    syncing.current = true;
+    api
+      .me()
+      .then(
+        (current) => setUser((previous) => (previous && !sameData(previous, current) ? current : previous)),
+        () => undefined,
+      )
+      .finally(() => {
+        syncing.current = false;
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const syncIfVisible = () => {
+      if (document.visibilityState === "visible") syncSession();
+    };
+    document.addEventListener("visibilitychange", syncIfVisible);
+    window.addEventListener("focus", syncIfVisible);
+    const stop = onSessionRefresh(syncSession);
+    return () => {
+      document.removeEventListener("visibilitychange", syncIfVisible);
+      window.removeEventListener("focus", syncIfVisible);
+      stop();
+    };
+  }, [signedIn, syncSession]);
 
   const clearError = useCallback(() => setError(null), []);
 

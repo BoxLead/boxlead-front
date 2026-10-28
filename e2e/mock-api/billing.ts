@@ -801,6 +801,13 @@ export async function billingRoute(state: BillingState, req: MockRequest): Promi
   return NOT_FOUND;
 }
 
+export function setBillingEnabled(state: BillingState, enabled: boolean): MockReply {
+  state.billing = enabled;
+  state.legal = enabled;
+  if (!enabled) state.referrals = false;
+  return ok({ billing: enabled });
+}
+
 export function settleCheckout(state: BillingState, status: unknown): MockReply {
   const sub = state.subscription;
   if (!sub || sub.status !== "INCOMPLETE") return error(409, "There is no checkout in progress");

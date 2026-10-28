@@ -1,7 +1,7 @@
 import type { Page, Response } from "@playwright/test";
 import type { BillingOptions } from "./mock-api/billing.ts";
 import type { Scenario } from "./mock-api/fixtures.ts";
-import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
+import { expect, expectAccessible, login, resetApi, screenshot, setBillingEnabled, test } from "./support.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const notices = (page: Page) => page.locator(".plan-banners");
@@ -170,8 +170,10 @@ test("the playground explains a 402 when the plan ended meanwhile", async ({ pag
   await resetApi("billing-none");
   await playground(page).getByPlaceholder("Mensaje del cliente").fill("¿Tienen stock?");
   const run = page.waitForResponse((response) => response.url().endsWith("/agents/playground"));
+  const session = page.waitForResponse((response) => response.url().endsWith("/auth/me"));
   await playground(page).getByRole("button", { name: "Enviar" }).click();
   expect((await run).status()).toBe(402);
+  expect((await session).status()).toBe(200);
   await expect(playground(page).getByText("Necesitás un plan activo para hacer esto.")).toBeVisible();
   await expect(playground(page).getByText("Necesitás un plan para probar agentes")).toBeVisible();
   await expect(notice(page, "No tenés un plan activo")).toBeVisible();
@@ -290,4 +292,23 @@ test("metrics without a plan explain a 402 in their own notice", async ({ page }
   await expect(notice(page, "No tenés un plan activo")).toBeVisible();
   await expectNoHorizontalScroll(page);
   await screenshot(page, "plan-metrics-402-light");
+});
+
+test("turning billing off with the app open shows when the window gets the focus back", async ({ page }) => {
+  test.slow();
+  await resetApi("billing-none");
+  await login(page, "/app/billing");
+  await expect(page.getByRole("heading", { level: 1, name: "Facturación" })).toBeVisible();
+  await expect(notice(page, "No tenés un plan activo")).toBeVisible();
+
+  await setBillingEnabled(false);
+  const session = page.waitForResponse((response) => response.url().endsWith("/auth/me"));
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  expect((await session).status()).toBe(200);
+  await expect(page).toHaveURL(/\/app\/inbox$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Bandeja" })).toBeVisible();
+  await expect(notices(page)).toHaveCount(0);
+  await page.getByRole("button", { name: "Cuenta" }).click();
+  await expect(page.getByRole("dialog", { name: "Cuenta" }).getByRole("link", { name: "Facturación" })).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
 });
