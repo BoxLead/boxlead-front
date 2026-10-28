@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import type { AdminPage } from "../../api/types";
 import { DataTable } from "../../components/list/DataTable";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
-import { formatCount, formatDate } from "../../format";
+import { formatCount, formatDate, formatMicros } from "../../format";
 import { addDays, lastMomentBefore, today } from "./dates";
-import { formatLimit, formatMicros } from "./limits";
+import { formatLimit } from "./limits";
 import { ErrorBlock, Facts, LoadingBlock, Muted, Section } from "./parts";
 import type { Entitlements, UsageRow } from "./types";
 

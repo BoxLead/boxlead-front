@@ -7,6 +7,7 @@ const ANA = "0c000000-0000-4000-8000-000000000001";
 const ANA_SUBSCRIPTION = "0e000000-0000-4000-8000-000000000001";
 const DIEGO = "0c000000-0000-4000-8000-000000000004";
 const ELENA = "0c000000-0000-4000-8000-000000000005";
+const FEDERICO = "0c000000-0000-4000-8000-000000000006";
 const CLIENT_08 = "0c000000-0000-4000-8000-000000000008";
 const REASON = "Lo pidió el cliente por mail";
 
@@ -31,6 +32,21 @@ test("the overview shows the month and its amounts to finance", async ({ page })
   await expect(section(page, "Comisiones")).toContainText("Aprobadas sin liquidar");
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   await expectAccessible(page);
+});
+
+test("the overview packs the plan counts at the top of their card next to a longer status list", async ({ page }) => {
+  await resetCustomers(["OWNER"]);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await enterAdmin(page, "/");
+  const byStatus = page.getByRole("list", { name: "Suscripciones por estado" }).getByRole("listitem");
+  const byPlan = page.getByRole("list", { name: "Suscripciones por plan" }).getByRole("listitem");
+  await expect(byStatus.first()).toBeVisible();
+  await expect(byPlan.first()).toBeVisible();
+  expect(await byStatus.count()).toBeGreaterThan(await byPlan.count());
+  const statusRow = await byStatus.nth(1).evaluate((element) => element.getBoundingClientRect().height);
+  for (const row of await byPlan.all()) {
+    expect(await row.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(statusRow);
+  }
 });
 
 test("the overview keeps the amounts away from support and changes the month", async ({ page }) => {
@@ -316,4 +332,14 @@ test("the detail fits 320 px, passes axe and explains a missing user", async ({ 
   await expectAccessible(page);
   await page.goto("/usuarios/0c000000-0000-4000-8000-000000009999");
   await expect(page.getByText("No encontramos este usuario")).toBeVisible();
+});
+
+test("the detail fits 320 px with a refund Mercado Pago has not credited yet", async ({ page }) => {
+  await resetCustomers(["OWNER"]);
+  await page.setViewportSize({ width: 320, height: 640 });
+  await enterAdmin(page, `/usuarios/${FEDERICO}`);
+  const waiting = section(page, "Pagos").locator(".sub-text").filter({ hasText: "Pedido y sin acreditar" });
+  await expect(waiting).toContainText("$ 1.500,00");
+  expect(await waiting.evaluate((element) => element.getBoundingClientRect().right - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
 });

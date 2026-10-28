@@ -2,6 +2,9 @@ import type { Money } from "./api/types";
 
 const LOCALE = "es-AR";
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
+const MICROS = 1_000_000;
+const COST_DIGITS = 2;
+const SMALLEST_COST = 10 ** -COST_DIGITS;
 
 export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TIME_ZONE });
@@ -40,4 +43,20 @@ export function formatMoney(money: Money): string {
 
 export function formatCount(value: number): string {
   return value.toLocaleString(LOCALE);
+}
+
+function costText(units: number, currency: string | null): string {
+  const digits = { minimumFractionDigits: COST_DIGITS, maximumFractionDigits: COST_DIGITS };
+  if (!currency) return units.toLocaleString(LOCALE, digits);
+  try {
+    return new Intl.NumberFormat(LOCALE, { style: "currency", currency, ...digits }).format(units);
+  } catch {
+    return `${currency} ${units.toLocaleString(LOCALE, digits)}`;
+  }
+}
+
+export function formatMicros(micros: number, currency: string | null): string {
+  const units = micros / MICROS;
+  if (units > 0 && units < SMALLEST_COST / 2) return `Menos de ${costText(SMALLEST_COST, currency)}`;
+  return costText(units, currency);
 }

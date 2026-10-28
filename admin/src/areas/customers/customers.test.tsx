@@ -403,6 +403,15 @@ describe("CustomerDetailScreen", () => {
     expect(within(revoke).queryByText(/La Demo termina ahora/)).toBeNull();
   });
 
+  it("names the reseller in the summary the same way the attribution panel does", async () => {
+    const attribution = { id: "a1", userId: USER_ID, resellerId: "r1", referralCodeId: "c1", source: "COOKIE" as const, sequence: 1, reason: null, createdAt: "2026-06-01T15:00:00Z" };
+    const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ attribution }));
+    await vi.waitFor(() => expect(screen.getAllByText("Agencia Norte")).toHaveLength(2), { timeout: 5000 });
+    for (const name of screen.getAllByText("Agencia Norte")) expect(name.closest("a")).toHaveAttribute("href", "/revendedores/r1");
+    expect(screen.queryByText("Ver revendedor")).not.toBeInTheDocument();
+    expect(calls.filter((call) => call.url.pathname === "/admin/resellers")).toHaveLength(1);
+  });
+
   it("corrects the attribution, says where the commissions go and loads the detail again", async () => {
     const attribution = { id: "a1", userId: USER_ID, resellerId: "r1", referralCodeId: "c1", source: "COOKIE" as const, sequence: 1, reason: null, createdAt: "2026-06-01T15:00:00Z" };
     const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], handlerWith({ attribution }));

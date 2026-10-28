@@ -16,7 +16,7 @@ import { lastMomentBefore } from "./dates";
 import { DemoPanel } from "./DemoPanel";
 import { ACCESS_LABELS, planLabel, PLAN_SOURCE_LABELS } from "./labels";
 import { LimitsPanel } from "./LimitsPanel";
-import { ErrorBlock, Facts, LoadingBlock, Muted, Section, SectionGrid } from "./parts";
+import { ErrorBlock, Facts, LoadingBlock, Muted, ResellerLink, Section, SectionGrid } from "./parts";
 import { PaymentsPanel } from "./PaymentsPanel";
 import { SubscriptionPanel } from "./SubscriptionPanel";
 import type { CustomerFile } from "./types";
@@ -61,9 +61,7 @@ function Summary({ file }: { file: CustomerFile }) {
         {
           label: "Referido por",
           value: file.attribution ? (
-            <Link className="entity-link" to={`/revendedores/${file.attribution.resellerId}`}>
-              Ver revendedor
-            </Link>
+            <ResellerLink id={file.attribution.resellerId} />
           ) : (
             <span className="sub-text">Nadie</span>
           ),

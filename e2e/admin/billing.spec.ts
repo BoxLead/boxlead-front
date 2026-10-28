@@ -216,27 +216,44 @@ test("a refund Mercado Pago is processing waits in Reembolsos without a retry", 
   await expect(processing.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
 });
 
-test("a refund that Mercado Pago did not answer stays asked for and can be retried", async ({ page }) => {
+test("a refund that Mercado Pago did not answer closes the dialog, is asked for once and can be retried", async ({ page }) => {
   await resetBilling(["FINANCE"], PROVIDER_DOWN_SCENARIO);
+  const refunds: string[] = [];
+  page.on("request", (req) => {
+    if (req.method() === "POST" && /\/admin\/payments\/[^/]+\/refunds$/.test(req.url())) refunds.push(req.url());
+  });
   await enterAdmin(page, "/pagos");
   const carla = row(page, "carla@example.com");
   await carla.getByRole("button", { name: "Reembolsar" }).click();
   const dialog = page.getByRole("dialog", { name: "Reembolsar pago" });
   await dialog.getByRole("button", { name: "Parcial" }).click();
-  await dialog.getByLabel("Monto a reembolsar en ARS").fill("4.000");
-  await confirmWithReason(page, "Reembolsar");
-  await expect(dialog).toContainText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.");
-  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-  await expect(carla).toContainText("Pedido y sin acreditar $ 4.000,00");
+  await dialog.getByLabel("Monto a reembolsar en ARS").fill("700");
+  expect(await confirmWithReason(page, "Reembolsar")).toEqual({ amount: { amountMinor: 70000, currency: "ARS" }, reason: REASON });
+  await expect(page.getByText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Reembolsar", exact: true })).toHaveCount(0);
+  await expect(carla).toContainText("Pedido y sin acreditar $ 700,00");
+  await expectFitsTheScreen(page);
+
+  await carla.getByRole("button", { name: "Reembolsar" }).click();
+  const again = page.getByRole("dialog", { name: "Reembolsar pago" });
+  await expect(again.locator(".billing-facts")).toContainText(/Pedido y sin acreditar\s*\$\s700,00/);
+  await expect(again.locator(".reason-amount")).toContainText("66.300,00");
+  await again.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(refunds).toHaveLength(1);
 
   await page.goto("/reembolsos");
-  const unanswered = page.locator("tbody tr").filter({ hasText: "4.000,00" });
+  const unanswered = page.locator("tbody tr").filter({ hasText: /\$\s700,00/ });
+  await expect(unanswered).toHaveCount(1);
   await expect(unanswered).toContainText("Sin respuesta");
   await unanswered.getByRole("button", { name: "Reintentar" }).click();
   const retry = page.getByRole("dialog", { name: "Reintentar reembolso" });
-  await expect(retry.locator(".reason-amount")).toContainText("4.000,00");
+  await expect(retry.locator(".reason-amount")).toContainText("700,00");
   await confirmWithReason(page, "Reintentar");
   await expect(retry).toContainText("Mercado Pago no respondió y el reembolso sigue pedido.");
+  await retry.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(page.locator("tbody tr").filter({ hasText: /\$\s700,00/ })).toHaveCount(1);
 });
 
 test("finance retries a refund that Mercado Pago did not answer", async ({ page }) => {

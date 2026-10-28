@@ -1,5 +1,5 @@
 import { adminApi } from "../../api/client";
-import { AdminApiError, isStale } from "../../api/errors";
+import { AdminApiError, ConnectionLostError, isStale } from "../../api/errors";
 import type { Money } from "../../api/types";
 import type { InvoiceRow, RefundResult } from "./types";
 
@@ -21,6 +21,8 @@ const RETRY_MESSAGES: Record<string, string> = {
   ...BILLING_MESSAGES,
   [PROVIDER_UNAVAILABLE]: "Mercado Pago no respondió y el reembolso sigue pedido. Probá de nuevo en unos minutos.",
 };
+
+const UNCERTAIN_REFUND = "No sabemos si el reembolso quedó pedido. Revisalo en Reembolsos antes de pedirlo de nuevo.";
 
 async function billingCall<T>(call: () => Promise<T>, messages: Record<string, string> = BILLING_MESSAGES): Promise<T> {
   try {
@@ -63,4 +65,10 @@ export function invalidInput(message: string): AdminApiError {
 
 export function changedUnderneath(failure: unknown): boolean {
   return isStale(failure) || (failure instanceof AdminApiError && (failure.status === 422 || failure.code === PROVIDER_UNAVAILABLE));
+}
+
+export function askedRefundNotice(failure: unknown): string | null {
+  if (failure instanceof AdminApiError && failure.code === PROVIDER_UNAVAILABLE) return failure.message;
+  if (failure instanceof ConnectionLostError || (failure instanceof AdminApiError && failure.status >= 500)) return UNCERTAIN_REFUND;
+  return null;
 }
