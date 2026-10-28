@@ -8,7 +8,7 @@ import { CharCounter } from "../../components/ui/CharCounter";
 import { Switch } from "../../components/ui/Switch";
 import { runPlayground, type PlaygroundTarget, type PlaygroundTurn } from "../../data/agentPlayground";
 import { CONNECTABLE_PLATFORMS, getPlatform, stageChoices } from "../../platforms";
-import { PLAYGROUND_MAX_MESSAGES, PLAYGROUND_MESSAGE_MAX, agentErrorMessage } from "../../util/agents";
+import { PLAYGROUND_MAX_MESSAGES, PLAYGROUND_MESSAGE_MAX, playgroundErrorMessage } from "../../util/agents";
 import { cx } from "../../util/classNames";
 import { PlaygroundResultView } from "./PlaygroundResultView";
 
@@ -98,7 +98,7 @@ export function Playground({ agentName, target, categories, restricted = false }
       if (controller.signal.aborted) return;
       setEntries((current) => current.filter((entry) => entry.id !== customer.id));
       setDraft(content);
-      setError(agentErrorMessage(e, "No pudimos completar la prueba. Probá de nuevo."));
+      setError(playgroundErrorMessage(e, "No pudimos completar la prueba. Probá de nuevo."));
     } finally {
       if (abort.current === controller) setRunning(false);
     }

@@ -180,6 +180,23 @@ test("the playground explains a 402 when the plan ended meanwhile", async ({ pag
   await screenshot(page, "plan-playground-402-light");
 });
 
+test("the playground explains in its own words that the plan has no more trials", async ({ page }) => {
+  await openAgentsWith(page, "billing-active", { overrides: { PLAYGROUND_RUNS_PER_HOUR: 0 } });
+  await page.getByRole("button", { name: "Nuevo agente" }).click();
+  await editor(page).getByLabel("Nombre").fill("Consultas");
+  await page.getByRole("button", { name: "Probar" }).click();
+  await playground(page).getByPlaceholder("Mensaje del cliente").fill("¿Tienen stock?");
+  const run = page.waitForResponse((response) => response.url().endsWith("/agents/playground"));
+  await playground(page).getByRole("button", { name: "Enviar" }).click();
+  expect((await run).status()).toBe(402);
+  await expect(
+    playground(page).getByText("Tu plan no tiene más pruebas disponibles en este período. Para seguir probando, pasate a un plan con más capacidad."),
+  ).toBeVisible();
+  await expect(playground(page).getByText("The plan has no playground runs")).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
+  await screenshot(page, "plan-playground-limit-light");
+});
+
 test("new legal versions ask for an explicit acceptance", async ({ page }) => {
   test.slow();
   await resetApi("billing-active", undefined, { pendingLegal: true });

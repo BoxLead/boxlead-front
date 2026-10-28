@@ -845,7 +845,9 @@ export function agentGate(state: BillingState, action: AgentAction, agents: Agen
   }
   const { access, limits } = entitlements(state);
   if (access === "RESTRICTED") return error(402, "A plan is required", "PLAN_REQUIRED");
-  if (action === "playground") return null;
+  if (action === "playground") {
+    return limitOf(limits, "PLAYGROUND_RUNS_PER_HOUR") === 0 ? error(402, "The plan has no playground runs", "PLAN_LIMIT_REACHED") : null;
+  }
   const max = limitOf(limits, "AGENTS_MAX");
   const count = action === "create" ? agents.length : agents.filter((agent) => agent.enabled).length;
   return count >= max ? error(402, "The plan limit was reached", "PLAN_LIMIT_REACHED") : null;
