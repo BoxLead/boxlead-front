@@ -34,6 +34,21 @@ test("the overview shows the month and its amounts to finance", async ({ page })
   await expectAccessible(page);
 });
 
+test("the overview packs the plan counts at the top of their card next to a longer status list", async ({ page }) => {
+  await resetCustomers(["OWNER"]);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await enterAdmin(page, "/");
+  const byStatus = page.getByRole("list", { name: "Suscripciones por estado" }).getByRole("listitem");
+  const byPlan = page.getByRole("list", { name: "Suscripciones por plan" }).getByRole("listitem");
+  await expect(byStatus.first()).toBeVisible();
+  await expect(byPlan.first()).toBeVisible();
+  expect(await byStatus.count()).toBeGreaterThan(await byPlan.count());
+  const statusRow = await byStatus.nth(1).evaluate((element) => element.getBoundingClientRect().height);
+  for (const row of await byPlan.all()) {
+    expect(await row.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(statusRow);
+  }
+});
+
 test("the overview keeps the amounts away from support and changes the month", async ({ page }) => {
   await resetCustomers(["SUPPORT"]);
   await enterAdmin(page, "/");
