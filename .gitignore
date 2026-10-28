@@ -48,6 +48,8 @@ override.tf.json
 coverage
 playwright-report
 test-results
+blob-report
+all-blob-reports
 demo-video
 promo-video
 
