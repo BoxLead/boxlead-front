@@ -150,8 +150,8 @@ describe("AdminLayout", () => {
     await userEvent.keyboard("{Escape}");
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("button", { name: "Cerrar el menú" })).toBeNull();
+    expect(toggle).toHaveFocus();
 
-    toggle.focus();
     await userEvent.keyboard(" ");
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     await userEvent.tab();
