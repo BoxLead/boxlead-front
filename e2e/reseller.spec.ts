@@ -151,7 +151,7 @@ for (const scenario of ["billing-active", "default"] as const) {
       if (request.url().includes("/referrals/")) referralCalls.push(request.url());
     });
     await login(page, "/app/reseller");
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/app\/inbox$/);
     expect(referralCalls).toEqual([]);
 
     const response = await page.context().request.get(`${mockApiUrl()}/referrals/me`, {
