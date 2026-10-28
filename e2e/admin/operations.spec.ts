@@ -177,10 +177,20 @@ test.describe("team", () => {
     await expect(page.getByText(noPassword)).toBeVisible();
     await noSideScroll(page);
     await page.getByRole("group", { name: "Rol" }).getByRole("button", { name: "Finanzas" }).click();
+    await answer(page, `/admin/customers/${DIRECTORY[2].id}`, 200, {
+      id: DIRECTORY[2].id,
+      subscription: { id: "0e000000-0000-4000-8000-000000000031", status: "PAST_DUE" },
+      attribution: { id: "1b000000-0000-4000-8000-000000000031", userId: DIRECTORY[2].id, resellerId: "0d000000-0000-4000-8000-000000000001", referralCodeId: null, source: "COOKIE", sequence: 1, reason: null, createdAt: "2026-09-05T12:10:00Z" },
+    });
     await page.getByRole("button", { name: "Otorgar Finanzas" }).click();
     const grant = page.getByRole("dialog", { name: "Otorgar rol" });
     await expect(grant.getByText(/tiene 24 horas para hacerlo/)).toBeVisible();
     await expect(grant.getByText(noPassword)).toBeVisible();
+    await expect(grant.getByText(/pasa a usar BoxLead sin pagar con los límites de Business/)).toBeVisible();
+    await expect(grant.getByText("Tiene una suscripción viva")).toBeVisible();
+    await expect(grant.getByText(/Hoy figura como Cuota impaga\./)).toBeVisible();
+    await expect(grant.getByText("Está atribuida a un revendedor")).toBeVisible();
+    await noSideScroll(page);
     await grant.getByLabel("Motivo").fill("Se suma a cobranzas");
     await grant.getByRole("button", { name: "Otorgar Finanzas" }).click();
     await expect(grant).toBeHidden();

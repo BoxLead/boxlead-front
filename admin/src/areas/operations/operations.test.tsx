@@ -397,6 +397,58 @@ describe("TeamScreen", { timeout: 20_000 }, () => {
   });
 });
 
+describe("granting a role and team access", { timeout: 20_000 }, () => {
+  const members: TeamMember[] = [
+    { userId: SELF, email: "equipo@boxlead.app", name: "Equipo", hasPassword: true, roles: [{ grantId: "g1", role: "OWNER", grantedAt: "2026-06-01T12:00:00Z", grantedBy: null }], factorConfirmed: true, enrollmentOpenUntil: null, lastAdminSessionAt: null, planSource: "TEAM" },
+  ];
+
+  async function openGrant(account: () => Reply) {
+    const calls = renderScreen(<TeamScreen />, ["OWNER"], "/equipo", (_method, url) => {
+      if (url.pathname === "/admin/customers") {
+        return json(200, { ...pageOf([{ id: LUCIA, email: "carla@example.com", name: "Carla", legalName: null, createdAt: "2026-07-01T00:00:00Z", hasPassword: true }]), size: 20 });
+      }
+      if (url.pathname === `/admin/customers/${LUCIA}`) return account();
+      return json(200, pageOf(members));
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Otorgar rol" }));
+    await userEvent.type(screen.getByLabelText("Buscar usuario"), "carla{Enter}");
+    await userEvent.click(await within(await screen.findByRole("list", { name: "Resultados" })).findByRole("button", { name: /carla@example\.com/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Otorgar Soporte" }));
+    return calls;
+  }
+
+  it("says the account will use BoxLead for free and warns about its subscription and its reseller", async () => {
+    const calls = await openGrant(() =>
+      json(200, {
+        id: LUCIA,
+        subscription: { id: "s1", status: "ACTIVE" },
+        attribution: { id: "a1", userId: LUCIA, resellerId: "r1", referralCodeId: null, source: "COOKIE", sequence: 1, reason: null, createdAt: "2026-07-01T00:00:00Z" },
+      }),
+    );
+    expect(screen.getByText(/pasa a usar BoxLead sin pagar con los límites de Business/)).toBeInTheDocument();
+    expect(await screen.findByText("Tiene una suscripción viva")).toBeInTheDocument();
+    expect(screen.getByText(/Hoy figura como Activa\./)).toBeInTheDocument();
+    expect(screen.getByText(/Mercado Pago le sigue cobrando hasta que se dé de baja/)).toBeInTheDocument();
+    expect(screen.getByText("Está atribuida a un revendedor")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver el revendedor", hidden: true })).toHaveAttribute("href", "/revendedores/r1");
+    expect(calls.some((call) => call.url.pathname === `/admin/customers/${LUCIA}`)).toBe(true);
+  });
+
+  it("stays quiet without a subscription or a reseller", async () => {
+    await openGrant(() => json(200, { id: LUCIA, subscription: { id: "s1", status: "CANCELED" }, attribution: null }));
+    expect(screen.getByText(/pasa a usar BoxLead sin pagar con los límites de Business/)).toBeInTheDocument();
+    await vi.waitFor(() => expect(screen.queryByText("Revisando su suscripción y su atribución…")).toBeNull());
+    expect(screen.queryByText(/Tiene una suscripción/)).toBeNull();
+    expect(screen.queryByText("Está atribuida a un revendedor")).toBeNull();
+  });
+
+  it("points to the file when the account can not be checked", async () => {
+    await openGrant(() => json(500, { error: "boom", message: "boom" }));
+    expect(await screen.findByText("No pudimos revisar su cuenta")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "su ficha", hidden: true })).toHaveAttribute("href", `/usuarios/${LUCIA}`);
+  });
+});
+
 describe("AuditScreen", () => {
   const event: AuditEvent = {
     id: "e1",
