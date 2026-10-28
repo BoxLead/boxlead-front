@@ -312,3 +312,16 @@ test("turning billing off with the app open shows when the window gets the focus
   await expect(page.getByRole("dialog", { name: "Cuenta" }).getByRole("link", { name: "Facturación" })).toHaveCount(0);
   await expectNoHorizontalScroll(page);
 });
+
+test("a suspended plan while limits are not enforced does not say the agents stopped", async ({ page }) => {
+  await resetApi("billing-suspended", undefined, { enforced: false });
+  await login(page);
+  const banner = notice(page, "Tu plan está suspendido");
+  await expect(banner).toContainText("No pudimos cobrarlo. Actualizá el medio de pago para regularizarlo.");
+  await expect(banner).not.toContainText("no responden");
+  await page.goto("/app/billing");
+  await expect(page.getByRole("heading", { level: 1, name: "Facturación" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Tu plan" }).getByText("Suspendida")).toBeVisible();
+  await expect(page.getByText("Tus agentes están apagados hasta que se regularice el pago.")).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
+});

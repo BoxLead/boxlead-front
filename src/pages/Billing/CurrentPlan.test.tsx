@@ -71,6 +71,14 @@ describe("CurrentPlan", () => {
     expect(screen.getByText("30 de 5.000 respuestas")).toBeInTheDocument();
   });
 
+  it("says the agents are off only when access is restricted", () => {
+    const starter: Plan = { code: "STARTER", name: "Starter", source: "SUBSCRIPTION" };
+    renderPlan(summary(starter, { access: "FULL", subscription: SUSPENDED }));
+    expect(screen.queryByText("Tus agentes están apagados hasta que se regularice el pago.")).not.toBeInTheDocument();
+    renderPlan(summary(starter, { access: "RESTRICTED", subscription: SUSPENDED }));
+    expect(screen.getByText("Tus agentes están apagados hasta que se regularice el pago.")).toBeInTheDocument();
+  });
+
   it("keeps a team account without an active Business version readable", () => {
     renderPlan(summary({ code: null, name: null, source: "TEAM" }, { limits: { AGENT_REPLIES_PER_PERIOD: 0 } }));
     expect(screen.getByText("Equipo de BoxLead")).toBeInTheDocument();

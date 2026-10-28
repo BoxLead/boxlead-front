@@ -43,6 +43,7 @@ export type BillingOptions = {
   entitlementsUnavailable?: boolean;
   agentReplies?: number;
   overrides?: PlanLimits;
+  enforced?: boolean;
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -191,6 +192,7 @@ export type BillingState = {
   reseller: boolean;
   team: boolean;
   overrides: PlanLimits;
+  enforced: boolean;
   entitlementsUnavailable: boolean;
   subscription: StoredSubscription | null;
   demo: { endsAt: string } | null;
@@ -352,6 +354,7 @@ function disabled(): BillingState {
     reseller: false,
     team: false,
     overrides: {},
+    enforced: true,
     entitlementsUnavailable: false,
     subscription: null,
     demo: null,
@@ -433,6 +436,7 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
   }
   if (typeof options.agentReplies === "number") state.agentReplies = options.agentReplies;
   if (options.overrides) state.overrides = options.overrides;
+  if (options.enforced === false) state.enforced = false;
   if (scenario === "reseller") {
     state.referrals = true;
     state.reseller = true;
@@ -459,6 +463,7 @@ function demoActive(state: BillingState): boolean {
 
 function entitlements(state: BillingState): Entitlements {
   const standing = standingOf(state);
+  if (!state.enforced) return { access: "FULL", plan: standing.plan, limits: {} };
   return { ...standing, limits: { ...standing.limits, ...state.overrides } };
 }
 
@@ -834,7 +839,7 @@ export function settleCheckout(state: BillingState, status: unknown): MockReply 
 type AgentAction = "create" | "enable" | "playground";
 
 export function agentGate(state: BillingState, action: AgentAction, agents: AgentResponse[]): MockReply | null {
-  if (!state.billing) return null;
+  if (!state.billing || !state.enforced) return null;
   if (state.entitlementsUnavailable) {
     return error(503, "Entitlements are unavailable, try again in a while", "ENTITLEMENTS_UNAVAILABLE");
   }
@@ -847,13 +852,13 @@ export function agentGate(state: BillingState, action: AgentAction, agents: Agen
 }
 
 export function playgroundLimit(state: BillingState): number {
-  if (!state.billing) return Number.POSITIVE_INFINITY;
+  if (!state.billing || !state.enforced) return Number.POSITIVE_INFINITY;
   return limitOf(entitlements(state).limits, "PLAYGROUND_RUNS_PER_HOUR");
 }
 
 export function markOverPlanLimit(state: BillingState, agents: AgentResponse[]): AgentResponse[] {
   const sorted = [...agents].sort((a, b) => a.position - b.position);
-  if (!state.billing) return sorted;
+  if (!state.billing || !state.enforced) return sorted;
   const { access, limits } = entitlements(state);
   if (access !== "FULL") return sorted;
   const max = limitOf(limits, "AGENTS_MAX");

@@ -77,6 +77,17 @@ describe("planNotice", () => {
     expect(notice).toMatchObject({ kind: "paused", tone: "danger", action: { href: "/app/billing" } });
   });
 
+  it("only says the agents stop when access is restricted", () => {
+    const stopped = /no responden|no podés enviar/;
+    for (const status of ["SUSPENDED", "PAUSED"] as const) {
+      const restricted = planNotice(summary({ access: "RESTRICTED", subscription: subscription({ status, updatePaymentUrl: PAY_URL }) }), NOW);
+      expect(restricted?.text).toMatch(stopped);
+      const open = planNotice(summary({ access: "FULL", subscription: subscription({ status, updatePaymentUrl: PAY_URL }) }), NOW);
+      expect(open?.kind).toBe(status === "SUSPENDED" ? "suspended" : "paused");
+      expect(open?.text).not.toMatch(stopped);
+    }
+  });
+
   it("explains what works without a plan", () => {
     const notice = planNotice(summary({ access: "RESTRICTED", plan: null, limits: {} }), NOW);
     expect(notice).toMatchObject({ kind: "no-plan", title: "No tenés un plan activo", action: { label: "Elegir un plan" } });

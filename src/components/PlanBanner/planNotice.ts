@@ -87,12 +87,15 @@ function repliesLimitNotice(summary: BillingSummary, team: boolean): PlanNotice 
 export function planNotice(summary: BillingSummary, now: Date = new Date()): PlanNotice | null {
   if (isTeamPlan(summary)) return repliesLimitReached(summary) ? repliesLimitNotice(summary, true) : null;
   const subscription = summary.subscription;
+  const restricted = summary.access === "RESTRICTED";
   if (subscription?.status === "SUSPENDED") {
     return {
       kind: "suspended",
       tone: "danger",
       title: "Tu plan está suspendido",
-      text: "No pudimos cobrarlo. Tus agentes no responden y no podés enviar mensajes hasta que actualices el medio de pago.",
+      text: restricted
+        ? "No pudimos cobrarlo. Tus agentes no responden y no podés enviar mensajes hasta que actualices el medio de pago."
+        : "No pudimos cobrarlo. Actualizá el medio de pago para regularizarlo.",
       action: updatePayment(subscription.updatePaymentUrl),
     };
   }
@@ -101,11 +104,13 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
       kind: "paused",
       tone: "danger",
       title: "Tu plan está en pausa",
-      text: "Tus agentes no responden y no podés enviar mensajes hasta que lo reactives.",
+      text: restricted
+        ? "Tus agentes no responden y no podés enviar mensajes hasta que lo reactives."
+        : "Reactivalo para seguir con tu plan.",
       action: GO_TO_BILLING,
     };
   }
-  if (summary.access === "RESTRICTED") {
+  if (restricted) {
     return {
       kind: "no-plan",
       tone: "warning",

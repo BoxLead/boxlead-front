@@ -86,7 +86,7 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
             {subscription.graceUntil ? ` Seguís con acceso hasta el ${longDate(subscription.graceUntil)}.` : null}
           </p>
         ) : null}
-        {subscription?.status === "SUSPENDED" || subscription?.status === "PAUSED" ? (
+        {summary.access === "RESTRICTED" && (subscription?.status === "SUSPENDED" || subscription?.status === "PAUSED") ? (
           <p>Tus agentes están apagados hasta que se regularice el pago.</p>
         ) : null}
         {subscription?.pendingPlanCode ? (
