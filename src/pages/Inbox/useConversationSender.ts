@@ -43,12 +43,13 @@ export function useConversationSender(conversationId: string, platform: Platform
   const [failure, setFailure] = useState<PlatformErrorView | null>(null);
 
   const post = useCallback(
-    async (body: CreateMessageRequest) => {
+    async (body: CreateMessageRequest, settle?: () => void) => {
       const created = await api.post<MessageResponse>(messagesKey(conversationId), body);
       setQueryData<MessageResponse[]>(messagesKey(conversationId), (current) => [
         ...(current ?? []).filter((m) => m.id !== created.id),
         created,
       ]);
+      settle?.();
       setQueryData<ConversationResponse[]>(CONVERSATIONS_KEY, (current) =>
         (current ?? []).map((c) =>
           c.id === conversationId
@@ -77,8 +78,9 @@ export function useConversationSender(conversationId: string, platform: Platform
         { ...message, status: "sending" },
       ]);
       try {
-        await post({ direction: "OUTBOUND", content: message.content });
-        setPending((current) => current.filter((item) => item.tempId !== message.tempId));
+        await post({ direction: "OUTBOUND", content: message.content }, () =>
+          setPending((current) => current.filter((item) => item.tempId !== message.tempId)),
+        );
         return true;
       } catch (error) {
         setFailure(explain(platform, error));
