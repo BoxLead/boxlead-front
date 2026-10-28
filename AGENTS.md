@@ -8,7 +8,7 @@ SPA for BoxLead: a public landing page plus the app (inbox, leads, metrics, cate
 
 ```
 index.html            # HTML shell shared by every page (charset, viewport, theme script, icons, manifest)
-Dockerfile            # Multi-stage build: lint, test, build + test:dist, export (static files), runtime (nginx)
+Dockerfile            # Multi-stage build: lint, unit, build + test:dist, e2e (Playwright), export (static files), runtime (nginx)
 docker/nginx.conf     # Clean URLs for the prerendered pages, app shell under /app, real 404, caching, security headers, /healthz
 docker-compose.yml    # Runs the production image locally
 public/               # favicon.svg and .ico, apple-touch-icon, icons/, og/ (social cards), site.webmanifest, theme-init.js, demo video
@@ -182,7 +182,7 @@ The landing shares the spacing, type, radius, motion, control and icon tokens an
 
 ## Build and deploy
 
-- The Dockerfile is the single source for the Node version; CI lints and builds through it.
+- The Dockerfile is the single source for the Node and Playwright versions. CI runs every step through it with `scripts/ci.sh`, and the deploys wait for that CI instead of testing again.
 - `VITE_API_BASE_URL`, `VITE_AGENT_API_BASE_URL`, `VITE_AUTH0_*`, `VITE_GA_MEASUREMENT_ID` and `VITE_GOOGLE_SITE_VERIFICATION` are build arguments baked into the bundle, read from SSM by the deploy workflow.
 - CD records the last commit of every source file in `lastmod.txt` for the sitemap, builds and smoke-tests the image (health, app shell, a prerendered page, the 404 status and a redirect), then exports the static files to S3 with `Cache-Control` per kind (immutable for `/assets`, a day for media, no-cache for HTML, XML and text) and invalidates CloudFront.
 - CloudFront runs `terraform/functions/router.js` on every viewer request and maps missing objects to `/404.html` with status 404. Changing the routing rules means changing the function, nginx and `scripts/staticSite.ts` together.

@@ -2,6 +2,7 @@
 
 ARG NODE_VERSION=24
 ARG NGINX_VERSION=stable
+ARG PLAYWRIGHT_VERSION=1.63.0
 
 FROM node:${NODE_VERSION}-alpine AS deps
 WORKDIR /app
@@ -14,8 +15,8 @@ COPY . .
 FROM source AS lint
 RUN npm run lint
 
-FROM lint AS test
-RUN npm test
+FROM source AS unit
+RUN npm run test:coverage
 
 FROM source AS build
 ARG VITE_API_BASE_URL
@@ -42,6 +43,16 @@ RUN npm run build:admin
 
 FROM scratch AS admin-export
 COPY --from=admin-build /app/dist-admin /
+
+FROM mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble AS e2e
+ARG PLAYWRIGHT_VERSION
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci \
+ && test "$(node -p "require('@playwright/test/package.json').version")" = "${PLAYWRIGHT_VERSION}"
+COPY . .
+ENV CI=1
+CMD ["npx", "playwright", "test"]
 
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS runtime
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf

@@ -13,3 +13,11 @@ docker-compose.yml
 Dockerfile
 *.md
 *.log
+coverage
+test-results
+playwright-report
+blob-report
+all-blob-reports
+demo-video
+promo-video
+docker-bake.hcl
