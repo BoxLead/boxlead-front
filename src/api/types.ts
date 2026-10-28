@@ -473,11 +473,11 @@ export type SubscriptionStatus =
 
 export type CheckoutStatus = "WAITING" | "PENDING" | "REJECTED";
 
-export type PlanSource = "SUBSCRIPTION" | "DEMO";
+export type PlanSource = "SUBSCRIPTION" | "DEMO" | "TEAM" | "NONE";
 
 export type CurrentPlan = {
-  code: PlanCode;
-  name: string;
+  code: PlanCode | null;
+  name: string | null;
   source: PlanSource;
 };
 

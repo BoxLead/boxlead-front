@@ -77,6 +77,10 @@ test("each scenario tells its own state", async () => {
     ["billing-checkout-rejected", { checkout: { planCode: "STARTER", status: "REJECTED" } }],
     ["billing-downgrade-pending", { plan: { code: "BUSINESS" }, subscription: { pendingPlanCode: "STARTER" } }],
     ["billing-invited", { access: "RESTRICTED", plan: null }],
+    [
+      "billing-team",
+      { access: "FULL", plan: { code: "BUSINESS", name: "Business", source: "TEAM" }, subscription: { status: "SUSPENDED" }, demo: null },
+    ],
     ["reseller", { access: "FULL", plan: { code: "STARTER" } }],
   ];
   for (const [scenario, shape] of expected) {

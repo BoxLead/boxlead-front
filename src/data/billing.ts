@@ -1,5 +1,5 @@
 import { api } from "../api/client";
-import type { BillingSummary, Invitation, LegalVersion } from "../api/types";
+import type { BillingSummary, CurrentPlan, Invitation, LegalVersion } from "../api/types";
 import { setQueryData } from "./queryCache";
 
 export const BILLING_SUMMARY_KEY = "/billing/summary";
@@ -19,4 +19,13 @@ export async function acceptInvitation(): Promise<BillingSummary> {
 
 export function acceptLegal(acceptedLegal: LegalVersion[]): Promise<void> {
   return api.post<void>("/legal/acceptances", { acceptedLegal });
+}
+
+export function currentPlan(summary: BillingSummary | undefined): CurrentPlan | null {
+  const plan = summary?.plan;
+  return plan && plan.source !== "NONE" ? plan : null;
+}
+
+export function isTeamPlan(summary: BillingSummary | undefined): boolean {
+  return currentPlan(summary)?.source === "TEAM";
 }

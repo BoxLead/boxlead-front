@@ -96,6 +96,29 @@ describe("planNotice", () => {
     expect(planNotice(unlimited, NOW)).toBeNull();
   });
 
+  it("says nothing about an own subscription to a team account", () => {
+    const team = summary({
+      plan: { code: "BUSINESS", name: "Business", source: "TEAM" },
+      subscription: subscription({ status: "SUSPENDED", updatePaymentUrl: PAY_URL }),
+    });
+    expect(planNotice(team, NOW)).toBeNull();
+    expect(planNotice({ ...team, subscription: subscription({ status: "PAST_DUE" }) }, NOW)).toBeNull();
+  });
+
+  it("tells a team account when the replies run out without offering plans", () => {
+    const team = summary({
+      plan: { code: "BUSINESS", name: "Business", source: "TEAM" },
+      usage: { agentReplies: { used: 1000, limit: 1000 }, periodEnd: "2026-12-01T03:00:00Z" },
+    });
+    const notice = planNotice(team, NOW);
+    expect(notice).toMatchObject({
+      kind: "replies-limit",
+      title: "Tus agentes usaron todas las respuestas del período",
+      action: { label: "Ir a facturación" },
+    });
+    expect(notice?.text).not.toContain("plan");
+  });
+
   it("never links to a payment page outside Mercado Pago", () => {
     const notice = planNotice(
       summary({ subscription: subscription({ status: "PAST_DUE", updatePaymentUrl: "https://evil.example/pay" }) }),

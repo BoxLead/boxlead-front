@@ -32,6 +32,7 @@ export const BILLING_SCENARIOS = [
   "billing-checkout-rejected",
   "billing-downgrade-pending",
   "billing-invited",
+  "billing-team",
   "reseller",
 ] as const;
 
@@ -187,6 +188,7 @@ export type BillingState = {
   referrals: boolean;
   legal: boolean;
   reseller: boolean;
+  team: boolean;
   entitlementsUnavailable: boolean;
   subscription: StoredSubscription | null;
   demo: { endsAt: string } | null;
@@ -230,6 +232,11 @@ function inDays(days: number): string {
 
 function daysAgo(days: number): string {
   return ago(days * DAY_MINUTES);
+}
+
+function monthEnd(): string {
+  const now = new Date(ago(0));
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString();
 }
 
 function error(status: number, message: string, code?: string, fields?: FieldError[]): MockReply {
@@ -332,6 +339,7 @@ function disabled(): BillingState {
     referrals: false,
     legal: false,
     reseller: false,
+    team: false,
     entitlementsUnavailable: false,
     subscription: null,
     demo: null,
@@ -366,6 +374,16 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
     state.agentReplies = 40;
   }
   if (scenario === "billing-invited") state.presetInvitation = INVITATION_TOKENS.otherEmail;
+  if (scenario === "billing-team") {
+    state.team = true;
+    state.profile = profile();
+    state.subscription = subscription("STARTER", "SUSPENDED");
+    state.subscription.currentPeriodStart = daysAgo(PERIOD_DAYS + 9);
+    state.subscription.currentPeriodEnd = daysAgo(9);
+    state.subscription.graceUntil = daysAgo(2);
+    state.payments = paymentHistory(state.subscription.price, 2);
+    state.agentReplies = 300;
+  }
   if (scenario === "billing-checkout-pending" || scenario === "billing-checkout-rejected") {
     state.profile = profile();
     state.subscription = {
@@ -427,6 +445,9 @@ function demoActive(state: BillingState): boolean {
 }
 
 function entitlements(state: BillingState): Entitlements {
+  if (state.team) {
+    return { access: "FULL", plan: { code: "BUSINESS", name: CATALOG.BUSINESS.name, source: "TEAM" }, limits: CATALOG.BUSINESS.limits };
+  }
   const sub = liveSubscription(state);
   if (sub) {
     const plan: CurrentPlan = { code: sub.planCode, name: CATALOG[sub.planCode].name, source: "SUBSCRIPTION" };
@@ -477,11 +498,11 @@ function summary(state: BillingState): BillingSummary {
           updatePaymentUrl: live.status === "PAST_DUE" || live.status === "SUSPENDED" ? checkoutUrl(live) : null,
         }
       : null,
-    demo: demoActive(state) ? state.demo : null,
+    demo: !state.team && demoActive(state) ? state.demo : null,
     checkout: sub?.status === "INCOMPLETE" ? { planCode: sub.planCode, status: sub.checkoutStatus ?? "WAITING" } : null,
     usage: {
       agentReplies: { used: state.agentReplies, limit: replyLimit === undefined ? 0 : replyLimit },
-      periodEnd: live?.currentPeriodEnd ?? state.demo?.endsAt ?? inDays(PERIOD_DAYS),
+      periodEnd: state.team ? monthEnd() : (live?.currentPeriodEnd ?? state.demo?.endsAt ?? inDays(PERIOD_DAYS)),
     },
     limits,
     billingProfileComplete: state.profile !== null,

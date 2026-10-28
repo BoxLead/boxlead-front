@@ -1,6 +1,6 @@
 import type { PlanErrorCode } from "../../api/client";
 import type { BillingSummary } from "../../api/types";
-import { BILLING_PATH } from "../../data/billing";
+import { BILLING_PATH, isTeamPlan } from "../../data/billing";
 import { formatNumber } from "../../util/format";
 import type { BannerTone } from "../ui/Banner";
 
@@ -60,7 +60,32 @@ function demoEnding(summary: BillingSummary, now: Date): boolean {
   return left > 0 && left <= DEMO_WARNING_DAYS * DAY_MS;
 }
 
+function repliesLimitNotice(summary: BillingSummary, team: boolean): PlanNotice {
+  const limit = summary.limits.AGENT_REPLIES_PER_PERIOD ?? 0;
+  const until = longDate(summary.usage.periodEnd);
+  const used = `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}.`;
+  if (team) {
+    return {
+      kind: "replies-limit",
+      tone: "warning",
+      title: "Tus agentes usaron todas las respuestas del período",
+      text: until ? `${used} Vuelven a responder el ${until}.` : `${used} Vuelven a responder cuando empiece el próximo período.`,
+      action: GO_TO_BILLING,
+    };
+  }
+  return {
+    kind: "replies-limit",
+    tone: "warning",
+    title: "Tus agentes usaron todas las respuestas del plan",
+    text: until
+      ? `${used} Vuelven a responder el ${until} o antes si cambiás de plan.`
+      : `${used} Cambiá de plan para que sigan respondiendo.`,
+    action: SEE_PLANS,
+  };
+}
+
 export function planNotice(summary: BillingSummary, now: Date = new Date()): PlanNotice | null {
+  if (isTeamPlan(summary)) return repliesLimitReached(summary) ? repliesLimitNotice(summary, true) : null;
   const subscription = summary.subscription;
   if (subscription?.status === "SUSPENDED") {
     return {
@@ -101,19 +126,7 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
       action: updatePayment(subscription.updatePaymentUrl),
     };
   }
-  if (repliesLimitReached(summary)) {
-    const limit = summary.limits.AGENT_REPLIES_PER_PERIOD ?? 0;
-    const until = longDate(summary.usage.periodEnd);
-    return {
-      kind: "replies-limit",
-      tone: "warning",
-      title: "Tus agentes usaron todas las respuestas del plan",
-      text: until
-        ? `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}. Vuelven a responder el ${until} o antes si cambiás de plan.`
-        : `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}. Cambiá de plan para que sigan respondiendo.`,
-      action: SEE_PLANS,
-    };
-  }
+  if (repliesLimitReached(summary)) return repliesLimitNotice(summary, false);
   if (summary.demo && demoEnding(summary, now)) {
     return {
       kind: "demo-ending",

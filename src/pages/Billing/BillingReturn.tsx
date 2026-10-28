@@ -50,7 +50,7 @@ function viewFor(poll: Poll, retry: () => void): View {
       tone: "success",
       icon: <CheckIcon />,
       title: "Tu pago está confirmado",
-      text: summary?.plan ? `Ya tenés ${summary.plan.name}. Tus agentes pueden responder.` : "Tu plan ya está activo.",
+      text: summary?.plan?.name ? `Ya tenés ${summary.plan.name}. Tus agentes pueden responder.` : "Tu plan ya está activo.",
       actions: (
         <>
           <Link className="btn btn-primary" to="/app/inbox">

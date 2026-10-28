@@ -7,7 +7,7 @@ import { Banner } from "../../components/ui/Banner";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/toast";
 import { useAuth } from "../../context/auth";
-import { BILLING_SUMMARY_KEY } from "../../data/billing";
+import { BILLING_SUMMARY_KEY, isTeamPlan } from "../../data/billing";
 import { PLANS_PATH } from "../../data/plans";
 import { cancelSubscription, changePlan } from "../../data/subscription";
 import { useApiQuery } from "../../hooks/useApiQuery";
@@ -53,8 +53,9 @@ export function Billing() {
   const data = summary.data;
   const planList = plans.data ?? [];
   const planName = (code: PaidPlanCode) => planList.find((plan) => plan.code === code)?.name ?? PLAN_NAMES[code];
+  const team = isTeamPlan(data);
   const requested = paidPlanCode(searchParams.get("checkout"));
-  const checkoutCode = buying ?? (requested && data && !data.subscription ? requested : null);
+  const checkoutCode = team ? null : (buying ?? (requested && data && !data.subscription ? requested : null));
   const checkoutPlan = checkoutCode ? planList.find((plan) => plan.code === checkoutCode && !plan.contactOnly) : undefined;
   const currentCode = data?.plan?.source === "SUBSCRIPTION" ? paidPlanCode(data.plan.code) : null;
 
@@ -141,7 +142,7 @@ export function Billing() {
         </div>
       ) : (
         <div className="billing-layout">
-          {data.checkout ? (
+          {data.checkout && !team ? (
             <CheckoutNotice
               checkout={data.checkout}
               planName={planName(data.checkout.planCode)}
@@ -157,49 +158,51 @@ export function Billing() {
             onKeep={() => void keepPlan()}
           />
 
-          <section className="billing-section" aria-labelledby="billing-plans-title">
-            <h2 id="billing-plans-title" className="billing-section-title">
-              Planes
-            </h2>
-            {plans.error && !plans.data ? (
-              <Banner
-                tone="danger"
-                title="No pudimos cargar los planes"
-                action={
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => void plans.reload()}>
-                    Reintentar
-                  </button>
-                }
-              >
-                {plans.error}
-              </Banner>
-            ) : !plans.data ? (
-              <div className="billing-plan-skeletons" aria-hidden="true">
-                {[0, 1, 2].map((index) => (
-                  <div key={index} className="panel skeleton billing-plan-skeleton" />
-                ))}
-              </div>
-            ) : planList.filter((plan) => !plan.inviteOnly).length === 0 ? (
-              <div className="panel">
-                <EmptyState
-                  icon={<CardIcon />}
-                  title="No hay planes disponibles ahora"
-                  hint={`Escribinos a ${SUPPORT_EMAIL} y te ayudamos a elegir.`}
+          {team ? null : (
+            <section className="billing-section" aria-labelledby="billing-plans-title">
+              <h2 id="billing-plans-title" className="billing-section-title">
+                Planes
+              </h2>
+              {plans.error && !plans.data ? (
+                <Banner
+                  tone="danger"
+                  title="No pudimos cargar los planes"
+                  action={
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void plans.reload()}>
+                      Reintentar
+                    </button>
+                  }
+                >
+                  {plans.error}
+                </Banner>
+              ) : !plans.data ? (
+                <div className="billing-plan-skeletons" aria-hidden="true">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="panel skeleton billing-plan-skeleton" />
+                  ))}
+                </div>
+              ) : planList.filter((plan) => !plan.inviteOnly).length === 0 ? (
+                <div className="panel">
+                  <EmptyState
+                    icon={<CardIcon />}
+                    title="No hay planes disponibles ahora"
+                    hint={`Escribinos a ${SUPPORT_EMAIL} y te ayudamos a elegir.`}
+                  />
+                </div>
+              ) : (
+                <PlanList
+                  plans={planList}
+                  summary={data}
+                  busy={busy}
+                  onBuy={(plan) => setBuying(paidPlanCode(plan.code))}
+                  onChange={(plan) => {
+                    const code = paidPlanCode(plan.code);
+                    if (code) setChange({ plan, code });
+                  }}
                 />
-              </div>
-            ) : (
-              <PlanList
-                plans={planList}
-                summary={data}
-                busy={busy}
-                onBuy={(plan) => setBuying(paidPlanCode(plan.code))}
-                onChange={(plan) => {
-                  const code = paidPlanCode(plan.code);
-                  if (code) setChange({ plan, code });
-                }}
-              />
-            )}
-          </section>
+              )}
+            </section>
+          )}
 
           <Payments />
 
