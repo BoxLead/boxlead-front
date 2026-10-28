@@ -12,11 +12,11 @@ import { DateFilter, FilterBar, SearchFilter, SelectFilter } from "../../compone
 import { ListView } from "../../components/list/ListView";
 import { useAdminQuery } from "../../components/list/useAdminQuery";
 import { PAGE_PARAM, useListParams, type ListParams } from "../../components/list/useListParams";
-import { formatCount, formatDateTime } from "../../format";
+import { formatCount, formatDateTime, formatMicros } from "../../format";
 import { navItem } from "../../nav";
 import { GROUPING_LABELS } from "./labels";
 import type { UsageDay, UsageGrouping, UsageSummary, UsageSummaryRow, UsageTotals } from "./types";
-import { formatCost, isUuid, monthStart, rangeProblem, todayInBuenosAires } from "./usage";
+import { isUuid, monthStart, rangeProblem, todayInBuenosAires } from "./usage";
 import { UserLink } from "./UserLink";
 import "./Operations.css";
 
@@ -59,7 +59,7 @@ function summaryCost(row: UsageTotals) {
   const priced = row.costCurrency !== null;
   return (
     <span className="cell-stack">
-      <span>{priced ? formatCost(row.estimatedCostMicros, row.costCurrency) : "Sin costo"}</span>
+      <span>{priced ? formatMicros(row.estimatedCostMicros, row.costCurrency) : "Sin costo"}</span>
       {row.rowsWithoutCost > 0 ? (
         <Tag tone="warning">
           {formatCount(row.rowsWithoutCost)} {row.rowsWithoutCost === 1 ? "fila sin costo" : "filas sin costo"}
@@ -137,7 +137,7 @@ const DETAIL_COLUMNS: Column<UsageDay>[] = [
     type: "money",
     cell: (row) => (
       <span className="cell-stack">
-        {row.estimatedCostMicros === null ? <Tag tone="warning">Sin costo</Tag> : <span>{formatCost(row.estimatedCostMicros, row.costCurrency)}</span>}
+        {row.estimatedCostMicros === null ? <Tag tone="warning">Sin costo</Tag> : <span>{formatMicros(row.estimatedCostMicros, row.costCurrency)}</span>}
         {row.priceVersion !== null ? <span className="sub-text">Precios versión {row.priceVersion}</span> : null}
         <span className="sub-text">Calculado el {formatDateTime(row.computedAt)}</span>
       </span>
@@ -158,7 +158,7 @@ function Totals({ totals }: { totals: readonly UsageTotals[] }) {
               : undefined
           }
         >
-          <p className="usage-total num">{total.costCurrency ? formatCost(total.estimatedCostMicros, total.costCurrency) : "Sin costo"}</p>
+          <p className="usage-total num">{total.costCurrency ? formatMicros(total.estimatedCostMicros, total.costCurrency) : "Sin costo"}</p>
           <Facts
             columns={3}
             items={[

@@ -12,7 +12,7 @@ import { ConsumerRequestsScreen } from "./ConsumerRequestsScreen";
 import { TeamScreen } from "./TeamScreen";
 import type { AuditEvent, ConsumerRequest, TeamMember, UsageDay, UsageSummary } from "./types";
 import { UsageScreen } from "./UsageScreen";
-import { formatCost, rangeProblem } from "./usage";
+import { rangeProblem } from "./usage";
 
 const SELF = "0b0e0000-0000-4000-8000-0000000000a1";
 const LUCIA = "0b0e0000-0000-4000-8001-000000000001";
@@ -83,9 +83,7 @@ afterEach(() => {
 });
 
 describe("usage helpers", () => {
-  it("formats micros in the currency of core and checks the range", () => {
-    expect(formatCost(1_284_500, "USD")).toMatch(/1,2845/);
-    expect(formatCost(0, null)).toBe("0,00");
+  it("checks the range", () => {
     expect(rangeProblem("2026-10-01", "2026-10-26")).toBeNull();
     expect(rangeProblem("2026-10-27", "2026-10-26")).toBe("La fecha de inicio tiene que ser anterior a la de fin.");
     expect(rangeProblem("2025-01-01", "2026-10-26")).toBe("El período puede tener hasta 366 días.");
