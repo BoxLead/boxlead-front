@@ -44,6 +44,7 @@ import {
   billingRoute,
   buildBilling,
   isBillingScenario,
+  limitOverrides,
   manualSendGate,
   markOverPlanLimit,
   metricsGate,
@@ -462,6 +463,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       pendingLegal: body.pendingLegal === true,
       entitlementsUnavailable: body.entitlementsUnavailable === true,
       agentReplies: typeof body.agentReplies === "number" ? body.agentReplies : undefined,
+      overrides: limitOverrides(body.overrides),
     });
     return send(res, 200, { scenario });
   }

@@ -42,6 +42,7 @@ export type BillingOptions = {
   pendingLegal?: boolean;
   entitlementsUnavailable?: boolean;
   agentReplies?: number;
+  overrides?: PlanLimits;
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -189,6 +190,7 @@ export type BillingState = {
   legal: boolean;
   reseller: boolean;
   team: boolean;
+  overrides: PlanLimits;
   entitlementsUnavailable: boolean;
   subscription: StoredSubscription | null;
   demo: { endsAt: string } | null;
@@ -221,6 +223,15 @@ export type MockRequest = {
   userEmail: string;
   readBody: () => Promise<Record<string, unknown>>;
 };
+
+export function limitOverrides(value: unknown): PlanLimits | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
+  const limits: PlanLimits = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (item === null || typeof item === "number") limits[key as EntitlementKey] = item;
+  }
+  return limits;
+}
 
 export function isBillingScenario(scenario: string): scenario is BillingScenario {
   return BILLING_SCENARIOS.some((item) => item === scenario);
@@ -340,6 +351,7 @@ function disabled(): BillingState {
     legal: false,
     reseller: false,
     team: false,
+    overrides: {},
     entitlementsUnavailable: false,
     subscription: null,
     demo: null,
@@ -420,6 +432,7 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
     state.agentReplies = 900;
   }
   if (typeof options.agentReplies === "number") state.agentReplies = options.agentReplies;
+  if (options.overrides) state.overrides = options.overrides;
   if (scenario === "reseller") {
     state.referrals = true;
     state.reseller = true;
@@ -445,6 +458,11 @@ function demoActive(state: BillingState): boolean {
 }
 
 function entitlements(state: BillingState): Entitlements {
+  const standing = standingOf(state);
+  return { ...standing, limits: { ...standing.limits, ...state.overrides } };
+}
+
+function standingOf(state: BillingState): Entitlements {
   if (state.team) {
     return { access: "FULL", plan: { code: "BUSINESS", name: CATALOG.BUSINESS.name, source: "TEAM" }, limits: CATALOG.BUSINESS.limits };
   }
@@ -457,7 +475,7 @@ function entitlements(state: BillingState): Entitlements {
   if (demoActive(state)) {
     return { access: "FULL", plan: { code: "DEMO", name: CATALOG.DEMO.name, source: "DEMO" }, limits: CATALOG.DEMO.limits };
   }
-  return { access: "RESTRICTED", plan: null, limits: {} };
+  return { access: "RESTRICTED", plan: null, limits: { METRICS_HISTORY_DAYS: CATALOG.DEMO.limits.METRICS_HISTORY_DAYS } };
 }
 
 function limitOf(limits: PlanLimits, key: EntitlementKey): number {

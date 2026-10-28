@@ -220,7 +220,7 @@ describe("plan errors", () => {
     fetchMock.mockResolvedValue(json({ error: "Payment Required", message: "Limit", code: "PLAN_LIMIT_REACHED" }, 402));
 
     await expect(agentApi.post("/agents", {})).rejects.toMatchObject({ status: 402, message: "Llegaste al límite de tu plan." });
-    expect(listener).toHaveBeenCalledWith("PLAN_LIMIT_REACHED");
+    expect(listener).toHaveBeenCalledWith("PLAN_LIMIT_REACHED", "/agents");
 
     stop();
     fetchMock.mockResolvedValue(json({ error: "Payment Required", message: "Plan", code: "PLAN_REQUIRED" }, 402));

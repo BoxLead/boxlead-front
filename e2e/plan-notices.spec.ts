@@ -254,3 +254,40 @@ test("metrics with three months of history keep the forecast", async ({ page }) 
   await expect.poll(() => new Set(responses.map((response) => response.url())).size).toBe(3);
   expect(responses.map((response) => response.status()).every((status) => status === 200)).toBe(true);
 });
+
+test("metrics without a plan ask for no period the history does not cover", async ({ page }) => {
+  test.slow();
+  const responses = metricsRequests(page);
+  await resetApi("billing-none", undefined, { overrides: { METRICS_HISTORY_DAYS: 0 } });
+  await login(page, "/app/metrics");
+  const banner = page.getByRole("status").filter({ hasText: "Tu plan no incluye historial de métricas" });
+  await expect(banner).toBeVisible();
+  await expect(banner.getByRole("link", { name: "Ver planes" })).toHaveAttribute("href", "/app/billing");
+  await expect(page.getByRole("group", { name: "Período" })).toHaveCount(0);
+  await expect(page.getByText("No pudimos cargar las métricas")).toHaveCount(0);
+  expect(responses).toHaveLength(0);
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+  await shootThemes(page, "plan-metrics-no-history", () => expect(banner).toBeVisible());
+});
+
+test("metrics without a plan explain a 402 in their own notice", async ({ page }) => {
+  test.slow();
+  await resetApi("billing-none");
+  await page.route(/\/metrics\?from=/, (route) =>
+    route.fulfill({
+      status: 402,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Payment Required", message: "The plan does not cover that period", code: "PLAN_LIMIT_REACHED" }),
+    }),
+  );
+  await login(page, "/app/metrics");
+  const banner = page.getByRole("status").filter({ hasText: "Tu plan no cubre este período" });
+  await expect(banner).toBeVisible();
+  await expect(banner).toContainText("Elegí un período más corto o pasate a un plan con más días de historial.");
+  await expect(page.getByText("No pudimos cargar las métricas")).toHaveCount(0);
+  await expect(notice(page, "Llegaste al límite de tu plan")).toHaveCount(0);
+  await expect(notice(page, "No tenés un plan activo")).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await screenshot(page, "plan-metrics-402-light");
+});

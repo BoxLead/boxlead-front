@@ -3,6 +3,7 @@ import { agentApi, api, ApiError } from "../api/client";
 export type QueryState<T> = {
   data: T | undefined;
   error: string | null;
+  errorStatus: number | null;
   status: "idle" | "loading" | "success" | "error";
   fetching: boolean;
   fetchedAt: number;
@@ -23,6 +24,7 @@ const GC_MS = 5 * 60_000;
 const IDLE: QueryState<unknown> = {
   data: undefined,
   error: null,
+  errorStatus: null,
   status: "idle",
   fetching: false,
   fetchedAt: 0,
@@ -96,6 +98,7 @@ export function fetchQuery(key: string): Promise<void> {
       update(entry, {
         data: keepStable(entry.state.data, data),
         error: null,
+        errorStatus: null,
         status: "success",
         fetching: false,
         fetchedAt: Date.now(),
@@ -109,6 +112,7 @@ export function fetchQuery(key: string): Promise<void> {
       const hasData = entry.state.data !== undefined;
       update(entry, {
         error: messageOf(error),
+        errorStatus: error instanceof ApiError ? error.status : null,
         status: hasData ? "success" : "error",
         fetching: false,
         fetchedAt: Date.now(),
@@ -154,6 +158,7 @@ export function setQueryData<T>(key: string, updater: (current: T | undefined) =
     data: updater(entry.state.data as T | undefined),
     status: "success",
     error: null,
+    errorStatus: null,
   });
 }
 

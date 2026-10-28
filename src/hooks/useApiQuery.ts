@@ -14,6 +14,7 @@ type Options = {
 const NO_KEY: QueryState<never> = {
   data: undefined,
   error: null,
+  errorStatus: null,
   status: "idle",
   fetching: false,
   fetchedAt: 0,
@@ -65,6 +66,7 @@ export function useApiQuery<T>(key: string | null, options: Options = {}) {
   return {
     data: state.data,
     error: state.error,
+    errorStatus: state.errorStatus,
     loading: key !== null && state.data === undefined && state.status !== "error" && state.status !== "success",
     refreshing: state.fetching && state.data !== undefined,
     reload,
