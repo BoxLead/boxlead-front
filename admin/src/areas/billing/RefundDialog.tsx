@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { ChoiceGroup } from "../../../../src/components/ui/ChoiceGroup";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { formatMoney } from "../../format";
-import { invalidInput, refundPayment } from "./api";
+import { askedRefundNotice, invalidInput, refundPayment } from "./api";
 import { Amount } from "./cells";
 import { parseAmount, refundInProgress } from "./money";
 import type { PaymentRow, RefundResult } from "./types";
@@ -14,6 +14,7 @@ type RefundDialogProps = {
   open: boolean;
   onClose: () => void;
   onDone: (result: RefundResult) => void;
+  onAsked: (notice: string) => void;
   onSettled?: (failure: unknown) => void;
 };
 
@@ -22,7 +23,7 @@ const MODES = [
   { value: "partial" as const, label: "Parcial" },
 ];
 
-export function RefundDialog({ payment, open, onClose, onDone, onSettled }: RefundDialogProps) {
+export function RefundDialog({ payment, open, onClose, onDone, onAsked, onSettled }: RefundDialogProps) {
   const [mode, setMode] = useState<Mode>("full");
   const [text, setText] = useState("");
   const [touched, setTouched] = useState(false);
@@ -40,7 +41,15 @@ export function RefundDialog({ payment, open, onClose, onDone, onSettled }: Refu
       setTouched(true);
       throw invalidInput("Revisá el monto a reembolsar.");
     }
-    const result = await refundPayment(payment.id, mode === "partial" && valid ? { amountMinor: parsed, currency: left.currency } : null, reason);
+    let result: RefundResult;
+    try {
+      result = await refundPayment(payment.id, mode === "partial" && valid ? { amountMinor: parsed, currency: left.currency } : null, reason);
+    } catch (error) {
+      const notice = askedRefundNotice(error);
+      if (notice === null) throw error;
+      onAsked(notice);
+      return;
+    }
     onDone(result);
   }
 

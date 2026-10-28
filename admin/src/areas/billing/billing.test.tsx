@@ -154,7 +154,7 @@ afterEach(() => {
 describe("refund dialog", () => {
   function renderRefund(onDone = vi.fn()) {
     const calls = mockFetch(() => json(201, { id: "r1", paymentId: PAYMENT.id, amount: null, status: "APPROVED", providerRefundId: "rf", createdAt: "" }));
-    renderAs(["FINANCE"], <RefundDialog payment={PAYMENT} open onClose={vi.fn()} onDone={onDone} />);
+    renderAs(["FINANCE"], <RefundDialog payment={PAYMENT} open onClose={vi.fn()} onDone={onDone} onAsked={vi.fn()} />);
     return calls;
   }
 
@@ -193,7 +193,7 @@ describe("refund dialog", () => {
   it("keeps the dialog open with the reason when core says the refund exceeds what is left", async () => {
     mockFetch(() => json(422, { error: "Unprocessable", message: "exceeds", code: "REFUND_EXCEEDS_PAYMENT" }));
     const onDone = vi.fn();
-    renderAs(["FINANCE"], <RefundDialog payment={PAYMENT} open onClose={vi.fn()} onDone={onDone} />);
+    renderAs(["FINANCE"], <RefundDialog payment={PAYMENT} open onClose={vi.fn()} onDone={onDone} onAsked={vi.fn()} />);
     await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
     await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
     expect(await screen.findByText("El reembolso supera lo que queda del pago.")).toBeInTheDocument();
@@ -232,18 +232,39 @@ describe("payments screen", () => {
     expect(await screen.findByText(message)).toBeInTheDocument();
   });
 
-  it("says the refund stays asked for when Mercado Pago does not answer and reloads on close", async () => {
-    const calls = mockFetch((method) =>
-      method === "POST" ? json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" }) : page([PAYMENT]),
-    );
+  it("closes the dialog, says the refund stays asked for and reloads when Mercado Pago does not answer", async () => {
+    const asked: PaymentRow = { ...PAYMENT, refundable: ars(5630000) };
+    let posted = false;
+    const calls = mockFetch((method) => {
+      if (method !== "POST") return page([posted ? asked : PAYMENT]);
+      posted = true;
+      return json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" });
+    });
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Parcial", hidden: true }));
+    await userEvent.type(screen.getByLabelText("Monto a reembolsar en ARS"), "700");
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.")).toBeInTheDocument();
+    await vi.waitFor(() => expect(screen.queryByLabelText("Motivo")).not.toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "Reembolsar", hidden: true })).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    expect(screen.getByText("Queda para reembolsar").closest("div")).toHaveTextContent("56.300,00");
+  });
+
+  it("closes the dialog without a second chance when core fails and the refund may have been asked for", async () => {
+    const calls = mockFetch((method) => (method === "POST" ? json(504, { error: "Gateway timeout" }) : page([PAYMENT])));
     renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
     await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
     await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
     await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
-    expect(await screen.findByText("Mercado Pago no respondió. Quedó pedido, reintentalo desde Reembolsos en unos minutos.")).toBeInTheDocument();
-    expect(screen.queryByText(/no cambió nada/)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
+    expect(await screen.findByText("No sabemos si el reembolso quedó pedido. Revisalo en Reembolsos antes de pedirlo de nuevo.")).toBeInTheDocument();
+    await vi.waitFor(() => expect(screen.queryByLabelText("Motivo")).not.toBeInTheDocument());
     await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
   });
 
   it("reloads the list when the refund dialog closes after core refused the amount", async () => {

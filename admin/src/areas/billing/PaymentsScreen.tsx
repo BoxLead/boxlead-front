@@ -64,6 +64,12 @@ export function PaymentsScreen() {
     query.reload();
   }
 
+  function asked(message: string) {
+    toast({ tone: "info", message });
+    setOpen(false);
+    query.reload();
+  }
+
   const columns: Column<PaymentRow>[] = [
     {
       key: "customer",
@@ -165,6 +171,7 @@ export function PaymentsScreen() {
           open={open}
           onClose={() => setOpen(false)}
           onDone={done}
+          onAsked={asked}
           onSettled={(failure) => {
             if (changedUnderneath(failure)) query.reload();
           }}
