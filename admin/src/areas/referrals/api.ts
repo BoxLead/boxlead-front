@@ -11,7 +11,7 @@ export type CommissionAction = "hold" | "release" | "reverse";
 const ACTION_REFUSED: Record<CommissionAction | "approve", string> = {
   approve: "Alguna comisión ya no está devengada o todavía no llegó a su fecha de liberación. Recargá y probá de nuevo.",
   hold: "Esta comisión ya no se puede retener. Recargá para ver su estado.",
-  release: "Esta comisión ya no está retenida. Recargá para ver su estado.",
+  release: "Esta comisión no se puede liberar. O ya no está retenida o es una autorreferencia, que queda retenida. Recargá para ver su estado.",
   reverse: "Esta comisión no se puede revertir.",
 };
 

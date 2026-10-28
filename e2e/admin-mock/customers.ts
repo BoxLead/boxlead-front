@@ -560,11 +560,11 @@ function reasonOf(body: Record<string, unknown>): string | null {
 
 type Action = (customer: Customer, reason: string, request: MockRequest) => MockReply;
 
-function action(handle: Action) {
+function action(handle: Action, ownerToo = false) {
   return (request: MockRequest): MockReply | null => {
     const customer = records.find((row) => row.id === request.match[1]);
     if (!customer) return null;
-    if (customer.id === request.admin.userId && !request.admin.roles.includes("OWNER")) {
+    if (customer.id === request.admin.userId && (ownerToo || !request.admin.roles.includes("OWNER"))) {
       return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
     }
     const reason = reasonOf(request.body);
@@ -580,6 +580,7 @@ function futureInstant(value: unknown): string | null | undefined {
 }
 
 const grantDemo: Action = (customer, _reason, { body }) => {
+  if (customer.team) return failure(409, "The user has team access, a Demo would have no effect", "DEMO_TEAM_MEMBER");
   if (currentDemo(customer)) return failure(409, "The demo was already used", "DEMO_ALREADY_USED");
   const days = body.demoDays ?? DEFAULT_DEMO_DAYS;
   if (typeof days !== "number" || !Number.isInteger(days) || days < 1 || days > MAX_DEMO_DAYS) return badRequest();
@@ -602,6 +603,9 @@ const extendDemo: Action = (customer, _reason, { body }) => {
   if (!demo) return notFound();
   const endsAt = futureInstant(body.endsAt);
   if (!endsAt) return badRequest("A demo can only be extended into the future");
+  if (Date.parse(endsAt) > new Date().getTime() + MAX_DEMO_DAYS * DAY) {
+    return failure(400, "A demo can end at most 365 days from today", "DEMO_END_TOO_FAR");
+  }
   demo.endsAt = endsAt;
   return ok(demo);
 };
@@ -721,15 +725,15 @@ export const customers: MockArea = {
         return customer ? ok(fileOf(customer, new Date().getTime())) : notFound();
       },
     },
-    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo$`), access: ["SUPPORT"], handle: action(grantDemo) },
-    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/extend$`), access: ["SUPPORT"], handle: action(extendDemo) },
-    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/revoke$`), access: ["SUPPORT"], handle: action(revokeDemo) },
-    { method: "PUT", pattern: new RegExp(`^/admin/customers/${USER}/overrides/([^/]+)$`), access: ["OWNER"], handle: action(setOverride) },
+    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo$`), access: ["SUPPORT"], handle: action(grantDemo, true) },
+    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/extend$`), access: ["SUPPORT"], handle: action(extendDemo, true) },
+    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/revoke$`), access: ["SUPPORT"], handle: action(revokeDemo, true) },
+    { method: "PUT", pattern: new RegExp(`^/admin/customers/${USER}/overrides/([^/]+)$`), access: ["OWNER"], handle: action(setOverride, true) },
     {
       method: "DELETE",
       pattern: new RegExp(`^/admin/customers/${USER}/overrides/([^/]+)$`),
       access: ["OWNER"],
-      handle: action(revokeOverride),
+      handle: action(revokeOverride, true),
     },
     { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/subscription/pause$`), access: ["OWNER"], handle: action(pause) },
     { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/subscription/resume$`), access: ["OWNER"], handle: action(resume) },

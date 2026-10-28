@@ -3,7 +3,7 @@ import { useToast } from "../../../../src/components/ui/toast";
 import { SearchIcon } from "../../../../src/components/icons/UiIcons";
 import { Banner } from "../../../../src/components/ui/Banner";
 import { errorText } from "../../api/errors";
-import { planLabel, SUBSCRIPTION_STATUS, type SubscriptionStatus } from "../../status";
+import { planLabel, SUBSCRIPTION_STATUS, TEAM_LABEL, type SubscriptionStatus } from "../../status";
 import type { AdminPage } from "../../api/types";
 import { ReasonDialog } from "../../components/ReasonDialog";
 import { grantDemo, searchCustomers } from "./api";
@@ -25,13 +25,15 @@ type GrantDemoFlowProps = {
   onGranted: () => void;
 };
 
-function planText(planCode: string | null): string {
-  return planCode ? `Plan ${planLabel(planCode)}` : planLabel(null);
+function planText(customer: CustomerMatch): string {
+  if (customer.planSource === "TEAM") return TEAM_LABEL;
+  return customer.planCode ? `Plan ${planLabel(customer.planCode)}` : planLabel(null);
 }
 
 const ACCESS_STATUSES: readonly string[] = ["ACTIVE", "PAST_DUE", "SUSPENDED", "PAUSED"] satisfies SubscriptionStatus[];
 
 function liveSubscription(customer: CustomerMatch): SubscriptionStatus | null {
+  if (customer.planSource === "TEAM") return null;
   const status = customer.subscriptionStatus;
   if (!status || !ACCESS_STATUSES.includes(status) || !customer.planCode || customer.planCode === "DEMO") return null;
   return status as SubscriptionStatus;
@@ -65,6 +67,7 @@ export function GrantDemoFlow({ open, hold, onClose, onGranted }: GrantDemoFlowP
 
   const daysProblem = demoDaysProblem(days);
   const live = selected ? liveSubscription(selected) : null;
+  const team = selected?.planSource === "TEAM";
   const userProblem = selected ? null : "Buscá y elegí un usuario.";
 
   function runSearch() {
@@ -152,11 +155,18 @@ export function GrantDemoFlow({ open, hold, onClose, onGranted }: GrantDemoFlowP
           <Summary
             rows={[
               ["Usuario", selected.email],
+              ...(team ? [["Plan", `${TEAM_LABEL}, con los límites de Business`] as [string, string]] : []),
               ...(live ? [["Suscripción", `Plan ${planLabel(selected.planCode)} · ${SUBSCRIPTION_STATUS[live].label}`] as [string, string]] : []),
               ["Demo", daysText(demoDaysValue(days))],
               ["Arranca", "Ahora"],
             ]}
           />
+        ) : null}
+        {team ? (
+          <Banner tone="warning" title="Es del equipo de BoxLead">
+            Ya usa BoxLead sin pagar con los límites de Business, así que la Demo no tendría efecto y BoxLead va a rechazar el pedido
+            mientras tenga un rol en el backoffice.
+          </Banner>
         ) : null}
         {live ? (
           <Banner tone="warning" title="Tiene una suscripción que le da acceso">
@@ -201,7 +211,7 @@ function SearchResults({ search, selected, problem, onSelect }: SearchResultsPro
             <span className="invitations-result-body">
               <span className="invitations-email">{customer.email}</span>
               <span className="invitations-note">
-                {[name, planText(customer.planCode)].filter(Boolean).join(" · ")}
+                {[name, planText(customer)].filter(Boolean).join(" · ")}
               </span>
             </span>
           </label>

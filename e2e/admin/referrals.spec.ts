@@ -353,7 +353,7 @@ test.describe("finance actions", () => {
     await page.getByRole("button", { name: "Liberar" }).click();
     await expect(dialog(page).getByText("$ 8.000,00")).toBeVisible();
     await confirmWithReason(page, "Liberar", "/release");
-    await expect(dialog(page).getByText("Esta comisión ya no está retenida. Recargá para ver su estado.")).toBeVisible();
+    await expect(dialog(page).getByText("Esta comisión no se puede liberar. O ya no está retenida o es una autorreferencia, que queda retenida. Recargá para ver su estado.")).toBeVisible();
     await page.unrouteAll();
     const released = await confirmWithReason(page, "Liberar", "/release");
     expect(released.postDataJSON()).toEqual({ reason: REASON });

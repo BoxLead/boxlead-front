@@ -6,6 +6,7 @@ const DAY = 86_400_000;
 const PAGE_SIZE = 50;
 const MOCK_DEMO_DAYS = 14;
 const MAX_DEMO_DAYS = 365;
+const MAX_AHEAD_MS = 365 * DAY;
 const MAX_EMAIL_LENGTH = 254;
 const MIN_REASON = 10;
 const MAX_REASON = 500;
@@ -23,9 +24,11 @@ export const MOCK_USERS = [
   { id: "0b0e0000-0000-4000-8000-000000000103", email: "carla@inmobiliariarivas.com", name: "Carla Rivas" },
   { id: "0b0e0000-0000-4000-8000-000000000104", email: "sofia@clinicadental.com", name: "Sofía Pereyra" },
   { id: "0b0e0000-0000-4000-8000-000000000105", email: "diego@agenciadelsur.com", name: "Diego Álvarez" },
+  { id: "0b0e0000-0000-4000-8000-000000000106", email: "pablo@boxlead.app", name: "Pablo Sosa" },
 ] as const;
 
 export const MOCK_SUBSCRIBED = { userId: MOCK_USERS[4].id, planCode: "STARTER", subscriptionStatus: "ACTIVE" } as const;
+export const MOCK_TEAM = { userId: MOCK_USERS[5].id, planCode: "BUSINESS", planSource: "TEAM" } as const;
 
 export const MOCK_RESELLER = { id: "0b0e0000-0000-4000-8000-000000000201", displayName: "Agencia Norte" };
 
@@ -151,8 +154,8 @@ function instant(value: unknown): number | null {
   return Number.isNaN(time) ? null : time;
 }
 
-function selfOperation(admin: AdminIdentity, matches: boolean): MockReply | null {
-  if (!matches || admin.roles.includes("OWNER")) return null;
+function selfOperation(admin: AdminIdentity, matches: boolean, ownerToo = false): MockReply | null {
+  if (!matches || (!ownerToo && admin.roles.includes("OWNER"))) return null;
   return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
 }
 
@@ -196,9 +199,10 @@ function createInvitation(body: Record<string, unknown>, admin: AdminIdentity): 
   const resellerId = typeof body.resellerId === "string" ? body.resellerId : null;
   const at = email.indexOf("@");
   if (at < 1 || at === email.length - 1) return failure(400, "An invitation needs a valid email", "INVITATION_EMAIL_INVALID");
-  const self = selfOperation(admin, email === admin.email.toLowerCase());
+  const self = selfOperation(admin, email === admin.email.toLowerCase(), true);
   if (self) return self;
   if (expiresAt <= Date.now()) return failure(400, "An invitation must expire in the future", "INVITATION_EXPIRY_PAST");
+  if (expiresAt > Date.now() + MAX_AHEAD_MS) return failure(400, "An invitation can expire at most 365 days from today", "INVITATION_EXPIRY_TOO_FAR");
   if (resellerId !== null && resellerId !== MOCK_RESELLER.id) {
     return failure(409, "The reseller does not exist or is not active", "INVITATION_RESELLER_INVALID");
   }
@@ -246,11 +250,12 @@ function grantResponse(grant: StoredGrant) {
 function grantDemo(userId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
   const problems = invalid([...demoDaysFields(body.demoDays), ...reasonFields(body)]);
   if (problems) return problems;
-  const self = selfOperation(admin, userId === admin.userId);
+  const self = selfOperation(admin, userId === admin.userId, true);
   if (self) return self;
   if (!emailOf(userId)) return notFound();
   const days = body.demoDays ?? MOCK_DEMO_DAYS;
   if (currentGrant(userId)) return failure(409, "The user already used a demo", "DEMO_ALREADY_USED");
+  if (userId === MOCK_TEAM.userId) return failure(409, "The user has team access, a Demo would have no effect", "DEMO_TEAM_MEMBER");
   if (userId === MOCK_SUBSCRIBED.userId) {
     return failure(409, "The user has a live subscription, a Demo would have no effect", "DEMO_SUBSCRIPTION_ACTIVE");
   }
@@ -264,11 +269,12 @@ function extendDemo(userId: string, body: Record<string, unknown>, admin: AdminI
   const problems = invalid([...instantFields("endsAt", body.endsAt), ...reasonFields(body)]);
   if (problems) return problems;
   const endsAt = instant(body.endsAt) as number;
-  const self = selfOperation(admin, userId === admin.userId);
+  const self = selfOperation(admin, userId === admin.userId, true);
   if (self) return self;
   const grant = currentGrant(userId);
   if (!grant) return failure(404, "The user has no demo");
   if (endsAt <= Date.now() || endsAt <= Date.parse(grant.endsAt)) return invalidRequest();
+  if (endsAt > Date.now() + MAX_AHEAD_MS) return failure(400, "A demo can end at most 365 days from today", "DEMO_END_TOO_FAR");
   grant.endsAt = new Date(endsAt).toISOString();
   return ok(grantResponse(grant));
 }
@@ -276,7 +282,7 @@ function extendDemo(userId: string, body: Record<string, unknown>, admin: AdminI
 function revokeDemo(userId: string, body: Record<string, unknown>, admin: AdminIdentity): MockReply {
   const problems = invalid(reasonFields(body));
   if (problems) return problems;
-  const self = selfOperation(admin, userId === admin.userId);
+  const self = selfOperation(admin, userId === admin.userId, true);
   if (self) return self;
   const grant = currentGrant(userId);
   if (!grant) return failure(404, "The user has no demo");

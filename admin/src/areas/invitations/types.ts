@@ -1,3 +1,5 @@
+import type { PlanSource } from "../../status";
+
 export type InvitationStatus = "OPEN" | "ACCEPTED" | "REVOKED" | "EXPIRED";
 
 export type DemoGrantStatus = "ACTIVE" | "ENDED" | "REVOKED";
@@ -46,6 +48,7 @@ export type CustomerMatch = {
   legalName: string | null;
   createdAt: string;
   planCode: string | null;
+  planSource: PlanSource;
   subscriptionStatus: string | null;
 };
 

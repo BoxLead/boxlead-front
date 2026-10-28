@@ -357,7 +357,7 @@ describe("InvitationsScreen", () => {
   it("grants a Demo to a user found by the search", async () => {
     const calls = renderScreen((method, url) => {
       if (url.pathname === "/admin/customers") {
-        return pageOf([{ id: "u7", email: "martin@ferreteria.com", name: "Martín", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: null, subscriptionStatus: null }]);
+        return pageOf([{ id: "u7", email: "martin@ferreteria.com", name: "Martín", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: null, planSource: "NONE", subscriptionStatus: null }]);
       }
       if (method === "POST" && url.pathname === "/admin/customers/u7/demo") return json(201, {});
       return undefined;
@@ -382,7 +382,7 @@ describe("InvitationsScreen", () => {
   it("explains that a user can only have one Demo", async () => {
     renderScreen((method, url) => {
       if (url.pathname === "/admin/customers") {
-        return pageOf([{ id: "u2", email: "lucia@estudio.com", name: null, legalName: "Estudio SRL", createdAt: "2029-01-01T00:00:00Z", planCode: "DEMO", subscriptionStatus: null }]);
+        return pageOf([{ id: "u2", email: "lucia@estudio.com", name: null, legalName: "Estudio SRL", createdAt: "2029-01-01T00:00:00Z", planCode: "DEMO", planSource: "DEMO", subscriptionStatus: null }]);
       }
       if (method === "POST") return json(409, { error: "Conflict", message: "used", code: "DEMO_ALREADY_USED" });
       return undefined;
@@ -401,7 +401,7 @@ describe("InvitationsScreen", () => {
   it("warns that a live subscription wins over the Demo and shows the refusal", async () => {
     renderScreen((method, url) => {
       if (url.pathname === "/admin/customers") {
-        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: "STARTER", subscriptionStatus: "PAST_DUE" }]);
+        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: "STARTER", planSource: "SUBSCRIPTION", subscriptionStatus: "PAST_DUE" }]);
       }
       if (method === "POST") return json(409, { error: "Conflict", message: "live", code: "DEMO_SUBSCRIPTION_ACTIVE" });
       return undefined;
@@ -417,10 +417,32 @@ describe("InvitationsScreen", () => {
     expect(await dialog().findByText(/Ese usuario tiene una suscripción que le da acceso/)).toBeInTheDocument();
   }, 15_000);
 
+  it("warns that a team member gets no Demo and shows the refusal", async () => {
+    renderScreen((method, url) => {
+      if (url.pathname === "/admin/customers") {
+        return pageOf([{ id: "u9", email: "pablo@boxlead.app", name: "Pablo", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: "BUSINESS", planSource: "TEAM", subscriptionStatus: null }]);
+      }
+      if (method === "POST") return json(409, { error: "Conflict", message: "team", code: "DEMO_TEAM_MEMBER" });
+      return undefined;
+    }, "/invitaciones?vista=demos");
+    await screen.findByRole("link", { name: "lucia@estudio.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Otorgar Demo" }));
+    await userEvent.type(dialog().getByLabelText("Buscar usuario"), "pablo{Enter}");
+    const option = await screen.findByRole("radio", { name: /pablo@boxlead.app/, hidden: true });
+    expect(option.closest("label")).toHaveTextContent("Pablo · Equipo");
+    await userEvent.click(option);
+    await userEvent.click(hidden("Continuar"));
+    expect(dialog().getByText("Es del equipo de BoxLead")).toBeInTheDocument();
+    expect(dialog().getByText("Equipo, con los límites de Business")).toBeInTheDocument();
+    expect(dialog().queryByText("Tiene una suscripción que le da acceso")).toBeNull();
+    await giveReason("Otorgar Demo");
+    expect(await dialog().findByText(/Esa persona es del equipo y ya usa BoxLead sin pagar/)).toBeInTheDocument();
+  }, 15_000);
+
   it("does not warn when the subscription no longer gives access", async () => {
     renderScreen((_method, url) => {
       if (url.pathname === "/admin/customers") {
-        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: null, subscriptionStatus: "CANCELED" }]);
+        return pageOf([{ id: "u8", email: "diego@agencia.com", name: "Diego", legalName: null, createdAt: "2029-01-01T00:00:00Z", planCode: null, planSource: "NONE", subscriptionStatus: "CANCELED" }]);
       }
       return undefined;
     }, "/invitaciones?vista=demos");

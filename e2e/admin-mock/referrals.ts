@@ -296,6 +296,7 @@ function correctAttribution({ match, body }: MockRequest): MockReply {
   const reseller = resellerId ? findReseller(resellerId) : undefined;
   if (!reseller) return notFound();
   const userId = match[1];
+  if (reseller.userId === userId) return failure(409, "A user can not be attributed to their own reseller", "ATTRIBUTION_SELF_REFERRAL");
   const previous = state.customers.find((customer) => customer.userId === userId);
   state.customers = state.customers.filter((customer) => customer.userId !== userId);
   const now = iso(Date.now());
