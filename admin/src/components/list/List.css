@@ -361,6 +361,10 @@
     white-space: normal;
   }
 
+  .data-table .data-table-money .sub-text {
+    white-space: normal;
+  }
+
   .data-table .data-table-actions {
     display: flex;
     justify-content: flex-end;

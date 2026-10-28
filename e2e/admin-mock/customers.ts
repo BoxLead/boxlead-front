@@ -160,7 +160,7 @@ function subscription(
   };
 }
 
-function payment(n: number, charge: Money, at: number, status: Payment["status"], invoice: Payment["invoice"], refunded = 0): Payment {
+function payment(n: number, charge: Money, at: number, status: Payment["status"], invoice: Payment["invoice"], refunded = 0, waiting = 0): Payment {
   return {
     id: uuid("0f", n),
     providerPaymentId: String(90_000_000 + n),
@@ -169,7 +169,7 @@ function payment(n: number, charge: Money, at: number, status: Payment["status"]
     amount: charge,
     refunded: { amountMinor: refunded, currency: charge.currency },
     refundable: {
-      amountMinor: status === "APPROVED" || status === "PARTIALLY_REFUNDED" ? charge.amountMinor - refunded : 0,
+      amountMinor: status === "APPROVED" || status === "PARTIALLY_REFUNDED" ? charge.amountMinor - refunded - waiting : 0,
       currency: charge.currency,
     },
     providerFee: status === "REJECTED" ? null : { amountMinor: Math.round(charge.amountMinor * 0.07), currency: charge.currency },
@@ -287,7 +287,7 @@ function seed(now: number): Customer[] {
 
   const federico = person(6, "federico.paz@example.com", "Federico Paz", now, 90);
   federico.subscription = subscription(6, "STARTER", "CANCELED", now, { canceledAt: iso(now - 3 * DAY), cancelReason: "USER_CANCELED" });
-  federico.payments = [payment(7, ars(8700000), now - 3 * DAY, "PARTIALLY_REFUNDED", invoice(7, "VOIDED"), 4350000)];
+  federico.payments = [payment(7, ars(8700000), now - 3 * DAY, "PARTIALLY_REFUNDED", invoice(7, "VOIDED"), 4350000, 150000)];
 
   const gabriela = person(7, "gabriela.torres@example.com", "Gabriela Torres", now, 200);
   gabriela.subscription = subscription(7, "BUSINESS", "ACTIVE", now);
