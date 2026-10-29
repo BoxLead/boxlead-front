@@ -8,6 +8,7 @@ import { ResellerDirectoryProvider } from "../../session/ResellerDirectoryProvid
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
 import { CustomerDetailScreen } from "./CustomerDetailScreen";
+import { addDays, endOfDay, today } from "./dates";
 import { CustomersScreen } from "./CustomersScreen";
 import { OverviewScreen } from "./OverviewScreen";
 import type { CustomerFile, Overview } from "./types";
@@ -609,5 +610,12 @@ describe("CustomerDetailScreen", () => {
     const calls = renderAt("/usuarios/abc", ["OWNER"], () => json(400, { error: "Bad request", message: "Invalid value for parameter 'userId'" }));
     expect(await screen.findByText("No encontramos este usuario")).toBeInTheDocument();
     expect(calls).toEqual([]);
+  });
+});
+
+describe("the end of a Demo extension", () => {
+  it("is the last second of the chosen day in Buenos Aires, which core still accepts on day 365", () => {
+    expect(endOfDay("2030-02-01")).toBe("2030-02-02T02:59:59.000Z");
+    expect(Date.parse(endOfDay(addDays(today(), 365)))).toBeLessThan(Date.parse(`${addDays(today(), 366)}T00:00:00-03:00`));
   });
 });

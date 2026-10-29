@@ -249,13 +249,24 @@ test("warns before granting a Demo to a team member and explains the refusal", a
   await expect(row(page, team.email)).toHaveCount(0);
 });
 
-test("explains the 365 day cap of an invitation and of a Demo end", async ({ page }) => {
+test("accepts the end of day 365 and explains the cap after it for an invitation and a Demo end", async ({ page }) => {
+  test.slow();
   const [, martin] = MOCK_USERS;
   await open(page);
   await page.getByRole("button", { name: "Nueva invitación" }).click();
-  const form = dialog(page, "Nueva invitación");
+  let form = dialog(page, "Nueva invitación");
   await form.getByLabel("Email").fill(NEW_EMAIL);
-  await form.getByLabel("La invitación vence el").fill(inDays(400));
+  await form.getByLabel("La invitación vence el").fill(inDays(365));
+  await form.getByRole("button", { name: "Continuar" }).click();
+  const created = page.waitForRequest((request) => request.method() === "POST" && request.url().endsWith("/admin/invitations"));
+  await confirmWithReason(page, "Crear invitación", "Crear invitación");
+  expect((await created).postDataJSON().expiresAt).toMatch(/T02:59:59\.999Z$/);
+  await dialog(page, "Invitación creada").getByRole("button", { name: "Listo" }).click();
+
+  await page.getByRole("button", { name: "Nueva invitación" }).click();
+  form = dialog(page, "Nueva invitación");
+  await form.getByLabel("Email").fill(`otra.${NEW_EMAIL}`);
+  await form.getByLabel("La invitación vence el").fill(inDays(366));
   await form.getByRole("button", { name: "Continuar" }).click();
   await confirmWithReason(page, "Crear invitación", "Crear invitación");
   await expect(dialog(page, "Crear invitación").getByText(/Una invitación puede vencer como mucho 365 días después de hoy/)).toBeVisible();
@@ -264,7 +275,13 @@ test("explains the 365 day cap of an invitation and of a Demo end", async ({ pag
 
   await page.getByRole("button", { name: "Demos" }).click();
   await row(page, martin.email).getByRole("button", { name: "Extender" }).click();
-  await dialog(page, "Extender Demo").getByLabel("Nuevo fin").fill(inDays(400));
+  await dialog(page, "Extender Demo").getByLabel("Nuevo fin").fill(inDays(365));
+  await dialog(page, "Extender Demo").getByRole("button", { name: "Continuar" }).click();
+  await confirmWithReason(page, "Extender Demo", "Extender");
+  await expect(page.getByText(/ahora termina el/)).toBeVisible();
+
+  await row(page, martin.email).getByRole("button", { name: "Extender" }).click();
+  await dialog(page, "Extender Demo").getByLabel("Nuevo fin").fill(inDays(366));
   await dialog(page, "Extender Demo").getByRole("button", { name: "Continuar" }).click();
   await confirmWithReason(page, "Extender Demo", "Extender");
   await expect(dialog(page, "Extender Demo").getByText(/Una Demo puede terminar como mucho 365 días después de hoy/)).toBeVisible();

@@ -475,6 +475,21 @@ describe("InvitationsScreen", () => {
     expect(JSON.parse(String(revoke?.init.body))).toEqual({ reason: REASON });
   });
 
+  it("explains that the Demo of a team member can not be extended", async () => {
+    renderScreen((method) => (method === "POST" ? json(409, { error: "team", message: "team", code: "DEMO_TEAM_MEMBER" }) : undefined), "/invitaciones?vista=demos");
+    await screen.findByRole("link", { name: "lucia@estudio.com" });
+    await userEvent.click(screen.getByRole("button", { name: "Extender" }));
+    await userEvent.type(dialog().getByLabelText("Nuevo fin"), "2030-02-01");
+    await userEvent.click(hidden("Continuar"));
+    await giveReason("Extender");
+    expect(await dialog().findByText(/Esa persona es del equipo y ya usa BoxLead sin pagar/)).toBeInTheDocument();
+  });
+
+  it("sends the last moment of the chosen day in Buenos Aires, which core still accepts on day 365", () => {
+    expect(endOfDay("2030-02-01")).toBe("2030-02-02T02:59:59.999Z");
+    expect(Date.parse(endOfDay(addDays(todayInBuenosAires(), 365)))).toBeLessThan(Date.parse(`${addDays(todayInBuenosAires(), 366)}T00:00:00-03:00`));
+  });
+
   it("shows the hour a Demo starts and ends and explains how to take away one that ended", async () => {
     const ended: DemoGrant = { ...ACTIVE, id: "g2", userId: "u3", email: "martin@ferreteria.com", invitationId: null, status: "ENDED", startsAt: "2029-12-01T13:00:00Z", endsAt: "2029-12-15T13:00:00Z" };
     renderScreen((_method, url) => (url.pathname === "/admin/demo-grants" ? pageOf([ACTIVE, ended]) : undefined), "/invitaciones?vista=demos");
