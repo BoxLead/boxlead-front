@@ -51,7 +51,7 @@ async function expectCode(response: Promise<{ status(): number; json(): Promise<
 test("with billing off every new endpoint answers 404 and the session is as today", async () => {
   await signIn("default");
   expect(await (await api.get("/auth/me")).json()).toMatchObject({
-    features: { billing: false, referrals: false, legal: false },
+    features: { billing: false, referrals: false, legal: false, notifications: false },
     access: "FULL",
     isReseller: false,
     pendingLegal: [],
@@ -94,7 +94,7 @@ test("each scenario tells its own state", async () => {
   await signIn("billing-past-due");
   expect((await summary()).subscription?.updatePaymentUrl).toMatch(/^https:\/\/www\.mercadopago\.com\.ar\//);
   await signIn("reseller");
-  expect(await (await api.get("/auth/me")).json()).toMatchObject({ features: { billing: true, referrals: true, legal: true }, isReseller: true });
+  expect(await (await api.get("/auth/me")).json()).toMatchObject({ features: { billing: true, referrals: true, legal: true, notifications: false }, isReseller: true });
 });
 
 test("plans are public and include the invite only Beta", async () => {

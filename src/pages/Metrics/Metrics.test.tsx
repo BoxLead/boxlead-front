@@ -27,7 +27,7 @@ function noPlan(days: number): BillingSummary {
 function session(billing: boolean): AuthContextValue {
   return {
     user: null,
-    features: { billing, referrals: false, legal: false },
+    features: { billing, referrals: false, legal: false, notifications: false },
     access: billing ? "RESTRICTED" : "FULL",
     isReseller: false,
     pendingLegal: [],

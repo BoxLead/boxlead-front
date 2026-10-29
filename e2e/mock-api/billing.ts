@@ -46,6 +46,7 @@ export type BillingOptions = {
   enforced?: boolean;
   providerDown?: boolean;
   teamSubscription?: "ACTIVE" | "SUSPENDED" | "NONE";
+  notifications?: boolean;
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -191,6 +192,7 @@ export type BillingState = {
   billing: boolean;
   referrals: boolean;
   legal: boolean;
+  notifications: boolean;
   reseller: boolean;
   team: boolean;
   overrides: PlanLimits;
@@ -354,6 +356,7 @@ function disabled(): BillingState {
     billing: false,
     referrals: false,
     legal: false,
+    notifications: false,
     reseller: false,
     team: false,
     overrides: {},
@@ -376,6 +379,7 @@ function disabled(): BillingState {
 
 export function buildBilling(scenario: string, options: BillingOptions = {}): BillingState {
   const state = disabled();
+  state.notifications = options.notifications === true;
   if (!isBillingScenario(scenario)) return state;
   state.billing = true;
   state.legal = true;
@@ -498,7 +502,7 @@ function limitOf(limits: PlanLimits, key: EntitlementKey): number {
 
 export function sessionFields(state: BillingState): SessionFlags {
   return {
-    features: { billing: state.billing, referrals: state.referrals, legal: state.legal },
+    features: { billing: state.billing, referrals: state.referrals, legal: state.legal, notifications: state.notifications },
     access: state.billing ? entitlements(state).access : "FULL",
     isReseller: state.referrals && state.reseller,
     pendingLegal: state.legal ? state.pendingLegal : [],

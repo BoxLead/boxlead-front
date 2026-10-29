@@ -468,6 +468,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       enforced: body.enforced !== false,
       providerDown: body.providerDown === true,
       teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
+      notifications: body.notifications === true,
     });
     return send(res, 200, { scenario });
   }

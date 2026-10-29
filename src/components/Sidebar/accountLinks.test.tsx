@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { accountLinks, consumerLinks } from "./accountLinks";
 
-const off = { billing: false, referrals: false, legal: false };
+const off = { billing: false, referrals: false, legal: false, notifications: false };
 
 describe("account links", () => {
   it("adds nothing while billing, referrals and legal are off", () => {

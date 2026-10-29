@@ -15,7 +15,7 @@ function user(access: AuthUser["access"]): AuthUser {
     userId: "u1",
     email: "ana@negocio.com",
     name: null,
-    features: { billing: true, referrals: false, legal: false },
+    features: { billing: true, referrals: false, legal: false, notifications: false },
     access,
     isReseller: false,
     pendingLegal: [],
@@ -128,7 +128,7 @@ describe("AuthProvider keeps the session fresh", () => {
     const me = vi
       .spyOn(api, "me")
       .mockResolvedValueOnce(user("RESTRICTED"))
-      .mockResolvedValueOnce({ ...user("FULL"), features: { billing: false, referrals: false, legal: false } });
+      .mockResolvedValueOnce({ ...user("FULL"), features: { billing: false, referrals: false, legal: false, notifications: false } });
     renderApp();
     expect(await screen.findByText("facturación sí, acceso RESTRICTED")).toBeInTheDocument();
     act(() => {

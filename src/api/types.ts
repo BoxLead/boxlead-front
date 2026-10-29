@@ -20,6 +20,7 @@ export type Features = {
   billing: boolean;
   referrals: boolean;
   legal: boolean;
+  notifications: boolean;
 };
 
 export type Access = "FULL" | "RESTRICTED";
