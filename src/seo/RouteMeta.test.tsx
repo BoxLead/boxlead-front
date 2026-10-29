@@ -1,7 +1,7 @@
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { setTitleBadge, useDocumentTitle } from "../hooks/useDocumentTitle";
 import { RouteMeta } from "./RouteMeta";
 
 function AppPage() {
@@ -62,5 +62,15 @@ describe("RouteMeta", () => {
     expect(document.title).toBe("Bandeja · BoxLead");
     expect(meta('meta[name="robots"]')).toBe("noindex");
     expect(document.querySelectorAll("title")).toHaveLength(1);
+  });
+
+  it("prefixes the app title with the unseen notices and drops it at zero", () => {
+    renderAt("/app/leads", <AppPage />);
+    act(() => setTitleBadge(3));
+    expect(document.title).toBe("(3) Bandeja · BoxLead");
+    act(() => setTitleBadge(120));
+    expect(document.title).toBe("(99+) Bandeja · BoxLead");
+    act(() => setTitleBadge(0));
+    expect(document.title).toBe("Bandeja · BoxLead");
   });
 });

@@ -30,6 +30,7 @@ describe("RouteAnnouncer", () => {
   it("strips the product suffix from the title", () => {
     expect(pageNameFrom("Leads · BoxLead")).toBe("Leads");
     expect(pageNameFrom("Otro")).toBe("Otro");
+    expect(pageNameFrom("(3) Leads · BoxLead")).toBe("Leads");
   });
 
   it("announces the new page and moves the focus to its heading", async () => {
