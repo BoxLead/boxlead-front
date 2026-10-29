@@ -246,3 +246,37 @@ describe("plan errors", () => {
     stop();
   });
 });
+
+describe("reports", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+  });
+
+  it("posts with keepalive, the session cookie and the CSRF header", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(api.report("/client-errors", { kind: "error" })).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.example.com/client-errors");
+    expect(init).toMatchObject({ method: "POST", credentials: "include", keepalive: true });
+    expect(init?.headers).toMatchObject({ "X-Requested-With": "boxlead-web", "Content-Type": "application/json" });
+  });
+
+  it("rejects with the status and leaves the session alone when it is gone", async () => {
+    sessionStorage.setItem("boxlead.test", "1");
+    fetchMock.mockResolvedValue(json({ message: "Unauthorized" }, 401));
+
+    await expect(api.report("/client-errors", {})).rejects.toMatchObject({ status: 401 });
+    expect(sessionStorage.getItem("boxlead.test")).toBe("1");
+    sessionStorage.clear();
+  });
+
+  it("keeps regular requests without keepalive", async () => {
+    fetchMock.mockResolvedValue(json([]));
+
+    await api.get("/leads");
+
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: false });
+  });
+});

@@ -199,11 +199,13 @@ export function handleUnauthorized(): void {
   clearAuthAndGoLogin();
 }
 
+type SendOptions = { body?: unknown; skipAuth?: boolean; keepalive?: boolean };
+
 async function send<T>(
   url: UrlBuilder,
   method: string,
   path: string,
-  options?: { body?: unknown; skipAuth?: boolean },
+  options?: SendOptions,
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -217,6 +219,7 @@ async function send<T>(
     method,
     headers,
     credentials: "include",
+    keepalive: options?.keepalive === true,
     body:
       options?.body === undefined ? undefined : JSON.stringify(options.body),
   });
@@ -241,7 +244,7 @@ async function send<T>(
 function request<T>(
   method: string,
   path: string,
-  options?: { body?: unknown; skipAuth?: boolean },
+  options?: SendOptions,
 ): Promise<T> {
   return send<T>(apiUrl, method, path, options);
 }
@@ -282,6 +285,8 @@ export const api = {
   me: () => requestUser("GET", "/auth/me"),
 
   logout: () => request<void>("POST", "/auth/logout", { skipAuth: true }),
+
+  report: (path: string, body: unknown) => request<void>("POST", path, { body, skipAuth: true, keepalive: true }),
 };
 
 export const agentApi = {
