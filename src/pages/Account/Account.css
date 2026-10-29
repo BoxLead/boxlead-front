@@ -87,3 +87,25 @@
   color: var(--signal-text);
   font-size: var(--signal-text-sm);
 }
+
+.account-danger {
+  border-color: var(--signal-danger-border);
+}
+
+.account-delete-list {
+  display: grid;
+  gap: var(--signal-space-1);
+  margin: 0;
+  padding-left: var(--signal-space-5);
+  color: var(--signal-text);
+  font-size: var(--signal-text-base);
+}
+
+.account-actions-start {
+  justify-content: flex-start;
+}
+
+.account-form .form-error a {
+  color: inherit;
+  text-decoration: underline;
+}

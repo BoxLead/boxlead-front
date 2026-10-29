@@ -4,6 +4,7 @@ import { useAuth } from "../../context/auth";
 import { ACCOUNT_KEY } from "../../data/account";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { DeleteAccountSection } from "./DeleteAccountSection";
 import { EmailSection } from "./EmailSection";
 import { ProfileSection } from "./ProfileSection";
 import { SessionsSection } from "./SessionsSection";
@@ -48,6 +49,7 @@ export function Account() {
           <EmailSection account={account.data} />
           <SignInSection account={account.data} />
           {user?.account?.sessionRevocation ? <SessionsSection /> : null}
+          {user?.account?.deletion ? <DeleteAccountSection account={account.data} /> : null}
         </div>
       )}
     </div>
