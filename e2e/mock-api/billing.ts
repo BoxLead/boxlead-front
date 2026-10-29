@@ -45,6 +45,7 @@ export type BillingOptions = {
   overrides?: PlanLimits;
   enforced?: boolean;
   providerDown?: boolean;
+  teamSubscription?: "ACTIVE" | "SUSPENDED";
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -395,10 +396,12 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
   if (scenario === "billing-team") {
     state.team = true;
     state.profile = profile();
-    state.subscription = subscription("STARTER", "SUSPENDED");
-    state.subscription.currentPeriodStart = daysAgo(PERIOD_DAYS + 9);
-    state.subscription.currentPeriodEnd = daysAgo(9);
-    state.subscription.graceUntil = daysAgo(2);
+    state.subscription = subscription("STARTER", options.teamSubscription ?? "SUSPENDED");
+    if (state.subscription.status === "SUSPENDED") {
+      state.subscription.currentPeriodStart = daysAgo(PERIOD_DAYS + 9);
+      state.subscription.currentPeriodEnd = daysAgo(9);
+      state.subscription.graceUntil = daysAgo(2);
+    }
     state.payments = paymentHistory(state.subscription.price, 2);
     state.agentReplies = 300;
   }
