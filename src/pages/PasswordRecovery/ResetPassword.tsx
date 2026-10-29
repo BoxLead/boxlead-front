@@ -1,12 +1,11 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../api/client";
-import { apiErrorCode } from "../../api/errors";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { Loading } from "../../components/Loading";
 import { resetPassword } from "../../data/account";
-import { takeFragmentToken } from "../../util/fragmentToken";
+import { isInvalidLink, takeFragmentToken } from "../../util/fragmentToken";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -46,7 +45,7 @@ export function ResetPassword() {
       await resetPassword(token, password);
       setStep("done");
     } catch (failure) {
-      if (apiErrorCode(failure) === "INVALID_TOKEN") setStep("invalid");
+      if (isInvalidLink(failure)) setStep("invalid");
       else setError(resetError(failure));
     } finally {
       setSaving(false);

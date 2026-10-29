@@ -58,3 +58,13 @@ export function confirmEmailChange(token: string): Promise<void> {
 export function revokeAllSessions(): Promise<void> {
   return api.post<void>("/auth/sessions/revoke");
 }
+
+export type DeleteAccountRequest = {
+  password?: string;
+  idToken?: string;
+  confirmation: string;
+};
+
+export function deleteAccount(request: DeleteAccountRequest): Promise<void> {
+  return api.post<void>("/account/deletion", request);
+}

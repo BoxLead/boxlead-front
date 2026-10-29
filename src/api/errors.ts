@@ -24,6 +24,11 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "WRONG_PASSWORD",
   "PASSWORD_REQUIRED",
   "SAME_EMAIL",
+  "CONFIRMATION_MISMATCH",
+  "REAUTHENTICATION_REQUIRED",
+  "SUBSCRIPTION_OPEN",
+  "RESELLER_ACTIVE",
+  "ADMIN_ACTIVE",
 ];
 
 function errorBody(error: unknown): object | null {

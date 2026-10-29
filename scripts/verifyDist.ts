@@ -73,7 +73,7 @@ async function main() {
     seen.set(`description:${description}`, path)
   }
 
-  for (const path of ['/login', '/register', '/arrepentimiento', '/baja', '/invitacion', '/social/callback', '/recuperar-clave', '/nueva-clave', '/confirmar-email', '/nuevo-email', '/app/inbox', '/app']) {
+  for (const path of ['/login', '/register', '/arrepentimiento', '/baja', '/invitacion', '/social/callback', '/recuperar-clave', '/nueva-clave', '/confirmar-email', '/nuevo-email', '/reingresar', '/app/inbox', '/app']) {
     const response = await fetch(`${base}${path}`)
     const html = await response.text()
     check(`${path} is noindex`, response.status === 200 && /name="robots" content="noindex"/.test(html) && count(html, /<title>/g) === 1, String(response.status))
