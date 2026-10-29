@@ -31,7 +31,7 @@ src/
 ├── data/             # queryCache (shared request cache behind useApiQuery), agui (AG-UI event stream reader), lead and category mutations, metrics source and demo data, sign up plans
 ├── hooks/            # useApiQuery, useConnectPlatform, useDocumentTitle, useUrlQuery, useRenderWindow
 ├── platforms/        # One definition per channel (MELI, WhatsApp, Instagram, Messenger) and the registry
-├── components/       # ProtectedRoute, Layout, PlanBanner, LegalDialog, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading
+├── components/       # ProtectedRoute, Layout, PlanBanner, Onboarding, LegalDialog, Sidebar, AuthLayout, PlanPicker, Logo, icons, StatusSelect, CategorySelect, EmptyState, Loading
 │   ├── ProviderDetails/ # Catvin SRL details from util/company.ts, only the fields that have a value
 │   └── ui/           # Banner, ChoiceGroup, Tag, Avatar, AnimatedNumber, CharCounter, Dialog, ConfirmDialog, toasts
 ├── pages/            # Login, Register, Inbox, Leads, LeadDetail, Metrics, Categories, Connections, OAuthCallback, Legal, Billing, Reseller, Invitation, ConsumerRequest
@@ -125,6 +125,10 @@ Before paying, the purchase dialog shows the provider, the final price with VAT,
 `pendingPlanCode` can also be a more expensive plan, because only the first upgrade applies at once and the next ones wait for the charge at the new amount, so the page never treats a pending change as a downgrade. A 409 `CHECKOUT_PENDING` asks to wait for the payment in process. When Mercado Pago does not confirm a cancellation core answers 502 and keeps `cancelAtPeriodEnd` in `false`, and the page says the cancellation was requested and is confirmed in a few minutes. A 409 `DEMO_SUBSCRIPTION_ACTIVE` on accepting an invitation says the subscription already gives a plan. A 409 `DEMO_TEAM_MEMBER` says the account is from the BoxLead team and already has access, and the invitation stays open in both cases. `resetApi(scenario, now, { providerDown: true })` makes the mock cancellation answer 502.
 
 `/app/billing/return` ignores its query and asks `GET /billing/summary` every 3 seconds for up to 60, so approved, pending and rejected always come from the server. Plan changes, undoing a pending downgrade and cancelling go through `ConfirmDialog` and keep the summary core returns. The CUIT is checked with its check digit before saving, and the 400 `fields` of core mark the same inputs. `e2e/billing.spec.ts` intercepts the Mercado Pago page with `page.route` and settles the payment with `settleCheckout`.
+
+## First steps
+
+With `features.onboarding` on, `Layout` shows `OnboardingChecklist` above the page until the account has a channel, an agent and a playground run. The channel comes from `GET /oauth/connections` and the other two from `GET /onboarding` in the agent service (`data/onboarding.ts`). It renders nothing while loading, on an error or when the three steps are done, so a finished account never sees it. Each pending step links to where it is done, the test to the playground of the first agent. Both keys refresh on focus like any query, and creating or deleting an agent and finishing a playground run read the onboarding key again.
 
 ## Categories
 

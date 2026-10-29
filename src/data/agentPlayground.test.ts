@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
 import { runPlayground, type PlaygroundRun } from "./agentPlayground";
+import { ONBOARDING_KEY } from "./onboarding";
+import { clearQueryCache, getQueryState, subscribe } from "./queryCache";
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -165,5 +167,38 @@ describe("runPlayground", () => {
 
     expect(failure).toBeInstanceOf(ApiError);
     expect((failure as ApiError).message).toBe("No pudimos completar la prueba. Probá de nuevo.");
+  });
+});
+
+describe("runPlayground and the first steps", () => {
+  afterEach(() => {
+    clearQueryCache();
+  });
+
+  it("reads the first steps again when a run finishes, even a failed one", async () => {
+    const stop = subscribe(ONBOARDING_KEY, () => undefined);
+    fetchMock.mockImplementation((input) =>
+      Promise.resolve(
+        String(input).endsWith("/onboarding")
+          ? new Response(JSON.stringify({ agentCreated: true, agentTested: true }), { status: 200 })
+          : sse(replyEvents("Hola")),
+      ),
+    );
+
+    await runPlayground(run);
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain("https://agent.example.com/onboarding");
+    await vi.waitFor(() => expect(getQueryState(ONBOARDING_KEY).fetching).toBe(false));
+
+    fetchMock.mockClear();
+    fetchMock.mockImplementation((input) =>
+      Promise.resolve(
+        String(input).endsWith("/onboarding")
+          ? new Response(JSON.stringify({ agentCreated: true, agentTested: true }), { status: 200 })
+          : new Response(JSON.stringify({ message: "boom" }), { status: 500 }),
+      ),
+    );
+    await expect(runPlayground(run)).rejects.toBeInstanceOf(ApiError);
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain("https://agent.example.com/onboarding");
+    stop();
   });
 });

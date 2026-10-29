@@ -1,6 +1,7 @@
 import { agentApi } from "../api/client";
 import type { AgentRequest, AgentResponse, BusinessProfile } from "../api/types";
 import { toAgentRequest } from "../util/agents";
+import { refreshOnboarding } from "./onboarding";
 import { AGENT_KEY_PREFIX, setQueryData } from "./queryCache";
 
 const AGENTS_PATH = "/agents";
@@ -27,6 +28,7 @@ export function replaceAgent(agent: AgentResponse) {
 export async function createAgent(body: AgentRequest): Promise<AgentResponse> {
   const created = await agentApi.post<AgentResponse>(AGENTS_PATH, body);
   setQueryData<AgentResponse[]>(AGENTS_KEY, (current) => sortByPosition([...(current ?? []), created]));
+  refreshOnboarding();
   return created;
 }
 
@@ -51,6 +53,7 @@ export async function setAgentEnabled(agent: AgentResponse, enabled: boolean): P
 export async function deleteAgent(id: string): Promise<void> {
   await agentApi.delete(`${AGENTS_PATH}/${id}`);
   setQueryData<AgentResponse[]>(AGENTS_KEY, (current) => (current ?? []).filter((agent) => agent.id !== id));
+  refreshOnboarding();
 }
 
 export async function saveBusinessProfile(profile: BusinessProfile): Promise<BusinessProfile> {

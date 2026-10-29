@@ -1,6 +1,7 @@
 import { agentApiUrl, ApiError, errorFromResponse, handleUnauthorized, REQUEST_HEADERS } from "../api/client";
 import type { PlatformType, PlaygroundResult, SalesStage } from "../api/types";
 import { readAgUiStream, type AgUiMessage, type AgUiRunInput } from "./agui";
+import { refreshOnboarding } from "./onboarding";
 
 export type PlaygroundTurn = { role: "user" | "assistant"; content: string };
 
@@ -94,6 +95,8 @@ export async function runPlayground(run: PlaygroundRun): Promise<PlaygroundOutco
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(FALLBACK_ERROR, 0);
+  } finally {
+    refreshOnboarding();
   }
 
   if (run.signal?.aborted || outcome.failed) throw new ApiError(FALLBACK_ERROR, 0);

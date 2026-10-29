@@ -617,6 +617,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
   }
 
+  if (path === "/onboarding" && method === "GET") {
+    return send(res, 200, { agentCreated: state.agents.length > 0, agentTested: state.playgroundRuns > 0 });
+  }
+
   if (parts[0] === "agents") {
     if (parts[1] === "playground" && method === "POST") return playground(req, res);
     if (parts[1] === "activity" && parts.length === 2 && method === "GET") {

@@ -704,3 +704,8 @@ export type NotificationSettings = {
 };
 
 export type UnsubscribeScope = NotificationKind | "ALL";
+
+export type OnboardingResponse = {
+  agentCreated: boolean;
+  agentTested: boolean;
+};

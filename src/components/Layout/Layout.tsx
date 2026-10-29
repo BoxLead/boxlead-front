@@ -6,6 +6,7 @@ import { EmailVerificationGate } from "../EmailVerificationGate/EmailVerificatio
 import { LegalAcceptanceDialog } from "../LegalDialog/LegalAcceptanceDialog";
 import { Loading } from "../Loading";
 import { NotificationWatcher } from "../Notifications/NotificationWatcher";
+import { OnboardingChecklist } from "../Onboarding/OnboardingChecklist";
 import { PlanBanner } from "../PlanBanner/PlanBanner";
 import { Sidebar } from "../Sidebar/Sidebar";
 import "./Layout.css";
@@ -31,13 +32,16 @@ export function Layout() {
         {gated ? (
           <EmailVerificationGate />
         ) : (
-          <Suspense fallback={<Loading inline />}>
-            <Outlet />
-          </Suspense>
+          <>
+            <OnboardingChecklist />
+            <Suspense fallback={<Loading inline />}>
+              <Outlet />
+            </Suspense>
+          </>
         )}
       </main>
       <LegalAcceptanceDialog />
-      <NotificationWatcher />
+      {gated ? null : <NotificationWatcher />}
     </div>
   );
 }
