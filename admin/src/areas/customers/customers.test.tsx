@@ -396,6 +396,17 @@ describe("CustomerDetailScreen", () => {
     expect(await screen.findByText("La suscripción quedó pausada.")).toBeInTheDocument();
   });
 
+  it("says the cancellation stays asked for when Mercado Pago does not confirm it", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], (method, url) =>
+      method === "POST" ? json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" }) : detailHandler(method, url),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const dialog = dialogOf("Cancelar suscripción");
+    await userEvent.type(within(dialog).getByLabelText("Motivo"), "Pidió la baja por teléfono");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar suscripción", hidden: true }));
+    expect(await screen.findByText("Mercado Pago no confirmó la baja a tiempo. Quedó pedida y se confirma sola en unos minutos.")).toBeInTheDocument();
+  });
+
   it("reloads the user when the subscription changed under the open dialog", async () => {
     const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], (method, url) =>
       method === "POST" ? json(409, { error: "Conflict", message: "changed", code: "SUBSCRIPTION_CHANGED" }) : detailHandler(method, url),

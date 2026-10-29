@@ -235,6 +235,7 @@ describe("payments screen", () => {
 
   it.each([
     ["CANCELED", "Mercado Pago aprobó el reembolso. La suscripción quedó cancelada."],
+    ["PENDING", "Mercado Pago aprobó el reembolso. El reembolso quedó en proceso. La suscripción se cancela sola cuando Mercado Pago lo confirme."],
     ["FAILED", /Mercado Pago no confirmó la cancelación de la suscripción, así que sigue viva y puede volver a cobrar\. La tiene que cancelar un Dueño desde Suscripciones\./],
   ] as const)("tells what happened to the subscription after a refund that closes it (%s)", async (subscriptionCancellation, message) => {
     mockFetch((method) =>
@@ -486,6 +487,18 @@ describe("buttons by role", () => {
     await userEvent.click(within(row).getByRole("button", { name: /Cancelar la suscripción/ }));
     expect(screen.getByText(/no se le vuelve a cobrar la cuota de \$\s87\.000,00 ARS/)).toBeInTheDocument();
     expect(screen.queryByText("Monto")).not.toBeInTheDocument();
+  });
+
+  it("says the cancellation stays asked for when Mercado Pago does not confirm it and reloads", async () => {
+    const calls = mockFetch((method) => (method === "POST" ? json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" }) : page([SUBSCRIPTION])));
+    renderAs(["OWNER"], <SubscriptionsScreen />, "/suscripciones");
+    const row = (await screen.findByText("Renueva el 20 nov 2026")).closest("tr");
+    if (!row) throw new Error("missing row");
+    await userEvent.click(within(row).getByRole("button", { name: /Cancelar la suscripción/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Pedido del cliente por mail");
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar suscripción", hidden: true }));
+    expect(await screen.findByText("Mercado Pago no confirmó la baja a tiempo. Quedó pedida y se confirma sola en unos minutos.")).toBeInTheDocument();
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
   });
 
   it("explains that the subscription changed and reloads the list on close", async () => {

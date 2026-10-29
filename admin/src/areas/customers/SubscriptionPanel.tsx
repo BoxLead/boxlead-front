@@ -6,6 +6,7 @@ import { ReasonDialog } from "../../components/ReasonDialog";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatMoney } from "../../format";
 import { SUBSCRIPTION_STATUS } from "../../status";
+import { CANCEL_REQUESTED, changeSubscription } from "../billing/api";
 import { cancelReasonLabel, CHECKOUT_LABELS } from "./labels";
 import { Facts, Muted, Section } from "./parts";
 import type { Subscription } from "./types";
@@ -132,7 +133,12 @@ export function SubscriptionPanel({ userId, subscription, canOperate, onChanged 
             tone="danger"
             onClose={dialogs.close}
             onSettled={settled}
-            onConfirm={(reason) => dialogs.run(() => adminApi.post(`${base}/cancel`, { reason, expectedSubscriptionId: subscription.id }), "La suscripción quedó cancelada.")}
+            onConfirm={(reason) =>
+              dialogs.run(
+                () => changeSubscription(userId, "cancel", reason, subscription.id),
+                (outcome) => (outcome === "CANCEL_REQUESTED" ? CANCEL_REQUESTED : "La suscripción quedó cancelada."),
+              )
+            }
           >
             <p>
               {cancelText(subscription)}
