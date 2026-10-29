@@ -45,6 +45,7 @@ export type AccountFeatures = {
   emailVerification: boolean;
   settings: boolean;
   deletion: boolean;
+  emailChange: boolean;
 };
 
 export type SignInProvider = "GOOGLE" | "FACEBOOK" | "OTHER";
@@ -445,7 +446,8 @@ export type ApiErrorCode =
   | "REAUTHENTICATION_REQUIRED"
   | "SUBSCRIPTION_OPEN"
   | "RESELLER_ACTIVE"
-  | "ADMIN_ACTIVE";
+  | "ADMIN_ACTIVE"
+  | "EMAIL_UNAVAILABLE";
 
 export type FieldError = {
   field: string;

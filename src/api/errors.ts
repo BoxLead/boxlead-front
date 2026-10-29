@@ -29,6 +29,7 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "SUBSCRIPTION_OPEN",
   "RESELLER_ACTIVE",
   "ADMIN_ACTIVE",
+  "EMAIL_UNAVAILABLE",
 ];
 
 function errorBody(error: unknown): object | null {

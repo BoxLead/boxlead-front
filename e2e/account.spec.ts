@@ -19,16 +19,15 @@ test.beforeEach(async () => {
   await resetApi();
 });
 
-test("with the account page off there is no link and the address goes back to the app", async ({ page }) => {
+test("while emails are off the email cannot be changed yet", async ({ page }) => {
   await login(page, "/app/inbox");
-  await page.getByRole("button", { name: "Cuenta" }).click();
-  await expect(page.getByRole("link", { name: "Tu cuenta" })).toHaveCount(0);
-  await page.goto("/app/cuenta");
-  await expect(page).toHaveURL(/\/app\/inbox$/);
+  await openAccountFromMenu(page);
+  await expect(page.locator(".account-email").first()).toHaveText("demo@boxlead.app");
+  await expect(page.getByRole("button", { name: "Cambiar el email" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cambiar la contraseña" })).toBeVisible();
 });
 
 test("the account shows the data, renames and changes the password", async ({ page }) => {
-  await setAccountOptions({ settings: true, sessionRevocation: true });
   await login(page, "/app/inbox");
   await openAccountFromMenu(page);
   await expect(page.locator(".account-email").first()).toHaveText("demo@boxlead.app");
@@ -53,7 +52,7 @@ test("the account shows the data, renames and changes the password", async ({ pa
 });
 
 test("the email changes only after the new address confirms", async ({ page }) => {
-  await setAccountOptions({ settings: true });
+  await setAccountOptions({ emailChange: true });
   await login(page, "/app/cuenta");
   await page.getByRole("button", { name: "Cambiar el email" }).click();
   await page.getByLabel("Email nuevo").fill("ana@otro.com");
@@ -75,7 +74,7 @@ test("the email changes only after the new address confirms", async ({ page }) =
 });
 
 test("a social account has no password to change", async ({ page }) => {
-  await setAccountOptions({ settings: true, socialOnly: true });
+  await setAccountOptions({ socialOnly: true });
   await login(page, "/app/cuenta");
   await expect(page.getByRole("list", { name: "Formas de entrar" })).toHaveText("Google");
   await expect(page.getByRole("button", { name: "Cambiar la contraseña" })).toHaveCount(0);
@@ -84,7 +83,6 @@ test("a social account has no password to change", async ({ page }) => {
 });
 
 test("closing every session sends the person to the login", async ({ page }) => {
-  await setAccountOptions({ settings: true, sessionRevocation: true });
   await login(page, "/app/cuenta");
   await page.getByRole("button", { name: "Cerrar sesión en todos los dispositivos" }).click();
   await expect(page.getByRole("dialog")).toContainText("Vas a salir de BoxLead en todos lados");

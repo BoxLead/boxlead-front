@@ -300,6 +300,7 @@ describe("account fields of the session", () => {
       emailVerification: true,
       settings: false,
       deletion: false,
+      emailChange: false,
     });
     expect(user.emailVerificationPending).toBe(true);
   });

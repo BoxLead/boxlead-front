@@ -2,6 +2,7 @@ import { type FormEvent, useId, useState } from "react";
 import { ApiError } from "../../api/client";
 import { apiErrorCode } from "../../api/errors";
 import type { AccountView } from "../../api/types";
+import { useAuth } from "../../context/auth";
 import { ACCOUNT_KEY, changeEmail } from "../../data/account";
 import { invalidateQueries } from "../../data/queryCache";
 
@@ -16,6 +17,8 @@ function emailError(error: unknown): string {
 
 export function EmailSection({ account }: { account: AccountView }) {
   const id = useId();
+  const { user } = useAuth();
+  const canChange = account.hasPassword && user?.account?.emailChange === true;
   const [editing, setEditing] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,7 +63,7 @@ export function EmailSection({ account }: { account: AccountView }) {
       ) : null}
       {!account.hasPassword ? (
         <p className="account-note">Tu email viene de la cuenta con la que entrás, así que se cambia desde ahí.</p>
-      ) : editing ? (
+      ) : !canChange ? null : editing ? (
         <form className="account-form" onSubmit={submit}>
           <div className="field">
             <label className="field-label" htmlFor={`${id}-email`}>

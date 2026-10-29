@@ -25,13 +25,13 @@ function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-function session(sessionRevocation = false): AuthContextValue {
+function session(sessionRevocation = false, emailChange = true): AuthContextValue {
   const user: AuthUser = {
     ...SESSION_FLAGS_OFF,
     userId: "u-1",
     email: "ana@negocio.com",
     name: "Ana",
-    account: { ...ACCOUNT_FEATURES_OFF, settings: true, sessionRevocation },
+    account: { ...ACCOUNT_FEATURES_OFF, settings: true, sessionRevocation, emailChange },
   };
   return {
     ...SESSION_FLAGS_OFF,
@@ -47,10 +47,10 @@ function session(sessionRevocation = false): AuthContextValue {
   };
 }
 
-function renderAccount(sessionRevocation = false) {
+function renderAccount(sessionRevocation = false, emailChange = true) {
   render(
     <MemoryRouter>
-      <AuthContext.Provider value={session(sessionRevocation)}>
+      <AuthContext.Provider value={session(sessionRevocation, emailChange)}>
         <ToastContext.Provider value={toast}>
           <Account />
         </ToastContext.Provider>
@@ -119,6 +119,13 @@ describe("account page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Mandar el link" }));
     expect(await screen.findByRole("status")).toHaveTextContent("ana@otro.com");
     expect(bodyOf("/account/email")).toEqual({ password: "clave", newEmail: "ana@otro.com" });
+  });
+
+  it("hides the email change while emails are off", async () => {
+    fetchMock.mockResolvedValueOnce(json(PASSWORD_ACCOUNT));
+    renderAccount(false, false);
+    expect(await screen.findByRole("button", { name: "Cambiar la contraseña" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cambiar el email" })).not.toBeInTheDocument();
   });
 
   it("hides the password and email changes of a social account", async () => {

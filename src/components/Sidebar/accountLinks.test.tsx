@@ -20,7 +20,7 @@ describe("account links", () => {
   });
 
   it("shows the account page first when core enables it", () => {
-    const account = { sessionRevocation: false, passwordReset: false, emailVerification: false, settings: true, deletion: false };
+    const account = { sessionRevocation: false, passwordReset: false, emailVerification: false, settings: true, deletion: false, emailChange: false };
     expect(accountLinks({ features: { ...off, billing: true }, isReseller: false, account }).map((link) => link.to)).toEqual([
       "/app/cuenta",
       "/app/billing",
