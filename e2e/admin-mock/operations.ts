@@ -13,6 +13,10 @@ import type {
 import { failure, hasRole, ok, page, type AdminIdentity, type MockArea, type MockReply, type ResetOptions } from "./http.ts";
 
 export const OPERATIONS_SCENARIO = "operations";
+export const REFUND_REJECTED_SCENARIO = "operations-refund-rejected";
+export const REFUND_PENDING_SCENARIO = "operations-refund-pending";
+
+let withdrawalRefund: "APPROVED" | "REJECTED" | "PENDING" = "APPROVED";
 
 const DAY_MS = 86_400_000;
 const MAX_RANGE_DAYS = 366;
@@ -182,7 +186,9 @@ function fixtures(now: Date): State {
 }
 
 function reset({ scenario, now }: ResetOptions) {
-  state = scenario === OPERATIONS_SCENARIO ? fixtures(now) : empty();
+  const seeded = scenario === OPERATIONS_SCENARIO || scenario === REFUND_REJECTED_SCENARIO || scenario === REFUND_PENDING_SCENARIO;
+  state = seeded ? fixtures(now) : empty();
+  withdrawalRefund = scenario === REFUND_REJECTED_SCENARIO ? "REJECTED" : scenario === REFUND_PENDING_SCENARIO ? "PENDING" : "APPROVED";
 }
 
 function nextId(group: string): string {
@@ -322,8 +328,12 @@ function resolve(requestId: string, body: Record<string, unknown>, admin: AdminI
   const request = state.requests.find((row) => row.id === requestId);
   if (!request) return failure(404, "Consumer request not found");
   if (request.kind === "WITHDRAWAL" && !hasRole(admin, "FINANCE")) return failure(403, "This action needs another admin role", "ROLE_REQUIRED");
-  if (request.userId === admin.userId && !admin.roles.includes("OWNER")) return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
+  if (request.userId === admin.userId && (request.kind === "WITHDRAWAL" || !admin.roles.includes("OWNER"))) return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
   if (request.status !== "RECEIVED") return failure(409, "The request is already closed");
+  if (request.kind === "WITHDRAWAL" && body.status === "RESOLVED") {
+    if (withdrawalRefund === "REJECTED") return failure(409, "Mercado Pago rejected the refund, the request stays open", "WITHDRAWAL_REFUND_REJECTED");
+    if (withdrawalRefund === "PENDING") return failure(409, "The refund is still in process, the request stays open", "WITHDRAWAL_REFUND_PENDING");
+  }
   const before = { id: request.id, kind: request.kind, status: request.status, resolvedAt: null };
   const now = new Date().toISOString();
   Object.assign(request, { status: body.status, resolution, resolvedBy: admin.userId, resolvedAt: now, receiptSentAt: now, refundable: null });

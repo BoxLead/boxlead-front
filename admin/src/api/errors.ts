@@ -29,7 +29,9 @@ export type AdminErrorCode =
   | "REFUND_ALREADY_ANSWERED"
   | "INVOICE_NOT_ISSUED"
   | "CONCURRENT_CHANGE"
-  | "AUDIT_TARGET_TYPE_REQUIRED";
+  | "AUDIT_TARGET_TYPE_REQUIRED"
+  | "WITHDRAWAL_REFUND_REJECTED"
+  | "WITHDRAWAL_REFUND_PENDING";
 
 const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   ADMIN_SESSION_REQUIRED: "Tu sesión de administración venció. Ingresá un código nuevo para seguir.",
@@ -65,6 +67,8 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   INVOICE_NOT_ISSUED: "Solo se puede anular una factura emitida. Recargá para ver su estado.",
   CONCURRENT_CHANGE: "Otra persona cambió esto al mismo tiempo. Recargá para ver lo último y volvé a intentar.",
   AUDIT_TARGET_TYPE_REQUIRED: "Elegí el tipo de objetivo para buscar por id.",
+  WITHDRAWAL_REFUND_REJECTED: "Mercado Pago rechazó el reembolso. El pedido sigue abierto, revisá el pago en Pagos antes de volver a intentar.",
+  WITHDRAWAL_REFUND_PENDING: "El reembolso sigue en proceso en Mercado Pago. Volvé a resolver el pedido cuando se acredite.",
 };
 
 const STATUS_MESSAGES: Record<number, string> = {

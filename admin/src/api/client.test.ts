@@ -142,6 +142,13 @@ describe("messageFor", () => {
     expect(messageFor(403, "ADMIN_SELF_OPERATION")).toMatch(/operar tu revendedor, sus códigos, sus comisiones o sus liquidaciones\. Lo tiene que hacer otra persona del equipo\.$/);
   });
 
+  it("keeps a withdrawal open while its refund is rejected or in process", () => {
+    expect(messageFor(409, "WITHDRAWAL_REFUND_REJECTED")).toBe(
+      "Mercado Pago rechazó el reembolso. El pedido sigue abierto, revisá el pago en Pagos antes de volver a intentar.",
+    );
+    expect(messageFor(409, "WITHDRAWAL_REFUND_PENDING")).toBe("El reembolso sigue en proceso en Mercado Pago. Volvé a resolver el pedido cuando se acredite.");
+  });
+
   it("asks for the target type when core gets a target id without it", () => {
     expect(messageFor(400, "AUDIT_TARGET_TYPE_REQUIRED")).toBe("Elegí el tipo de objetivo para buscar por id.");
   });
