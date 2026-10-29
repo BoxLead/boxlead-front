@@ -189,6 +189,7 @@ test.describe("team", () => {
     await expect(grant.getByText(/pasa a usar BoxLead sin pagar con los límites de Business/)).toBeVisible();
     await expect(grant.getByText("Tiene una suscripción viva")).toBeVisible();
     await expect(grant.getByText(/Hoy figura como Cuota impaga\./)).toBeVisible();
+    await expect(grant.getByText(/Mercado Pago le sigue cobrando hasta que se dé de baja/)).toBeVisible();
     await expect(grant.getByText("Está atribuida a un revendedor")).toBeVisible();
     await noSideScroll(page);
     await grant.getByLabel("Motivo").fill("Se suma a cobranzas");

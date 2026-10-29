@@ -23,7 +23,7 @@ import { navItem } from "../../nav";
 import { ROLE_LABELS } from "../../session/roles";
 import { isFuture, useAdmin, useSession } from "../../session/session";
 import { FACTOR_STATUS, PLAN_SOURCE_LABELS, SUBSCRIPTION_STATUS, TEAM_LABEL } from "../../status";
-import type { CustomerFile } from "../customers/types";
+import type { CustomerFile, SubscriptionStatus } from "../customers/types";
 import type { AdminGrant, CustomerMatch, MemberRole, TeamMember } from "./types";
 import "./Operations.css";
 
@@ -37,6 +37,14 @@ const ROLE_SCOPE: Record<AdminRole, string> = {
 };
 
 type Revoking = { member: TeamMember; role: MemberRole };
+
+function chargeNotice(status: SubscriptionStatus): string {
+  if (status === "PAUSED") return "Mientras esté pausada Mercado Pago no le cobra, pero si se reanuda le vuelve a cobrar hasta que se dé de baja.";
+  if (status === "INCOMPLETE") {
+    return "Todavía no pagó la primera cuota. Si completa el pago en Mercado Pago, empieza a cobrarle todos los meses hasta que se dé de baja.";
+  }
+  return "Mercado Pago le sigue cobrando hasta que se dé de baja.";
+}
 
 const NO_PASSWORD = "Esta cuenta no tiene contraseña. Puede entrar si antes abre sesión en boxlead.app con Google.";
 
@@ -92,8 +100,8 @@ function AccountNotices({ userId, account }: { userId: string; account: AccountC
     <>
       {live ? (
         <Banner tone="warning" title="Tiene una suscripción viva">
-          Hoy figura como {SUBSCRIPTION_STATUS[live.status].label}. Mientras tenga el rol su acceso viene del equipo, pero la suscripción sigue viva y Mercado Pago le sigue cobrando hasta que
-          se dé de baja.
+          Hoy figura como {SUBSCRIPTION_STATUS[live.status].label}. Mientras tenga el rol su acceso viene del equipo, pero la suscripción sigue viva.{" "}
+          {chargeNotice(live.status)}
         </Banner>
       ) : null}
       {attribution ? (
