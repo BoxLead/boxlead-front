@@ -679,3 +679,8 @@ export type ConsumerRequestReceipt = {
   code: string;
   createdAt: string;
 };
+
+export type OnboardingResponse = {
+  agentCreated: boolean;
+  agentTested: boolean;
+};

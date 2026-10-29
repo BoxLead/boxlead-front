@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AgentResponse } from "../api/types";
 import { AGENTS_KEY, createAgent, deleteAgent, saveBusinessProfile, setAgentEnabled, BUSINESS_PROFILE_KEY } from "./agents";
-import { clearQueryCache, getQueryState, setQueryData } from "./queryCache";
+import { ONBOARDING_KEY } from "./onboarding";
+import { clearQueryCache, getQueryState, setQueryData, subscribe } from "./queryCache";
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -91,5 +92,29 @@ describe("agent mutations", () => {
 
     expect(getQueryState(BUSINESS_PROFILE_KEY).data).toEqual(saved);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "PUT" });
+  });
+});
+
+describe("onboarding after agent changes", () => {
+  it("reads the first steps again after creating or deleting an agent", async () => {
+    const stop = subscribe(ONBOARDING_KEY, () => undefined);
+    fetchMock.mockImplementation((input) =>
+      Promise.resolve(String(input).endsWith("/onboarding") ? json({ agentCreated: true, agentTested: false }) : json(agent())),
+    );
+
+    await createAgent({ name: "Ventas", instructions: "", enabled: true, publicCommentReplies: false, scopes: [] });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      "https://agent.example.com/agents",
+      "https://agent.example.com/onboarding",
+    ]);
+
+    await vi.waitFor(() => expect(getQueryState(ONBOARDING_KEY).fetching).toBe(false));
+    fetchMock.mockClear();
+    fetchMock.mockImplementation((input) =>
+      Promise.resolve(String(input).endsWith("/onboarding") ? json({ agentCreated: false, agentTested: false }) : new Response(null, { status: 204 })),
+    );
+    await deleteAgent("a-1");
+    await vi.waitFor(() => expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain("https://agent.example.com/onboarding"));
+    stop();
   });
 });
