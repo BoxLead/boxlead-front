@@ -24,6 +24,7 @@ const ROUTE_ENTRIES: Record<string, string[]> = {
   '/nueva-clave': ['src/pages/PasswordRecovery/ResetPassword.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/confirmar-email': ['src/pages/EmailVerification/ConfirmEmail.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/nuevo-email': ['src/pages/EmailChange/ConfirmEmailChange.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/reingresar': ['src/pages/Reauthenticate/Reauthenticate.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/whatsapp': ['src/landing/pages/EditorialPage.tsx'],
   '/instagram': ['src/landing/pages/EditorialPage.tsx'],
   '/messenger': ['src/landing/pages/EditorialPage.tsx'],

@@ -1,6 +1,6 @@
 import { SOCIAL_AUTH_ENABLED } from "../util/social";
 
-const SOCIAL_ROUTES = /^\/(login|register|invitacion)(\/|$)/;
+const SOCIAL_ROUTES = /^\/(login|register|invitacion|reingresar)(\/|$)/;
 
 export function needsSocialAuth(pathname: string, callbackPath: string): boolean {
   return SOCIAL_ROUTES.test(pathname) || pathname === callbackPath;

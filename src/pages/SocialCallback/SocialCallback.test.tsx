@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
+import { clearReauthToken, peekReauthToken } from "../../data/reauth";
 import { SocialCallback } from "./SocialCallback";
 
 const auth0 = vi.hoisted(() => ({
@@ -100,5 +101,13 @@ describe("SocialCallback", () => {
   it("shows the API error when the session cannot be created", () => {
     renderCallback("A verified email is required");
     expect(screen.getByRole("alert")).toHaveTextContent("A verified email is required");
+  });
+
+  it("keeps a reauthentication token in memory and goes back to the deletion without a new session", async () => {
+    auth0.handleRedirectCallback.mockResolvedValue({ appState: { next: "/app/cuenta?borrar=1", intent: "reauth" } });
+    const { socialLogin } = renderCallback();
+    await waitFor(() => expect(peekReauthToken()).toBe("id-token"));
+    expect(socialLogin).not.toHaveBeenCalled();
+    clearReauthToken();
   });
 });

@@ -214,6 +214,14 @@ export const PUBLIC_PAGES: PublicPage[] = [
     source: "src/pages/EmailChange/ConfirmEmailChange.tsx",
   }),
   page({
+    path: "/reingresar",
+    title: "Confirmá que sos vos",
+    description: "Volvé a entrar con tu proveedor para confirmar un cambio en tu cuenta de BoxLead.",
+    lang: "es-AR",
+    index: false,
+    source: "src/pages/Reauthenticate/Reauthenticate.tsx",
+  }),
+  page({
     path: "/social/callback",
     title: "Iniciando sesión",
     description: "Estamos verificando tu cuenta.",
