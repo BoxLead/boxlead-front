@@ -1,0 +1,194 @@
+.onboarding {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: var(--signal-content-max);
+  margin: 0 auto;
+  padding: var(--signal-space-4) var(--signal-gutter) 0;
+}
+
+.onboarding-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--signal-space-2) var(--signal-space-3);
+  margin-bottom: var(--signal-space-3);
+}
+
+.onboarding-title {
+  margin: 0;
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-semibold);
+  line-height: var(--signal-leading-snug);
+  color: var(--signal-heading);
+}
+
+.onboarding-count {
+  margin: 0;
+  font-size: var(--signal-text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--signal-text-muted);
+}
+
+.onboarding-bar {
+  --onboarding-done: 0;
+  position: relative;
+  flex: 1;
+  min-width: var(--signal-space-16);
+  max-width: var(--signal-space-20);
+  height: var(--signal-space-1);
+  margin-left: auto;
+  overflow: hidden;
+  border-radius: var(--signal-radius-pill);
+  background: var(--signal-hairline);
+}
+
+.onboarding-bar[data-done="1"] {
+  --onboarding-done: 1;
+}
+
+.onboarding-bar[data-done="2"] {
+  --onboarding-done: 2;
+}
+
+.onboarding-bar-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--signal-accent);
+  transform: scaleX(calc(var(--onboarding-done) / 3));
+  transform-origin: left center;
+  transition: transform var(--signal-duration-slow) var(--signal-ease-out);
+}
+
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--signal-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onboarding-step {
+  display: flex;
+  align-items: center;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-3) var(--signal-space-4);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-surface);
+  box-shadow: var(--signal-edge);
+}
+
+.onboarding-step.is-next {
+  grid-column: span 2;
+  border-color: var(--signal-accent-border);
+  background: color-mix(in srgb, var(--signal-accent-muted) 50%, var(--signal-surface));
+}
+
+.onboarding-step.is-done {
+  background: var(--signal-bg-subtle);
+  box-shadow: none;
+}
+
+.onboarding-marker {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--signal-icon-md);
+  height: var(--signal-icon-md);
+  border: 1px solid var(--signal-border-strong);
+  border-radius: var(--signal-radius-full);
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--signal-text-muted);
+}
+
+.onboarding-marker svg {
+  width: var(--signal-icon-xs);
+  height: var(--signal-icon-xs);
+}
+
+.is-next .onboarding-marker {
+  border-color: var(--signal-accent);
+  color: var(--signal-accent);
+}
+
+.is-done .onboarding-marker {
+  border-color: var(--signal-success);
+  background: var(--signal-success);
+  color: var(--signal-accent-contrast);
+}
+
+.onboarding-step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.onboarding-step-title {
+  margin: 0;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
+  line-height: var(--signal-leading-snug);
+  color: var(--signal-heading);
+}
+
+.is-done .onboarding-step-title {
+  font-weight: var(--signal-weight-medium);
+  color: var(--signal-text-muted);
+}
+
+.onboarding-step-text {
+  margin: var(--signal-space-0-5) 0 0;
+  font-size: var(--signal-text-xs);
+  line-height: var(--signal-leading-normal);
+  color: var(--signal-text-muted);
+}
+
+.onboarding-step-link {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+@media (max-width: 1024px) {
+  .onboarding-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--signal-space-2);
+  }
+
+  .onboarding-step.is-next {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .onboarding {
+    padding: var(--signal-space-3) var(--signal-gutter-mobile) 0;
+  }
+
+  .onboarding-head {
+    margin-bottom: var(--signal-space-2);
+  }
+
+  .onboarding-step {
+    padding: var(--signal-space-2) var(--signal-space-3);
+  }
+
+  .onboarding-step.is-done {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-bar-fill {
+    transition: none;
+  }
+}
+
+@media print {
+  .onboarding {
+    display: none;
+  }
+}

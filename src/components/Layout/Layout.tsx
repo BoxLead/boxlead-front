@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { dismissPlanError } from "../../data/planErrors";
 import { LegalAcceptanceDialog } from "../LegalDialog/LegalAcceptanceDialog";
 import { Loading } from "../Loading";
+import { OnboardingChecklist } from "../Onboarding/OnboardingChecklist";
 import { PlanBanner } from "../PlanBanner/PlanBanner";
 import { Sidebar } from "../Sidebar/Sidebar";
 import "./Layout.css";
@@ -21,6 +22,7 @@ export function Layout() {
       <Sidebar />
       <main className="layout-content" ref={contentRef}>
         <PlanBanner />
+        <OnboardingChecklist />
         <Suspense fallback={<Loading inline />}>
           <Outlet />
         </Suspense>
