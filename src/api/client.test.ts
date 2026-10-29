@@ -107,13 +107,13 @@ describe("session user", () => {
     await expect(api.me()).resolves.toMatchObject({ userId: "u-1", email: "ana@example.com", name: null });
   });
 
-  it("treats billing, referrals and legal as off when core does not send them yet", async () => {
+  it("treats every feature as off when core does not send them yet", async () => {
     fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", name: "Ana" }));
     await expect(api.me()).resolves.toEqual({
       userId: "u-1",
       email: "ana@example.com",
       name: "Ana",
-      features: { billing: false, referrals: false, legal: false },
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false },
       access: "FULL",
       isReseller: false,
       pendingLegal: [],
@@ -126,14 +126,14 @@ describe("session user", () => {
         userId: "u-1",
         email: "ana@example.com",
         name: "Ana",
-        features: { billing: true, referrals: true, legal: true },
+        features: { billing: true, referrals: true, legal: true, clientErrors: true, onboarding: true },
         access: "RESTRICTED",
         isReseller: true,
         pendingLegal: [{ kind: "TERMS", version: "2026-11" }],
       }),
     );
     await expect(api.me()).resolves.toMatchObject({
-      features: { billing: true, referrals: true, legal: true },
+      features: { billing: true, referrals: true, legal: true, clientErrors: true, onboarding: true },
       access: "RESTRICTED",
       isReseller: true,
       pendingLegal: [{ kind: "TERMS", version: "2026-11" }],
@@ -145,21 +145,24 @@ describe("session user", () => {
       json({
         userId: "u-1",
         email: "ana@example.com",
-        features: { billing: "true", referrals: 1, legal: "yes" },
+        features: { billing: "true", referrals: 1, legal: "yes", clientErrors: "true", onboarding: 1 },
         access: "ADMIN",
         isReseller: "yes",
         pendingLegal: [{ kind: "COOKIES", version: "1" }, { kind: "PRIVACY" }, "TERMS", { kind: "PRIVACY", version: "2026-11", extra: 1 }],
       }),
     );
     await expect(api.me()).resolves.toMatchObject({
-      features: { billing: false, referrals: false, legal: false },
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false },
       access: "FULL",
       isReseller: false,
       pendingLegal: [{ kind: "PRIVACY", version: "2026-11" }],
     });
 
     fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", features: null, pendingLegal: {} }));
-    await expect(api.me()).resolves.toMatchObject({ features: { billing: false, referrals: false, legal: false }, pendingLegal: [] });
+    await expect(api.me()).resolves.toMatchObject({
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false },
+      pendingLegal: [],
+    });
   });
 });
 

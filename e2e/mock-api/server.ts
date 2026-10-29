@@ -467,6 +467,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       overrides: limitOverrides(body.overrides),
       enforced: body.enforced !== false,
       providerDown: body.providerDown === true,
+      clientErrors: body.clientErrors === true,
+      onboarding: body.onboarding === true,
     });
     return send(res, 200, { scenario });
   }
