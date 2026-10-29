@@ -45,7 +45,7 @@ export type BillingOptions = {
   overrides?: PlanLimits;
   enforced?: boolean;
   providerDown?: boolean;
-  teamSubscription?: "ACTIVE" | "SUSPENDED";
+  teamSubscription?: "ACTIVE" | "SUSPENDED" | "NONE";
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -396,13 +396,13 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
   if (scenario === "billing-team") {
     state.team = true;
     state.profile = profile();
-    state.subscription = subscription("STARTER", options.teamSubscription ?? "SUSPENDED");
-    if (state.subscription.status === "SUSPENDED") {
+    state.subscription = options.teamSubscription === "NONE" ? null : subscription("STARTER", options.teamSubscription ?? "SUSPENDED");
+    if (state.subscription?.status === "SUSPENDED") {
       state.subscription.currentPeriodStart = daysAgo(PERIOD_DAYS + 9);
       state.subscription.currentPeriodEnd = daysAgo(9);
       state.subscription.graceUntil = daysAgo(2);
     }
-    state.payments = paymentHistory(state.subscription.price, 2);
+    state.payments = state.subscription ? paymentHistory(state.subscription.price, 2) : [];
     state.agentReplies = 300;
   }
   if (scenario === "billing-checkout-pending" || scenario === "billing-checkout-rejected") {
@@ -707,6 +707,7 @@ function acceptInvitation(state: BillingState, req: MockRequest): MockReply {
   }
   if (state.demoUsed) return error(409, "The demo was already used", "DEMO_ALREADY_USED");
   if (liveSubscription(state)) return error(409, "A live subscription already gives the plan", "DEMO_SUBSCRIPTION_ACTIVE");
+  if (state.team) return error(409, "Team access already gives the plan", "DEMO_TEAM_MEMBER");
   invitation.usable = false;
   state.demo = { endsAt: inDays(DEMO_DAYS) };
   state.demoUsed = true;

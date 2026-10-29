@@ -24,6 +24,9 @@ describe("acceptInvitationError", () => {
     expect(acceptInvitationError(coded(409, "DEMO_SUBSCRIPTION_ACTIVE"), null)).toBe(
       "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.",
     );
+    expect(acceptInvitationError(coded(409, "DEMO_TEAM_MEMBER"), null)).toBe(
+      "Tu cuenta es del equipo de BoxLead y ya tenés acceso, así que no necesitás la Beta. La invitación sigue abierta.",
+    );
     expect(acceptInvitationError(new Error("network"), null)).toBe("No pudimos activar la Beta. Probá de nuevo en un rato.");
   });
 });

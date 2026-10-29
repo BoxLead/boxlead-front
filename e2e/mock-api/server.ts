@@ -467,7 +467,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       overrides: limitOverrides(body.overrides),
       enforced: body.enforced !== false,
       providerDown: body.providerDown === true,
-      teamSubscription: body.teamSubscription === "ACTIVE" ? "ACTIVE" : undefined,
+      teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
     });
     return send(res, 200, { scenario });
   }
