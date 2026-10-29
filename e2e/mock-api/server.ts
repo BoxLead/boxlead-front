@@ -536,7 +536,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     authed: isAuthed(req),
     userEmail: USER.email,
     readBody: () => readBody(req),
-  });
+  }, () => sessionUser());
   if (accountReply) return reply(res, accountReply);
   const billingReply = await billingRoute(billing, {
     method,

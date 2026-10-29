@@ -3,11 +3,15 @@ import type { MockReply, MockRequest } from "./billing.ts";
 
 export type AccountOptions = {
   passwordReset: boolean;
+  emailVerification: boolean;
+  emailPending: boolean;
 };
 
 type SentEmail = { template: string; to: string; token: string | null };
 
-type AccountToken = { purpose: "PASSWORD_RESET"; used: boolean };
+type AccountToken = { purpose: "PASSWORD_RESET" | "EMAIL_VERIFICATION"; used: boolean };
+
+type SessionUser = () => Record<string, unknown>;
 
 export type AccountState = {
   options: AccountOptions;
@@ -23,7 +27,7 @@ const INVALID_TOKEN: MockReply = {
 };
 
 export function buildAccount(): AccountState {
-  return { options: { passwordReset: false }, sent: [], tokens: new Map() };
+  return { options: { passwordReset: false, emailVerification: false, emailPending: false }, sent: [], tokens: new Map() };
 }
 
 function issueToken(account: AccountState, purpose: AccountToken["purpose"]): string {
@@ -42,12 +46,80 @@ function spendToken(account: AccountState, value: unknown, purpose: AccountToken
   return true;
 }
 
-export async function accountRoute(account: AccountState, request: MockRequest): Promise<MockReply | null> {
+function accountFeatures(account: AccountState) {
+  return {
+    sessionRevocation: false,
+    passwordReset: account.options.passwordReset,
+    emailVerification: account.options.emailVerification,
+    settings: false,
+    deletion: false,
+  };
+}
+
+export async function accountRoute(
+  account: AccountState,
+  request: MockRequest,
+  sessionUser: SessionUser,
+): Promise<MockReply | null> {
   const { method, path } = request;
   if (path === "/__account/options" && method === "POST") {
     const body = await request.readBody();
-    account.options = { passwordReset: body.passwordReset === true };
+    account.options = {
+      passwordReset: body.passwordReset === true,
+      emailVerification: body.emailVerification === true,
+      emailPending: body.emailPending === true,
+    };
+    if (account.options.emailPending) {
+      account.sent.push({
+        template: "EMAIL_VERIFICATION",
+        to: request.userEmail,
+        token: issueToken(account, "EMAIL_VERIFICATION"),
+      });
+    }
     return { status: 200, body: { ...account.options } };
+  }
+  if (path === "/auth/me" && method === "GET" && request.authed) {
+    return {
+      status: 200,
+      body: {
+        ...sessionUser(),
+        account: accountFeatures(account),
+        emailVerificationPending: account.options.emailVerification && account.options.emailPending,
+      },
+    };
+  }
+  if (path === "/auth/email/verify" && method === "POST") {
+    if (!account.options.emailVerification) return NOT_FOUND;
+    const body = await request.readBody();
+    if (!spendToken(account, body.token, "EMAIL_VERIFICATION")) return INVALID_TOKEN;
+    account.options.emailPending = false;
+    return { status: 204 };
+  }
+  if (path === "/account/email/verification" && method === "POST") {
+    if (!account.options.emailVerification) return NOT_FOUND;
+    if (!request.authed) return { status: 401, body: { error: "Unauthorized", message: "Unauthorized" } };
+    if (account.options.emailPending) {
+      account.sent.push({
+        template: "EMAIL_VERIFICATION",
+        to: request.userEmail,
+        token: issueToken(account, "EMAIL_VERIFICATION"),
+      });
+    }
+    return { status: 202 };
+  }
+  if (
+    account.options.emailVerification &&
+    account.options.emailPending &&
+    request.authed &&
+    !path.startsWith("/auth/") &&
+    !path.startsWith("/account") &&
+    !path.startsWith("/legal/") &&
+    !path.startsWith("/__")
+  ) {
+    return {
+      status: 403,
+      body: { error: "Forbidden", message: "Confirm your email first", code: "EMAIL_NOT_VERIFIED" },
+    };
   }
   if (path === "/__account/sent" && method === "GET") {
     return { status: 200, body: account.sent };
