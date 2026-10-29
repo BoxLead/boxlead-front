@@ -341,3 +341,9 @@
     white-space: nowrap;
   }
 }
+
+.auth-forgot {
+  align-self: flex-end;
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
+}

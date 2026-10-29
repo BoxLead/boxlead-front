@@ -19,6 +19,7 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "CHECKOUT_PENDING",
   "DEMO_SUBSCRIPTION_ACTIVE",
   "DEMO_TEAM_MEMBER",
+  "INVALID_TOKEN",
 ];
 
 function errorBody(error: unknown): object | null {
