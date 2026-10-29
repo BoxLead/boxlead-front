@@ -1,6 +1,8 @@
 .account-sections {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--signal-space-md);
+  width: 100%;
   max-width: var(--signal-measure);
 }
 
@@ -8,6 +10,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--signal-space-md);
+  min-width: 0;
+  padding: var(--signal-space-lg);
+}
+
+@media (max-width: 480px) {
+  .account-section {
+    padding: var(--signal-space-md);
+  }
 }
 
 .account-skeleton {
