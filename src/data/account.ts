@@ -24,3 +24,11 @@ export function requestPasswordReset(email: string): Promise<void> {
 export function resetPassword(token: string, password: string): Promise<void> {
   return api.post<void>("/auth/password/reset", { token, password });
 }
+
+export function verifyEmail(token: string): Promise<void> {
+  return api.post<void>("/auth/email/verify", { token });
+}
+
+export function resendEmailVerification(): Promise<void> {
+  return api.post<void>("/account/email/verification");
+}
