@@ -28,7 +28,7 @@ test("without billing the account menu and the routes stay as today", async ({ p
   await login(page);
   const account = await openAccount(page);
   await expect(account.getByRole("button", { name: "Cerrar sesión" })).toBeVisible();
-  await expect(account.getByRole("link")).toHaveCount(0);
+  await expect(account.getByRole("link")).toHaveText(["Tu cuenta"]);
   await screenshotThemes(page, "billing-off-menu", "Bandeja", true);
 
   for (const path of ["/app/billing", "/app/billing/return", "/app/reseller"]) {

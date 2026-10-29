@@ -82,6 +82,7 @@ const ACCOUNT_FEATURE_KEYS: readonly (keyof AccountFeatures)[] = [
   "emailVerification",
   "settings",
   "deletion",
+  "emailChange",
 ];
 
 export const ACCOUNT_FEATURES_OFF: AccountFeatures = {
@@ -90,6 +91,7 @@ export const ACCOUNT_FEATURES_OFF: AccountFeatures = {
   emailVerification: false,
   settings: false,
   deletion: false,
+  emailChange: false,
 };
 
 function readAccountFeatures(value: object): AccountFeatures {

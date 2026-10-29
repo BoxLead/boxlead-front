@@ -11,15 +11,7 @@ test.beforeEach(async () => {
   await resetApi();
 });
 
-test("with deletion off the account page has no deletion section", async ({ page }) => {
-  await setAccountOptions({ settings: true });
-  await login(page, "/app/cuenta");
-  await expect(page.getByRole("heading", { level: 1, name: "Tu cuenta" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Borrar la cuenta" })).toHaveCount(0);
-});
-
 test("a password account deletes with its password and the word", async ({ page }) => {
-  await setAccountOptions({ settings: true, deletion: true });
   await login(page, "/app/cuenta");
   await openDeletion(page);
   const submit = page.getByRole("button", { name: "Borrar mi cuenta" });
@@ -41,7 +33,7 @@ test("a password account deletes with its password and the word", async ({ page 
 });
 
 test("an open subscription stops the deletion and points to the cancellation", async ({ page }) => {
-  await setAccountOptions({ settings: true, deletion: true, subscriptionOpen: true });
+  await setAccountOptions({ subscriptionOpen: true });
   await login(page, "/app/cuenta");
   await openDeletion(page);
   await page.getByLabel("Tu contraseña").fill("demo1234");
@@ -54,7 +46,7 @@ test("an open subscription stops the deletion and points to the cancellation", a
 
 test("a social account signs in again with its provider before deleting", async ({ page }) => {
   const auth0 = await routeAuth0(page, { claims: GOOGLE_IDENTITY });
-  await setAccountOptions({ settings: true, deletion: true, socialOnly: true });
+  await setAccountOptions({ socialOnly: true });
   await login(page, "/app/cuenta");
   await openDeletion(page);
   await expect(page.getByRole("button", { name: "Borrar mi cuenta" })).toBeDisabled();

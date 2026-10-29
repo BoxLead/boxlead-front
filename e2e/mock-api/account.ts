@@ -5,10 +5,8 @@ export type AccountOptions = {
   passwordReset: boolean;
   emailVerification: boolean;
   emailPending: boolean;
-  settings: boolean;
-  sessionRevocation: boolean;
+  emailChange: boolean;
   socialOnly: boolean;
-  deletion: boolean;
   subscriptionOpen: boolean;
 };
 
@@ -50,10 +48,8 @@ export function buildAccount(): AccountState {
       passwordReset: false,
       emailVerification: false,
       emailPending: false,
-      settings: false,
-      sessionRevocation: false,
+      emailChange: false,
       socialOnly: false,
-      deletion: false,
       subscriptionOpen: false,
     },
     profile: { name: null, email: null, pendingEmail: null, password: "demo1234" },
@@ -80,11 +76,12 @@ function spendToken(account: AccountState, value: unknown, purpose: AccountToken
 
 function accountFeatures(account: AccountState) {
   return {
-    sessionRevocation: account.options.sessionRevocation,
+    sessionRevocation: true,
     passwordReset: account.options.passwordReset,
     emailVerification: account.options.emailVerification,
-    settings: account.options.settings,
-    deletion: account.options.deletion,
+    settings: true,
+    deletion: true,
+    emailChange: account.options.emailChange,
   };
 }
 
@@ -100,10 +97,8 @@ export async function accountRoute(
       passwordReset: body.passwordReset === true,
       emailVerification: body.emailVerification === true,
       emailPending: body.emailPending === true,
-      settings: body.settings === true,
-      sessionRevocation: body.sessionRevocation === true,
+      emailChange: body.emailChange === true,
       socialOnly: body.socialOnly === true,
-      deletion: body.deletion === true,
       subscriptionOpen: body.subscriptionOpen === true,
     };
     if (account.options.emailPending) {
@@ -214,12 +209,11 @@ async function settingsRoute(
 ): Promise<MockReply | null> {
   const { method, path } = request;
   if (path === "/auth/sessions/revoke" && method === "POST") {
-    if (!account.options.sessionRevocation) return NOT_FOUND;
     if (!request.authed) return UNAUTHORIZED;
     return { status: 204, headers: { "Set-Cookie": "boxlead_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" } };
   }
   if (path === "/auth/email/change" && method === "POST") {
-    if (!account.options.settings) return NOT_FOUND;
+    if (!account.options.emailChange) return NOT_FOUND;
     const body = await request.readBody();
     if (!spendToken(account, body.token, "EMAIL_CHANGE") || !account.profile.pendingEmail) return INVALID_TOKEN;
     account.profile.email = account.profile.pendingEmail;
@@ -227,7 +221,6 @@ async function settingsRoute(
     return { status: 204 };
   }
   if (!path.startsWith("/account") || path === "/account/email/verification") return null;
-  if (!account.options.settings) return NOT_FOUND;
   if (!request.authed) return UNAUTHORIZED;
   if (path === "/account" && method === "GET") return { status: 200, body: accountView(account, sessionUser) };
   if (path === "/account" && method === "PATCH") {
@@ -250,7 +243,6 @@ async function settingsRoute(
     return { status: 204 };
   }
   if (path === "/account/deletion" && method === "POST") {
-    if (!account.options.deletion) return NOT_FOUND;
     const body = await request.readBody();
     if (body.confirmation !== "BORRAR") {
       return { status: 400, body: { error: "Bad Request", message: "Confirm", code: "CONFIRMATION_MISMATCH" } };
@@ -269,6 +261,9 @@ async function settingsRoute(
     return { status: 204, headers: { "Set-Cookie": "boxlead_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" } };
   }
   if (path === "/account/email" && method === "POST") {
+    if (!account.options.emailChange) {
+      return { status: 409, body: { error: "Conflict", message: "Emails are not being sent yet", code: "EMAIL_UNAVAILABLE" } };
+    }
     const body = await request.readBody();
     if (body.password !== account.profile.password) return WRONG_PASSWORD;
     if (typeof body.newEmail !== "string" || !body.newEmail.includes("@")) {
