@@ -10,12 +10,16 @@ import type {
   ResellerClick,
   ResellerCustomer,
 } from "../../admin/src/areas/referrals/types.ts";
-import { failure, hasRole, notFound, ok, page, type MockReply, type MockRequest, type MockArea } from "./http.ts";
+import { failure, hasRole, notFound, ok, page, type AdminIdentity, type MockReply, type MockRequest, type MockArea } from "./http.ts";
 
 const DAY = 86_400_000;
 const CURRENCY = "ARS";
 const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const BUENOS_AIRES = "America/Argentina/Buenos_Aires";
+const ADMIN_USER = "0b0e0000-0000-4000-8000-0000000000a1";
+
+export const REFERRALS_SCENARIO = "referrals";
+export const OWN_RESELLER_SCENARIO = "referrals-own-reseller";
 
 type StoredReseller = Omit<Reseller, "codes"> & { billing: ResellerBilling };
 
@@ -186,6 +190,18 @@ function reasonOf(body: Record<string, unknown>): string | null {
 
 const MISSING_REASON = failure(400, "reason: must not be blank");
 const NOT_RELEASABLE = failure(409, "The commission can not change from its current status", "COMMISSION_NOT_RELEASABLE");
+const SELF_OPERATION = failure(403, "Admins can not operate on their own account or reseller", "ADMIN_SELF_OPERATION");
+
+function ownReseller(admin: AdminIdentity, resellerId: string | null | undefined): boolean {
+  return Boolean(resellerId) && findReseller(resellerId ?? "")?.userId === admin.userId;
+}
+
+function othersCommission(admin: AdminIdentity, row: Commission | undefined): MockReply | null {
+  if (!row) return null;
+  if (ownReseller(admin, row.resellerId)) return SELF_OPERATION;
+  if (row.customerUserId === admin.userId && !admin.roles.includes("OWNER")) return SELF_OPERATION;
+  return null;
+}
 
 function text(body: Record<string, unknown>, key: string): string | null {
   const value = body[key];
@@ -240,7 +256,7 @@ function detail({ match, query, admin }: MockRequest): MockReply {
   });
 }
 
-function createReseller({ body }: MockRequest): MockReply {
+function createReseller({ body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const userId = text(body, "userId");
   const displayName = text(body, "displayName");
@@ -248,6 +264,7 @@ function createReseller({ body }: MockRequest): MockReply {
   const taxId = text(body, "taxId");
   const vatCondition = text(body, "vatCondition");
   if (!userId || !displayName || !legalName || !taxId || !vatCondition) return failure(400, "Missing reseller data");
+  if (userId === admin.userId) return SELF_OPERATION;
   if (state.resellers.some((reseller) => reseller.userId === userId)) return failure(409, "That user is already a reseller", "RESELLER_EXISTS");
   const reseller: StoredReseller = {
     id: randomUUID(),
@@ -271,8 +288,9 @@ function createReseller({ body }: MockRequest): MockReply {
   return { status: 201, body: withCodes(reseller) };
 }
 
-function issueCode({ match, body }: MockRequest): MockReply {
+function issueCode({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
+  if (ownReseller(admin, match[1])) return SELF_OPERATION;
   const reseller = findReseller(match[1]);
   if (!reseller) return notFound();
   const code: ReferralCode = { id: randomUUID(), resellerId: reseller.id, code: newCode(), status: "ACTIVE", disabledAt: null, createdAt: iso(Date.now()) };
@@ -280,19 +298,21 @@ function issueCode({ match, body }: MockRequest): MockReply {
   return { status: 201, body: code };
 }
 
-function disableCode({ match, body }: MockRequest): MockReply {
+function disableCode({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const code = state.codes.find((candidate) => candidate.id === match[1]);
   if (!code) return notFound();
+  if (ownReseller(admin, code.resellerId)) return SELF_OPERATION;
   if (code.status === "DISABLED") return failure(409, "The code is already disabled");
   code.status = "DISABLED";
   code.disabledAt = iso(Date.now());
   return ok(code);
 }
 
-function correctAttribution({ match, body }: MockRequest): MockReply {
+function correctAttribution({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const resellerId = text(body, "resellerId");
+  if (ownReseller(admin, resellerId)) return SELF_OPERATION;
   const reseller = resellerId ? findReseller(resellerId) : undefined;
   if (!reseller) return notFound();
   const userId = match[1];
@@ -334,11 +354,13 @@ function findCommission(commissionId: string): Commission | undefined {
   return state.commissions.find((row) => row.id === commissionId);
 }
 
-function approve({ body }: MockRequest): MockReply {
+function approve({ body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const ids = Array.isArray(body.ids) ? body.ids.filter((value): value is string => typeof value === "string") : [];
   if (ids.length === 0) return failure(400, "Approving needs at least one commission");
   const found = ids.map(findCommission);
+  const refused = found.map((row) => othersCommission(admin, row)).find(Boolean);
+  if (refused) return refused;
   const now = Date.now();
   if (found.some((row) => !row || row.status !== "ACCRUED" || Date.parse(row.releaseAt) > now)) return NOT_RELEASABLE;
   const approved = found.filter((row): row is Commission => Boolean(row));
@@ -346,9 +368,11 @@ function approve({ body }: MockRequest): MockReply {
   return ok(approved);
 }
 
-function changeCommission({ match, body }: MockRequest): MockReply {
+function changeCommission({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const row = findCommission(match[1]);
+  const refused = othersCommission(admin, row);
+  if (refused) return refused;
   if (!row) return notFound();
   const action = match[2];
   if (action === "hold") {
@@ -404,9 +428,10 @@ function payoutDetail({ match }: MockRequest): MockReply {
   return ok({ payout, entries });
 }
 
-function createPayout({ body }: MockRequest): MockReply {
+function createPayout({ body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const resellerId = text(body, "resellerId");
+  if (ownReseller(admin, resellerId)) return SELF_OPERATION;
   const periodEnd = text(body, "periodEnd");
   const reseller = resellerId ? findReseller(resellerId) : undefined;
   if (!reseller || !periodEnd) return notFound();
@@ -459,10 +484,11 @@ function customerLabel(customerUserId: string): string {
   return customer ? maskedEmail(customer.email) : "Cliente";
 }
 
-function exportPayout({ match, body }: MockRequest): MockReply {
+function exportPayout({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const payout = findPayout(match[1]);
   if (!payout) return notFound();
+  if (ownReseller(admin, payout.resellerId)) return SELF_OPERATION;
   const reseller = findReseller(payout.resellerId);
   if (!reseller) return notFound();
   const rows = [
@@ -491,10 +517,11 @@ function exportPayout({ match, body }: MockRequest): MockReply {
   };
 }
 
-function markPaid({ match, body }: MockRequest): MockReply {
+function markPaid({ match, body, admin }: MockRequest): MockReply {
   if (!reasonOf(body)) return MISSING_REASON;
   const payout = findPayout(match[1]);
   if (!payout) return notFound();
+  if (ownReseller(admin, payout.resellerId)) return SELF_OPERATION;
   if (payout.status !== "EXPORTED") return failure(409, "Only an exported payout can be marked paid");
   payout.status = "PAID";
   payout.paidAt = iso(Date.now());
@@ -507,7 +534,8 @@ const SEGMENT = "([^/]+)";
 
 export const referrals: MockArea = {
   reset: ({ scenario, now }) => {
-    state = scenario === "referrals" ? seeded(now.getTime()) : empty();
+    state = scenario === REFERRALS_SCENARIO || scenario === OWN_RESELLER_SCENARIO ? seeded(now.getTime()) : empty();
+    if (scenario === OWN_RESELLER_SCENARIO) state.resellers[0].userId = ADMIN_USER;
   },
   routes: [
     {

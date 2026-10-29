@@ -1,5 +1,5 @@
 import type { Locator, Page, Route } from "@playwright/test";
-import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_SUBSCRIBED, MOCK_TEAM, MOCK_USERS } from "../admin-mock/invitations.ts";
+import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_OWN_RESELLER, MOCK_RESELLER, MOCK_SUBSCRIBED, MOCK_TEAM, MOCK_USERS } from "../admin-mock/invitations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
@@ -19,7 +19,12 @@ function fulfill(route: Route, body: unknown) {
 
 async function routeDirectory(page: Page) {
   await page.route(`${ADMIN_MOCK_ORIGIN}/admin/resellers?*`, (route) =>
-    fulfill(route, { items: [{ ...MOCK_RESELLER, status: "ACTIVE", codes: [] }], page: 0, size: 50, totalItems: 1 }),
+    fulfill(route, {
+      items: [MOCK_RESELLER, MOCK_OWN_RESELLER].map((reseller) => ({ ...reseller, status: "ACTIVE", codes: [] })),
+      page: 0,
+      size: 50,
+      totalItems: 2,
+    }),
   );
   await page.route(`${ADMIN_MOCK_ORIGIN}/admin/customers?*`, (route) => {
     const query = new URL(route.request().url()).searchParams.get("query") ?? "";
@@ -274,8 +279,21 @@ test("explains that not even an owner invites their own email", async ({ page })
   await form.getByRole("button", { name: "Continuar" }).click();
   await confirmWithReason(page, "Crear invitación", "Crear invitación");
   await expect(
-    dialog(page, "Crear invitación").getByText(/No podés hacer esto sobre tu propia cuenta\. Ni el rol de Dueño permite/),
+    dialog(page, "Crear invitación").getByText(/No podés hacer esto sobre tu propia cuenta ni sobre tu propio revendedor\. Ni el rol de Dueño permite/),
   ).toBeVisible();
+});
+
+test("explains that not even an owner invites with their own reseller", async ({ page }) => {
+  await open(page, INVITATIONS_SCENARIO, "/invitaciones", ["OWNER"]);
+  await page.getByRole("button", { name: "Nueva invitación" }).click();
+  const form = dialog(page, "Nueva invitación");
+  await form.getByLabel("Email").fill(NEW_EMAIL);
+  await form.getByLabel("La invitación vence el").fill(inFiveDays());
+  await form.getByLabel("Revendedor").selectOption({ label: MOCK_OWN_RESELLER.displayName });
+  await form.getByRole("button", { name: "Continuar" }).click();
+  await confirmWithReason(page, "Crear invitación", "Crear invitación");
+  await expect(dialog(page, "Crear invitación").getByText(/ni operar tu revendedor, sus códigos, sus comisiones o sus liquidaciones/)).toBeVisible();
+  expect(await overflowWithDialog(page)).toBeLessThanOrEqual(0);
 });
 
 test("shows the loading, empty and error states", async ({ page }) => {

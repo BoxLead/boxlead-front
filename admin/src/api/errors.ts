@@ -35,7 +35,7 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   ADMIN_SESSION_REQUIRED: "Tu sesión de administración venció. Ingresá un código nuevo para seguir.",
   ROLE_REQUIRED: "Tu rol no permite hacer esto.",
   ADMIN_SELF_OPERATION:
-    "No podés hacer esto sobre tu propia cuenta. Ni el rol de Dueño permite tocar tus límites, tu Demo, tus reembolsos o tus arrepentimientos, ni invitar a tu propio email. Pedíselo a otra persona del equipo.",
+    "No podés hacer esto sobre tu propia cuenta ni sobre tu propio revendedor. Ni el rol de Dueño permite tocar tus límites, tu Demo, tus reembolsos o tus arrepentimientos, invitar a tu propio email ni operar tu revendedor, sus códigos, sus comisiones o sus liquidaciones. Lo tiene que hacer otra persona del equipo.",
   MFA_LOCKED: "Hubo demasiados códigos incorrectos y el factor quedó bloqueado por un rato.",
   MFA_INVALID: "El código no es válido. Revisá que la hora del teléfono esté bien y probá con el próximo.",
   REFUND_EXCEEDS_PAYMENT: "El reembolso supera lo que queda del pago.",

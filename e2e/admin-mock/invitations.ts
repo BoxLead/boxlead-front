@@ -31,6 +31,7 @@ export const MOCK_SUBSCRIBED = { userId: MOCK_USERS[4].id, planCode: "STARTER", 
 export const MOCK_TEAM = { userId: MOCK_USERS[5].id, planCode: "BUSINESS", planSource: "TEAM" } as const;
 
 export const MOCK_RESELLER = { id: "0b0e0000-0000-4000-8000-000000000201", displayName: "Agencia Norte" };
+export const MOCK_OWN_RESELLER = { id: "0b0e0000-0000-4000-8000-000000000202", displayName: "Reventa del equipo" };
 
 type StoredInvitation = Omit<Invitation, "status">;
 type StoredGrant = Omit<DemoGrant, "status" | "email">;
@@ -199,7 +200,7 @@ function createInvitation(body: Record<string, unknown>, admin: AdminIdentity): 
   const resellerId = typeof body.resellerId === "string" ? body.resellerId : null;
   const at = email.indexOf("@");
   if (at < 1 || at === email.length - 1) return failure(400, "An invitation needs a valid email", "INVITATION_EMAIL_INVALID");
-  const self = selfOperation(admin, email === admin.email.toLowerCase(), true);
+  const self = selfOperation(admin, email === admin.email.toLowerCase(), true) ?? selfOperation(admin, resellerId === MOCK_OWN_RESELLER.id, true);
   if (self) return self;
   if (expiresAt <= Date.now()) return failure(400, "An invitation must expire in the future", "INVITATION_EXPIRY_PAST");
   if (expiresAt > Date.now() + MAX_AHEAD_MS) return failure(400, "An invitation can expire at most 365 days from today", "INVITATION_EXPIRY_TOO_FAR");

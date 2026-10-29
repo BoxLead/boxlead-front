@@ -138,7 +138,8 @@ describe("messageFor", () => {
   });
 
   it("explains that not even an owner acts on their own account", () => {
-    expect(messageFor(403, "ADMIN_SELF_OPERATION")).toMatch(/^No podés hacer esto sobre tu propia cuenta\. Ni el rol de Dueño/);
+    expect(messageFor(403, "ADMIN_SELF_OPERATION")).toMatch(/^No podés hacer esto sobre tu propia cuenta ni sobre tu propio revendedor\. Ni el rol de Dueño/);
+    expect(messageFor(403, "ADMIN_SELF_OPERATION")).toMatch(/operar tu revendedor, sus códigos, sus comisiones o sus liquidaciones\. Lo tiene que hacer otra persona del equipo\.$/);
   });
 
   it("asks for the target type when core gets a target id without it", () => {
