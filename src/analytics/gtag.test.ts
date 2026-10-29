@@ -61,6 +61,7 @@ describe("analytics consent", () => {
     expect(window.dataLayer).toBeUndefined();
     expect(gtag.isPublicPath("/app")).toBe(false);
     expect(gtag.isPublicPath("/whatsapp")).toBe(true);
+    expect(gtag.isPublicPath("/avisos/baja")).toBe(false);
   });
 
   it("keeps the choice when the person rejects", async () => {

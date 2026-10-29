@@ -11,6 +11,7 @@ export const ANALYTICS_ENABLED = MEASUREMENT_ID !== "";
 export const TAG_ORIGIN = "https://www.googletagmanager.com";
 
 const APP_PREFIX = /^\/app(\/|$)/;
+const EMAIL_LINK_PREFIX = /^\/avisos(\/|$)/;
 
 export type EventName = "cta_registro" | "demo_play" | "contacto" | "canal_visita" | "registro_inicio";
 
@@ -27,7 +28,7 @@ const push: Command = function () {
 };
 
 export function isPublicPath(pathname: string): boolean {
-  return !APP_PREFIX.test(pathname);
+  return !APP_PREFIX.test(pathname) && !EMAIL_LINK_PREFIX.test(pathname);
 }
 
 export function isActive(pathname = window.location.pathname): boolean {

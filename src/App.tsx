@@ -41,6 +41,7 @@ const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContract
 const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
 const Notifications = lazyRoute(() => import("./pages/Notifications/Notifications"), "Notifications");
+const NotificationUnsubscribe = lazyRoute(() => import("./pages/NotificationUnsubscribe/NotificationUnsubscribe"), "NotificationUnsubscribe");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -58,6 +59,7 @@ registerRoutePreload("/app/connections", [Layout, Connections]);
 registerRoutePreload("/app/billing", [Layout, Billing]);
 registerRoutePreload("/app/reseller", [Layout, Reseller]);
 registerRoutePreload("/app/notificaciones", [Layout, Notifications]);
+registerRoutePreload("/avisos/baja", [NotificationUnsubscribe]);
 
 function Page({ children }: { children: ReactNode }) {
   return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;
@@ -86,6 +88,7 @@ export default function App() {
           <Route path="/contratos" element={<AdhesionContracts />} />
           <Route path="/arrepentimiento" element={<Withdrawal />} />
           <Route path="/baja" element={<Cancellation />} />
+          <Route path="/avisos/baja" element={<NotificationUnsubscribe />} />
           <Route element={<ProtectedRoute />}>
             <Route
               path="/app/oauth/callback/:platform"
