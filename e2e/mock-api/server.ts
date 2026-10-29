@@ -40,6 +40,13 @@ import {
 } from "./agents.ts";
 import { PRODUCT_IMAGES } from "./images.ts";
 import {
+  appendNotice,
+  buildNotifications,
+  inspectNotifications,
+  notificationsRoute,
+  type NotificationsState,
+} from "./notifications.ts";
+import {
   agentGate,
   billingRoute,
   buildBilling,
@@ -85,6 +92,7 @@ const NAME_IN_USE = "Category name already in use";
 
 let state: MockState = buildState("default");
 let billing: BillingState = buildBilling("default");
+let notifications: NotificationsState = buildNotifications();
 
 type Json = Record<string, unknown> | unknown[] | null;
 
@@ -470,7 +478,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
       notifications: body.notifications === true,
     });
+    notifications = buildNotifications({ notices: typeof body.notices === "number" ? body.notices : undefined });
     return send(res, 200, { scenario });
+  }
+  if (path === "/__notify" && method === "POST") {
+    return reply(res, appendNotice(notifications, await readBody(req)));
+  }
+  if (path === "/__notifications" && method === "GET") {
+    return reply(res, inspectNotifications(notifications));
   }
   if (path === "/__billing/enabled" && method === "POST") {
     return reply(res, setBillingEnabled(billing, (await readBody(req)).enabled === true));
@@ -536,6 +551,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     readBody: () => readBody(req),
   });
   if (billingReply) return reply(res, billingReply);
+  const notificationsReply = await notificationsRoute(notifications, billing.notifications, {
+    method,
+    parts,
+    query: url.searchParams,
+    authed: isAuthed(req),
+    readBody: () => readBody(req),
+  });
+  if (notificationsReply) return reply(res, notificationsReply);
 
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, sessionUser());

@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test as base, type Page } from "@playwright/test";
 import type { BillingOptions } from "./mock-api/billing.ts";
 import type { Scenario, SeedOptions } from "./mock-api/fixtures.ts";
+import type { NotificationsOptions } from "./mock-api/notifications.ts";
 import { MOCK_API_ORIGIN, mockApiPortOf } from "./ports.ts";
 
 export { expect };
@@ -28,7 +29,7 @@ export const test = base.extend({
   },
 });
 
-export type ResetOptions = BillingOptions & SeedOptions;
+export type ResetOptions = BillingOptions & SeedOptions & NotificationsOptions;
 
 export async function resetApi(scenario: Scenario = "default", now?: Date, options: ResetOptions = {}) {
   const res = await fetch(`${mockApiUrl()}/__reset`, {
