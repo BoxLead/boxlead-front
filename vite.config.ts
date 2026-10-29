@@ -38,6 +38,7 @@ const ROUTE_ENTRIES: Record<string, string[]> = {
   '/data-deletion': ['src/pages/Legal/DataDeletion.tsx'],
   '/arrepentimiento': ['src/pages/ConsumerRequest/Withdrawal.tsx'],
   '/baja': ['src/pages/ConsumerRequest/Cancellation.tsx'],
+  '/avisos/baja': ['src/pages/NotificationUnsubscribe/NotificationUnsubscribe.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/app': ['src/components/Layout/Layout.tsx', 'src/pages/Inbox/Inbox.tsx'],
   '/app/leads': ['src/components/Layout/Layout.tsx', 'src/pages/Leads/Leads.tsx'],
   '/app/metrics': ['src/components/Layout/Layout.tsx', 'src/pages/Metrics/Metrics.tsx'],

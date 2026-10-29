@@ -1,0 +1,58 @@
+.unsubscribe-body {
+  display: grid;
+  gap: var(--signal-space-3);
+}
+
+.unsubscribe-body .auth-subtitle {
+  margin-bottom: var(--signal-space-2);
+}
+
+.unsubscribe-body .auth-footer {
+  margin-top: var(--signal-space-2);
+}
+
+.unsubscribe-loading {
+  display: grid;
+  gap: var(--signal-space-3);
+}
+
+.unsubscribe-loading .skeleton {
+  height: var(--signal-control-lg);
+}
+
+.unsubscribe-done {
+  display: grid;
+  justify-items: start;
+  gap: var(--signal-space-3);
+  padding: var(--signal-space-4);
+  border: 1px solid var(--signal-success-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-success-muted);
+  animation: rise-in var(--signal-duration-slower) var(--signal-ease-out) both;
+}
+
+.unsubscribe-done p {
+  margin: 0;
+  color: var(--signal-heading);
+}
+
+.unsubscribe-done-icon {
+  display: inline-flex;
+  color: var(--signal-success);
+}
+
+.unsubscribe-missing .empty-state {
+  padding: var(--signal-space-4) 0 0;
+}
+
+@media (max-width: 480px) {
+  .unsubscribe-done .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unsubscribe-done {
+    animation: none;
+  }
+}

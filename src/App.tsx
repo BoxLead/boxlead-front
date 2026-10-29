@@ -46,6 +46,8 @@ const ConfirmEmail = lazyRoute(() => import("./pages/EmailVerification/ConfirmEm
 const ConfirmEmailChange = lazyRoute(() => import("./pages/EmailChange/ConfirmEmailChange"), "ConfirmEmailChange");
 const Reauthenticate = lazyRoute(() => import("./pages/Reauthenticate/Reauthenticate"), "Reauthenticate");
 const Account = lazyRoute(() => import("./pages/Account/Account"), "Account");
+const Notifications = lazyRoute(() => import("./pages/Notifications/Notifications"), "Notifications");
+const NotificationUnsubscribe = lazyRoute(() => import("./pages/NotificationUnsubscribe/NotificationUnsubscribe"), "NotificationUnsubscribe");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -68,6 +70,8 @@ registerRoutePreload("/app/agents", [Layout, Agents]);
 registerRoutePreload("/app/connections", [Layout, Connections]);
 registerRoutePreload("/app/billing", [Layout, Billing]);
 registerRoutePreload("/app/reseller", [Layout, Reseller]);
+registerRoutePreload("/app/notificaciones", [Layout, Notifications]);
+registerRoutePreload("/avisos/baja", [NotificationUnsubscribe]);
 
 function Page({ children }: { children: ReactNode }) {
   return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;
@@ -101,6 +105,7 @@ export default function App() {
           <Route path="/confirmar-email" element={<ConfirmEmail />} />
           <Route path="/nuevo-email" element={<ConfirmEmailChange />} />
           <Route path="/reingresar" element={<Reauthenticate />} />
+          <Route path="/avisos/baja" element={<NotificationUnsubscribe />} />
           <Route element={<ProtectedRoute />}>
             <Route
               path="/app/oauth/callback/:platform"
@@ -115,6 +120,7 @@ export default function App() {
               <Route path="categories" element={<Page><Categories /></Page>} />
               <Route path="agents" element={<Page><Agents /></Page>} />
               <Route path="connections" element={<Page><Connections /></Page>} />
+              <Route path="notificaciones" element={<Page><Notifications /></Page>} />
               <Route element={<FeatureRoute feature="billing" />}>
                 <Route path="billing" element={<Billing />} />
                 <Route path="billing/return" element={<BillingReturn />} />

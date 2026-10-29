@@ -5,6 +5,7 @@ import { dismissPlanError } from "../../data/planErrors";
 import { EmailVerificationGate } from "../EmailVerificationGate/EmailVerificationGate";
 import { LegalAcceptanceDialog } from "../LegalDialog/LegalAcceptanceDialog";
 import { Loading } from "../Loading";
+import { NotificationWatcher } from "../Notifications/NotificationWatcher";
 import { OnboardingChecklist } from "../Onboarding/OnboardingChecklist";
 import { PlanBanner } from "../PlanBanner/PlanBanner";
 import { Sidebar } from "../Sidebar/Sidebar";
@@ -40,6 +41,7 @@ export function Layout() {
         )}
       </main>
       <LegalAcceptanceDialog />
+      {gated ? null : <NotificationWatcher />}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { AccountView } from "../../api/types";
+import { NotificationSettings } from "../../components/NotificationSettings/NotificationSettings";
 import { Banner } from "../../components/ui/Banner";
 import { useAuth } from "../../context/auth";
 import { ACCOUNT_KEY } from "../../data/account";
@@ -48,6 +49,7 @@ export function Account() {
           <ProfileSection account={account.data} />
           <EmailSection account={account.data} />
           <SignInSection account={account.data} />
+          <NotificationSettings />
           {user?.account?.sessionRevocation ? <SessionsSection /> : null}
           {user?.account?.deletion ? <DeleteAccountSection account={account.data} /> : null}
         </div>

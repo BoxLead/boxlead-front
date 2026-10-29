@@ -91,7 +91,7 @@ describe("UserMenu", () => {
   });
 
   it("links billing, the reseller page and the consumer pages when core enables them", async () => {
-    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: true, referrals: true, legal: true, clientErrors: false, onboarding: false }, isReseller: true };
+    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: true, referrals: true, legal: true, clientErrors: false, onboarding: false, notifications: false }, isReseller: true };
     renderMenu({ ...named, ...flags });
     await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
     const dialog = screen.getByRole("dialog", { name: "Cuenta" });
@@ -105,7 +105,7 @@ describe("UserMenu", () => {
   });
 
   it("links the consumer pages with legal on and billing off", async () => {
-    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: false, referrals: false, legal: true, clientErrors: false, onboarding: false } };
+    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: false, referrals: false, legal: true, clientErrors: false, onboarding: false, notifications: false } };
     renderMenu({ ...named, ...flags });
     await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
     const dialog = screen.getByRole("dialog", { name: "Cuenta" });

@@ -45,6 +45,7 @@ docker compose up --build   # Production image at localhost:3000
 - `src/api/types.ts` — All API type definitions, payments included
 - `e2e/mock-api/billing.ts` — Payments mock and its `billing-*` and `reseller` scenarios
 - `src/components/PlanBanner/` — Plan notices in `Layout`, fed by `usePlan` and the 402 errors of `api/client.ts`
+- `src/components/Notifications/` and `src/components/NotificationSettings/` — Notice watcher in `Layout` and the preferences section, behind `features.notifications`
 - `src/pages/Billing/` — Billing page, purchase and return, with prices formatted by `src/util/planPrice.ts`
 - `src/index.css` — Global design tokens (`--signal-*`)
 - `src/landing/` — Public landing page (isolated from app). Animations are CSS, and JS only passes the pointer position as CSS variables to elements with `data-glow`

@@ -50,9 +50,11 @@ terraform/            # Infrastructure (do not modify without approval)
 /terms-of-service, /privacy-policy  English translations, plus /data-deletion (public)
 /arrepentimiento, /baja             Withdrawal and cancellation requests without login (public)
 /invitacion                         Demo invitation (public, token in the fragment)
+/avisos/baja                        Stops the notice mails from the link in the mail (public, noindex)
 /app/inbox, /app/leads, /app/leads/:leadId, /app/metrics, /app/categories, /app/connections   Protected
 /app/billing, /app/billing/return   Protected, only with features.billing
 /app/reseller                       Protected, only with isReseller
+/app/notificaciones                 Protected, only with features.notifications, temporary until the account page takes NotificationSettings
 /app/oauth/callback/:platform       Protected
 /app/*                              404 inside the app shell
 *                                   404 page
@@ -105,6 +107,14 @@ With `features.billing` on, `Layout` shows `PlanBanner` from `GET /billing/summa
 ## Legal and consumer
 
 The landing shows the Botón de arrepentimiento and the Botón de baja de servicio in the header and the footer on first access, without login and without calling the API (Disposición 954/2025). `/arrepentimiento` and `/baja` post `POST /consumer-requests` with the kind, the email and an optional detail of up to 500 characters and show the code. If the API fails or answers 404 they point to the support email with a prefilled subject. The footer and the Spanish legal pages show the provider block from `util/company.ts`. CUIT, address and support hours stay empty until Matías confirms them and `ProviderDetails` leaves out every empty field. The ARCA Data Fiscal badge appears in the footer only when `DATA_FISCAL_URL` and `DATA_FISCAL_IMAGE` are set, with the image served from `public/`. `/contratos` publishes the adhesion contract and is linked from the landing with the name that Resolución 271/2020 asks for. The texts of `/terminos`, `/privacidad` and `/contratos` are drafts for the lawyer, share their clauses through `pages/Legal/clauses` and show the version from `pages/Legal/legalVersion.ts`, which has to match the one core publishes.
+
+## Notifications
+
+Everything here sits behind `features.notifications` from `GET /auth/me`. With it on, `Layout` mounts `NotificationWatcher`, which reads `GET /notifications/settings` and only runs while `browser` is true. It takes the cursor from `GET /notifications`, so older notices stay quiet, and then asks `GET /notifications?after=<cursor>` every 20 seconds while the tab is visible and again when it comes back (`data/notificationWatcher.ts`). Each batch shows one toast per kind (`util/notifications.ts`), refreshes the conversations and leads, adds the count to the tab title through `setTitleBadge` until the window gets the focus back or the inbox opens, and ends with `POST /notifications/seen`. When the browser permission is already granted and the page is hidden or without focus, it also shows a system notification with the same generic text. Notices never carry names or messages, and the permission is only asked from the button in the settings.
+
+`components/NotificationSettings` holds the three switches, saved with `PUT /notifications/settings` at once and rolled back with a toast when the save fails, plus the state of the system permission. It renders nothing with the flag off, so the account page can import it as is. `/avisos/baja` reads `token` and `scope` (`NEW_LEAD`, `HANDOFF` or `ALL`) only after hydration, says what stops and posts `POST /notifications/unsubscribe` on click without a session. It stays out of analytics because the token is in its URL.
+
+The mock answers these endpoints from `e2e/mock-api/notifications.ts`. `resetApi(scenario, now, { notifications: true, notices })` turns the flag on and starts with that many old notices, `POST /__notify` with `{kind, platform}` appends one, `GET /__notifications` shows what was marked seen, the saved preferences and the unsubscribes, and the token `UNSUBSCRIBE_TOKEN` turns the matching mails off.
 
 ## Billing
 

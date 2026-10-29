@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { accountLinks, consumerLinks } from "./accountLinks";
 
-const off = { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false };
+const off = { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false };
 
 describe("account links", () => {
   it("adds nothing while billing, referrals and legal are off", () => {
@@ -32,5 +32,11 @@ describe("account links", () => {
     const features = { ...off, billing: true, referrals: true };
     expect(accountLinks({ features, isReseller: true }).map((link) => link.label)).toEqual(["Facturación", "Revendedor"]);
     expect(accountLinks({ features, isReseller: false }).map((link) => link.label)).toEqual(["Facturación"]);
+  });
+
+  it("links the notifications page only with the notifications flag", () => {
+    expect(accountLinks({ features: { ...off, notifications: true }, isReseller: false }).map((link) => link.to)).toEqual([
+      "/app/notificaciones",
+    ]);
   });
 });

@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { useAppTitle } from "../hooks/useDocumentTitle";
+import { titleWithBadge, useAppTitle, useTitleBadge } from "../hooks/useDocumentTitle";
 import { PRODUCT_NAME } from "../util/company";
 import { serializeJsonLd } from "./jsonLd";
 import { pageFor, pageTitle, type PublicPage } from "./pages";
@@ -10,11 +10,12 @@ const OG_LOCALE: Record<PublicPage["lang"], string> = { "es-AR": "es_AR", en: "e
 export function RouteMeta() {
   const { pathname } = useLocation();
   const appTitle = useAppTitle();
+  const badge = useTitleBadge();
   const page = pageFor(pathname);
   if (!page) {
     return (
       <>
-        <title>{appTitle ? `${appTitle} · ${PRODUCT_NAME}` : PRODUCT_NAME}</title>
+        <title>{titleWithBadge(appTitle ? `${appTitle} · ${PRODUCT_NAME}` : PRODUCT_NAME, badge)}</title>
         <meta name="robots" content="noindex" />
       </>
     );

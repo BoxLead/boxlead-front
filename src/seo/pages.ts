@@ -229,6 +229,14 @@ export const PUBLIC_PAGES: PublicPage[] = [
     index: false,
     source: "src/pages/SocialCallback/SocialCallback.tsx",
   }),
+  page({
+    path: "/avisos/baja",
+    title: "Dejar de recibir avisos",
+    description: "Dejá de recibir los mails de avisos de BoxLead desde el enlace del último mail.",
+    lang: "es-AR",
+    index: false,
+    source: "src/pages/NotificationUnsubscribe/NotificationUnsubscribe.tsx",
+  }),
 ];
 
 export const NOT_FOUND_PAGE: PublicPage = {
