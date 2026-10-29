@@ -22,6 +22,10 @@ const RETRY_MESSAGES: Record<string, string> = {
   [PROVIDER_UNAVAILABLE]: "Mercado Pago no respondió y el reembolso sigue pedido. Probá de nuevo en unos minutos.",
 };
 
+export const CANCEL_REQUESTED = "Mercado Pago no confirmó la baja a tiempo. Quedó pedida y se confirma sola en unos minutos.";
+
+export type SubscriptionOutcome = "DONE" | "CANCEL_REQUESTED";
+
 const UNCERTAIN_REFUND = "No sabemos si el reembolso quedó pedido. Revisalo en Reembolsos antes de pedirlo de nuevo.";
 
 async function billingCall<T>(call: () => Promise<T>, messages: Record<string, string> = BILLING_MESSAGES): Promise<T> {
@@ -35,9 +39,20 @@ async function billingCall<T>(call: () => Promise<T>, messages: Record<string, s
   }
 }
 
-export function changeSubscription(userId: string, action: SubscriptionAction, reason: string, expectedSubscriptionId: string): Promise<void> {
+export function changeSubscription(
+  userId: string,
+  action: SubscriptionAction,
+  reason: string,
+  expectedSubscriptionId: string,
+): Promise<SubscriptionOutcome> {
   return billingCall(() =>
-    adminApi.post<void>(`/admin/customers/${encodeURIComponent(userId)}/subscription/${action}`, { reason, expectedSubscriptionId }),
+    adminApi.post<void>(`/admin/customers/${encodeURIComponent(userId)}/subscription/${action}`, { reason, expectedSubscriptionId }).then(
+      (): SubscriptionOutcome => "DONE",
+      (error: unknown): SubscriptionOutcome => {
+        if (action === "cancel" && error instanceof AdminApiError && error.code === PROVIDER_UNAVAILABLE) return "CANCEL_REQUESTED";
+        throw error;
+      },
+    ),
   );
 }
 

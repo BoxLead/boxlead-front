@@ -73,7 +73,7 @@ export type RefundRow = {
   createdAt: string;
 };
 
-export type SubscriptionCancellation = "NOT_NEEDED" | "CANCELED" | "FAILED";
+export type SubscriptionCancellation = "NOT_NEEDED" | "CANCELED" | "PENDING" | "FAILED";
 
 export type RefundResult = {
   id: string;

@@ -1,4 +1,5 @@
 import {
+  Fragment,
   startTransition,
   useCallback,
   useEffect,
@@ -28,6 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const needsSession = SESSION_ROUTES.test(pathname);
   const signedIn = user !== null;
   const syncing = useRef(false);
+  const userRef = useRef<AuthUser | null>(null);
+  const [sessionKey, setSessionKey] = useState(0);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
     if (sessionChecked || !needsSession) return;
@@ -55,7 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api
       .me()
       .then(
-        (current) => setUser((previous) => (previous && !sameData(previous, current) ? current : previous)),
+        (current) => {
+          const previous = userRef.current;
+          if (!previous || sameData(previous, current)) return;
+          if (previous.userId !== current.userId) {
+            clearQueryCache();
+            setSessionKey((key) => key + 1);
+          }
+          setUser(current);
+        },
         () => undefined,
       )
       .finally(() => {
@@ -161,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {needsSession && !sessionChecked ? <Loading /> : children}
+      {needsSession && !sessionChecked ? <Loading /> : <Fragment key={sessionKey}>{children}</Fragment>}
     </AuthContext.Provider>
   );
 }

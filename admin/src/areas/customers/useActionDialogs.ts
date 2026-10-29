@@ -11,11 +11,11 @@ export function useActionDialogs<K extends string>(onChanged: () => void) {
   const toast = useToast();
   const close = useCallback(() => setOpen(null), []);
   const run = useCallback(
-    async (call: () => Promise<unknown>, message: string) => {
-      await call();
+    async <T>(call: () => Promise<T>, message: string | ((result: T) => string)) => {
+      const result = await call();
       setOpen(null);
       onChanged();
-      toast({ tone: "success", message });
+      toast({ tone: "success", message: typeof message === "string" ? message : message(result) });
     },
     [onChanged, toast],
   );

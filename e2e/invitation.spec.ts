@@ -120,6 +120,19 @@ test("an account whose subscription already gives the plan is told so and keeps 
   await expectNoHorizontalScroll(page);
 });
 
+test("a team account is told it already has access and keeps the invitation", async ({ page }) => {
+  await resetApi("billing-team", undefined, { teamSubscription: "NONE" });
+  await login(page);
+  await page.goto(`/invitacion#${INVITATION_TOKENS.valid}`);
+  const answer = page.waitForResponse((response) => response.url().endsWith("/invitations/accept"));
+  await page.getByRole("button", { name: "Activar la Beta en esta cuenta" }).click();
+  expect((await answer).status()).toBe(409);
+  await expect(page.getByRole("alert")).toHaveText(
+    "Tu cuenta es del equipo de BoxLead y ya tenés acceso, así que no necesitás la Beta. La invitación sigue abierta.",
+  );
+  await expectNoHorizontalScroll(page);
+});
+
 test("an account that already used the demo is told so", async ({ page }) => {
   await resetApi("billing-demo");
   await login(page);

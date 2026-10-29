@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { BillingPlan, BillingSummary, CurrentPlan as Plan, SubscriptionSummary } from "../../api/types";
 import { CurrentPlan } from "./CurrentPlan";
@@ -59,16 +59,51 @@ describe("CurrentPlan", () => {
     expect(screen.getByText("Elegí un plan para que tus agentes respondan y puedas enviar mensajes.")).toBeInTheDocument();
   });
 
-  it("tells a team account it uses BoxLead for free and offers nothing to buy or cancel", () => {
-    renderPlan(summary(TEAM, { subscription: SUSPENDED }));
+  it("tells a team account it uses BoxLead for free and offers nothing to cancel without an own subscription", () => {
+    renderPlan(summary(TEAM));
     expect(screen.getByText("Equipo de BoxLead")).toBeInTheDocument();
     expect(screen.getByText("Sin cargo")).toBeInTheDocument();
     expect(screen.getByText(/Esta cuenta es del equipo de BoxLead\. Usás la app sin pagar con los límites de Business/)).toBeInTheDocument();
-    expect(screen.queryByText("Suspendido")).not.toBeInTheDocument();
+    expect(screen.queryByText(/plan pago propio/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByText("30 de 5.000 respuestas")).toBeInTheDocument();
+  });
+
+  it("keeps showing the own subscription of a team account with its charge and its cancel", () => {
+    const active: SubscriptionSummary = { ...SUSPENDED, status: "ACTIVE", graceUntil: null, updatePaymentUrl: null, pendingPlanCode: "STARTER" };
+    renderPlan(summary(TEAM, { subscription: active }));
+    expect(screen.getByText("Equipo de BoxLead")).toBeInTheDocument();
+    expect(screen.getByText(/También tenés un plan pago propio que hoy figura como/)).toHaveTextContent(
+      "También tenés un plan pago propio que hoy figura como Activo. No lo necesitás para usar BoxLead, pero Mercado Pago te lo sigue cobrando hasta que lo des de baja.",
+    );
+    expect(screen.getByText(/^Próxima cuota de/)).toBeInTheDocument();
+    expect(screen.getByText(/^Pasás a STARTER el/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dar de baja" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: /^Seguir en/ })).not.toBeInTheDocument();
+  });
+
+  it("tells a team account its own suspended subscription is still charged and how to pay it", () => {
+    renderPlan(summary(TEAM, { subscription: SUSPENDED }));
+    expect(screen.getByText(/También tenés un plan pago propio/)).toHaveTextContent("hoy figura como Suspendido. No lo necesitás para usar BoxLead, pero Mercado Pago te lo sigue cobrando");
+    expect(screen.getByRole("link", { name: "Cambiar el medio de pago" })).toHaveAttribute("href", SUSPENDED.updatePaymentUrl);
     expect(screen.queryByText("Tus agentes están apagados hasta que se regularice el pago.")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Dar de baja" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Cambiar el medio de pago" })).not.toBeInTheDocument();
-    expect(screen.getByText("30 de 5.000 respuestas")).toBeInTheDocument();
+  });
+
+  it("tells a team account what happens with a paused, past due or canceled own subscription", () => {
+    renderPlan(summary(TEAM, { subscription: { ...SUSPENDED, status: "PAUSED", updatePaymentUrl: null } }));
+    expect(screen.getByText(/Mientras esté pausado Mercado Pago no te lo cobra, pero si se reanuda te lo vuelve a cobrar\./)).toBeInTheDocument();
+    expect(screen.queryByText(/te lo sigue cobrando/)).not.toBeInTheDocument();
+    cleanup();
+    renderPlan(summary(TEAM, { subscription: { ...SUSPENDED, status: "PAST_DUE" } }));
+    expect(screen.getByText("Mercado Pago no pudo cobrar la cuota.")).toBeInTheDocument();
+    expect(screen.queryByText(/Seguís con acceso/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dar de baja" })).toBeEnabled();
+    cleanup();
+    renderPlan(summary(TEAM, { subscription: { ...SUSPENDED, status: "ACTIVE", cancelAtPeriodEnd: true, updatePaymentUrl: null } }));
+    expect(screen.getByText(/Lo diste de baja y termina el .+\. No se te cobra más\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Tenés acceso hasta/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dar de baja" })).not.toBeInTheDocument();
   });
 
   it("says the agents are off only when access is restricted", () => {

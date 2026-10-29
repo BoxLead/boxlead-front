@@ -189,6 +189,26 @@ test("a refund that could not cancel the subscription says an owner has to cance
   ).toBeVisible();
 });
 
+test("a total refund still in process leaves the cancellation to Mercado Pago", async ({ page }) => {
+  await resetBilling(["FINANCE"], REFUND_IN_PROCESS_SCENARIO);
+  await enterAdmin(page, "/pagos");
+  await row(page, "ana@example.com").first().getByRole("button", { name: "Reembolsar" }).click();
+  expect(await confirmWithReason(page, "Reembolsar")).toEqual({ reason: REASON });
+  await expect(page.getByText(/El reembolso quedó en proceso\. La suscripción se cancela sola cuando Mercado Pago lo confirme\./)).toBeVisible();
+});
+
+test("a cancellation Mercado Pago does not confirm stays asked for", async ({ page }) => {
+  await resetBilling(["OWNER"], PROVIDER_DOWN_SCENARIO);
+  await enterAdmin(page, "/suscripciones");
+  const ana = row(page, "ana@example.com");
+  await ana.getByRole("button", { name: "Cancelar" }).click();
+  expect(await confirmWithReason(page, "Cancelar suscripción")).toEqual({ reason: REASON, expectedSubscriptionId: ANA_SUBSCRIPTION });
+  await expect(page.getByText("Mercado Pago no confirmó la baja a tiempo. Quedó pedida y se confirma sola en unos minutos.")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(ana).toContainText("Activa");
+  await expectFitsTheScreen(page);
+});
+
 test("a payment with a total refund on the way offers nothing more to refund", async ({ page }) => {
   await resetBilling(["FINANCE"]);
   await enterAdmin(page, "/pagos?userId=0c78dde6-0000-4000-8000-000000000004");

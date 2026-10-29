@@ -18,6 +18,7 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "PROVIDER_UNAVAILABLE",
   "CHECKOUT_PENDING",
   "DEMO_SUBSCRIPTION_ACTIVE",
+  "DEMO_TEAM_MEMBER",
 ];
 
 function errorBody(error: unknown): object | null {

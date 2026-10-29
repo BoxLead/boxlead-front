@@ -8,6 +8,7 @@ import { ResellerDirectoryProvider } from "../../session/ResellerDirectoryProvid
 import { SessionContext, type SessionValue } from "../../session/session";
 import { json, mockFetch, type Reply } from "../../test/fetch";
 import { CustomerDetailScreen } from "./CustomerDetailScreen";
+import { addDays, endOfDay, today } from "./dates";
 import { CustomersScreen } from "./CustomersScreen";
 import { OverviewScreen } from "./OverviewScreen";
 import type { CustomerFile, Overview } from "./types";
@@ -395,6 +396,17 @@ describe("CustomerDetailScreen", () => {
     expect(await screen.findByText("La suscripción quedó pausada.")).toBeInTheDocument();
   });
 
+  it("says the cancellation stays asked for when Mercado Pago does not confirm it", async () => {
+    renderAt(`/usuarios/${USER_ID}`, ["OWNER"], (method, url) =>
+      method === "POST" ? json(502, { error: "Bad gateway", message: "down", code: "PROVIDER_UNAVAILABLE" }) : detailHandler(method, url),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cancelar suscripción" }));
+    const dialog = dialogOf("Cancelar suscripción");
+    await userEvent.type(within(dialog).getByLabelText("Motivo"), "Pidió la baja por teléfono");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar suscripción", hidden: true }));
+    expect(await screen.findByText("Mercado Pago no confirmó la baja a tiempo. Quedó pedida y se confirma sola en unos minutos.")).toBeInTheDocument();
+  });
+
   it("reloads the user when the subscription changed under the open dialog", async () => {
     const calls = renderAt(`/usuarios/${USER_ID}`, ["OWNER"], (method, url) =>
       method === "POST" ? json(409, { error: "Conflict", message: "changed", code: "SUBSCRIPTION_CHANGED" }) : detailHandler(method, url),
@@ -609,5 +621,12 @@ describe("CustomerDetailScreen", () => {
     const calls = renderAt("/usuarios/abc", ["OWNER"], () => json(400, { error: "Bad request", message: "Invalid value for parameter 'userId'" }));
     expect(await screen.findByText("No encontramos este usuario")).toBeInTheDocument();
     expect(calls).toEqual([]);
+  });
+});
+
+describe("the end of a Demo extension", () => {
+  it("is the last second of the chosen day in Buenos Aires, which core still accepts on day 365", () => {
+    expect(endOfDay("2030-02-01")).toBe("2030-02-02T02:59:59.000Z");
+    expect(Date.parse(endOfDay(addDays(today(), 365)))).toBeLessThan(Date.parse(`${addDays(today(), 366)}T00:00:00-03:00`));
   });
 });
