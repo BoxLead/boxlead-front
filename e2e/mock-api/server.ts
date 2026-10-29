@@ -40,6 +40,7 @@ import {
   PLAYGROUND_RUNS_PER_HOUR,
 } from "./agents.ts";
 import { PRODUCT_IMAGES } from "./images.ts";
+import { clearClientErrors, receiveClientError, receivedClientErrors } from "./clientErrors.ts";
 import {
   agentGate,
   billingRoute,
@@ -469,11 +470,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       overrides: limitOverrides(body.overrides),
       enforced: body.enforced !== false,
       providerDown: body.providerDown === true,
+      clientErrors: body.clientErrors === true,
+      onboarding: body.onboarding === true,
       teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
     });
+    clearClientErrors();
     account = buildAccount();
     return send(res, 200, { scenario });
   }
+  if (path === "/__client-errors" && method === "GET") return reply(res, receivedClientErrors());
   if (path === "/__billing/enabled" && method === "POST") {
     return reply(res, setBillingEnabled(billing, (await readBody(req)).enabled === true));
   }
@@ -552,6 +557,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, sessionUser());
+  if (path === "/client-errors" && method === "POST") {
+    return reply(res, receiveClientError(billing.clientErrors, await readBody(req)));
+  }
 
   if (parts[0] === "metrics") {
     if (parts.length === 1 && method === "GET") {

@@ -63,11 +63,15 @@ const LEGAL_KINDS: readonly LegalDocumentKind[] = [
 
 function readFeatures(value: object): Features {
   const features = "features" in value ? value.features : null;
-  if (!features || typeof features !== "object") return { billing: false, referrals: false, legal: false };
+  if (!features || typeof features !== "object") {
+    return { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false };
+  }
   return {
     billing: "billing" in features && features.billing === true,
     referrals: "referrals" in features && features.referrals === true,
     legal: "legal" in features && features.legal === true,
+    clientErrors: "clientErrors" in features && features.clientErrors === true,
+    onboarding: "onboarding" in features && features.onboarding === true,
   };
 }
 
@@ -235,11 +239,13 @@ export function handleUnauthorized(): void {
   clearAuthAndGoLogin();
 }
 
+type SendOptions = { body?: unknown; skipAuth?: boolean; keepalive?: boolean };
+
 async function send<T>(
   url: UrlBuilder,
   method: string,
   path: string,
-  options?: { body?: unknown; skipAuth?: boolean },
+  options?: SendOptions,
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -253,6 +259,7 @@ async function send<T>(
     method,
     headers,
     credentials: "include",
+    keepalive: options?.keepalive === true,
     body:
       options?.body === undefined ? undefined : JSON.stringify(options.body),
   });
@@ -277,7 +284,7 @@ async function send<T>(
 function request<T>(
   method: string,
   path: string,
-  options?: { body?: unknown; skipAuth?: boolean },
+  options?: SendOptions,
 ): Promise<T> {
   return send<T>(apiUrl, method, path, options);
 }
@@ -318,6 +325,8 @@ export const api = {
   me: () => requestUser("GET", "/auth/me"),
 
   logout: () => request<void>("POST", "/auth/logout", { skipAuth: true }),
+
+  report: (path: string, body: unknown) => request<void>("POST", path, { body, skipAuth: true, keepalive: true }),
 };
 
 export const agentApi = {

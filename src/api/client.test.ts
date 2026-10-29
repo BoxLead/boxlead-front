@@ -107,13 +107,13 @@ describe("session user", () => {
     await expect(api.me()).resolves.toMatchObject({ userId: "u-1", email: "ana@example.com", name: null });
   });
 
-  it("treats billing, referrals and legal as off when core does not send them yet", async () => {
+  it("treats every feature as off when core does not send them yet", async () => {
     fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", name: "Ana" }));
     await expect(api.me()).resolves.toEqual({
       userId: "u-1",
       email: "ana@example.com",
       name: "Ana",
-      features: { billing: false, referrals: false, legal: false },
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false },
       access: "FULL",
       isReseller: false,
       pendingLegal: [],
@@ -128,14 +128,14 @@ describe("session user", () => {
         userId: "u-1",
         email: "ana@example.com",
         name: "Ana",
-        features: { billing: true, referrals: true, legal: true },
+        features: { billing: true, referrals: true, legal: true, clientErrors: true, onboarding: true },
         access: "RESTRICTED",
         isReseller: true,
         pendingLegal: [{ kind: "TERMS", version: "2026-11" }],
       }),
     );
     await expect(api.me()).resolves.toMatchObject({
-      features: { billing: true, referrals: true, legal: true },
+      features: { billing: true, referrals: true, legal: true, clientErrors: true, onboarding: true },
       access: "RESTRICTED",
       isReseller: true,
       pendingLegal: [{ kind: "TERMS", version: "2026-11" }],
@@ -147,21 +147,24 @@ describe("session user", () => {
       json({
         userId: "u-1",
         email: "ana@example.com",
-        features: { billing: "true", referrals: 1, legal: "yes" },
+        features: { billing: "true", referrals: 1, legal: "yes", clientErrors: "true", onboarding: 1 },
         access: "ADMIN",
         isReseller: "yes",
         pendingLegal: [{ kind: "COOKIES", version: "1" }, { kind: "PRIVACY" }, "TERMS", { kind: "PRIVACY", version: "2026-11", extra: 1 }],
       }),
     );
     await expect(api.me()).resolves.toMatchObject({
-      features: { billing: false, referrals: false, legal: false },
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false },
       access: "FULL",
       isReseller: false,
       pendingLegal: [{ kind: "PRIVACY", version: "2026-11" }],
     });
 
     fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", features: null, pendingLegal: {} }));
-    await expect(api.me()).resolves.toMatchObject({ features: { billing: false, referrals: false, legal: false }, pendingLegal: [] });
+    await expect(api.me()).resolves.toMatchObject({
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false },
+      pendingLegal: [],
+    });
   });
 });
 
@@ -243,6 +246,40 @@ describe("plan errors", () => {
     });
     expect(listener).not.toHaveBeenCalled();
     stop();
+  });
+});
+
+describe("reports", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+  });
+
+  it("posts with keepalive, the session cookie and the CSRF header", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(api.report("/client-errors", { kind: "error" })).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.example.com/client-errors");
+    expect(init).toMatchObject({ method: "POST", credentials: "include", keepalive: true });
+    expect(init?.headers).toMatchObject({ "X-Requested-With": "boxlead-web", "Content-Type": "application/json" });
+  });
+
+  it("rejects with the status and leaves the session alone when it is gone", async () => {
+    sessionStorage.setItem("boxlead.test", "1");
+    fetchMock.mockResolvedValue(json({ message: "Unauthorized" }, 401));
+
+    await expect(api.report("/client-errors", {})).rejects.toMatchObject({ status: 401 });
+    expect(sessionStorage.getItem("boxlead.test")).toBe("1");
+    sessionStorage.clear();
+  });
+
+  it("keeps regular requests without keepalive", async () => {
+    fetchMock.mockResolvedValue(json([]));
+
+    await api.get("/leads");
+
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: false });
   });
 });
 

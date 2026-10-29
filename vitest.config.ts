@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __BOXLEAD_RELEASE__: JSON.stringify('test'),
+  },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}', 'admin/src/**/*.test.{ts,tsx}'],

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as clientErrors from "../monitoring/clientErrors";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
 function Explodes({ message }: { message: string }) {
@@ -92,5 +93,25 @@ describe("RouteErrorBoundary", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("link", { name: "Ir a la bandeja" }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("RouteErrorBoundary reports", () => {
+  beforeEach(() => {
+    window.addEventListener("error", swallowRecoverableErrors);
+    return () => window.removeEventListener("error", swallowRecoverableErrors);
+  });
+
+  it("hands the caught error to the reporter", () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const report = vi.spyOn(clientErrors, "reportClientError");
+    render(
+      <MemoryRouter>
+        <RouteErrorBoundary>
+          <Explodes message="boundary kaboom" />
+        </RouteErrorBoundary>
+      </MemoryRouter>,
+    );
+    expect(report).toHaveBeenCalledWith("boundary", expect.objectContaining({ message: "boundary kaboom" }));
   });
 });
