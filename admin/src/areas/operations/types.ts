@@ -1,4 +1,5 @@
 import type { AdminPage, AdminRole, Money } from "../../api/types";
+import type { PlanSource } from "../../status";
 
 export type UsageGrouping = "USER" | "DAY" | "MODEL";
 
@@ -77,6 +78,7 @@ export type TeamMember = {
   factorConfirmed: boolean;
   enrollmentOpenUntil: string | null;
   lastAdminSessionAt: string | null;
+  planSource: PlanSource;
 };
 
 export type AdminGrant = {

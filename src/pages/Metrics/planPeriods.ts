@@ -11,8 +11,7 @@ function historyDays(limits: PlanLimits): number | null {
 export function allowedPeriods(limits: PlanLimits): MetricsPeriod[] {
   const days = historyDays(limits);
   if (days === null) return [...PERIODS];
-  const fitting = PERIODS.filter((period) => period * 2 <= days);
-  return fitting.length > 0 ? fitting : [PERIODS[0]];
+  return PERIODS.filter((period) => period * 2 <= days);
 }
 
 export function forecastAllowed(limits: PlanLimits): boolean {
@@ -23,11 +22,12 @@ export function forecastAllowed(limits: PlanLimits): boolean {
 export function fitPeriod(period: MetricsPeriod, allowed: MetricsPeriod[]): MetricsPeriod {
   if (allowed.includes(period)) return period;
   const shorter = allowed.filter((days) => days < period);
-  return shorter.length > 0 ? shorter[shorter.length - 1] : allowed[0];
+  return shorter.length > 0 ? shorter[shorter.length - 1] : (allowed[0] ?? period);
 }
 
 export function historyNote(limits: PlanLimits): string | null {
   const days = historyDays(limits);
-  if (days === null || allowedPeriods(limits).length === PERIODS.length) return null;
+  const allowed = allowedPeriods(limits).length;
+  if (days === null || allowed === 0 || allowed === PERIODS.length) return null;
   return `Tu plan incluye ${days === 1 ? "1 día" : `${days} días`} de historial.`;
 }

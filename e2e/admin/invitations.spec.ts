@@ -1,5 +1,5 @@
 import type { Locator, Page, Route } from "@playwright/test";
-import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_SUBSCRIBED, MOCK_USERS } from "../admin-mock/invitations.ts";
+import { INVITATIONS_EMAIL_SCENARIO, INVITATIONS_SCENARIO, MOCK_RESELLER, MOCK_SUBSCRIBED, MOCK_TEAM, MOCK_USERS } from "../admin-mock/invitations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
@@ -27,7 +27,8 @@ async function routeDirectory(page: Page) {
       ...user,
       legalName: null,
       createdAt: "2026-09-01T12:00:00Z",
-      planCode: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.planCode : null,
+      planCode: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.planCode : user.id === MOCK_TEAM.userId ? MOCK_TEAM.planCode : null,
+      planSource: user.id === MOCK_SUBSCRIBED.userId ? "SUBSCRIPTION" : user.id === MOCK_TEAM.userId ? MOCK_TEAM.planSource : "NONE",
       subscriptionStatus: user.id === MOCK_SUBSCRIBED.userId ? MOCK_SUBSCRIBED.subscriptionStatus : null,
     }));
     return fulfill(route, { items, page: 0, size: 20, totalItems: items.length });
@@ -76,9 +77,13 @@ async function confirmWithReason(page: Page, title: string, button: string) {
   await confirm.getByRole("button", { name: button }).click();
 }
 
-function inFiveDays(): string {
-  const date = new Date(Date.now() + 5 * 86_400_000);
+function inDays(days: number): string {
+  const date = new Date(Date.now() + days * 86_400_000);
   return date.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+}
+
+function inFiveDays(): string {
+  return inDays(5);
 }
 
 test("creates an invitation and shows its link only once", async ({ page, context }) => {
@@ -216,6 +221,61 @@ test("warns before granting a Demo to a user whose subscription gives access", a
   await grant.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.locator("dialog[open]")).toHaveCount(0);
   await expect(row(page, subscribed.email)).toHaveCount(0);
+});
+
+test("warns before granting a Demo to a team member and explains the refusal", async ({ page }) => {
+  const team = MOCK_USERS[5];
+  await open(page, INVITATIONS_SCENARIO, "/invitaciones?vista=demos");
+  await page.getByRole("button", { name: "Otorgar Demo" }).click();
+  const grant = dialog(page, "Otorgar Demo");
+  await grant.getByLabel("Buscar usuario").fill("pablo");
+  await grant.getByLabel("Buscar usuario").press("Enter");
+  await expect(grant.locator("label", { hasText: team.email })).toContainText("Equipo");
+  await grant.getByRole("radio", { name: new RegExp(team.email) }).check();
+  await grant.getByRole("button", { name: "Continuar" }).click();
+  const confirm = dialog(page, "Otorgar Demo");
+  await expect(confirm.getByText("Es del equipo de BoxLead")).toBeVisible();
+  await expect(confirm).toContainText("Equipo, con los límites de Business");
+  expect(await overflowWithDialog(page)).toBeLessThanOrEqual(0);
+  await confirmWithReason(page, "Otorgar Demo", "Otorgar Demo");
+  await expect(confirm.getByText(/Esa persona es del equipo y ya usa BoxLead sin pagar/)).toBeVisible();
+  await confirm.getByRole("button", { name: "Cancelar" }).click();
+  await grant.getByRole("button", { name: "Cancelar" }).click();
+  await expect(row(page, team.email)).toHaveCount(0);
+});
+
+test("explains the 365 day cap of an invitation and of a Demo end", async ({ page }) => {
+  const [, martin] = MOCK_USERS;
+  await open(page);
+  await page.getByRole("button", { name: "Nueva invitación" }).click();
+  const form = dialog(page, "Nueva invitación");
+  await form.getByLabel("Email").fill(NEW_EMAIL);
+  await form.getByLabel("La invitación vence el").fill(inDays(400));
+  await form.getByRole("button", { name: "Continuar" }).click();
+  await confirmWithReason(page, "Crear invitación", "Crear invitación");
+  await expect(dialog(page, "Crear invitación").getByText(/Una invitación puede vencer como mucho 365 días después de hoy/)).toBeVisible();
+  await dialog(page, "Crear invitación").getByRole("button", { name: "Cancelar" }).click();
+  await form.getByRole("button", { name: "Cancelar" }).click();
+
+  await page.getByRole("button", { name: "Demos" }).click();
+  await row(page, martin.email).getByRole("button", { name: "Extender" }).click();
+  await dialog(page, "Extender Demo").getByLabel("Nuevo fin").fill(inDays(400));
+  await dialog(page, "Extender Demo").getByRole("button", { name: "Continuar" }).click();
+  await confirmWithReason(page, "Extender Demo", "Extender");
+  await expect(dialog(page, "Extender Demo").getByText(/Una Demo puede terminar como mucho 365 días después de hoy/)).toBeVisible();
+});
+
+test("explains that not even an owner invites their own email", async ({ page }) => {
+  await open(page, INVITATIONS_SCENARIO, "/invitaciones", ["OWNER"]);
+  await page.getByRole("button", { name: "Nueva invitación" }).click();
+  const form = dialog(page, "Nueva invitación");
+  await form.getByLabel("Email").fill("equipo@boxlead.app");
+  await form.getByLabel("La invitación vence el").fill(inFiveDays());
+  await form.getByRole("button", { name: "Continuar" }).click();
+  await confirmWithReason(page, "Crear invitación", "Crear invitación");
+  await expect(
+    dialog(page, "Crear invitación").getByText(/No podés hacer esto sobre tu propia cuenta\. Ni el rol de Dueño permite/),
+  ).toBeVisible();
 });
 
 test("shows the loading, empty and error states", async ({ page }) => {

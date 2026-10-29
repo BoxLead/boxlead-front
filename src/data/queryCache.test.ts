@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
 import {
   clearQueryCache,
+  discardQueryData,
   fetchQuery,
   getQueryState,
   invalidateQueries,
   isStale,
+  onQueryError,
   setQueryData,
   setQueryFetcher,
   STALE_MS,
@@ -117,5 +119,33 @@ describe("structural sharing", () => {
     await fetchQuery("/changed");
     expect(getQueryState("/changed").data).not.toBe(first);
     expect(getQueryState("/changed").data).toEqual([{ id: "a", unread: 2 }]);
+  });
+});
+
+describe("errors", () => {
+  it("keeps the status of a failed request and tells the error listeners", async () => {
+    const listener = vi.fn();
+    const stop = onQueryError(listener);
+    fetcher.mockResolvedValueOnce({ plan: "STARTER" });
+    await fetchQuery("/billing/summary");
+    const failure = new ApiError("Not found", 404);
+    fetcher.mockRejectedValueOnce(failure);
+    await fetchQuery("/billing/summary");
+    expect(getQueryState("/billing/summary")).toMatchObject({ data: { plan: "STARTER" }, errorStatus: 404, status: "success" });
+    expect(listener).toHaveBeenCalledWith("/billing/summary", failure);
+    stop();
+  });
+
+  it("drops the stored data on demand so nobody reads an old answer", async () => {
+    fetcher.mockResolvedValueOnce({ plan: "STARTER" });
+    await fetchQuery("/billing/summary");
+    fetcher.mockRejectedValueOnce(new ApiError("Not found", 404));
+    await fetchQuery("/billing/summary");
+    discardQueryData("/billing/summary");
+    expect(getQueryState("/billing/summary")).toMatchObject({ data: undefined, status: "error" });
+    expect(isStale("/billing/summary")).toBe(true);
+    fetcher.mockResolvedValueOnce({ plan: "BUSINESS" });
+    await fetchQuery("/billing/summary");
+    expect(getQueryState("/billing/summary")).toMatchObject({ data: { plan: "BUSINESS" }, errorStatus: null });
   });
 });

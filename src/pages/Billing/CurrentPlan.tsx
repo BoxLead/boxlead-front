@@ -1,5 +1,6 @@
 import type { BillingSummary, PaidPlanCode } from "../../api/types";
 import { Tag } from "../../components/ui/Tag";
+import { currentPlan } from "../../data/billing";
 import { isCheckoutUrl } from "../../util/checkout";
 import { formatNumber } from "../../util/format";
 import { formatMinor } from "../../util/planPrice";
@@ -25,7 +26,11 @@ function usageRatio(used: number, limit: number | null): number {
 }
 
 export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: CurrentPlanProps) {
-  const { plan, subscription, demo, usage, limits } = summary;
+  const { usage, limits } = summary;
+  const plan = currentPlan(summary);
+  const team = plan?.source === "TEAM";
+  const subscription = team ? null : summary.subscription;
+  const demo = team ? null : summary.demo;
   const status = subscription ? SUBSCRIPTION_STATUS[subscription.status] : null;
   const canCancel =
     subscription !== null &&
@@ -41,9 +46,14 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
         Tu plan
       </h2>
 
-      {plan ? (
+      {team ? (
         <div className="billing-current-head">
-          <p className="billing-current-name">{plan.name}</p>
+          <p className="billing-current-name">Equipo de BoxLead</p>
+          <Tag tone="accent">Sin cargo</Tag>
+        </div>
+      ) : plan ? (
+        <div className="billing-current-head">
+          <p className="billing-current-name">{plan.name ?? "Tu plan"}</p>
           {status ? <Tag tone={status.tone}>{status.label}</Tag> : null}
           {plan.source === "DEMO" ? <Tag tone="accent">Gratis</Tag> : null}
         </div>
@@ -55,6 +65,12 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
 
       <div className="billing-current-lines">
         {!plan ? <p>Elegí un plan para que tus agentes respondan y puedas enviar mensajes.</p> : null}
+        {team ? (
+          <p>
+            Esta cuenta es del equipo de BoxLead. Usás la app sin pagar con los límites de Business mientras tengas un rol en el
+            backoffice, así que no hace falta contratar un plan.
+          </p>
+        ) : null}
         {demo ? <p>Tu Beta gratis dura hasta el {longDate(demo.endsAt)}.</p> : null}
         {subscription && !subscription.cancelAtPeriodEnd && subscription.status === "ACTIVE" ? (
           <p>
@@ -70,7 +86,7 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
             {subscription.graceUntil ? ` Seguís con acceso hasta el ${longDate(subscription.graceUntil)}.` : null}
           </p>
         ) : null}
-        {subscription?.status === "SUSPENDED" || subscription?.status === "PAUSED" ? (
+        {summary.access === "RESTRICTED" && (subscription?.status === "SUSPENDED" || subscription?.status === "PAUSED") ? (
           <p>Tus agentes están apagados hasta que se regularice el pago.</p>
         ) : null}
         {subscription?.pendingPlanCode ? (
@@ -121,7 +137,7 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
           ) : null}
           {subscription?.pendingPlanCode && plan ? (
             <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onKeep}>
-              Seguir en {plan.name}
+              Seguir en {plan.name ?? "tu plan"}
             </button>
           ) : null}
           {canCancel ? (

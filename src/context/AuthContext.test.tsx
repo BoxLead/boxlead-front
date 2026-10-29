@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, ApiError } from "../api/client";
 import type { AuthUser } from "../api/types";
+import { requestSessionRefresh } from "../data/session";
 import { useAuth } from "./auth";
 import { AuthProvider } from "./AuthContext";
 
@@ -95,6 +96,83 @@ describe("AuthProvider", () => {
     renderProvider();
     await userEvent.click(await screen.findByRole("button", { name: "entrar" }));
     await waitFor(() => expect(screen.getByText("acceso RESTRICTED")).toBeInTheDocument());
+    expect(me).toHaveBeenCalledTimes(1);
+  });
+});
+
+function Session() {
+  const { features, access } = useAuth();
+  return <p>{`facturación ${features.billing ? "sí" : "no"}, acceso ${access}`}</p>;
+}
+
+function renderApp() {
+  render(
+    <MemoryRouter initialEntries={["/app/inbox"]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/app/inbox" element={<Session />} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe("AuthProvider keeps the session fresh", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("reads the session again when the window gets the focus back", async () => {
+    const me = vi
+      .spyOn(api, "me")
+      .mockResolvedValueOnce(user("RESTRICTED"))
+      .mockResolvedValueOnce({ ...user("FULL"), features: { billing: false, referrals: false, legal: false } });
+    renderApp();
+    expect(await screen.findByText("facturación sí, acceso RESTRICTED")).toBeInTheDocument();
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(await screen.findByText("facturación no, acceso FULL")).toBeInTheDocument();
+    expect(me).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads it again on request and only once at a time", async () => {
+    let answer: (value: AuthUser) => void = () => undefined;
+    const me = vi
+      .spyOn(api, "me")
+      .mockResolvedValueOnce(user("FULL"))
+      .mockImplementationOnce(() => new Promise<AuthUser>((resolve) => (answer = resolve)));
+    renderApp();
+    expect(await screen.findByText("facturación sí, acceso FULL")).toBeInTheDocument();
+    act(() => {
+      requestSessionRefresh();
+      window.dispatchEvent(new Event("focus"));
+      requestSessionRefresh();
+    });
+    expect(me).toHaveBeenCalledTimes(2);
+    await act(async () => answer(user("RESTRICTED")));
+    expect(await screen.findByText("facturación sí, acceso RESTRICTED")).toBeInTheDocument();
+  });
+
+  it("keeps the session when it cannot be read again and asks nothing without one", async () => {
+    const me = vi.spyOn(api, "me").mockResolvedValueOnce(user("FULL")).mockRejectedValueOnce(new ApiError("Down", 503));
+    renderApp();
+    expect(await screen.findByText("facturación sí, acceso FULL")).toBeInTheDocument();
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(screen.getByText("facturación sí, acceso FULL")).toBeInTheDocument();
+    expect(me).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not ask without a session", async () => {
+    const me = vi.spyOn(api, "me").mockRejectedValue(new ApiError("Unauthorized", 401));
+    renderApp();
+    expect(await screen.findByText("facturación no, acceso FULL")).toBeInTheDocument();
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+      requestSessionRefresh();
+    });
     expect(me).toHaveBeenCalledTimes(1);
   });
 });

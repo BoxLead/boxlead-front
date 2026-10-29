@@ -128,10 +128,10 @@ function seeded(now: number): State {
   const carla = id(4, 3);
   const dario = id(4, 4);
   const customers: State["customers"] = [
-    { resellerId: north, userId: ana, email: "ana@example.com", source: "COOKIE", referralCodeId: codes[0].id, attributedAt: iso(now - 70 * DAY), planCode: "BUSINESS", subscriptionStatus: "ACTIVE" },
-    { resellerId: north, userId: bruno, email: "bruno@example.com", source: "INVITATION", referralCodeId: null, attributedAt: iso(now - 60 * DAY), planCode: "STARTER", subscriptionStatus: "PAST_DUE" },
-    { resellerId: north, userId: carla, email: "carla@example.com", source: "COOKIE", referralCodeId: codes[1].id, attributedAt: iso(now - 50 * DAY), planCode: null, subscriptionStatus: null },
-    { resellerId: laura, userId: dario, email: "dario@example.com", source: "COOKIE", referralCodeId: codes[2].id, attributedAt: iso(now - 30 * DAY), planCode: "STARTER", subscriptionStatus: "ACTIVE" },
+    { resellerId: north, userId: ana, email: "ana@example.com", source: "COOKIE", referralCodeId: codes[0].id, attributedAt: iso(now - 70 * DAY), planCode: "BUSINESS", planSource: "SUBSCRIPTION", subscriptionStatus: "ACTIVE" },
+    { resellerId: north, userId: bruno, email: "bruno@example.com", source: "INVITATION", referralCodeId: null, attributedAt: iso(now - 60 * DAY), planCode: "STARTER", planSource: "SUBSCRIPTION", subscriptionStatus: "PAST_DUE" },
+    { resellerId: north, userId: carla, email: "carla@example.com", source: "COOKIE", referralCodeId: codes[1].id, attributedAt: iso(now - 50 * DAY), planCode: "BUSINESS", planSource: "TEAM", subscriptionStatus: null },
+    { resellerId: laura, userId: dario, email: "dario@example.com", source: "COOKIE", referralCodeId: codes[2].id, attributedAt: iso(now - 30 * DAY), planCode: "STARTER", planSource: "SUBSCRIPTION", subscriptionStatus: "ACTIVE" },
   ];
   const paid = id(5, 1);
   const exported = id(5, 2);
@@ -296,6 +296,7 @@ function correctAttribution({ match, body }: MockRequest): MockReply {
   const reseller = resellerId ? findReseller(resellerId) : undefined;
   if (!reseller) return notFound();
   const userId = match[1];
+  if (reseller.userId === userId) return failure(409, "A user can not be attributed to their own reseller", "ATTRIBUTION_SELF_REFERRAL");
   const previous = state.customers.find((customer) => customer.userId === userId);
   state.customers = state.customers.filter((customer) => customer.userId !== userId);
   const now = iso(Date.now());
@@ -307,6 +308,7 @@ function correctAttribution({ match, body }: MockRequest): MockReply {
     referralCodeId: null,
     attributedAt: now,
     planCode: previous?.planCode ?? null,
+    planSource: previous?.planSource ?? "NONE",
     subscriptionStatus: previous?.subscriptionStatus ?? null,
   });
   const attribution: Attribution = { id: randomUUID(), userId, resellerId: reseller.id, referralCodeId: null, source: "ADMIN", sequence: 2, reason: null, createdAt: now };

@@ -50,13 +50,15 @@ export function useMetricsView(period: MetricsPeriod, filters: MetricsFilters, o
   const [shown, setShown] = useState<MetricsView | null>(null);
   if (view && view !== shown) setShown(view);
   const visible = view ?? shown;
-  const error = view ? null : (current.error ?? previous.error ?? settings.error);
+  const planLimited = current.errorStatus === 402 || previous.errorStatus === 402;
+  const error = view || planLimited ? null : (current.error ?? previous.error ?? settings.error);
 
   return {
     view: visible,
-    updating: !view && !error && visible !== null,
-    loading: !visible && !error,
+    updating: !view && !error && !planLimited && visible !== null,
+    loading: !visible && !error && !planLimited,
     error,
+    planLimited: !view && planLimited,
     reload: () => Promise.all([current.reload(), previous.reload(), history.reload(), settings.reload()]),
   };
 }

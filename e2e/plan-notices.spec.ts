@@ -1,7 +1,7 @@
 import type { Page, Response } from "@playwright/test";
 import type { BillingOptions } from "./mock-api/billing.ts";
 import type { Scenario } from "./mock-api/fixtures.ts";
-import { expect, expectAccessible, login, resetApi, screenshot, test } from "./support.ts";
+import { expect, expectAccessible, login, resetApi, screenshot, setBillingEnabled, test } from "./support.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const notices = (page: Page) => page.locator(".plan-banners");
@@ -170,12 +170,31 @@ test("the playground explains a 402 when the plan ended meanwhile", async ({ pag
   await resetApi("billing-none");
   await playground(page).getByPlaceholder("Mensaje del cliente").fill("¿Tienen stock?");
   const run = page.waitForResponse((response) => response.url().endsWith("/agents/playground"));
+  const session = page.waitForResponse((response) => response.url().endsWith("/auth/me"));
   await playground(page).getByRole("button", { name: "Enviar" }).click();
   expect((await run).status()).toBe(402);
+  expect((await session).status()).toBe(200);
   await expect(playground(page).getByText("Necesitás un plan activo para hacer esto.")).toBeVisible();
   await expect(playground(page).getByText("Necesitás un plan para probar agentes")).toBeVisible();
   await expect(notice(page, "No tenés un plan activo")).toBeVisible();
   await screenshot(page, "plan-playground-402-light");
+});
+
+test("the playground explains in its own words that the plan has no more trials", async ({ page }) => {
+  await openAgentsWith(page, "billing-active", { overrides: { PLAYGROUND_RUNS_PER_HOUR: 0 } });
+  await page.getByRole("button", { name: "Nuevo agente" }).click();
+  await editor(page).getByLabel("Nombre").fill("Consultas");
+  await page.getByRole("button", { name: "Probar" }).click();
+  await playground(page).getByPlaceholder("Mensaje del cliente").fill("¿Tienen stock?");
+  const run = page.waitForResponse((response) => response.url().endsWith("/agents/playground"));
+  await playground(page).getByRole("button", { name: "Enviar" }).click();
+  expect((await run).status()).toBe(402);
+  await expect(
+    playground(page).getByText("Tu plan no tiene más pruebas disponibles en este período. Para seguir probando, pasate a un plan con más capacidad."),
+  ).toBeVisible();
+  await expect(playground(page).getByText("The plan has no playground runs")).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
+  await screenshot(page, "plan-playground-limit-light");
 });
 
 test("new legal versions ask for an explicit acceptance", async ({ page }) => {
@@ -253,4 +272,73 @@ test("metrics with three months of history keep the forecast", async ({ page }) 
   await expect(periods.nth(1)).toHaveAttribute("aria-pressed", "true");
   await expect.poll(() => new Set(responses.map((response) => response.url())).size).toBe(3);
   expect(responses.map((response) => response.status()).every((status) => status === 200)).toBe(true);
+});
+
+test("metrics without a plan ask for no period the history does not cover", async ({ page }) => {
+  test.slow();
+  const responses = metricsRequests(page);
+  await resetApi("billing-none", undefined, { overrides: { METRICS_HISTORY_DAYS: 0 } });
+  await login(page, "/app/metrics");
+  const banner = page.getByRole("status").filter({ hasText: "Tu plan no incluye historial de métricas" });
+  await expect(banner).toBeVisible();
+  await expect(banner.getByRole("link", { name: "Ver planes" })).toHaveAttribute("href", "/app/billing");
+  await expect(page.getByRole("group", { name: "Período" })).toHaveCount(0);
+  await expect(page.getByText("No pudimos cargar las métricas")).toHaveCount(0);
+  expect(responses).toHaveLength(0);
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+  await shootThemes(page, "plan-metrics-no-history", () => expect(banner).toBeVisible());
+});
+
+test("metrics without a plan explain a 402 in their own notice", async ({ page }) => {
+  test.slow();
+  await resetApi("billing-none");
+  await page.route(/\/metrics\?from=/, (route) =>
+    route.fulfill({
+      status: 402,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Payment Required", message: "The plan does not cover that period", code: "PLAN_LIMIT_REACHED" }),
+    }),
+  );
+  await login(page, "/app/metrics");
+  const banner = page.getByRole("status").filter({ hasText: "Tu plan no cubre este período" });
+  await expect(banner).toBeVisible();
+  await expect(banner).toContainText("Elegí un período más corto o pasate a un plan con más días de historial.");
+  await expect(page.getByText("No pudimos cargar las métricas")).toHaveCount(0);
+  await expect(notice(page, "Llegaste al límite de tu plan")).toHaveCount(0);
+  await expect(notice(page, "No tenés un plan activo")).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await screenshot(page, "plan-metrics-402-light");
+});
+
+test("turning billing off with the app open shows when the window gets the focus back", async ({ page }) => {
+  test.slow();
+  await resetApi("billing-none");
+  await login(page, "/app/billing");
+  await expect(page.getByRole("heading", { level: 1, name: "Facturación" })).toBeVisible();
+  await expect(notice(page, "No tenés un plan activo")).toBeVisible();
+
+  await setBillingEnabled(false);
+  const session = page.waitForResponse((response) => response.url().endsWith("/auth/me"));
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  expect((await session).status()).toBe(200);
+  await expect(page).toHaveURL(/\/app\/inbox$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Bandeja" })).toBeVisible();
+  await expect(notices(page)).toHaveCount(0);
+  await page.getByRole("button", { name: "Cuenta" }).click();
+  await expect(page.getByRole("dialog", { name: "Cuenta" }).getByRole("link", { name: "Facturación" })).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
+});
+
+test("a suspended plan while limits are not enforced does not say the agents stopped", async ({ page }) => {
+  await resetApi("billing-suspended", undefined, { enforced: false });
+  await login(page);
+  const banner = notice(page, "Tu plan está suspendido");
+  await expect(banner).toContainText("No pudimos cobrarlo. Actualizá el medio de pago para regularizarlo.");
+  await expect(banner).not.toContainText("no responden");
+  await page.goto("/app/billing");
+  await expect(page.getByRole("heading", { level: 1, name: "Facturación" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Tu plan" }).getByText("Suspendido")).toBeVisible();
+  await expect(page.getByText("Tus agentes están apagados hasta que se regularice el pago.")).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
 });

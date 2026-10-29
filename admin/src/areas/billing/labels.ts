@@ -1,4 +1,5 @@
 import type { FilterOption } from "../../components/list/Filters";
+import type { SubscriptionCancellation } from "./types";
 import {
   INVOICE_STATUS,
   PAYMENT_STATUS,
@@ -51,3 +52,16 @@ export const REFUND_STATUS_OPTIONS = options(REFUND_STATUS).map((option) =>
 );
 export const INVOICE_STATUS_OPTIONS = options(INVOICE_STATUS);
 export const PLAN_OPTIONS = options(PLAN_LABELS).filter((option) => option.value !== "DEMO");
+
+export const REFUND_NEEDED: StatusLabel = { label: "Para devolver", tone: "warning" };
+
+export type RefundNotice = { tone: "success" | "info" | "danger"; message: string };
+
+const CANCEL_FAILED =
+  "Mercado Pago no confirmó la cancelación de la suscripción, así que sigue viva y puede volver a cobrar. La tiene que cancelar un Dueño desde Suscripciones.";
+
+export function withCancellation(notice: RefundNotice, cancellation: SubscriptionCancellation | undefined): RefundNotice {
+  if (cancellation === "FAILED") return { tone: "danger", message: `${notice.message} ${CANCEL_FAILED}` };
+  if (cancellation === "CANCELED") return { ...notice, message: `${notice.message} La suscripción quedó cancelada.` };
+  return notice;
+}

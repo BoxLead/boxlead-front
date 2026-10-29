@@ -33,7 +33,8 @@ test("without billing the account menu and the routes stay as today", async ({ p
 
   for (const path of ["/app/billing", "/app/billing/return", "/app/reseller"]) {
     await page.goto(path);
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/app\/inbox$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Bandeja" })).toBeVisible();
   }
 });
 
@@ -75,7 +76,7 @@ test("with billing the account menu links billing and the consumer pages", async
   await expect(page.getByRole("heading", { level: 1, name: "Estado del pago" })).toBeVisible();
 
   await page.goto("/app/reseller");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/app\/inbox$/);
 });
 
 test("resellers also get their page", async ({ page }) => {

@@ -104,17 +104,19 @@ function ProfilePanel({ file }: { file: CustomerFile }) {
 
 function PlanPanel({ file }: { file: CustomerFile }) {
   const { plan, access, period, enforced } = file.entitlements;
+  const team = plan.source === "TEAM";
   return (
-    <Section title="Plan" hint="Lo que rige hoy según su suscripción, su Demo y sus ajustes.">
+    <Section title="Plan" hint="Lo que rige hoy según su suscripción, su Demo, su rol en el equipo y sus ajustes.">
       <Facts
         columns={2}
         items={[
-          { label: "Plan", value: planLabel(plan.code) },
+          { label: "Plan", value: team && !plan.code ? "Business sin versión activa" : planLabel(plan.code) },
           { label: "Viene de", value: PLAN_SOURCE_LABELS[plan.source] },
           { label: "Acceso", value: enforced ? ACCESS_LABELS[access] : `${ACCESS_LABELS[access]}, todavía sin aplicar` },
           { label: "Período", value: <><DateText value={period.start} /> al <DateText value={lastMomentBefore(period.end)} /></> },
         ]}
       />
+      {team ? <Muted>Tiene un rol en el equipo y su factor configurado, así que usa BoxLead sin pagar con los límites de Business.</Muted> : null}
     </Section>
   );
 }

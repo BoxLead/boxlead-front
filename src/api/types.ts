@@ -408,7 +408,9 @@ export type ApiErrorCode =
   | "LEGAL_ACCEPTANCE_REQUIRED"
   | "ACCOUNT_EXISTS_WITH_PASSWORD"
   | "BILLING_PROFILE_REQUIRED"
-  | "PROVIDER_UNAVAILABLE";
+  | "PROVIDER_UNAVAILABLE"
+  | "CHECKOUT_PENDING"
+  | "DEMO_SUBSCRIPTION_ACTIVE";
 
 export type FieldError = {
   field: string;
@@ -473,11 +475,11 @@ export type SubscriptionStatus =
 
 export type CheckoutStatus = "WAITING" | "PENDING" | "REJECTED";
 
-export type PlanSource = "SUBSCRIPTION" | "DEMO";
+export type PlanSource = "SUBSCRIPTION" | "DEMO" | "TEAM" | "NONE";
 
 export type CurrentPlan = {
-  code: PlanCode;
-  name: string;
+  code: PlanCode | null;
+  name: string | null;
   source: PlanSource;
 };
 

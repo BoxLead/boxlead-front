@@ -32,6 +32,7 @@ export const BILLING_SCENARIOS = [
   "billing-checkout-rejected",
   "billing-downgrade-pending",
   "billing-invited",
+  "billing-team",
   "reseller",
 ] as const;
 
@@ -41,6 +42,9 @@ export type BillingOptions = {
   pendingLegal?: boolean;
   entitlementsUnavailable?: boolean;
   agentReplies?: number;
+  overrides?: PlanLimits;
+  enforced?: boolean;
+  providerDown?: boolean;
 };
 
 export const INVITE_COOKIE = "boxlead_invite";
@@ -187,6 +191,10 @@ export type BillingState = {
   referrals: boolean;
   legal: boolean;
   reseller: boolean;
+  team: boolean;
+  overrides: PlanLimits;
+  enforced: boolean;
+  providerDown: boolean;
   entitlementsUnavailable: boolean;
   subscription: StoredSubscription | null;
   demo: { endsAt: string } | null;
@@ -220,6 +228,15 @@ export type MockRequest = {
   readBody: () => Promise<Record<string, unknown>>;
 };
 
+export function limitOverrides(value: unknown): PlanLimits | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
+  const limits: PlanLimits = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (item === null || typeof item === "number") limits[key as EntitlementKey] = item;
+  }
+  return limits;
+}
+
 export function isBillingScenario(scenario: string): scenario is BillingScenario {
   return BILLING_SCENARIOS.some((item) => item === scenario);
 }
@@ -230,6 +247,11 @@ function inDays(days: number): string {
 
 function daysAgo(days: number): string {
   return ago(days * DAY_MINUTES);
+}
+
+function monthEnd(): string {
+  const now = new Date(ago(0));
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString();
 }
 
 function error(status: number, message: string, code?: string, fields?: FieldError[]): MockReply {
@@ -332,6 +354,10 @@ function disabled(): BillingState {
     referrals: false,
     legal: false,
     reseller: false,
+    team: false,
+    overrides: {},
+    enforced: true,
+    providerDown: false,
     entitlementsUnavailable: false,
     subscription: null,
     demo: null,
@@ -366,6 +392,16 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
     state.agentReplies = 40;
   }
   if (scenario === "billing-invited") state.presetInvitation = INVITATION_TOKENS.otherEmail;
+  if (scenario === "billing-team") {
+    state.team = true;
+    state.profile = profile();
+    state.subscription = subscription("STARTER", "SUSPENDED");
+    state.subscription.currentPeriodStart = daysAgo(PERIOD_DAYS + 9);
+    state.subscription.currentPeriodEnd = daysAgo(9);
+    state.subscription.graceUntil = daysAgo(2);
+    state.payments = paymentHistory(state.subscription.price, 2);
+    state.agentReplies = 300;
+  }
   if (scenario === "billing-checkout-pending" || scenario === "billing-checkout-rejected") {
     state.profile = profile();
     state.subscription = {
@@ -402,6 +438,9 @@ export function buildBilling(scenario: string, options: BillingOptions = {}): Bi
     state.agentReplies = 900;
   }
   if (typeof options.agentReplies === "number") state.agentReplies = options.agentReplies;
+  if (options.overrides) state.overrides = options.overrides;
+  if (options.enforced === false) state.enforced = false;
+  if (options.providerDown) state.providerDown = true;
   if (scenario === "reseller") {
     state.referrals = true;
     state.reseller = true;
@@ -427,6 +466,15 @@ function demoActive(state: BillingState): boolean {
 }
 
 function entitlements(state: BillingState): Entitlements {
+  const standing = standingOf(state);
+  if (!state.enforced) return { access: "FULL", plan: standing.plan, limits: {} };
+  return { ...standing, limits: { ...standing.limits, ...state.overrides } };
+}
+
+function standingOf(state: BillingState): Entitlements {
+  if (state.team) {
+    return { access: "FULL", plan: { code: "BUSINESS", name: CATALOG.BUSINESS.name, source: "TEAM" }, limits: CATALOG.BUSINESS.limits };
+  }
   const sub = liveSubscription(state);
   if (sub) {
     const plan: CurrentPlan = { code: sub.planCode, name: CATALOG[sub.planCode].name, source: "SUBSCRIPTION" };
@@ -436,7 +484,7 @@ function entitlements(state: BillingState): Entitlements {
   if (demoActive(state)) {
     return { access: "FULL", plan: { code: "DEMO", name: CATALOG.DEMO.name, source: "DEMO" }, limits: CATALOG.DEMO.limits };
   }
-  return { access: "RESTRICTED", plan: null, limits: {} };
+  return { access: "RESTRICTED", plan: null, limits: { METRICS_HISTORY_DAYS: CATALOG.DEMO.limits.METRICS_HISTORY_DAYS } };
 }
 
 function limitOf(limits: PlanLimits, key: EntitlementKey): number {
@@ -477,11 +525,11 @@ function summary(state: BillingState): BillingSummary {
           updatePaymentUrl: live.status === "PAST_DUE" || live.status === "SUSPENDED" ? checkoutUrl(live) : null,
         }
       : null,
-    demo: demoActive(state) ? state.demo : null,
+    demo: !state.team && demoActive(state) ? state.demo : null,
     checkout: sub?.status === "INCOMPLETE" ? { planCode: sub.planCode, status: sub.checkoutStatus ?? "WAITING" } : null,
     usage: {
       agentReplies: { used: state.agentReplies, limit: replyLimit === undefined ? 0 : replyLimit },
-      periodEnd: live?.currentPeriodEnd ?? state.demo?.endsAt ?? inDays(PERIOD_DAYS),
+      periodEnd: state.team ? monthEnd() : (live?.currentPeriodEnd ?? state.demo?.endsAt ?? inDays(PERIOD_DAYS)),
     },
     limits,
     billingProfileComplete: state.profile !== null,
@@ -589,6 +637,9 @@ async function checkout(state: BillingState, req: MockRequest): Promise<MockRepl
   if (current?.status === "INCOMPLETE" && current.planCode === planCode && current.payerEmail === payerEmail) {
     return ok({ checkoutUrl: checkoutUrl(current) });
   }
+  if (current?.status === "INCOMPLETE" && current.checkoutStatus === "PENDING") {
+    return error(409, "The checkout has a payment in process", "CHECKOUT_PENDING");
+  }
   const created: StoredSubscription = {
     ...subscription(planCode, "INCOMPLETE"),
     payerEmail,
@@ -614,9 +665,15 @@ async function changePlan(state: BillingState, req: MockRequest): Promise<MockRe
     sub.price = priceOf(sub.planCode);
     return ok(summary(state));
   }
+  const upgrade = PLAN_RANK[planCode] > PLAN_RANK[sub.planCode];
   const upgradedThisPeriod = sub.lastUpgradeAt !== null && sub.lastUpgradeAt >= sub.currentPeriodStart;
-  if (PLAN_RANK[planCode] > PLAN_RANK[sub.planCode] || upgradedThisPeriod) {
-    if (PLAN_RANK[planCode] > PLAN_RANK[sub.planCode]) sub.lastUpgradeAt = ago(0);
+  if (upgrade && sub.lastUpgradeAt !== null) {
+    sub.pendingPlanCode = planCode;
+    sub.price = priceOf(planCode);
+    return ok(summary(state));
+  }
+  if (upgrade || upgradedThisPeriod) {
+    if (upgrade) sub.lastUpgradeAt = ago(0);
     sub.planCode = planCode;
     sub.pendingPlanCode = null;
     sub.price = priceOf(planCode);
@@ -633,6 +690,7 @@ function cancel(state: BillingState): MockReply {
     return error(409, "The subscription is not active", "SUBSCRIPTION_NOT_ACTIVE");
   }
   if (sub.cancelAtPeriodEnd) return error(409, "The subscription is being canceled", "SUBSCRIPTION_CANCELING");
+  if (state.providerDown) return error(502, "Mercado Pago did not confirm the cancellation", "PROVIDER_UNAVAILABLE");
   sub.cancelAtPeriodEnd = true;
   sub.pendingPlanCode = null;
   return ok(summary(state));
@@ -645,6 +703,7 @@ function acceptInvitation(state: BillingState, req: MockRequest): MockReply {
     return error(403, "The invitation belongs to another email", "INVITATION_EMAIL_MISMATCH");
   }
   if (state.demoUsed) return error(409, "The demo was already used", "DEMO_ALREADY_USED");
+  if (liveSubscription(state)) return error(409, "A live subscription already gives the plan", "DEMO_SUBSCRIPTION_ACTIVE");
   invitation.usable = false;
   state.demo = { endsAt: inDays(DEMO_DAYS) };
   state.demoUsed = true;
@@ -762,6 +821,13 @@ export async function billingRoute(state: BillingState, req: MockRequest): Promi
   return NOT_FOUND;
 }
 
+export function setBillingEnabled(state: BillingState, enabled: boolean): MockReply {
+  state.billing = enabled;
+  state.legal = enabled;
+  if (!enabled) state.referrals = false;
+  return ok({ billing: enabled });
+}
+
 export function settleCheckout(state: BillingState, status: unknown): MockReply {
   const sub = state.subscription;
   if (!sub || sub.status !== "INCOMPLETE") return error(409, "There is no checkout in progress");
@@ -788,26 +854,28 @@ export function settleCheckout(state: BillingState, status: unknown): MockReply 
 type AgentAction = "create" | "enable" | "playground";
 
 export function agentGate(state: BillingState, action: AgentAction, agents: AgentResponse[]): MockReply | null {
-  if (!state.billing) return null;
+  if (!state.billing || !state.enforced) return null;
   if (state.entitlementsUnavailable) {
     return error(503, "Entitlements are unavailable, try again in a while", "ENTITLEMENTS_UNAVAILABLE");
   }
   const { access, limits } = entitlements(state);
   if (access === "RESTRICTED") return error(402, "A plan is required", "PLAN_REQUIRED");
-  if (action === "playground") return null;
+  if (action === "playground") {
+    return limitOf(limits, "PLAYGROUND_RUNS_PER_HOUR") === 0 ? error(402, "The plan has no playground runs", "PLAN_LIMIT_REACHED") : null;
+  }
   const max = limitOf(limits, "AGENTS_MAX");
   const count = action === "create" ? agents.length : agents.filter((agent) => agent.enabled).length;
   return count >= max ? error(402, "The plan limit was reached", "PLAN_LIMIT_REACHED") : null;
 }
 
 export function playgroundLimit(state: BillingState): number {
-  if (!state.billing) return Number.POSITIVE_INFINITY;
+  if (!state.billing || !state.enforced) return Number.POSITIVE_INFINITY;
   return limitOf(entitlements(state).limits, "PLAYGROUND_RUNS_PER_HOUR");
 }
 
 export function markOverPlanLimit(state: BillingState, agents: AgentResponse[]): AgentResponse[] {
   const sorted = [...agents].sort((a, b) => a.position - b.position);
-  if (!state.billing) return sorted;
+  if (!state.billing || !state.enforced) return sorted;
   const { access, limits } = entitlements(state);
   if (access !== "FULL") return sorted;
   const max = limitOf(limits, "AGENTS_MAX");

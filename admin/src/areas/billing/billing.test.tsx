@@ -33,6 +33,7 @@ const PAYMENT: PaymentRow = {
   approvedAt: "2026-10-20T15:00:00Z",
   createdAt: "2026-10-20T15:00:00Z",
   invoice: null,
+  refundNeeded: false,
 };
 
 const UNANSWERED: RefundRow = {
@@ -232,6 +233,30 @@ describe("payments screen", () => {
     expect(await screen.findByText(message)).toBeInTheDocument();
   });
 
+  it.each([
+    ["CANCELED", "Mercado Pago aprobó el reembolso. La suscripción quedó cancelada."],
+    ["FAILED", /Mercado Pago no confirmó la cancelación de la suscripción, así que sigue viva y puede volver a cobrar\. La tiene que cancelar un Dueño desde Suscripciones\./],
+  ] as const)("tells what happened to the subscription after a refund that closes it (%s)", async (subscriptionCancellation, message) => {
+    mockFetch((method) =>
+      method === "POST"
+        ? json(201, { id: "r1", paymentId: PAYMENT.id, amount: null, createdAt: "", status: "APPROVED", providerRefundId: "rf", subscriptionCancellation })
+        : page([PAYMENT]),
+    );
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reembolsar el pago 9e000000/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "El cliente pidió la baja");
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar", hidden: true }));
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it("marks an approved payment that has to be given back", async () => {
+    mockFetch(() => page([{ ...PAYMENT, status: "APPROVED", refunded: ars(0), refundNeeded: true }]));
+    renderAs(["FINANCE"], <PaymentsScreen />, "/pagos");
+    const row = (await screen.findAllByRole("row"))[1];
+    expect(row).toHaveTextContent("Para devolver");
+    expect(within(row).getByTitle("Se cobró con la suscripción ya cancelada")).toBeInTheDocument();
+  });
+
   it("closes the dialog, says the refund stays asked for and reloads when Mercado Pago does not answer", async () => {
     const asked: PaymentRow = { ...PAYMENT, refundable: ars(5630000) };
     let posted = false;
@@ -309,6 +334,19 @@ describe("refunds screen", () => {
     await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
     expect(await screen.findByText("Lo mandamos de nuevo y Mercado Pago lo está procesando.")).toBeInTheDocument();
     expect(calls.filter((call) => call.method === "GET")).toHaveLength(2);
+  });
+
+  it("warns after a retry that the subscription could not be canceled", async () => {
+    mockFetch((method) =>
+      method === "POST"
+        ? json(200, { id: UNANSWERED.id, paymentId: PAYMENT.id, amount: null, status: "APPROVED", providerRefundId: "rf-9", createdAt: "", subscriptionCancellation: "FAILED" })
+        : page([UNANSWERED]),
+    );
+    renderAs(["FINANCE"], <RefundsScreen />, "/reembolsos");
+    await userEvent.click(await screen.findByRole("button", { name: /Reintentar el reembolso/ }));
+    await userEvent.type(screen.getByLabelText("Motivo"), "Mercado Pago no contestó ayer");
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar", hidden: true }));
+    expect(await screen.findByText(/^Mercado Pago aprobó el reembolso\. Mercado Pago no confirmó la cancelación/)).toBeInTheDocument();
   });
 
   it("reloads the list when the retry finds the refund already answered", async () => {

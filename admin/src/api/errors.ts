@@ -6,11 +6,16 @@ export type AdminErrorCode =
   | "MFA_INVALID"
   | "REFUND_EXCEEDS_PAYMENT"
   | "COMMISSION_NOT_RELEASABLE"
+  | "COMMISSION_REFUND_IN_PROGRESS"
   | "INVITATION_ALREADY_OPEN"
   | "INVITATION_CLOSED"
   | "INVITATION_RESELLER_INVALID"
   | "DEMO_ALREADY_USED"
   | "DEMO_SUBSCRIPTION_ACTIVE"
+  | "DEMO_TEAM_MEMBER"
+  | "DEMO_END_TOO_FAR"
+  | "ATTRIBUTION_SELF_REFERRAL"
+  | "INVITATION_EXPIRY_TOO_FAR"
   | "INVITATION_EXPIRY_PAST"
   | "INVITATION_EMAIL_INVALID"
   | "SUBSCRIPTION_NOT_ACTIVE"
@@ -29,17 +34,24 @@ export type AdminErrorCode =
 const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   ADMIN_SESSION_REQUIRED: "Tu sesión de administración venció. Ingresá un código nuevo para seguir.",
   ROLE_REQUIRED: "Tu rol no permite hacer esto.",
-  ADMIN_SELF_OPERATION: "No podés operar sobre tu propia cuenta.",
+  ADMIN_SELF_OPERATION:
+    "No podés hacer esto sobre tu propia cuenta. Ni el rol de Dueño permite tocar tus límites, tu Demo, tus reembolsos o tus arrepentimientos, ni invitar a tu propio email. Pedíselo a otra persona del equipo.",
   MFA_LOCKED: "Hubo demasiados códigos incorrectos y el factor quedó bloqueado por un rato.",
   MFA_INVALID: "El código no es válido. Revisá que la hora del teléfono esté bien y probá con el próximo.",
   REFUND_EXCEEDS_PAYMENT: "El reembolso supera lo que queda del pago.",
   COMMISSION_NOT_RELEASABLE: "Esa comisión todavía no se puede liberar.",
+  COMMISSION_REFUND_IN_PROGRESS:
+    "El pago de alguna de esas comisiones tiene un reembolso en curso. Esperá a que Mercado Pago lo responda antes de aprobarla.",
   INVITATION_ALREADY_OPEN: "Ese email ya tiene una invitación abierta.",
   INVITATION_CLOSED: "La invitación ya está cerrada.",
   INVITATION_RESELLER_INVALID: "Ese revendedor no existe o no está activo. Elegí otro o creá la invitación sin revendedor.",
   DEMO_ALREADY_USED: "Ese usuario ya tiene una Demo, aunque haya terminado. Quitala antes de otorgarle otra.",
   DEMO_SUBSCRIPTION_ACTIVE: "Ese usuario tiene una suscripción que le da acceso. La Demo no tendría efecto y gastaría la única que puede tener.",
+  DEMO_TEAM_MEMBER: "Esa persona es del equipo y ya usa BoxLead sin pagar con los límites de Business. La Demo no tendría efecto.",
+  DEMO_END_TOO_FAR: "Una Demo puede terminar como mucho 365 días después de hoy. Elegí un día más cercano.",
+  ATTRIBUTION_SELF_REFERRAL: "Ese revendedor es del mismo usuario. Nadie puede quedar atribuido a su propio revendedor.",
   INVITATION_EXPIRY_PAST: "El vencimiento ya pasó. Elegí hoy o un día que todavía no pasó.",
+  INVITATION_EXPIRY_TOO_FAR: "Una invitación puede vencer como mucho 365 días después de hoy. Elegí un día más cercano.",
   INVITATION_EMAIL_INVALID: "Ese email no es válido. Revisalo y volvé a intentar.",
   SUBSCRIPTION_NOT_ACTIVE: "Esa suscripción ya no está activa, así que esta acción no aplica. Recargá para ver lo último.",
   RESELLER_EXISTS: "Ese usuario ya es revendedor.",

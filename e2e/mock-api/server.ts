@@ -44,12 +44,14 @@ import {
   billingRoute,
   buildBilling,
   isBillingScenario,
+  limitOverrides,
   manualSendGate,
   markOverPlanLimit,
   metricsGate,
   missingLegal,
   playgroundLimit,
   sessionFields,
+  setBillingEnabled,
   settleCheckout,
   startInvitedDemo,
   withPlanAgents,
@@ -462,8 +464,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       pendingLegal: body.pendingLegal === true,
       entitlementsUnavailable: body.entitlementsUnavailable === true,
       agentReplies: typeof body.agentReplies === "number" ? body.agentReplies : undefined,
+      overrides: limitOverrides(body.overrides),
+      enforced: body.enforced !== false,
+      providerDown: body.providerDown === true,
     });
     return send(res, 200, { scenario });
+  }
+  if (path === "/__billing/enabled" && method === "POST") {
+    return reply(res, setBillingEnabled(billing, (await readBody(req)).enabled === true));
   }
   if (path === "/__billing/checkout-result" && method === "POST") {
     return reply(res, settleCheckout(billing, (await readBody(req)).status));

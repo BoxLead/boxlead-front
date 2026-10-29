@@ -24,7 +24,7 @@ export type PaymentStatus =
 export type InvoiceStatus = "PENDING" | "ISSUED" | "VOIDED";
 export type CheckoutStatus = "WAITING" | "PENDING" | "REJECTED";
 export type AttributionSource = "COOKIE" | "INVITATION" | "ADMIN";
-export type PlanSource = "SUBSCRIPTION" | "DEMO" | "NONE";
+export type PlanSource = "SUBSCRIPTION" | "DEMO" | "TEAM" | "NONE";
 export type Access = "FULL" | "RESTRICTED";
 
 export type Revenue = {
@@ -55,6 +55,7 @@ export type CustomerMatch = {
   legalName: string | null;
   createdAt: string;
   planCode: PlanCode | null;
+  planSource: PlanSource;
   subscriptionStatus: SubscriptionStatus | null;
   hasPassword: boolean;
 };

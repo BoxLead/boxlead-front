@@ -77,6 +77,17 @@ describe("planNotice", () => {
     expect(notice).toMatchObject({ kind: "paused", tone: "danger", action: { href: "/app/billing" } });
   });
 
+  it("only says the agents stop when access is restricted", () => {
+    const stopped = /no responden|no podés enviar/;
+    for (const status of ["SUSPENDED", "PAUSED"] as const) {
+      const restricted = planNotice(summary({ access: "RESTRICTED", subscription: subscription({ status, updatePaymentUrl: PAY_URL }) }), NOW);
+      expect(restricted?.text).toMatch(stopped);
+      const open = planNotice(summary({ access: "FULL", subscription: subscription({ status, updatePaymentUrl: PAY_URL }) }), NOW);
+      expect(open?.kind).toBe(status === "SUSPENDED" ? "suspended" : "paused");
+      expect(open?.text).not.toMatch(stopped);
+    }
+  });
+
   it("explains what works without a plan", () => {
     const notice = planNotice(summary({ access: "RESTRICTED", plan: null, limits: {} }), NOW);
     expect(notice).toMatchObject({ kind: "no-plan", title: "No tenés un plan activo", action: { label: "Elegir un plan" } });
@@ -94,6 +105,29 @@ describe("planNotice", () => {
   it("ignores usage when the plan sets no reply limit", () => {
     const unlimited = summary({ limits: {}, usage: { agentReplies: { used: 5000, limit: null }, periodEnd: "2026-11-28T12:00:00Z" } });
     expect(planNotice(unlimited, NOW)).toBeNull();
+  });
+
+  it("says nothing about an own subscription to a team account", () => {
+    const team = summary({
+      plan: { code: "BUSINESS", name: "Business", source: "TEAM" },
+      subscription: subscription({ status: "SUSPENDED", updatePaymentUrl: PAY_URL }),
+    });
+    expect(planNotice(team, NOW)).toBeNull();
+    expect(planNotice({ ...team, subscription: subscription({ status: "PAST_DUE" }) }, NOW)).toBeNull();
+  });
+
+  it("tells a team account when the replies run out without offering plans", () => {
+    const team = summary({
+      plan: { code: "BUSINESS", name: "Business", source: "TEAM" },
+      usage: { agentReplies: { used: 1000, limit: 1000 }, periodEnd: "2026-12-01T03:00:00Z" },
+    });
+    const notice = planNotice(team, NOW);
+    expect(notice).toMatchObject({
+      kind: "replies-limit",
+      title: "Tus agentes usaron todas las respuestas del período",
+      action: { label: "Ir a facturación" },
+    });
+    expect(notice?.text).not.toContain("plan");
   });
 
   it("never links to a payment page outside Mercado Pago", () => {

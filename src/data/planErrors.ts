@@ -10,8 +10,14 @@ function emit(next: PlanErrorCode | null) {
   listeners.forEach((listener) => listener());
 }
 
-onPlanError((code) => {
-  emit(code);
+const OWN_NOTICE_PATHS = ["/metrics"];
+
+function hasOwnNotice(path: string | null): boolean {
+  return path !== null && OWN_NOTICE_PATHS.some((prefix) => path === prefix || path.startsWith(`${prefix}?`) || path.startsWith(`${prefix}/`));
+}
+
+onPlanError((code, path) => {
+  if (!hasOwnNotice(path)) emit(code);
   void invalidateQueries(BILLING_SUMMARY_KEY);
 });
 

@@ -14,6 +14,7 @@ type MetricsHeaderProps = {
   period: MetricsPeriod;
   periods?: readonly MetricsPeriod[];
   note?: string | null;
+  controls?: boolean;
   filters: MetricsFilters;
   platforms: PlatformType[];
   categories: CategoryResponse[];
@@ -27,6 +28,7 @@ export function MetricsHeader({
   period,
   periods = PERIODS,
   note = null,
+  controls = true,
   filters,
   platforms,
   categories,
@@ -82,56 +84,58 @@ export function MetricsHeader({
         </button>
       </div>
 
-      <div className="m-header-controls">
-        <ChoiceGroup
-          label="Período"
-          variant="segmented"
-          value={String(period)}
-          onChange={(value) => onPeriodChange(Number(value) as MetricsPeriod)}
-          choices={periods.map((days) => ({ value: String(days), label: `${days} días` }))}
-        />
-        <label className="m-filter">
-          <span className="visually-hidden">Canal</span>
-          <select
-            className="select"
-            value={filters.platform}
-            onChange={(event) => onFiltersChange({ platform: event.target.value as PlatformType | "ALL" })}
-          >
-            <option value="ALL">{compact ? "Canales" : "Todos los canales"}</option>
-            {channelOptions.map((id) => (
-              <option key={id} value={id}>
-                {getPlatform(id).name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="m-filter">
-          <span className="visually-hidden">Categoría</span>
-          <select
-            className="select"
-            value={filters.category ?? ""}
-            onChange={(event) => onFiltersChange({ category: event.target.value || null })}
-          >
-            <option value="">{compact ? "Categorías" : "Todas las categorías"}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-            <option value={UNCATEGORIZED}>Sin categoría</option>
-            {missingCategory ? <option value={missingCategory}>Categoría eliminada</option> : null}
-          </select>
-        </label>
-        {filtered ? (
-          <button
-            type="button"
-            className="m-header-clear"
-            onClick={() => onFiltersChange({ platform: "ALL", category: null })}
-          >
-            Limpiar
-          </button>
-        ) : null}
-      </div>
+      {controls ? (
+        <div className="m-header-controls">
+          <ChoiceGroup
+            label="Período"
+            variant="segmented"
+            value={String(period)}
+            onChange={(value) => onPeriodChange(Number(value) as MetricsPeriod)}
+            choices={periods.map((days) => ({ value: String(days), label: `${days} días` }))}
+          />
+          <label className="m-filter">
+            <span className="visually-hidden">Canal</span>
+            <select
+              className="select"
+              value={filters.platform}
+              onChange={(event) => onFiltersChange({ platform: event.target.value as PlatformType | "ALL" })}
+            >
+              <option value="ALL">{compact ? "Canales" : "Todos los canales"}</option>
+              {channelOptions.map((id) => (
+                <option key={id} value={id}>
+                  {getPlatform(id).name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="m-filter">
+            <span className="visually-hidden">Categoría</span>
+            <select
+              className="select"
+              value={filters.category ?? ""}
+              onChange={(event) => onFiltersChange({ category: event.target.value || null })}
+            >
+              <option value="">{compact ? "Categorías" : "Todas las categorías"}</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+              <option value={UNCATEGORIZED}>Sin categoría</option>
+              {missingCategory ? <option value={missingCategory}>Categoría eliminada</option> : null}
+            </select>
+          </label>
+          {filtered ? (
+            <button
+              type="button"
+              className="m-header-clear"
+              onClick={() => onFiltersChange({ platform: "ALL", category: null })}
+            >
+              Limpiar
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }

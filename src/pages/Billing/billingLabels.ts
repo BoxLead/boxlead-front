@@ -41,8 +41,11 @@ const CODE_MESSAGES: Record<string, string> = {
   SUBSCRIPTION_CANCELING: "Diste de baja tu plan. Podés volver a contratar cuando termine el período pagado.",
   BILLING_PROFILE_REQUIRED: "Completá tus datos fiscales para seguir.",
   PROVIDER_UNAVAILABLE: "Mercado Pago no responde. Probá de nuevo en unos minutos.",
+  CHECKOUT_PENDING: "Tenés un pago en proceso en Mercado Pago. Esperá a que se confirme antes de pagar otro plan o con otro email.",
   LEGAL_ACCEPTANCE_REQUIRED: "Cambiaron los términos. Leelos y aceptalos de nuevo para seguir.",
 };
+
+export const CANCEL_REQUESTED = "Pediste la baja. Mercado Pago la confirma en unos minutos. Si en un rato no la ves acá, pedila de nuevo.";
 
 export function billingErrorMessage(error: unknown, fallback: string): string {
   const code = apiErrorCode(error);

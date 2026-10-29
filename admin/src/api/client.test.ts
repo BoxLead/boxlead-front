@@ -122,9 +122,23 @@ describe("messageFor", () => {
     "SUBSCRIPTION_CHANGED",
     "REFUND_ALREADY_ANSWERED",
     "INVOICE_NOT_ISSUED",
+    "DEMO_TEAM_MEMBER",
+    "ATTRIBUTION_SELF_REFERRAL",
+    "COMMISSION_REFUND_IN_PROGRESS",
   ])("has its own message for %s instead of the status fallback", (code) => {
     expect(messageFor(409, code)).not.toBe(messageFor(409, null));
     expect(messageFor(409, code)).not.toBe(messageFor(500, null));
+  });
+
+  it("explains the 365 day cap of a Demo end and of an invitation expiry", () => {
+    expect(messageFor(400, "DEMO_END_TOO_FAR")).toBe("Una Demo puede terminar como mucho 365 días después de hoy. Elegí un día más cercano.");
+    expect(messageFor(400, "INVITATION_EXPIRY_TOO_FAR")).toBe(
+      "Una invitación puede vencer como mucho 365 días después de hoy. Elegí un día más cercano.",
+    );
+  });
+
+  it("explains that not even an owner acts on their own account", () => {
+    expect(messageFor(403, "ADMIN_SELF_OPERATION")).toMatch(/^No podés hacer esto sobre tu propia cuenta\. Ni el rol de Dueño/);
   });
 
   it("asks for the target type when core gets a target id without it", () => {

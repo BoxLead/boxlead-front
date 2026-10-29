@@ -149,9 +149,11 @@ const CODE_MESSAGES: Record<string, string> = {
 
 export type PlanErrorCode = "PLAN_REQUIRED" | "PLAN_LIMIT_REACHED";
 
-const planErrorListeners = new Set<(code: PlanErrorCode) => void>();
+export type PlanErrorListener = (code: PlanErrorCode, path: string | null) => void;
 
-export function onPlanError(listener: (code: PlanErrorCode) => void): () => void {
+const planErrorListeners = new Set<PlanErrorListener>();
+
+export function onPlanError(listener: PlanErrorListener): () => void {
   planErrorListeners.add(listener);
   return () => {
     planErrorListeners.delete(listener);
@@ -175,10 +177,10 @@ function errorMessage(status: number, data: unknown): string {
   return `Request failed (${status})`;
 }
 
-export function toApiError(status: number, data: unknown): ApiError {
+export function toApiError(status: number, data: unknown, path: string | null = null): ApiError {
   const code = codeOf(data);
   if (status === 402 && (code === "PLAN_REQUIRED" || code === "PLAN_LIMIT_REACHED")) {
-    planErrorListeners.forEach((listener) => listener(code));
+    planErrorListeners.forEach((listener) => listener(code, path));
   }
   return new ApiError(errorMessage(status, data), status, data);
 }
@@ -226,7 +228,7 @@ async function send<T>(
   }
 
   if (!res.ok) {
-    throw toApiError(res.status, data);
+    throw toApiError(res.status, data, path);
   }
 
   return data as T;

@@ -110,6 +110,14 @@ export function agentErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+export const PLAYGROUND_LIMIT_MESSAGE =
+  "Tu plan no tiene más pruebas disponibles en este período. Para seguir probando, pasate a un plan con más capacidad.";
+
+export function playgroundErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError && apiErrorCode(error) === "PLAN_LIMIT_REACHED") return PLAYGROUND_LIMIT_MESSAGE;
+  return agentErrorMessage(error, fallback);
+}
+
 export type ScopeDraft = { key: string; scope: AgentScope };
 
 export function newScopeDraft(scope: AgentScope = emptyScope()): ScopeDraft {

@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
+import { PlanLink } from "../../components/PlanBanner/PlanLink";
+import { SEE_PLANS } from "../../components/PlanBanner/planNotice";
 import { Banner } from "../../components/ui/Banner";
 import { useToast } from "../../components/ui/toast";
+import { isTeamPlan } from "../../data/billing";
 import { cx } from "../../util/classNames";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { usePlan } from "../../hooks/usePlan";
@@ -44,6 +47,7 @@ export function Metrics() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const plan = usePlan();
   const periods = allowedPeriods(plan.limits);
+  const covered = periods.length > 0;
   const period = fitPeriod(parsePeriod(searchParams.get("period")), periods);
   const defaultPeriod = fitPeriod(DEFAULT_PERIOD, periods);
   const metric = parseMetric(searchParams.get("metric"));
@@ -51,8 +55,8 @@ export function Metrics() {
     platform: parseChannel(searchParams.get("channel")),
     category: searchParams.get("category") || null,
   };
-  const { view, updating, loading, error, reload } = useMetricsView(period, filters, {
-    enabled: !(plan.billing && plan.loading),
+  const { view, updating, loading, error, planLimited, reload } = useMetricsView(period, filters, {
+    enabled: covered && !(plan.billing && plan.loading),
     forecast: forecastAllowed(plan.limits),
   });
   const filtered = filters.platform !== "ALL" || filters.category !== null;
@@ -81,6 +85,7 @@ export function Metrics() {
         period={period}
         periods={periods}
         note={historyNote(plan.limits)}
+        controls={covered}
         filters={filters}
         platforms={view?.platforms ?? []}
         categories={view?.categories ?? []}
@@ -92,7 +97,17 @@ export function Metrics() {
 
       <div className={cx("metrics-progress", updating && "metrics-progress-active")} aria-hidden="true" />
 
-      {error ? (
+      {!covered || planLimited ? (
+        <Banner
+          tone="warning"
+          title={covered ? "Tu plan no cubre este período" : "Tu plan no incluye historial de métricas"}
+          action={plan.billing && !isTeamPlan(plan.summary) ? <PlanLink action={SEE_PLANS} /> : undefined}
+        >
+          {covered
+            ? "Elegí un período más corto o pasate a un plan con más días de historial."
+            : "Para ver un período y compararlo con el anterior hace falta un plan con más días de historial."}
+        </Banner>
+      ) : error ? (
         <Banner
           tone="danger"
           title="No pudimos cargar las métricas"

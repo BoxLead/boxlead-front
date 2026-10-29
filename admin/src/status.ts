@@ -23,6 +23,7 @@ export type PayoutStatus = "DRAFT" | "EXPORTED" | "PAID";
 export type FactorStatus = "CONFIRMED" | "PENDING" | "EXPIRED";
 export type ConsumerRequestKind = "WITHDRAWAL" | "CANCELLATION";
 export type PlanCode = "DEMO" | "STARTER" | "BUSINESS" | "ENTERPRISE";
+export type PlanSource = "SUBSCRIPTION" | "DEMO" | "TEAM" | "NONE";
 
 function status<K extends string>(table: Record<K, [string, StatusTone]>): Record<K, StatusLabel> {
   const out = {} as Record<K, StatusLabel>;
@@ -124,6 +125,19 @@ export const NO_SUBSCRIPTION_LABEL = "Sin suscripción";
 export function planLabel(code: string | null | undefined): string {
   if (!code) return NO_PLAN;
   return code in PLAN_LABELS ? PLAN_LABELS[code as PlanCode] : code;
+}
+
+export const TEAM_LABEL = "Equipo";
+
+export const PLAN_SOURCE_LABELS: Record<PlanSource, string> = {
+  SUBSCRIPTION: "Suscripción",
+  DEMO: "Demo",
+  TEAM: TEAM_LABEL,
+  NONE: NO_PLAN,
+};
+
+export function planWithSource(code: string | null | undefined, source: PlanSource | null | undefined): string {
+  return source === "TEAM" ? TEAM_LABEL : planLabel(code);
 }
 
 export function labelsOf<K extends string>(table: Record<K, StatusLabel>): Record<K, string> {

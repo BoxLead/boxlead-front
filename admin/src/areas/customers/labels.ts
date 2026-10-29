@@ -3,15 +3,20 @@ import {
   labelsOf,
   PAYMENT_STATUS,
   PLAN_LABELS,
+  PLAN_SOURCE_LABELS,
   planLabel,
+  planWithSource,
   SUBSCRIPTION_STATUS,
+  TEAM_LABEL,
   tonesOf,
 } from "../../status";
-import type { Access, AttributionSource, CheckoutStatus, EntitlementKey, PlanSource, SubscriptionStatus } from "./types";
+import type { Access, AttributionSource, CheckoutStatus, EntitlementKey, SubscriptionStatus } from "./types";
 
 export const NO_SUBSCRIPTION = "NONE";
 
-export { PLAN_LABELS, planLabel };
+export { PLAN_LABELS, PLAN_SOURCE_LABELS, planLabel, planWithSource, TEAM_LABEL };
+
+export const TEAM_FILTER = "TEAM";
 
 export const SUBSCRIPTION_LABELS = labelsOf(SUBSCRIPTION_STATUS);
 export const SUBSCRIPTION_TONES = tonesOf(SUBSCRIPTION_STATUS);
@@ -29,12 +34,6 @@ export const SOURCE_LABELS: Record<AttributionSource, string> = {
   COOKIE: "Link de referido",
   INVITATION: "Invitación",
   ADMIN: "Corrección del equipo",
-};
-
-export const PLAN_SOURCE_LABELS: Record<PlanSource, string> = {
-  SUBSCRIPTION: "Suscripción",
-  DEMO: "Demo",
-  NONE: "Sin plan",
 };
 
 export const ACCESS_LABELS: Record<Access, string> = {

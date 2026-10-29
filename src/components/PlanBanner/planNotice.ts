@@ -1,6 +1,6 @@
 import type { PlanErrorCode } from "../../api/client";
 import type { BillingSummary } from "../../api/types";
-import { BILLING_PATH } from "../../data/billing";
+import { BILLING_PATH, isTeamPlan } from "../../data/billing";
 import { formatNumber } from "../../util/format";
 import type { BannerTone } from "../ui/Banner";
 
@@ -60,14 +60,42 @@ function demoEnding(summary: BillingSummary, now: Date): boolean {
   return left > 0 && left <= DEMO_WARNING_DAYS * DAY_MS;
 }
 
+function repliesLimitNotice(summary: BillingSummary, team: boolean): PlanNotice {
+  const limit = summary.limits.AGENT_REPLIES_PER_PERIOD ?? 0;
+  const until = longDate(summary.usage.periodEnd);
+  const used = `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}.`;
+  if (team) {
+    return {
+      kind: "replies-limit",
+      tone: "warning",
+      title: "Tus agentes usaron todas las respuestas del período",
+      text: until ? `${used} Vuelven a responder el ${until}.` : `${used} Vuelven a responder cuando empiece el próximo período.`,
+      action: GO_TO_BILLING,
+    };
+  }
+  return {
+    kind: "replies-limit",
+    tone: "warning",
+    title: "Tus agentes usaron todas las respuestas del plan",
+    text: until
+      ? `${used} Vuelven a responder el ${until} o antes si cambiás de plan.`
+      : `${used} Cambiá de plan para que sigan respondiendo.`,
+    action: SEE_PLANS,
+  };
+}
+
 export function planNotice(summary: BillingSummary, now: Date = new Date()): PlanNotice | null {
+  if (isTeamPlan(summary)) return repliesLimitReached(summary) ? repliesLimitNotice(summary, true) : null;
   const subscription = summary.subscription;
+  const restricted = summary.access === "RESTRICTED";
   if (subscription?.status === "SUSPENDED") {
     return {
       kind: "suspended",
       tone: "danger",
       title: "Tu plan está suspendido",
-      text: "No pudimos cobrarlo. Tus agentes no responden y no podés enviar mensajes hasta que actualices el medio de pago.",
+      text: restricted
+        ? "No pudimos cobrarlo. Tus agentes no responden y no podés enviar mensajes hasta que actualices el medio de pago."
+        : "No pudimos cobrarlo. Actualizá el medio de pago para regularizarlo.",
       action: updatePayment(subscription.updatePaymentUrl),
     };
   }
@@ -76,11 +104,13 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
       kind: "paused",
       tone: "danger",
       title: "Tu plan está en pausa",
-      text: "Tus agentes no responden y no podés enviar mensajes hasta que lo reactives.",
+      text: restricted
+        ? "Tus agentes no responden y no podés enviar mensajes hasta que lo reactives."
+        : "Reactivalo para seguir con tu plan.",
       action: GO_TO_BILLING,
     };
   }
-  if (summary.access === "RESTRICTED") {
+  if (restricted) {
     return {
       kind: "no-plan",
       tone: "warning",
@@ -101,19 +131,7 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
       action: updatePayment(subscription.updatePaymentUrl),
     };
   }
-  if (repliesLimitReached(summary)) {
-    const limit = summary.limits.AGENT_REPLIES_PER_PERIOD ?? 0;
-    const until = longDate(summary.usage.periodEnd);
-    return {
-      kind: "replies-limit",
-      tone: "warning",
-      title: "Tus agentes usaron todas las respuestas del plan",
-      text: until
-        ? `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}. Vuelven a responder el ${until} o antes si cambiás de plan.`
-        : `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}. Cambiá de plan para que sigan respondiendo.`,
-      action: SEE_PLANS,
-    };
-  }
+  if (repliesLimitReached(summary)) return repliesLimitNotice(summary, false);
   if (summary.demo && demoEnding(summary, now)) {
     return {
       kind: "demo-ending",

@@ -20,6 +20,7 @@ type CardState = {
 };
 
 function cardState(plan: BillingPlan, { summary, busy, onBuy, onChange }: PlanListProps): CardState {
+  if (summary.plan?.source === "TEAM") return { action: null };
   if (plan.contactOnly) {
     return {
       action: (

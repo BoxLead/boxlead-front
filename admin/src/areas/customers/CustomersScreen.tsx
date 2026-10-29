@@ -8,13 +8,16 @@ import { Screen } from "../../components/Screen";
 import { StatusBadge } from "../../components/StatusBadge";
 import { navItem } from "../../nav";
 import { NO_SUBSCRIPTION_LABEL, SUBSCRIPTION_STATUS } from "../../status";
-import { NO_SUBSCRIPTION, PLAN_LABELS, planLabel, SUBSCRIPTION_LABELS } from "./labels";
+import { NO_SUBSCRIPTION, PLAN_LABELS, planWithSource, SUBSCRIPTION_LABELS, TEAM_FILTER, TEAM_LABEL } from "./labels";
 import { PLAN_CODES, SUBSCRIPTION_STATUSES, type CustomerMatch } from "./types";
 import "./customers.css";
 
 const FILTER_KEYS = ["query", "plan", "status", "createdFrom", "createdTo"] as const;
 
-const PLAN_OPTIONS = PLAN_CODES.map((code) => ({ value: code, label: PLAN_LABELS[code] }));
+const PLAN_OPTIONS = [
+  ...PLAN_CODES.map((code) => ({ value: code, label: PLAN_LABELS[code] })),
+  { value: TEAM_FILTER, label: TEAM_LABEL },
+];
 const STATUS_OPTIONS = [
   ...SUBSCRIPTION_STATUSES.map((status) => ({ value: status, label: SUBSCRIPTION_LABELS[status] })),
   { value: NO_SUBSCRIPTION, label: NO_SUBSCRIPTION_LABEL },
@@ -84,7 +87,7 @@ export function CustomersScreen() {
               </span>
             ),
           },
-          { key: "plan", header: "Plan", width: "xs", cell: (row) => planLabel(row.planCode) },
+          { key: "plan", header: "Plan", width: "xs", cell: (row) => planWithSource(row.planCode, row.planSource) },
           {
             key: "status",
             header: "Suscripción",

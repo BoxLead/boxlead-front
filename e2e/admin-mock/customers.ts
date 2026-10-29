@@ -19,6 +19,7 @@ import {
 import { failure, hasRole, notFound, ok, page, type AdminIdentity, type MockReply, type MockRequest, type MockArea } from "./http.ts";
 
 export const CUSTOMERS_SCENARIO = "customers";
+export const TEAM_CUSTOMER = { id: "0c000000-0000-4000-8000-000000000009", email: "cliente09@example.com" } as const;
 export const RESELLERS = [
   { id: "0d000000-0000-4000-8000-000000000001", displayName: "Agencia Norte" },
   { id: "0d000000-0000-4000-8000-000000000002", displayName: "Estudio Delta" },
@@ -33,6 +34,7 @@ const MAX_DEMO_DAYS = 365;
 const DEFAULT_DEMO_DAYS = 14;
 const SERVED: readonly SubscriptionStatus[] = ["ACTIVE", "PAST_DUE", "SUSPENDED"];
 const NO_SUBSCRIPTION = "NONE";
+const TEAM = "TEAM";
 const NOT_USER_LIMITS: readonly EntitlementKey[] = ["DEMO_DURATION_DAYS"];
 const INVALID_REQUEST = "The request has a value that is not valid";
 
@@ -101,6 +103,7 @@ type Customer = {
   resellerId: string | null;
   replies: number;
   hasPassword: boolean;
+  team: boolean;
 };
 
 type StoredRefund = { paymentId: string; amount: Money | null; status: "REQUESTED" | "APPROVED" | "REJECTED"; createdAt: string };
@@ -198,6 +201,7 @@ function person(n: number, email: string, name: string, now: number, days: numbe
     resellerId: null,
     replies: 0,
     hasPassword: true,
+    team: false,
   };
 }
 
@@ -321,6 +325,8 @@ function seed(now: number): Customer[] {
     const n = index + 8;
     return person(n, `cliente${String(n).padStart(2, "0")}@example.com`, `Cliente ${String(n).padStart(2, "0")}`, now, 8 + index * 9);
   });
+  others[1].team = true;
+  others[1].replies = 64;
   return [ana, bruno, carla, diego, elena, federico, gabriela, ...others];
 }
 
@@ -360,6 +366,7 @@ function activeOverrides(customer: Customer, now: number): Override[] {
 }
 
 function planOf(customer: Customer, now: number): { code: PlanCode | null; source: Entitlements["plan"]["source"] } {
+  if (customer.team) return { code: "BUSINESS", source: "TEAM" };
   const live = liveSubscription(customer);
   if (live && live.status !== "INCOMPLETE") return { code: live.planCode, source: "SUBSCRIPTION" };
   if (demoRunning(customer, now)) return { code: "DEMO", source: "DEMO" };
@@ -369,12 +376,13 @@ function planOf(customer: Customer, now: number): { code: PlanCode | null; sourc
 function entitlementsOf(customer: Customer, now: number): Entitlements {
   const plan = planOf(customer, now);
   const live = liveSubscription(customer);
-  const restricted = live !== null && (live.status === "PAUSED" || live.status === "SUSPENDED");
+  const restricted = plan.source !== "TEAM" && live !== null && (live.status === "PAUSED" || live.status === "SUSPENDED");
   const limits: Limits = {};
   for (const key of ENTITLEMENT_KEYS) {
     if (NOT_USER_LIMITS.includes(key)) continue;
     limits[key] = plan.code ? (PLAN_LIMITS[plan.code][key] ?? 0) : 0;
   }
+  if (plan.source === "NONE") limits.METRICS_HISTORY_DAYS = PLAN_LIMITS.DEMO.METRICS_HISTORY_DAYS;
   for (const override of activeOverrides(customer, now)) limits[override.key] = override.value;
   const monthStart = new Date(`${dayOf(new Date(now)).slice(0, 7)}-01T00:00:00-03:00`);
   const period =
@@ -400,6 +408,7 @@ function matchOf(customer: Customer, now: number): CustomerMatch {
     legalName: customer.billingProfile?.legalName ?? null,
     createdAt: customer.createdAt,
     planCode: planOf(customer, now).code,
+    planSource: planOf(customer, now).source,
     subscriptionStatus: customer.subscription?.status ?? null,
     hasPassword: customer.hasPassword,
   };
@@ -449,7 +458,7 @@ function day(query: URLSearchParams, key: string): string | null | undefined {
 
 function search(query: URLSearchParams): MockReply {
   const now = new Date().getTime();
-  const plans = listOf(query, "plan", PLAN_CODES);
+  const plans = listOf(query, "plan", [...PLAN_CODES, TEAM]);
   const statuses = listOf(query, "status", [...SUBSCRIPTION_STATUSES, NO_SUBSCRIPTION]);
   const from = day(query, "createdFrom");
   const to = day(query, "createdTo");
@@ -461,7 +470,7 @@ function search(query: URLSearchParams): MockReply {
   const rows = records
     .map((customer) => matchOf(customer, now))
     .filter((row) => !text || [row.email, row.name ?? "", row.legalName ?? "", row.id].some((value) => value.toLowerCase().includes(text)))
-    .filter((row) => plans.length === 0 || (row.planCode !== null && plans.includes(row.planCode)))
+    .filter((row) => plans.length === 0 || plans.includes(row.planSource === TEAM ? TEAM : (row.planCode ?? "")))
     .filter((row) => statuses.length === 0 || statuses.includes(row.subscriptionStatus ?? NO_SUBSCRIPTION))
     .filter((row) => (!from || dayOf(row.createdAt) >= from) && (!to || dayOf(row.createdAt) <= to))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
@@ -551,11 +560,11 @@ function reasonOf(body: Record<string, unknown>): string | null {
 
 type Action = (customer: Customer, reason: string, request: MockRequest) => MockReply;
 
-function action(handle: Action) {
+function action(handle: Action, ownerToo = false) {
   return (request: MockRequest): MockReply | null => {
     const customer = records.find((row) => row.id === request.match[1]);
     if (!customer) return null;
-    if (customer.id === request.admin.userId && !request.admin.roles.includes("OWNER")) {
+    if (customer.id === request.admin.userId && (ownerToo || !request.admin.roles.includes("OWNER"))) {
       return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
     }
     const reason = reasonOf(request.body);
@@ -571,6 +580,7 @@ function futureInstant(value: unknown): string | null | undefined {
 }
 
 const grantDemo: Action = (customer, _reason, { body }) => {
+  if (customer.team) return failure(409, "The user has team access, a Demo would have no effect", "DEMO_TEAM_MEMBER");
   if (currentDemo(customer)) return failure(409, "The demo was already used", "DEMO_ALREADY_USED");
   const days = body.demoDays ?? DEFAULT_DEMO_DAYS;
   if (typeof days !== "number" || !Number.isInteger(days) || days < 1 || days > MAX_DEMO_DAYS) return badRequest();
@@ -593,6 +603,9 @@ const extendDemo: Action = (customer, _reason, { body }) => {
   if (!demo) return notFound();
   const endsAt = futureInstant(body.endsAt);
   if (!endsAt) return badRequest("A demo can only be extended into the future");
+  if (Date.parse(endsAt) > new Date().getTime() + MAX_DEMO_DAYS * DAY) {
+    return failure(400, "A demo can end at most 365 days from today", "DEMO_END_TOO_FAR");
+  }
   demo.endsAt = endsAt;
   return ok(demo);
 };
@@ -712,15 +725,15 @@ export const customers: MockArea = {
         return customer ? ok(fileOf(customer, new Date().getTime())) : notFound();
       },
     },
-    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo$`), access: ["SUPPORT"], handle: action(grantDemo) },
-    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/extend$`), access: ["SUPPORT"], handle: action(extendDemo) },
-    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/revoke$`), access: ["SUPPORT"], handle: action(revokeDemo) },
-    { method: "PUT", pattern: new RegExp(`^/admin/customers/${USER}/overrides/([^/]+)$`), access: ["OWNER"], handle: action(setOverride) },
+    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo$`), access: ["SUPPORT"], handle: action(grantDemo, true) },
+    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/extend$`), access: ["SUPPORT"], handle: action(extendDemo, true) },
+    { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/demo/revoke$`), access: ["SUPPORT"], handle: action(revokeDemo, true) },
+    { method: "PUT", pattern: new RegExp(`^/admin/customers/${USER}/overrides/([^/]+)$`), access: ["OWNER"], handle: action(setOverride, true) },
     {
       method: "DELETE",
       pattern: new RegExp(`^/admin/customers/${USER}/overrides/([^/]+)$`),
       access: ["OWNER"],
-      handle: action(revokeOverride),
+      handle: action(revokeOverride, true),
     },
     { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/subscription/pause$`), access: ["OWNER"], handle: action(pause) },
     { method: "POST", pattern: new RegExp(`^/admin/customers/${USER}/subscription/resume$`), access: ["OWNER"], handle: action(resume) },

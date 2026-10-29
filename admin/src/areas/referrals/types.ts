@@ -1,4 +1,5 @@
 import type { Money } from "../../api/types";
+import type { PlanSource } from "../../status";
 
 export type ResellerStatus = "ACTIVE" | "SUSPENDED" | "CLOSED";
 export type ReferralCodeStatus = "ACTIVE" | "DISABLED";
@@ -64,6 +65,7 @@ export type ResellerCustomer = {
   referralCodeId: string | null;
   attributedAt: string;
   planCode: string | null;
+  planSource: PlanSource;
   subscriptionStatus: SubscriptionStatus | null;
 };
 
@@ -126,5 +128,6 @@ export type CustomerMatch = {
   legalName: string | null;
   createdAt: string;
   planCode: string | null;
+  planSource: PlanSource;
   subscriptionStatus: SubscriptionStatus | null;
 };

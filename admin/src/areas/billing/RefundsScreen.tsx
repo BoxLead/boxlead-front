@@ -11,7 +11,7 @@ import { DateText } from "../../components/DateText";
 import { navItem } from "../../nav";
 import { Amount, CustomerCell, RowActions, ShortId, Stack, StatusTag } from "./cells";
 import { changedUnderneath } from "./api";
-import { canRetryRefund, REFUND_STATUS_OPTIONS, refundStatusOf } from "./labels";
+import { canRetryRefund, REFUND_STATUS_OPTIONS, refundStatusOf, withCancellation } from "./labels";
 import { RetryRefundDialog } from "./RetryRefundDialog";
 import type { RefundResult, RefundRow } from "./types";
 
@@ -33,7 +33,7 @@ export function RefundsScreen() {
   const [attempt, setAttempt] = useState(0);
 
   function done(result: RefundResult) {
-    toast(RETRY_NOTICE[result.status]);
+    toast(withCancellation(RETRY_NOTICE[result.status], result.subscriptionCancellation));
     setOpen(false);
     query.reload();
   }

@@ -68,7 +68,10 @@ test("with billing off every new endpoint answers 404 and the session is as toda
 
 test("each scenario tells its own state", async () => {
   const expected: [Scenario, Partial<Record<string, unknown>>][] = [
-    ["billing-none", { access: "RESTRICTED", plan: null, subscription: null, demo: null, checkout: null }],
+    [
+      "billing-none",
+      { access: "RESTRICTED", plan: null, subscription: null, demo: null, checkout: null, limits: { METRICS_HISTORY_DAYS: 30 } },
+    ],
     ["billing-demo", { access: "FULL", plan: { code: "DEMO", source: "DEMO" }, subscription: null }],
     ["billing-active", { access: "FULL", plan: { code: "STARTER" }, subscription: { status: "ACTIVE", updatePaymentUrl: null } }],
     ["billing-past-due", { access: "FULL", subscription: { status: "PAST_DUE" } }],
@@ -77,6 +80,10 @@ test("each scenario tells its own state", async () => {
     ["billing-checkout-rejected", { checkout: { planCode: "STARTER", status: "REJECTED" } }],
     ["billing-downgrade-pending", { plan: { code: "BUSINESS" }, subscription: { pendingPlanCode: "STARTER" } }],
     ["billing-invited", { access: "RESTRICTED", plan: null }],
+    [
+      "billing-team",
+      { access: "FULL", plan: { code: "BUSINESS", name: "Business", source: "TEAM" }, subscription: { status: "SUSPENDED" }, demo: null },
+    ],
     ["reseller", { access: "FULL", plan: { code: "STARTER" } }],
   ];
   for (const [scenario, shape] of expected) {

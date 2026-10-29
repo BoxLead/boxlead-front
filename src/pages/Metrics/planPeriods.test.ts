@@ -17,8 +17,11 @@ describe("periods allowed by the plan", () => {
     expect(allowedPeriods({ METRICS_HISTORY_DAYS: 14 })).toEqual([7]);
   });
 
-  it("keeps the shortest period when not even that one fits", () => {
-    expect(allowedPeriods({ METRICS_HISTORY_DAYS: 10 })).toEqual([7]);
+  it("offers no period when not even the shortest one fits", () => {
+    expect(allowedPeriods({ METRICS_HISTORY_DAYS: 13 })).toEqual([]);
+    expect(allowedPeriods({ METRICS_HISTORY_DAYS: 0 })).toEqual([]);
+    expect(historyNote({ METRICS_HISTORY_DAYS: 0 })).toBeNull();
+    expect(fitPeriod(30, [])).toBe(30);
   });
 
   it("hides the forecast without 84 days of history", () => {

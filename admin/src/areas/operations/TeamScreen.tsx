@@ -22,7 +22,8 @@ import { formatDateTime } from "../../format";
 import { navItem } from "../../nav";
 import { ROLE_LABELS } from "../../session/roles";
 import { isFuture, useAdmin, useSession } from "../../session/session";
-import { FACTOR_STATUS } from "../../status";
+import { FACTOR_STATUS, PLAN_SOURCE_LABELS, SUBSCRIPTION_STATUS, TEAM_LABEL } from "../../status";
+import type { CustomerFile } from "../customers/types";
 import type { AdminGrant, CustomerMatch, MemberRole, TeamMember } from "./types";
 import "./Operations.css";
 
@@ -69,6 +70,44 @@ function Factor({ member }: { member: TeamMember }) {
   );
 }
 
+type AccountCheck = ReturnType<typeof useAdminQuery<CustomerFile>>;
+
+function AccountNotices({ userId, account }: { userId: string; account: AccountCheck }) {
+  if (account.status === "loading") return <Muted>Revisando su suscripción y su atribución…</Muted>;
+  if (account.status === "error") {
+    return (
+      <Banner tone="warning" title="No pudimos revisar su cuenta">
+        {account.message} Mirá su suscripción y su atribución en{" "}
+        <Link className="entity-link" to={`/usuarios/${userId}`}>
+          su ficha
+        </Link>{" "}
+        antes de seguir.
+      </Banner>
+    );
+  }
+  const subscription = account.data.subscription;
+  const live = subscription && subscription.status !== "CANCELED" ? subscription : null;
+  const attribution = account.data.attribution;
+  return (
+    <>
+      {live ? (
+        <Banner tone="warning" title="Tiene una suscripción viva">
+          Hoy figura como {SUBSCRIPTION_STATUS[live.status].label}. Mientras tenga el rol su acceso viene del equipo, pero la suscripción sigue viva y Mercado Pago le sigue cobrando hasta que
+          se dé de baja.
+        </Banner>
+      ) : null}
+      {attribution ? (
+        <Banner tone="warning" title="Está atribuida a un revendedor">
+          Revisá si la atribución tiene que seguir así.{" "}
+          <Link className="entity-link" to={`/revendedores/${attribution.resellerId}`}>
+            Ver el revendedor
+          </Link>
+        </Banner>
+      ) : null}
+    </>
+  );
+}
+
 type GrantPanelProps = { members: readonly TeamMember[]; onClose: () => void; onGranted: () => void; onStale: () => void };
 
 function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
@@ -80,6 +119,7 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
   const [confirming, setConfirming] = useState(false);
   const results = useAdminQuery<AdminPage<CustomerMatch>>(search ? "/admin/customers" : null, new URLSearchParams({ query: search }).toString());
   const held = picked ? (members.find((member) => member.userId === picked.id)?.roles.map((grant) => grant.role) ?? []) : [];
+  const account = useAdminQuery<CustomerFile>(picked && confirming && held.length === 0 ? `/admin/customers/${picked.id}` : null);
   const blocked = blockedRoles(held);
 
   function pick(customer: CustomerMatch) {
@@ -183,6 +223,14 @@ function GrantPanel({ members, onClose, onGranted, onStale }: GrantPanelProps) {
             <strong>{picked.email}</strong> va a tener el rol {ROLE_LABELS[role]}. {ROLE_SCOPE[role]}
           </p>
           {picked.hasPassword ? null : <p>{NO_PASSWORD}</p>}
+          {held.length === 0 ? (
+            <>
+              <p>
+                Cuando configure su factor, esta cuenta pasa a usar BoxLead sin pagar con los límites de Business, tenga o no un plan.
+              </p>
+              <AccountNotices userId={picked.id} account={account} />
+            </>
+          ) : null}
           <p>
             Si todavía no configuró su factor, tiene 24 horas para hacerlo al entrar al backoffice. Para entrar también tiene que estar
             en la lista de Cloudflare Access, que se carga aparte.
@@ -301,6 +349,23 @@ export function TeamScreen() {
       ),
     },
     { key: "factor", header: "Factor", type: "status", cell: (row) => <Factor member={row} /> },
+    {
+      key: "plan",
+      header: "Plan",
+      width: "sm",
+      cell: (row) =>
+        row.planSource === "TEAM" ? (
+          <span className="cell-stack">
+            <span>{TEAM_LABEL}</span>
+            <span className="sub-text">Límites de Business sin pagar</span>
+          </span>
+        ) : (
+          <span className="cell-stack">
+            <span>{PLAN_SOURCE_LABELS[row.planSource]}</span>
+            <span className="sub-text">Pasa a {TEAM_LABEL} cuando configure su factor</span>
+          </span>
+        ),
+    },
     {
       key: "session",
       header: "Última sesión",
