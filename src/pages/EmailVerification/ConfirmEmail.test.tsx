@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConfirmEmail } from "./ConfirmEmail";
@@ -42,6 +43,19 @@ describe("confirm email", () => {
     );
     renderPage();
     expect(await screen.findByRole("alert")).toHaveTextContent("Este link no sirve");
+  });
+
+  it("says there were too many attempts and retries with the same token", async () => {
+    window.history.replaceState(null, "", "/confirmar-email#token-de-prueba");
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "Too Many Requests" }), { status: 429 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    renderPage();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Hiciste demasiados intentos seguidos");
+    expect(screen.queryByText(/Revisá tu conexión/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Probar de nuevo" }));
+    expect(await screen.findByText("Listo, confirmaste tu email.")).toBeInTheDocument();
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({ token: "token-de-prueba" });
   });
 
   it("explains a missing token without calling the API", async () => {

@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { isInvalidLink, takeFragmentToken } from "../../util/fragmentToken";
+import { isInvalidLink, isRateLimited, takeFragmentToken } from "../../util/fragmentToken";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { Loading } from "../../components/Loading";
 import { verifyEmail } from "../../data/account";
 
-type Step = "checking" | "done" | "invalid" | "error";
+type Step = "checking" | "done" | "invalid" | "limited" | "error";
 
 export function ConfirmEmail() {
   const [step, setStep] = useState<Step>("checking");
   const taken = useRef<string | null | undefined>(undefined);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (taken.current === undefined) taken.current = takeFragmentToken();
@@ -20,9 +21,14 @@ export function ConfirmEmail() {
     }
     verifyEmail(token).then(
       () => setStep("done"),
-      (error: unknown) => setStep(isInvalidLink(error) ? "invalid" : "error"),
+      (error: unknown) => setStep(isInvalidLink(error) ? "invalid" : isRateLimited(error) ? "limited" : "error"),
     );
-  }, []);
+  }, [attempt]);
+
+  function retry() {
+    setStep("checking");
+    setAttempt((current) => current + 1);
+  }
 
   return (
     <AuthLayout>
@@ -47,6 +53,16 @@ export function ConfirmEmail() {
           <Link className="auth-submit auth-action" to="/app/inbox">
             Entrar a BoxLead
           </Link>
+        </div>
+      ) : null}
+      {step === "limited" ? (
+        <div className="auth-stack">
+          <p className="auth-notice" role="alert">
+            Hiciste demasiados intentos seguidos. Esperá unos minutos y probá de nuevo, el link sigue sirviendo.
+          </p>
+          <button type="button" className="auth-submit" onClick={retry}>
+            Probar de nuevo
+          </button>
         </div>
       ) : null}
       {step === "error" ? (
