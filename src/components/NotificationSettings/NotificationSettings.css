@@ -1,0 +1,107 @@
+.notification-settings {
+  display: grid;
+  gap: var(--signal-space-5);
+  min-width: 0;
+  padding: var(--signal-space-6);
+}
+
+.notification-settings-head {
+  display: grid;
+  gap: var(--signal-space-1);
+}
+
+.notification-settings-desc {
+  margin: 0;
+  max-width: var(--signal-measure);
+  color: var(--signal-text);
+  font-size: var(--signal-text-base);
+}
+
+.notification-settings-groups {
+  display: grid;
+  gap: var(--signal-space-6);
+}
+
+.notification-settings-group {
+  display: grid;
+  gap: var(--signal-space-4);
+  min-width: 0;
+  margin: 0;
+  padding: var(--signal-space-5) 0 0;
+  border: 0;
+  border-top: 1px solid var(--signal-hairline);
+}
+
+.notification-settings-legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--signal-space-1);
+  padding: 0;
+  color: var(--signal-heading);
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-semibold);
+}
+
+.notification-settings-group .switch {
+  align-items: flex-start;
+}
+
+.notification-settings-group .switch-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.notification-settings-loading {
+  display: grid;
+  gap: var(--signal-space-4);
+}
+
+.notification-settings-skeleton {
+  display: block;
+  height: var(--signal-control-md);
+}
+
+.notification-system {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--signal-space-3) var(--signal-space-4);
+  padding: var(--signal-space-4);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-md);
+  background: var(--signal-bg-subtle);
+}
+
+.notification-system-text {
+  display: grid;
+  flex: 1 1 260px;
+  gap: var(--signal-space-1);
+  min-width: 0;
+}
+
+.notification-system-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--signal-space-2);
+  margin: 0;
+  color: var(--signal-heading);
+  font-size: var(--signal-text-md);
+  font-weight: var(--signal-weight-medium);
+}
+
+.notification-system .field-help {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .notification-settings {
+    padding: var(--signal-space-4);
+  }
+
+  .notification-system .btn {
+    width: 100%;
+    white-space: normal;
+  }
+}

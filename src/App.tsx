@@ -40,6 +40,7 @@ const Privacy = lazyRoute(() => import("./pages/Legal/Privacy"), "Privacy");
 const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContracts"), "AdhesionContracts");
 const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
+const Notifications = lazyRoute(() => import("./pages/Notifications/Notifications"), "Notifications");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -56,6 +57,7 @@ registerRoutePreload("/app/agents", [Layout, Agents]);
 registerRoutePreload("/app/connections", [Layout, Connections]);
 registerRoutePreload("/app/billing", [Layout, Billing]);
 registerRoutePreload("/app/reseller", [Layout, Reseller]);
+registerRoutePreload("/app/notificaciones", [Layout, Notifications]);
 
 function Page({ children }: { children: ReactNode }) {
   return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;
@@ -98,6 +100,7 @@ export default function App() {
               <Route path="categories" element={<Page><Categories /></Page>} />
               <Route path="agents" element={<Page><Agents /></Page>} />
               <Route path="connections" element={<Page><Connections /></Page>} />
+              <Route path="notificaciones" element={<Page><Notifications /></Page>} />
               <Route element={<FeatureRoute feature="billing" />}>
                 <Route path="billing" element={<Billing />} />
                 <Route path="billing/return" element={<BillingReturn />} />

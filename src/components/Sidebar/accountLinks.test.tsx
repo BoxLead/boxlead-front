@@ -24,4 +24,10 @@ describe("account links", () => {
     expect(accountLinks({ features, isReseller: true }).map((link) => link.label)).toEqual(["Facturación", "Revendedor"]);
     expect(accountLinks({ features, isReseller: false }).map((link) => link.label)).toEqual(["Facturación"]);
   });
+
+  it("links the notifications page only with the notifications flag", () => {
+    expect(accountLinks({ features: { ...off, notifications: true }, isReseller: false }).map((link) => link.to)).toEqual([
+      "/app/notificaciones",
+    ]);
+  });
 });
