@@ -1,4 +1,6 @@
 import { api } from "../api/client";
+import type { AccountView } from "../api/types";
+import { setQueryData } from "./queryCache";
 
 export type AuthOptions = {
   passwordReset: boolean;
@@ -31,4 +33,28 @@ export function verifyEmail(token: string): Promise<void> {
 
 export function resendEmailVerification(): Promise<void> {
   return api.post<void>("/account/email/verification");
+}
+
+export const ACCOUNT_KEY = "/account";
+
+export async function renameAccount(name: string): Promise<AccountView> {
+  const saved = await api.patch<AccountView>(ACCOUNT_KEY, { name });
+  setQueryData<AccountView>(ACCOUNT_KEY, () => saved);
+  return saved;
+}
+
+export function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  return api.post<void>("/account/password", { currentPassword, newPassword });
+}
+
+export function changeEmail(password: string, newEmail: string): Promise<void> {
+  return api.post<void>("/account/email", { password, newEmail });
+}
+
+export function confirmEmailChange(token: string): Promise<void> {
+  return api.post<void>("/auth/email/change", { token });
+}
+
+export function revokeAllSessions(): Promise<void> {
+  return api.post<void>("/auth/sessions/revoke");
 }

@@ -21,6 +21,9 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "DEMO_TEAM_MEMBER",
   "INVALID_TOKEN",
   "EMAIL_NOT_VERIFIED",
+  "WRONG_PASSWORD",
+  "PASSWORD_REQUIRED",
+  "SAME_EMAIL",
 ];
 
 function errorBody(error: unknown): object | null {

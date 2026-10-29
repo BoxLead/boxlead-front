@@ -43,6 +43,8 @@ const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellatio
 const ForgotPassword = lazyRoute(() => import("./pages/PasswordRecovery/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyRoute(() => import("./pages/PasswordRecovery/ResetPassword"), "ResetPassword");
 const ConfirmEmail = lazyRoute(() => import("./pages/EmailVerification/ConfirmEmail"), "ConfirmEmail");
+const ConfirmEmailChange = lazyRoute(() => import("./pages/EmailChange/ConfirmEmailChange"), "ConfirmEmailChange");
+const Account = lazyRoute(() => import("./pages/Account/Account"), "Account");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -53,6 +55,8 @@ registerRoutePreload("/register", [Register, socialAuth]);
 registerRoutePreload("/recuperar-clave", [ForgotPassword]);
 registerRoutePreload("/nueva-clave", [ResetPassword]);
 registerRoutePreload("/confirmar-email", [ConfirmEmail]);
+registerRoutePreload("/nuevo-email", [ConfirmEmailChange]);
+registerRoutePreload("/app/cuenta", [Layout, Account]);
 registerRoutePreload("/app", [Layout, Inbox]);
 registerRoutePreload("/app/inbox", [Layout, Inbox]);
 registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);
@@ -93,6 +97,7 @@ export default function App() {
           <Route path="/recuperar-clave" element={<ForgotPassword />} />
           <Route path="/nueva-clave" element={<ResetPassword />} />
           <Route path="/confirmar-email" element={<ConfirmEmail />} />
+          <Route path="/nuevo-email" element={<ConfirmEmailChange />} />
           <Route element={<ProtectedRoute />}>
             <Route
               path="/app/oauth/callback/:platform"
@@ -113,6 +118,9 @@ export default function App() {
               </Route>
               <Route element={<FeatureRoute feature="reseller" />}>
                 <Route path="reseller" element={<Reseller />} />
+              </Route>
+              <Route element={<FeatureRoute feature="account" />}>
+                <Route path="cuenta" element={<Page><Account /></Page>} />
               </Route>
               <Route path="*" element={<NotFound inApp />} />
             </Route>

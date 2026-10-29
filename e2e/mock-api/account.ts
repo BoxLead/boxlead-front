@@ -5,21 +5,37 @@ export type AccountOptions = {
   passwordReset: boolean;
   emailVerification: boolean;
   emailPending: boolean;
+  settings: boolean;
+  sessionRevocation: boolean;
+  socialOnly: boolean;
+};
+
+type AccountProfile = {
+  name: string | null;
+  email: string | null;
+  pendingEmail: string | null;
+  password: string;
 };
 
 type SentEmail = { template: string; to: string; token: string | null };
 
-type AccountToken = { purpose: "PASSWORD_RESET" | "EMAIL_VERIFICATION"; used: boolean };
+type AccountToken = { purpose: "PASSWORD_RESET" | "EMAIL_VERIFICATION" | "EMAIL_CHANGE"; used: boolean };
 
 type SessionUser = () => Record<string, unknown>;
 
 export type AccountState = {
   options: AccountOptions;
+  profile: AccountProfile;
   sent: SentEmail[];
   tokens: Map<string, AccountToken>;
 };
 
 const MIN_PASSWORD_LENGTH = 8;
+const WRONG_PASSWORD: MockReply = {
+  status: 400,
+  body: { error: "Bad Request", message: "The password is not correct", code: "WRONG_PASSWORD" },
+};
+const UNAUTHORIZED: MockReply = { status: 401, body: { error: "Unauthorized", message: "Unauthorized" } };
 const NOT_FOUND: MockReply = { status: 404, body: { error: "Not found", message: "Not found" } };
 const INVALID_TOKEN: MockReply = {
   status: 400,
@@ -27,7 +43,19 @@ const INVALID_TOKEN: MockReply = {
 };
 
 export function buildAccount(): AccountState {
-  return { options: { passwordReset: false, emailVerification: false, emailPending: false }, sent: [], tokens: new Map() };
+  return {
+    options: {
+      passwordReset: false,
+      emailVerification: false,
+      emailPending: false,
+      settings: false,
+      sessionRevocation: false,
+      socialOnly: false,
+    },
+    profile: { name: null, email: null, pendingEmail: null, password: "demo1234" },
+    sent: [],
+    tokens: new Map(),
+  };
 }
 
 function issueToken(account: AccountState, purpose: AccountToken["purpose"]): string {
@@ -48,10 +76,10 @@ function spendToken(account: AccountState, value: unknown, purpose: AccountToken
 
 function accountFeatures(account: AccountState) {
   return {
-    sessionRevocation: false,
+    sessionRevocation: account.options.sessionRevocation,
     passwordReset: account.options.passwordReset,
     emailVerification: account.options.emailVerification,
-    settings: false,
+    settings: account.options.settings,
     deletion: false,
   };
 }
@@ -68,6 +96,9 @@ export async function accountRoute(
       passwordReset: body.passwordReset === true,
       emailVerification: body.emailVerification === true,
       emailPending: body.emailPending === true,
+      settings: body.settings === true,
+      sessionRevocation: body.sessionRevocation === true,
+      socialOnly: body.socialOnly === true,
     };
     if (account.options.emailPending) {
       account.sent.push({
@@ -79,10 +110,13 @@ export async function accountRoute(
     return { status: 200, body: { ...account.options } };
   }
   if (path === "/auth/me" && method === "GET" && request.authed) {
+    const user = sessionUser();
     return {
       status: 200,
       body: {
-        ...sessionUser(),
+        ...user,
+        email: account.profile.email ?? user.email,
+        name: account.profile.name ?? user.name,
         account: accountFeatures(account),
         emailVerificationPending: account.options.emailVerification && account.options.emailPending,
       },
@@ -107,6 +141,8 @@ export async function accountRoute(
     }
     return { status: 202 };
   }
+  const settingsReply = await settingsRoute(account, request, sessionUser);
+  if (settingsReply) return settingsReply;
   if (
     account.options.emailVerification &&
     account.options.emailPending &&
@@ -148,6 +184,78 @@ export async function accountRoute(
     if (!spendToken(account, body.token, "PASSWORD_RESET")) return INVALID_TOKEN;
     account.sent.push({ template: "PASSWORD_CHANGED", to: request.userEmail, token: null });
     return { status: 204 };
+  }
+  return null;
+}
+
+function accountView(account: AccountState, sessionUser: SessionUser) {
+  const user = sessionUser();
+  const social = account.options.socialOnly;
+  return {
+    name: account.profile.name ?? (typeof user.name === "string" ? user.name : null),
+    email: account.profile.email ?? String(user.email),
+    pendingEmail: account.profile.pendingEmail,
+    emailVerified: social || !account.options.emailPending,
+    hasPassword: !social,
+    providers: social ? ["GOOGLE"] : [],
+  };
+}
+
+async function settingsRoute(
+  account: AccountState,
+  request: MockRequest,
+  sessionUser: SessionUser,
+): Promise<MockReply | null> {
+  const { method, path } = request;
+  if (path === "/auth/sessions/revoke" && method === "POST") {
+    if (!account.options.sessionRevocation) return NOT_FOUND;
+    if (!request.authed) return UNAUTHORIZED;
+    return { status: 204, headers: { "Set-Cookie": "boxlead_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" } };
+  }
+  if (path === "/auth/email/change" && method === "POST") {
+    if (!account.options.settings) return NOT_FOUND;
+    const body = await request.readBody();
+    if (!spendToken(account, body.token, "EMAIL_CHANGE") || !account.profile.pendingEmail) return INVALID_TOKEN;
+    account.profile.email = account.profile.pendingEmail;
+    account.profile.pendingEmail = null;
+    return { status: 204 };
+  }
+  if (!path.startsWith("/account") || path === "/account/email/verification") return null;
+  if (!account.options.settings) return NOT_FOUND;
+  if (!request.authed) return UNAUTHORIZED;
+  if (path === "/account" && method === "GET") return { status: 200, body: accountView(account, sessionUser) };
+  if (path === "/account" && method === "PATCH") {
+    const body = await request.readBody();
+    if (typeof body.name !== "string" || body.name.length > 100) return { status: 400, body: { error: "Validation failed", message: "Validation failed" } };
+    account.profile.name = body.name.trim() === "" ? null : body.name.trim();
+    return { status: 200, body: accountView(account, sessionUser) };
+  }
+  if (path === "/account/password" && method === "POST") {
+    const body = await request.readBody();
+    if (account.options.socialOnly) {
+      return { status: 409, body: { error: "Conflict", message: "No password", code: "PASSWORD_REQUIRED" } };
+    }
+    if (typeof body.newPassword !== "string" || body.newPassword.length < MIN_PASSWORD_LENGTH) {
+      return { status: 400, body: { error: "Validation failed", message: "Validation failed" } };
+    }
+    if (body.currentPassword !== account.profile.password) return WRONG_PASSWORD;
+    account.profile.password = body.newPassword;
+    account.sent.push({ template: "PASSWORD_CHANGED", to: request.userEmail, token: null });
+    return { status: 204 };
+  }
+  if (path === "/account/email" && method === "POST") {
+    const body = await request.readBody();
+    if (body.password !== account.profile.password) return WRONG_PASSWORD;
+    if (typeof body.newEmail !== "string" || !body.newEmail.includes("@")) {
+      return { status: 400, body: { error: "Validation failed", message: "Validation failed" } };
+    }
+    const email = body.newEmail.trim().toLowerCase();
+    if (email === (account.profile.email ?? request.userEmail)) {
+      return { status: 400, body: { error: "Bad Request", message: "Same email", code: "SAME_EMAIL" } };
+    }
+    account.profile.pendingEmail = email;
+    account.sent.push({ template: "EMAIL_CHANGE", to: email, token: issueToken(account, "EMAIL_CHANGE") });
+    return { status: 202 };
   }
   return null;
 }

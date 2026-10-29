@@ -46,6 +46,17 @@ export type AccountFeatures = {
   deletion: boolean;
 };
 
+export type SignInProvider = "GOOGLE" | "FACEBOOK" | "OTHER";
+
+export type AccountView = {
+  name: string | null;
+  email: string;
+  pendingEmail: string | null;
+  emailVerified: boolean;
+  hasPassword: boolean;
+  providers: SignInProvider[];
+};
+
 export type SessionFlags = {
   features: Features;
   access: Access;
@@ -425,7 +436,10 @@ export type ApiErrorCode =
   | "DEMO_SUBSCRIPTION_ACTIVE"
   | "DEMO_TEAM_MEMBER"
   | "INVALID_TOKEN"
-  | "EMAIL_NOT_VERIFIED";
+  | "EMAIL_NOT_VERIFIED"
+  | "WRONG_PASSWORD"
+  | "PASSWORD_REQUIRED"
+  | "SAME_EMAIL";
 
 export type FieldError = {
   field: string;
