@@ -90,3 +90,16 @@ test("closing every session sends the person to the login", async ({ page }) => 
   await page.getByRole("button", { name: "Cerrar todas" }).click();
   await expect(heading(page, "Iniciar sesión")).toBeVisible();
 });
+
+test("too many attempts on the new email link says so", async ({ page }) => {
+  await page.route("**/auth/email/change", (route) =>
+    route.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: "Too Many Requests" }) }),
+  );
+  await page.goto("/nuevo-email#un-token");
+  await expect(page.getByRole("alert")).toContainText("Hiciste demasiados intentos seguidos");
+  await expect(page.getByText(/Revisá tu conexión/)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Probar de nuevo" })).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+  await screenshot(page, "email-change-limited");
+});

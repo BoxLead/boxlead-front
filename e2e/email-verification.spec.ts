@@ -59,3 +59,23 @@ test("a used or missing confirmation link explains what to do", async ({ page })
   await page.goto("/confirmar-email");
   await expect(page.getByRole("alert")).toContainText("Este link no sirve");
 });
+
+test("too many attempts on the confirmation link says so and retries with the same link", async ({ page }) => {
+  await setAccountOptions({ emailVerification: true, emailPending: true });
+  const token = await lastToken("EMAIL_VERIFICATION");
+  let limited = true;
+  await page.route("**/auth/email/verify", async (route) => {
+    if (!limited) return route.fallback();
+    limited = false;
+    await route.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: "Too Many Requests" }) });
+  });
+  await page.goto(`/confirmar-email#${token}`);
+  await expect(page.getByRole("alert")).toContainText("Hiciste demasiados intentos seguidos");
+  await expect(page.getByText(/Revisá tu conexión/)).toHaveCount(0);
+  await expect(page).toHaveURL(/\/confirmar-email$/);
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+  await screenshot(page, "email-confirm-limited");
+  await page.getByRole("button", { name: "Probar de nuevo" }).click();
+  await expect(page.locator("p.auth-notice")).toHaveText("Listo, confirmaste tu email.");
+});

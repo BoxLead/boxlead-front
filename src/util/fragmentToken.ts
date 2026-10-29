@@ -15,3 +15,7 @@ export function takeFragmentToken(): string | null {
 export function isInvalidLink(error: unknown): boolean {
   return apiErrorCode(error) === "INVALID_TOKEN" || (error instanceof ApiError && error.status === 404);
 }
+
+export function isRateLimited(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 429;
+}
