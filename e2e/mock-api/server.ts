@@ -470,6 +470,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       providerDown: body.providerDown === true,
       clientErrors: body.clientErrors === true,
       onboarding: body.onboarding === true,
+      teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
     });
     clearClientErrors();
     return send(res, 200, { scenario });

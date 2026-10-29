@@ -4,7 +4,9 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, ApiError } from "../api/client";
 import type { AuthUser } from "../api/types";
+import { clearQueryCache } from "../data/queryCache";
 import { requestSessionRefresh } from "../data/session";
+import { useApiQuery } from "../hooks/useApiQuery";
 import { useAuth } from "./auth";
 import { AuthProvider } from "./AuthContext";
 
@@ -226,5 +228,60 @@ describe("AuthProvider reports client errors", () => {
     expect(await screen.findByRole("button", { name: "registrar" })).toBeInTheDocument();
     throwOnWindow("anonymous visitor");
     expect(report).not.toHaveBeenCalled();
+  });
+});
+
+function Leads() {
+  const { user } = useAuth();
+  const leads = useApiQuery<{ owner: string }>("/leads");
+  return <p>{`${user?.email ?? "nadie"} ve los leads de ${leads.data?.owner ?? "nadie"}`}</p>;
+}
+
+function renderLeads() {
+  render(
+    <MemoryRouter initialEntries={["/app/leads"]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/app/leads" element={<Leads />} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe("AuthProvider when another tab changes the session", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    clearQueryCache();
+  });
+
+  const other: AuthUser = { ...user("FULL"), userId: "u2", email: "beto@otro.com" };
+
+  it("drops the cached data of the previous user and loads it again", async () => {
+    vi.spyOn(api, "me").mockResolvedValueOnce(user("FULL")).mockResolvedValueOnce(other);
+    const get = vi
+      .spyOn(api, "get")
+      .mockResolvedValueOnce({ owner: "ana" })
+      .mockResolvedValueOnce({ owner: "beto" });
+    renderLeads();
+    expect(await screen.findByText("ana@negocio.com ve los leads de ana")).toBeInTheDocument();
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(await screen.findByText("beto@otro.com ve los leads de beto")).toBeInTheDocument();
+    expect(screen.queryByText(/de ana/)).toBeNull();
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the cache when the same user comes back with other flags", async () => {
+    vi.spyOn(api, "me").mockResolvedValueOnce(user("FULL")).mockResolvedValueOnce(user("RESTRICTED"));
+    const get = vi.spyOn(api, "get").mockResolvedValue({ owner: "ana" });
+    renderLeads();
+    expect(await screen.findByText("ana@negocio.com ve los leads de ana")).toBeInTheDocument();
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(screen.getByText("ana@negocio.com ve los leads de ana")).toBeInTheDocument();
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });

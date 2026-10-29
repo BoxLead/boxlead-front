@@ -29,13 +29,15 @@ export type AdminErrorCode =
   | "REFUND_ALREADY_ANSWERED"
   | "INVOICE_NOT_ISSUED"
   | "CONCURRENT_CHANGE"
-  | "AUDIT_TARGET_TYPE_REQUIRED";
+  | "AUDIT_TARGET_TYPE_REQUIRED"
+  | "WITHDRAWAL_REFUND_REJECTED"
+  | "WITHDRAWAL_REFUND_PENDING";
 
 const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   ADMIN_SESSION_REQUIRED: "Tu sesión de administración venció. Ingresá un código nuevo para seguir.",
   ROLE_REQUIRED: "Tu rol no permite hacer esto.",
   ADMIN_SELF_OPERATION:
-    "No podés hacer esto sobre tu propia cuenta. Ni el rol de Dueño permite tocar tus límites, tu Demo, tus reembolsos o tus arrepentimientos, ni invitar a tu propio email. Pedíselo a otra persona del equipo.",
+    "No podés hacer esto sobre tu propia cuenta ni sobre tu propio revendedor. Ni el rol de Dueño permite tocar tus límites, tu Demo, tus reembolsos o tus arrepentimientos, invitar a tu propio email ni operar tu revendedor, sus códigos, sus comisiones o sus liquidaciones. Lo tiene que hacer otra persona del equipo.",
   MFA_LOCKED: "Hubo demasiados códigos incorrectos y el factor quedó bloqueado por un rato.",
   MFA_INVALID: "El código no es válido. Revisá que la hora del teléfono esté bien y probá con el próximo.",
   REFUND_EXCEEDS_PAYMENT: "El reembolso supera lo que queda del pago.",
@@ -65,6 +67,8 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   INVOICE_NOT_ISSUED: "Solo se puede anular una factura emitida. Recargá para ver su estado.",
   CONCURRENT_CHANGE: "Otra persona cambió esto al mismo tiempo. Recargá para ver lo último y volvé a intentar.",
   AUDIT_TARGET_TYPE_REQUIRED: "Elegí el tipo de objetivo para buscar por id.",
+  WITHDRAWAL_REFUND_REJECTED: "Mercado Pago rechazó el reembolso. El pedido sigue abierto, revisá el pago en Pagos antes de volver a intentar.",
+  WITHDRAWAL_REFUND_PENDING: "El reembolso sigue en proceso en Mercado Pago. Volvé a resolver el pedido cuando se acredite.",
 };
 
 const STATUS_MESSAGES: Record<number, string> = {

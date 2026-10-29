@@ -101,7 +101,9 @@ export function Billing() {
       const result = await cancelSubscription();
       toast({
         message: result.subscription?.cancelAtPeriodEnd
-          ? `Diste de baja tu plan. Tenés acceso hasta el ${longDate(result.subscription.currentPeriodEnd)}.`
+          ? team
+            ? `Diste de baja tu plan pago propio. Termina el ${longDate(result.subscription.currentPeriodEnd)}.`
+            : `Diste de baja tu plan. Tenés acceso hasta el ${longDate(result.subscription.currentPeriodEnd)}.`
           : CANCEL_REQUESTED,
       });
       setConfirmCancel(false);
@@ -259,18 +261,26 @@ export function Billing() {
 
       <ConfirmDialog
         open={confirmCancel}
-        title="¿Dar de baja tu plan?"
+        title={team ? "¿Dar de baja tu plan pago propio?" : "¿Dar de baja tu plan?"}
         confirmLabel={busy ? "Dando de baja…" : "Dar de baja"}
         tone="danger"
         busy={busy}
         onConfirm={() => void cancel()}
         onCancel={() => setConfirmCancel(false)}
       >
-        <p>
-          No se te va a cobrar más. Seguís usando {data?.plan?.name ?? "tu plan"} hasta el{" "}
-          {data?.subscription ? longDate(data.subscription.currentPeriodEnd) : "fin del período pagado"}. Después tus agentes dejan de
-          responder.
-        </p>
+        {team ? (
+          <p>
+            No se te va a cobrar más y termina el{" "}
+            {data?.subscription ? longDate(data.subscription.currentPeriodEnd) : "fin del período pagado"}. Mientras tengas un rol en el
+            backoffice seguís usando BoxLead sin pagar con los límites de Business.
+          </p>
+        ) : (
+          <p>
+            No se te va a cobrar más. Seguís usando {data?.plan?.name ?? "tu plan"} hasta el{" "}
+            {data?.subscription ? longDate(data.subscription.currentPeriodEnd) : "fin del período pagado"}. Después tus agentes dejan de
+            responder.
+          </p>
+        )}
         <p>La baja no se puede deshacer. Para volver, contratás de nuevo cuando termine el período.</p>
       </ConfirmDialog>
     </div>

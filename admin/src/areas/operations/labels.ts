@@ -61,7 +61,7 @@ export const ACTION_LABELS: Record<string, string> = {
   CHECKOUT_REPLACED: "Compra reemplazada",
   BILLING_PROFILE_UPDATED: "Datos de facturación cambiados",
   SUBSCRIPTION_PLAN_CHANGED: "Plan cambiado",
-  SUBSCRIPTION_CANCEL_REQUESTED: "Baja pedida por el cliente",
+  SUBSCRIPTION_CANCEL_REQUESTED: "Baja pedida",
   SUBSCRIPTION_PAUSED: "Suscripción pausada",
   SUBSCRIPTION_RESUMED: "Suscripción reanudada",
   SUBSCRIPTION_CANCELED: "Suscripción cancelada",

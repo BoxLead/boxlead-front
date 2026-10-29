@@ -412,7 +412,8 @@ export type ApiErrorCode =
   | "BILLING_PROFILE_REQUIRED"
   | "PROVIDER_UNAVAILABLE"
   | "CHECKOUT_PENDING"
-  | "DEMO_SUBSCRIPTION_ACTIVE";
+  | "DEMO_SUBSCRIPTION_ACTIVE"
+  | "DEMO_TEAM_MEMBER";
 
 export type FieldError = {
   field: string;

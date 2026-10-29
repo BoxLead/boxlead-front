@@ -292,7 +292,9 @@ test("a team account sees it uses BoxLead for free and is offered nothing to buy
   await expect(current.getByText("Equipo de BoxLead", { exact: true })).toBeVisible();
   await expect(current).toContainText("Esta cuenta es del equipo de BoxLead. Usás la app sin pagar con los límites de Business");
   await expect(current.getByText("300 de 5.000 respuestas")).toBeVisible();
-  await expect(current.getByText("Suspendido")).toHaveCount(0);
+  await expect(current).toContainText("También tenés un plan pago propio que hoy figura como Suspendido. No lo necesitás para usar BoxLead, pero Mercado Pago te lo sigue cobrando");
+  await expect(current.getByRole("link", { name: "Cambiar el medio de pago" })).toHaveAttribute("href", CHECKOUT_PAGE);
+  await expect(current.getByText("Tus agentes están apagados hasta que se regularice el pago.")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Planes" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Contratar/ })).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -301,6 +303,28 @@ test("a team account sees it uses BoxLead for free and is offered nothing to buy
   await expectNoHorizontalScroll(page);
   await expectAccessible(page);
   await shoot(page, "billing-team");
+});
+
+test("a team account with its own active plan can still cancel it", async ({ page }) => {
+  await resetApi("billing-team", undefined, { teamSubscription: "ACTIVE" });
+  await login(page, "/app/billing");
+  const current = page.getByRole("region", { name: "Tu plan" });
+  await expect(current.getByText("Equipo de BoxLead", { exact: true })).toBeVisible();
+  await expect(current).toContainText("hoy figura como Activo. No lo necesitás para usar BoxLead, pero Mercado Pago te lo sigue cobrando hasta que lo des de baja.");
+  await expect(current.getByText(/^Próxima cuota de/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planes" })).toHaveCount(0);
+  await expect(page.locator(".plan-banners")).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
+
+  await current.getByRole("button", { name: "Dar de baja" }).click();
+  const cancel = page.getByRole("dialog", { name: "¿Dar de baja tu plan pago propio?" });
+  await expect(cancel).toContainText("Mientras tengas un rol en el backoffice seguís usando BoxLead sin pagar con los límites de Business.");
+  await expectNoHorizontalScroll(page);
+  await cancel.getByRole("button", { name: "Dar de baja" }).click();
+  await expect(page.getByText(/^Diste de baja tu plan pago propio\. Termina el/)).toBeVisible();
+  await expect(current.getByText(/Lo diste de baja y termina el .+\. No se te cobra más\./)).toBeVisible();
+  await expect(current.getByRole("button", { name: "Dar de baja" })).toHaveCount(0);
+  await expect(current.getByText("Equipo de BoxLead", { exact: true })).toBeVisible();
 });
 
 test("the billing profile explains its validation errors", async ({ page }) => {

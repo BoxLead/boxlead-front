@@ -60,8 +60,11 @@ export type RefundNotice = { tone: "success" | "info" | "danger"; message: strin
 const CANCEL_FAILED =
   "Mercado Pago no confirmó la cancelación de la suscripción, así que sigue viva y puede volver a cobrar. La tiene que cancelar un Dueño desde Suscripciones.";
 
+const CANCEL_PENDING = "El reembolso quedó en proceso. La suscripción se cancela sola cuando Mercado Pago lo confirme.";
+
 export function withCancellation(notice: RefundNotice, cancellation: SubscriptionCancellation | undefined): RefundNotice {
   if (cancellation === "FAILED") return { tone: "danger", message: `${notice.message} ${CANCEL_FAILED}` };
+  if (cancellation === "PENDING") return { ...notice, message: `${notice.message} ${CANCEL_PENDING}` };
   if (cancellation === "CANCELED") return { ...notice, message: `${notice.message} La suscripción quedó cancelada.` };
   return notice;
 }

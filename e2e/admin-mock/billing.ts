@@ -367,6 +367,7 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
     live.status = "ACTIVE";
     live.graceUntil = null;
   } else {
+    if (provider === "DOWN") return PROVIDER_UNAVAILABLE;
     live.status = "CANCELED";
     live.canceledAt = new Date().toISOString();
     live.cancelReason = "ADMIN_CANCELED";
@@ -374,11 +375,12 @@ function changeSubscription({ match, body, admin }: MockRequest): MockReply {
   return { status: 204 };
 }
 
-type SubscriptionCancellation = "NOT_NEEDED" | "CANCELED" | "FAILED";
+type SubscriptionCancellation = "NOT_NEEDED" | "CANCELED" | "PENDING" | "FAILED";
 
-function closeSubscription(payment: StoredPayment): SubscriptionCancellation {
+function closeSubscription(payment: StoredPayment, refund: StoredRefund): SubscriptionCancellation {
   const subscription = state.subscriptions.find((row) => row.id === payment.subscriptionId && row.status !== "CANCELED");
   if (!subscription) return "NOT_NEEDED";
+  if (refund.status !== "APPROVED") return "PENDING";
   if (cancelFails) return "FAILED";
   subscription.status = "CANCELED";
   subscription.canceledAt = new Date().toISOString();
@@ -442,7 +444,7 @@ function refundPayment({ match, body, admin }: MockRequest): MockReply {
   state.refunds.push(refund);
   const down = answer(refund, `rf-${3000 + sequence}`);
   if (down) return down;
-  const cancellation = closesTheSubscription ? closeSubscription(payment) : "NOT_NEEDED";
+  const cancellation = closesTheSubscription ? closeSubscription(payment, refund) : "NOT_NEEDED";
   return { status: 201, body: refundResult(refund, cancellation) };
 }
 
@@ -457,7 +459,7 @@ function retryRefund({ match, body, admin }: MockRequest): MockReply {
   const down = answer(refund, `rf-${3500 + state.refunds.indexOf(refund)}`);
   if (down) return down;
   const closes = payment !== undefined && refund.amount === null && isLatestApproval(payment);
-  return ok(refundResult(refund, closes && payment ? closeSubscription(payment) : "NOT_NEEDED"));
+  return ok(refundResult(refund, closes && payment ? closeSubscription(payment, refund) : "NOT_NEEDED"));
 }
 
 function syncPayment(invoice: InvoiceRow) {
