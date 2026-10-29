@@ -16,6 +16,7 @@ describe("structured data", () => {
     expect(video).toMatchObject({
       "@type": "VideoObject",
       duration: "PT2M27S",
+      uploadDate: "2026-10-25T00:00:00-03:00",
       contentUrl: "https://boxlead.app/demo/boxlead-demo.mp4",
       thumbnailUrl: ["https://boxlead.app/demo/boxlead-demo-poster.jpg"],
     });
