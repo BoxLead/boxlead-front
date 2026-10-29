@@ -68,3 +68,26 @@ for (const route of ROUTES) {
     expect(bad).toEqual([]);
   });
 }
+
+test("the first steps panel keeps controls and gutters on the scale", async ({ page }) => {
+  await resetApi("empty", undefined, { onboarding: true });
+  await login(page, "/app/inbox");
+  await expect(page.getByRole("region", { name: "Primeros pasos" })).toBeVisible();
+
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow, "no horizontal scroll").toBeLessThanOrEqual(0);
+
+  const rows = await controlRows(page);
+  expect(rows.filter((row) => new Set(row.heights).size > 1)).toEqual([]);
+  expect(rows.flatMap((row) => row.heights.filter((height) => !CONTROLS.has(height)))).toEqual([]);
+
+  const padding = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>(".onboarding, .onboarding-step")].flatMap((element) => {
+      const style = getComputedStyle(element);
+      return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft].map(
+        (value) => `${element.className} ${value}`,
+      );
+    }),
+  );
+  expect(padding.filter((entry) => !SPACING.has(Number(entry.split(" ").pop()?.replace("px", ""))))).toEqual([]);
+});
