@@ -1,5 +1,4 @@
 import type { Page, Request } from "@playwright/test";
-import { setAccountOptions } from "./account-support.ts";
 import { UNSUBSCRIBE_TOKEN } from "./mock-api/notifications.ts";
 import { APP_PORT, MOCK_API_ORIGIN } from "./ports.ts";
 import { expect, expectAccessible, login, mockApiUrl, resetApi, screenshot, test } from "./support.ts";
@@ -236,7 +235,6 @@ test("the system notifications are asked only from their button", async ({ page 
 
 test("the account screen shows the preferences only with the flag on", async ({ page }) => {
   await resetApi("default", undefined, { notifications: true });
-  await setAccountOptions({ settings: true });
   await login(page, "/app/cuenta");
   await expect(page.getByRole("heading", { level: 1, name: "Tu cuenta" })).toBeVisible();
   await expect(page.getByRole("switch", { name: "Mail cuando entra un lead nuevo" })).toBeVisible();
@@ -244,7 +242,6 @@ test("the account screen shows the preferences only with the flag on", async ({ 
   await screenshot(page, "notifications-account");
 
   await resetApi();
-  await setAccountOptions({ settings: true });
   await page.reload();
   await expect(page.getByRole("heading", { level: 1, name: "Tu cuenta" })).toBeVisible();
   await expect(page.getByRole("switch", { name: "Mail cuando entra un lead nuevo" })).toHaveCount(0);
