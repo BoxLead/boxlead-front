@@ -42,6 +42,7 @@ const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"),
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
 const ForgotPassword = lazyRoute(() => import("./pages/PasswordRecovery/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyRoute(() => import("./pages/PasswordRecovery/ResetPassword"), "ResetPassword");
+const ConfirmEmail = lazyRoute(() => import("./pages/EmailVerification/ConfirmEmail"), "ConfirmEmail");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -51,6 +52,7 @@ registerRoutePreload("/login", [Login, socialAuth]);
 registerRoutePreload("/register", [Register, socialAuth]);
 registerRoutePreload("/recuperar-clave", [ForgotPassword]);
 registerRoutePreload("/nueva-clave", [ResetPassword]);
+registerRoutePreload("/confirmar-email", [ConfirmEmail]);
 registerRoutePreload("/app", [Layout, Inbox]);
 registerRoutePreload("/app/inbox", [Layout, Inbox]);
 registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);
@@ -90,6 +92,7 @@ export default function App() {
           <Route path="/baja" element={<Cancellation />} />
           <Route path="/recuperar-clave" element={<ForgotPassword />} />
           <Route path="/nueva-clave" element={<ResetPassword />} />
+          <Route path="/confirmar-email" element={<ConfirmEmail />} />
           <Route element={<ProtectedRoute />}>
             <Route
               path="/app/oauth/callback/:platform"
