@@ -439,7 +439,12 @@ export type ApiErrorCode =
   | "EMAIL_NOT_VERIFIED"
   | "WRONG_PASSWORD"
   | "PASSWORD_REQUIRED"
-  | "SAME_EMAIL";
+  | "SAME_EMAIL"
+  | "CONFIRMATION_MISMATCH"
+  | "REAUTHENTICATION_REQUIRED"
+  | "SUBSCRIPTION_OPEN"
+  | "RESELLER_ACTIVE"
+  | "ADMIN_ACTIVE";
 
 export type FieldError = {
   field: string;
