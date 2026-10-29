@@ -647,3 +647,27 @@ export type ConsumerRequestReceipt = {
   code: string;
   createdAt: string;
 };
+
+export type NotificationKind = "NEW_LEAD" | "HANDOFF";
+
+export type AppNotification = {
+  id: number;
+  kind: NotificationKind;
+  platform: PlatformType;
+  leadId: string | null;
+  conversationId: string | null;
+  createdAt: string;
+};
+
+export type NotificationsPage = {
+  notifications: AppNotification[];
+  cursor: number;
+};
+
+export type NotificationSettings = {
+  newLeadEmail: boolean;
+  handoffEmail: boolean;
+  browser: boolean;
+};
+
+export type UnsubscribeScope = NotificationKind | "ALL";
