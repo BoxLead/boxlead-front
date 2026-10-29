@@ -38,6 +38,14 @@ export type LegalVersion = {
   version: string;
 };
 
+export type AccountFeatures = {
+  sessionRevocation: boolean;
+  passwordReset: boolean;
+  emailVerification: boolean;
+  settings: boolean;
+  deletion: boolean;
+};
+
 export type SessionFlags = {
   features: Features;
   access: Access;
@@ -49,6 +57,8 @@ export type AuthUser = SessionFlags & {
   userId: string;
   email: string;
   name: string | null;
+  account?: AccountFeatures;
+  emailVerificationPending?: boolean;
 };
 
 export type RegisterRequest = {
@@ -414,7 +424,8 @@ export type ApiErrorCode =
   | "CHECKOUT_PENDING"
   | "DEMO_SUBSCRIPTION_ACTIVE"
   | "DEMO_TEAM_MEMBER"
-  | "INVALID_TOKEN";
+  | "INVALID_TOKEN"
+  | "EMAIL_NOT_VERIFIED";
 
 export type FieldError = {
   field: string;

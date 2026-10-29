@@ -22,6 +22,7 @@ const ROUTE_ENTRIES: Record<string, string[]> = {
   '/social/callback': ['src/pages/SocialCallback/SocialCallback.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/recuperar-clave': ['src/pages/PasswordRecovery/ForgotPassword.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/nueva-clave': ['src/pages/PasswordRecovery/ResetPassword.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/confirmar-email': ['src/pages/EmailVerification/ConfirmEmail.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/whatsapp': ['src/landing/pages/EditorialPage.tsx'],
   '/instagram': ['src/landing/pages/EditorialPage.tsx'],
   '/messenger': ['src/landing/pages/EditorialPage.tsx'],

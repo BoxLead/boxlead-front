@@ -198,6 +198,14 @@ export const PUBLIC_PAGES: PublicPage[] = [
     source: "src/pages/PasswordRecovery/ResetPassword.tsx",
   }),
   page({
+    path: "/confirmar-email",
+    title: "Confirmar tu email",
+    description: "Confirmá el email de tu cuenta de BoxLead.",
+    lang: "es-AR",
+    index: false,
+    source: "src/pages/EmailVerification/ConfirmEmail.tsx",
+  }),
+  page({
     path: "/social/callback",
     title: "Iniciando sesión",
     description: "Estamos verificando tu cuenta.",

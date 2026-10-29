@@ -7,7 +7,6 @@ import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { Loading } from "../../components/Loading";
 import { resetPassword } from "../../data/account";
 import { takeFragmentToken } from "../../util/fragmentToken";
-import "./PasswordRecovery.css";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -59,8 +58,8 @@ export function ResetPassword() {
       <h1 className="auth-title">Elegí una contraseña nueva</h1>
       {step === "reading" ? <Loading inline /> : null}
       {step === "invalid" ? (
-        <div className="recovery-body">
-          <p className="recovery-notice" role="alert">
+        <div className="auth-stack">
+          <p className="auth-notice" role="alert">
             Este link no sirve. Puede que haya vencido, que ya lo hayas usado o que hayas pedido otro después.
           </p>
           <p className="auth-footer">
@@ -69,11 +68,11 @@ export function ResetPassword() {
         </div>
       ) : null}
       {step === "done" ? (
-        <div className="recovery-body">
-          <p className="recovery-notice" role="status">
+        <div className="auth-stack">
+          <p className="auth-notice" role="status">
             Listo, guardamos tu contraseña nueva y cerramos las sesiones abiertas en otros dispositivos.
           </p>
-          <Link className="auth-submit recovery-action" to="/login">
+          <Link className="auth-submit auth-action" to="/login">
             Iniciar sesión
           </Link>
         </div>

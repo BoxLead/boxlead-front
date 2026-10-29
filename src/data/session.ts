@@ -1,4 +1,4 @@
-import { ApiError, onPlanError } from "../api/client";
+import { ApiError, onEmailNotVerified, onPlanError } from "../api/client";
 import { BILLING_SUMMARY_KEY } from "./billing";
 import { discardQueryData, onQueryError } from "./queryCache";
 
@@ -16,6 +16,8 @@ export function onSessionRefresh(listener: () => void): () => void {
 }
 
 onPlanError(() => requestSessionRefresh());
+
+onEmailNotVerified(() => requestSessionRefresh());
 
 onQueryError((key, error) => {
   if (key !== BILLING_SUMMARY_KEY || !(error instanceof ApiError) || error.status !== 404) return;
