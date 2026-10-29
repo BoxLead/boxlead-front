@@ -82,6 +82,19 @@ afterEach(() => {
   setQueryFetcher(null);
 });
 
+function CopiesProbe({ copies }: { copies: number[] }) {
+  const messages = useApiQuery<MessageResponse[]>(messagesKey("c-1"));
+  const sender = useConversationSender("c-1", "INSTAGRAM");
+  const delivered = (messages.data ?? []).filter((message) => message.content === "Hola").length;
+  const pending = sender.pending.filter((item) => item.content === "Hola").length;
+  copies.push(delivered + pending);
+  return (
+    <button type="button" onClick={() => void sender.send("Hola")}>
+      Enviar
+    </button>
+  );
+}
+
 function CommentProbe() {
   const sender = useConversationSender("c-1", "INSTAGRAM");
   return (
@@ -178,5 +191,28 @@ describe("useConversationSender", () => {
       });
     });
     await waitFor(() => expect(screen.getAllByText("Hola")).toHaveLength(1));
+  });
+
+  it("never renders the delivered reply next to its pending copy", async () => {
+    const copies: number[] = [];
+    let resolvePost: (message: MessageResponse) => void = () => undefined;
+    vi.mocked(api.post).mockReturnValue(
+      new Promise((resolve) => {
+        resolvePost = resolve;
+      }),
+    );
+    fetcher.mockImplementation((key: string) => Promise.resolve(key === messagesKey("c-1") ? [] : undefined));
+
+    render(<CopiesProbe copies={copies} />);
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith(messagesKey("c-1")));
+    fetcher.mockImplementation(() => new Promise(() => undefined));
+    await userEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() => expect(copies.at(-1)).toBe(1));
+
+    resolvePost(created);
+
+    await waitFor(() => expect(getQueryState<MessageResponse[]>(messagesKey("c-1")).data).toEqual([created]));
+    expect(copies.at(-1)).toBe(1);
+    expect(Math.max(...copies)).toBe(1);
   });
 });

@@ -78,6 +78,9 @@ Dockerfile targets:
 | Target    | Purpose                                             |
 | --------- | --------------------------------------------------- |
 | `lint`    | Runs ESLint                                         |
+| `unit`    | Runs the unit tests with coverage                   |
+| `build`   | Type checks, builds and runs `test:dist`            |
+| `e2e`     | Playwright image with the browsers and the suite, at the Playwright version of `package.json` |
 | `export`  | Only the static files (`--output type=local,dest=dist`) |
 | `admin-export` | Only the backoffice files from `dist-admin`, with `VITE_API_BASE_URL` as build argument |
 | `runtime` | nginx image (default), health check on `/healthz`   |
@@ -98,15 +101,32 @@ Channel and agency pages are data in `src/landing/editorial.ts`. Keep their clai
 
 URLs have one form, without trailing slash and without `.html`. `vite preview`, nginx and the CloudFront Function redirect the other forms with 301 and answer 404 for anything that does not exist.
 
+## CI
+
+Every step runs inside the Dockerfile, the same way on a laptop and in GitHub Actions.
+
+```bash
+scripts/ci.sh check
+scripts/ci.sh unit
+scripts/ci.sh e2e 3 8
+scripts/ci.sh
+```
+
+`check` lints, type checks, builds and verifies the site. `unit` runs Vitest with coverage. `e2e 3 8` runs the third of eight Playwright shards in the `e2e` image and leaves its blob report in `blob-report` and its traces in `test-results`. Without arguments it runs everything with the whole suite in one shard. `scripts/ci.sh report` merges the blobs found in `all-blob-reports` into `playwright-report` and lists the tests that only passed on a retry.
+
+The e2e container has its own network, so its ports do not clash with a dev server on the host.
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs `check`, `unit` and the eight shards in parallel on every pull request and on `master`, with the Docker layers cached in GitHub. A last job merges the shards into one report.
+
 ## Deployment
 
 Pushing to `master` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 
-1. Lints and runs the unit tests inside Docker (`test` target).
+1. Waits for CI on the same commit and stops if it did not pass, so lint and tests run once per commit.
 2. Records the last commit of every source file for the sitemap, builds the image with the `VITE_*` values read from SSM, verifies the generated site and smoke-tests the image, including the 404 status and a redirect.
 3. Exports the static files from the same build, syncs them to S3 with `Cache-Control` per kind and invalidates CloudFront.
 
-The backoffice deploys on its own with [.github/workflows/deploy-admin.yml](.github/workflows/deploy-admin.yml) when a push to `master` touches `admin/` or the code it shares. It runs the same tests, exports the `admin-export` target, checks `noindex`, `robots.txt` and that no file points to third party origins, and syncs to the bucket and distribution in `ADMIN_S3_BUCKET_NAME` and `ADMIN_CLOUDFRONT_DISTRIBUTION_ID`.
+The backoffice deploys on its own with [.github/workflows/deploy-admin.yml](.github/workflows/deploy-admin.yml) when a push to `master` touches `admin/` or the code it shares. It waits for the same CI, exports the `admin-export` target, checks `noindex`, `robots.txt` and that no file points to third party origins, and syncs to the bucket and distribution in `ADMIN_S3_BUCKET_NAME` and `ADMIN_CLOUDFRONT_DISTRIBUTION_ID`.
 
 Infrastructure lives in [terraform/](terraform/README.md).
 
