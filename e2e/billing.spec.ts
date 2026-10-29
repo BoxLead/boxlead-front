@@ -289,10 +289,10 @@ test("a team account sees it uses BoxLead for free and is offered nothing to buy
   await resetApi("billing-team");
   await login(page, "/app/billing?checkout=STARTER");
   const current = page.getByRole("region", { name: "Tu plan" });
-  await expect(current.getByText("Equipo de BoxLead")).toBeVisible();
+  await expect(current.getByText("Equipo de BoxLead", { exact: true })).toBeVisible();
   await expect(current).toContainText("Esta cuenta es del equipo de BoxLead. Usás la app sin pagar con los límites de Business");
   await expect(current.getByText("300 de 5.000 respuestas")).toBeVisible();
-  await expect(current.getByText("Suspendida")).toHaveCount(0);
+  await expect(current.getByText("Suspendido")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Planes" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Contratar/ })).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(0);

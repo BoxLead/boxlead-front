@@ -64,7 +64,7 @@ describe("CurrentPlan", () => {
     expect(screen.getByText("Equipo de BoxLead")).toBeInTheDocument();
     expect(screen.getByText("Sin cargo")).toBeInTheDocument();
     expect(screen.getByText(/Esta cuenta es del equipo de BoxLead\. Usás la app sin pagar con los límites de Business/)).toBeInTheDocument();
-    expect(screen.queryByText("Suspendida")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suspendido")).not.toBeInTheDocument();
     expect(screen.queryByText("Tus agentes están apagados hasta que se regularice el pago.")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Dar de baja" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Cambiar el medio de pago" })).not.toBeInTheDocument();

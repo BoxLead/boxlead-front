@@ -338,7 +338,7 @@ test("a suspended plan while limits are not enforced does not say the agents sto
   await expect(banner).not.toContainText("no responden");
   await page.goto("/app/billing");
   await expect(page.getByRole("heading", { level: 1, name: "Facturación" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Tu plan" }).getByText("Suspendida")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Tu plan" }).getByText("Suspendido")).toBeVisible();
   await expect(page.getByText("Tus agentes están apagados hasta que se regularice el pago.")).toHaveCount(0);
   await expectNoHorizontalScroll(page);
 });
