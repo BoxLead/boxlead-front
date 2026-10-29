@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { prerenderSite, type RouteFiles } from './scripts/prerender'
+import { releaseOf } from './scripts/release'
 import { staticSiteMiddleware } from './scripts/staticSite'
 
 const FACEBOOK_SOURCES = 'https://*.facebook.com https://*.facebook.net https://*.fbcdn.net'
@@ -229,6 +230,9 @@ export default defineConfig(({ mode }) => {
       ),
       staticSite(),
     ],
+    define: {
+      __BOXLEAD_RELEASE__: JSON.stringify(releaseOf(root)),
+    },
     build: {
       modulePreload: { polyfill: false },
     },
