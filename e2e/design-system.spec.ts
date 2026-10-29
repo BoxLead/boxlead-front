@@ -4,7 +4,7 @@ import { expect, login, resetApi, test } from "./support.ts";
 const SPACING = new Set([0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80]);
 const CONTROLS = new Set([32, 40, 44, 48]);
 
-const ROUTES = ["/app/inbox", "/app/leads", "/app/metrics", "/app/categories", "/app/agents", "/app/connections"];
+const ROUTES = ["/app/inbox", "/app/leads", "/app/metrics", "/app/categories", "/app/agents", "/app/connections", "/app/notificaciones", "/avisos/baja"];
 
 type Row = { y: number; heights: number[]; labels: string[] };
 
@@ -42,7 +42,7 @@ async function gutters(page: Page): Promise<string[]> {
 }
 
 test.beforeEach(async () => {
-  await resetApi("showcase");
+  await resetApi("showcase", undefined, { notifications: true });
 });
 
 for (const route of ROUTES) {
