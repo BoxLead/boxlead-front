@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { prerenderSite, type RouteFiles } from './scripts/prerender'
+import { releaseOf } from './scripts/release'
 import { staticSiteMiddleware } from './scripts/staticSite'
 
 const FACEBOOK_SOURCES = 'https://*.facebook.com https://*.facebook.net https://*.fbcdn.net'
@@ -19,6 +20,11 @@ const ROUTE_ENTRIES: Record<string, string[]> = {
   '/register': ['src/pages/Register/Register.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/invitacion': ['src/pages/Invitation/Invitation.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/social/callback': ['src/pages/SocialCallback/SocialCallback.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/recuperar-clave': ['src/pages/PasswordRecovery/ForgotPassword.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/nueva-clave': ['src/pages/PasswordRecovery/ResetPassword.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/confirmar-email': ['src/pages/EmailVerification/ConfirmEmail.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/nuevo-email': ['src/pages/EmailChange/ConfirmEmailChange.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
+  '/reingresar': ['src/pages/Reauthenticate/Reauthenticate.tsx', 'src/components/AuthLayout/AuthLayout.tsx'],
   '/whatsapp': ['src/landing/pages/EditorialPage.tsx'],
   '/instagram': ['src/landing/pages/EditorialPage.tsx'],
   '/messenger': ['src/landing/pages/EditorialPage.tsx'],
@@ -229,6 +235,9 @@ export default defineConfig(({ mode }) => {
       ),
       staticSite(),
     ],
+    define: {
+      __BOXLEAD_RELEASE__: JSON.stringify(releaseOf(root)),
+    },
     build: {
       modulePreload: { polyfill: false },
     },

@@ -179,6 +179,58 @@ describe("AuthProvider keeps the session fresh", () => {
   });
 });
 
+function swallow(event: Event) {
+  event.preventDefault();
+}
+
+function throwOnWindow(message: string) {
+  window.dispatchEvent(new ErrorEvent("error", { message, error: new Error(message) }));
+}
+
+describe("AuthProvider reports client errors", () => {
+  afterEach(() => {
+    window.removeEventListener("error", swallow);
+    vi.restoreAllMocks();
+  });
+
+  function reportedMessages(calls: [string, unknown][]) {
+    return calls.map(([, body]) => (body as { message: string }).message);
+  }
+
+  it("sends errors only while the session has the flag on", async () => {
+    window.addEventListener("error", swallow);
+    const report = vi.spyOn(api, "report").mockResolvedValue(undefined);
+    const withFlag = { ...user("FULL"), features: { ...user("FULL").features, clientErrors: true } };
+    const withoutFlag = { ...user("FULL"), features: { ...user("FULL").features, billing: false } };
+    vi.spyOn(api, "me").mockResolvedValue(withoutFlag).mockResolvedValueOnce(withFlag);
+    throwOnWindow("before the session");
+    renderApp();
+    expect(await screen.findByText("facturación sí, acceso FULL")).toBeInTheDocument();
+    await waitFor(() => {
+      throwOnWindow("with the flag on");
+      expect(report).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      act(() => {
+        window.dispatchEvent(new Event("focus"));
+      });
+      expect(screen.getByText("facturación no, acceso FULL")).toBeInTheDocument();
+    });
+    throwOnWindow("with the flag off");
+    expect(reportedMessages(report.mock.calls)).toEqual(["with the flag on"]);
+  });
+
+  it("sends nothing without a session", async () => {
+    window.addEventListener("error", swallow);
+    const report = vi.spyOn(api, "report").mockResolvedValue(undefined);
+    vi.spyOn(api, "me").mockRejectedValue(new ApiError("Unauthorized", 401));
+    renderProvider();
+    expect(await screen.findByRole("button", { name: "registrar" })).toBeInTheDocument();
+    throwOnWindow("anonymous visitor");
+    expect(report).not.toHaveBeenCalled();
+  });
+});
+
 function Leads() {
   const { user } = useAuth();
   const leads = useApiQuery<{ owner: string }>("/leads");

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { agentApi, agentApiUrl, api, apiUrl, onPlanError } from "./client";
+import { ACCOUNT_FEATURES_OFF, agentApi, agentApiUrl, api, apiUrl, onEmailNotVerified, onPlanError } from "./client";
 import { clearQueryCache, fetchQuery, getQueryState } from "../data/queryCache";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -117,6 +117,8 @@ describe("session user", () => {
       access: "FULL",
       isReseller: false,
       pendingLegal: [],
+      account: ACCOUNT_FEATURES_OFF,
+      emailVerificationPending: false,
     });
   });
 
@@ -243,6 +245,80 @@ describe("plan errors", () => {
       message: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
     });
     expect(listener).not.toHaveBeenCalled();
+    stop();
+  });
+});
+
+describe("reports", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+  });
+
+  it("posts with keepalive, the session cookie and the CSRF header", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(api.report("/client-errors", { kind: "error" })).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.example.com/client-errors");
+    expect(init).toMatchObject({ method: "POST", credentials: "include", keepalive: true });
+    expect(init?.headers).toMatchObject({ "X-Requested-With": "boxlead-web", "Content-Type": "application/json" });
+  });
+
+  it("rejects with the status and leaves the session alone when it is gone", async () => {
+    sessionStorage.setItem("boxlead.test", "1");
+    fetchMock.mockResolvedValue(json({ message: "Unauthorized" }, 401));
+
+    await expect(api.report("/client-errors", {})).rejects.toMatchObject({ status: 401 });
+    expect(sessionStorage.getItem("boxlead.test")).toBe("1");
+    sessionStorage.clear();
+  });
+
+  it("keeps regular requests without keepalive", async () => {
+    fetchMock.mockResolvedValue(json([]));
+
+    await api.get("/leads");
+
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: false });
+  });
+});
+
+describe("account fields of the session", () => {
+  it("reads the account features and the pending email", async () => {
+    fetchMock.mockResolvedValueOnce(
+      json({
+        userId: "u-1",
+        email: "ana@negocio.com",
+        account: { passwordReset: true, emailVerification: true, settings: "yes" },
+        emailVerificationPending: true,
+      }),
+    );
+    const user = await api.me();
+    expect(user.account).toEqual({
+      sessionRevocation: false,
+      passwordReset: true,
+      emailVerification: true,
+      settings: false,
+      deletion: false,
+    });
+    expect(user.emailVerificationPending).toBe(true);
+  });
+
+  it("treats an older session answer as everything off", async () => {
+    fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@negocio.com" }));
+    const user = await api.me();
+    expect(user.account?.deletion).toBe(false);
+    expect(user.emailVerificationPending).toBe(false);
+  });
+
+  it("asks for a new session when the API says the email is not confirmed", async () => {
+    const listener = vi.fn();
+    const stop = onEmailNotVerified(listener);
+    fetchMock.mockResolvedValueOnce(
+      json({ error: "Forbidden", message: "Confirm your email first", code: "EMAIL_NOT_VERIFIED" }, 403),
+    );
+    await expect(api.get("/leads")).rejects.toThrow();
+    expect(listener).toHaveBeenCalledTimes(1);
     stop();
   });
 });

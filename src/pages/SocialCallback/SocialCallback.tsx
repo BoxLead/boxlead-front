@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { useAuth } from "../../context/auth";
+import { DELETE_ACCOUNT_PATH, keepReauthToken, REAUTH_INTENT } from "../../data/reauth";
 import { readAcceptedLegal } from "../../util/legalAcceptance";
 import { safeAppPath } from "../../util/redirect";
 import "./SocialCallback.css";
@@ -18,6 +19,7 @@ function failureMessage(error: unknown): string {
 export function SocialCallback() {
   const { handleRedirectCallback, getIdTokenClaims, logout: clearProviderSession } = useAuth0();
   const { socialLogin, error: sessionError } = useAuth();
+  const navigate = useNavigate();
   const [failure, setFailure] = useState<string | null>(null);
   const started = useRef(false);
 
@@ -34,6 +36,11 @@ export function SocialCallback() {
           setFailure(FAILURE_MESSAGE);
           return;
         }
+        if (appState?.intent === REAUTH_INTENT) {
+          keepReauthToken(claims.__raw);
+          navigate(DELETE_ACCOUNT_PATH, { replace: true });
+          return;
+        }
         await socialLogin(
           claims.__raw,
           safeAppPath(appState?.next) ?? undefined,
@@ -45,7 +52,7 @@ export function SocialCallback() {
     }
 
     void complete();
-  }, [handleRedirectCallback, getIdTokenClaims, clearProviderSession, socialLogin]);
+  }, [handleRedirectCallback, getIdTokenClaims, clearProviderSession, socialLogin, navigate]);
 
   const message = failure ?? sessionError;
 

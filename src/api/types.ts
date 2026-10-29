@@ -38,6 +38,25 @@ export type LegalVersion = {
   version: string;
 };
 
+export type AccountFeatures = {
+  sessionRevocation: boolean;
+  passwordReset: boolean;
+  emailVerification: boolean;
+  settings: boolean;
+  deletion: boolean;
+};
+
+export type SignInProvider = "GOOGLE" | "FACEBOOK" | "OTHER";
+
+export type AccountView = {
+  name: string | null;
+  email: string;
+  pendingEmail: string | null;
+  emailVerified: boolean;
+  hasPassword: boolean;
+  providers: SignInProvider[];
+};
+
 export type SessionFlags = {
   features: Features;
   access: Access;
@@ -49,6 +68,8 @@ export type AuthUser = SessionFlags & {
   userId: string;
   email: string;
   name: string | null;
+  account?: AccountFeatures;
+  emailVerificationPending?: boolean;
 };
 
 export type RegisterRequest = {
@@ -413,7 +434,17 @@ export type ApiErrorCode =
   | "PROVIDER_UNAVAILABLE"
   | "CHECKOUT_PENDING"
   | "DEMO_SUBSCRIPTION_ACTIVE"
-  | "DEMO_TEAM_MEMBER";
+  | "DEMO_TEAM_MEMBER"
+  | "INVALID_TOKEN"
+  | "EMAIL_NOT_VERIFIED"
+  | "WRONG_PASSWORD"
+  | "PASSWORD_REQUIRED"
+  | "SAME_EMAIL"
+  | "CONFIRMATION_MISMATCH"
+  | "REAUTHENTICATION_REQUIRED"
+  | "SUBSCRIPTION_OPEN"
+  | "RESELLER_ACTIVE"
+  | "ADMIN_ACTIVE";
 
 export type FieldError = {
   field: string;

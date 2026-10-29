@@ -25,6 +25,7 @@ import {
   type StoredConversation,
   WHATSAPP_TEMPLATES,
 } from "./fixtures.ts";
+import { accountRoute, buildAccount, type AccountState } from "./account.ts";
 import { buildMetricsReport, parseMetricsSettings, validateRange } from "./metrics.ts";
 import { buildShowcase } from "./showcase.ts";
 import {
@@ -39,6 +40,7 @@ import {
   PLAYGROUND_RUNS_PER_HOUR,
 } from "./agents.ts";
 import { PRODUCT_IMAGES } from "./images.ts";
+import { clearClientErrors, receiveClientError, receivedClientErrors } from "./clientErrors.ts";
 import {
   agentGate,
   billingRoute,
@@ -85,6 +87,7 @@ const NAME_IN_USE = "Category name already in use";
 
 let state: MockState = buildState("default");
 let billing: BillingState = buildBilling("default");
+let account: AccountState = buildAccount();
 
 type Json = Record<string, unknown> | unknown[] | null;
 
@@ -471,8 +474,11 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       onboarding: body.onboarding === true,
       teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
     });
+    clearClientErrors();
+    account = buildAccount();
     return send(res, 200, { scenario });
   }
+  if (path === "/__client-errors" && method === "GET") return reply(res, receivedClientErrors());
   if (path === "/__billing/enabled" && method === "POST") {
     return reply(res, setBillingEnabled(billing, (await readBody(req)).enabled === true));
   }
@@ -526,6 +532,17 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });
   }
+  const accountReply = await accountRoute(account, {
+    method,
+    path,
+    parts,
+    query: url.searchParams,
+    cookies: readCookies(req),
+    authed: isAuthed(req),
+    userEmail: USER.email,
+    readBody: () => readBody(req),
+  }, () => sessionUser());
+  if (accountReply) return reply(res, accountReply);
   const billingReply = await billingRoute(billing, {
     method,
     path,
@@ -540,6 +557,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, sessionUser());
+  if (path === "/client-errors" && method === "POST") {
+    return reply(res, receiveClientError(billing.clientErrors, await readBody(req)));
+  }
 
   if (parts[0] === "metrics") {
     if (parts.length === 1 && method === "GET") {

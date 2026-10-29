@@ -40,6 +40,12 @@ const Privacy = lazyRoute(() => import("./pages/Legal/Privacy"), "Privacy");
 const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContracts"), "AdhesionContracts");
 const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
+const ForgotPassword = lazyRoute(() => import("./pages/PasswordRecovery/ForgotPassword"), "ForgotPassword");
+const ResetPassword = lazyRoute(() => import("./pages/PasswordRecovery/ResetPassword"), "ResetPassword");
+const ConfirmEmail = lazyRoute(() => import("./pages/EmailVerification/ConfirmEmail"), "ConfirmEmail");
+const ConfirmEmailChange = lazyRoute(() => import("./pages/EmailChange/ConfirmEmailChange"), "ConfirmEmailChange");
+const Reauthenticate = lazyRoute(() => import("./pages/Reauthenticate/Reauthenticate"), "Reauthenticate");
+const Account = lazyRoute(() => import("./pages/Account/Account"), "Account");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -47,6 +53,12 @@ for (const path of EDITORIAL_PATHS) registerRoutePreload(path, [EditorialPage]);
 const socialAuth = { preload: preloadSocialAuth };
 registerRoutePreload("/login", [Login, socialAuth]);
 registerRoutePreload("/register", [Register, socialAuth]);
+registerRoutePreload("/recuperar-clave", [ForgotPassword]);
+registerRoutePreload("/nueva-clave", [ResetPassword]);
+registerRoutePreload("/confirmar-email", [ConfirmEmail]);
+registerRoutePreload("/nuevo-email", [ConfirmEmailChange]);
+registerRoutePreload("/reingresar", [Reauthenticate, socialAuth]);
+registerRoutePreload("/app/cuenta", [Layout, Account]);
 registerRoutePreload("/app", [Layout, Inbox]);
 registerRoutePreload("/app/inbox", [Layout, Inbox]);
 registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);
@@ -84,6 +96,11 @@ export default function App() {
           <Route path="/contratos" element={<AdhesionContracts />} />
           <Route path="/arrepentimiento" element={<Withdrawal />} />
           <Route path="/baja" element={<Cancellation />} />
+          <Route path="/recuperar-clave" element={<ForgotPassword />} />
+          <Route path="/nueva-clave" element={<ResetPassword />} />
+          <Route path="/confirmar-email" element={<ConfirmEmail />} />
+          <Route path="/nuevo-email" element={<ConfirmEmailChange />} />
+          <Route path="/reingresar" element={<Reauthenticate />} />
           <Route element={<ProtectedRoute />}>
             <Route
               path="/app/oauth/callback/:platform"
@@ -104,6 +121,9 @@ export default function App() {
               </Route>
               <Route element={<FeatureRoute feature="reseller" />}>
                 <Route path="reseller" element={<Reseller />} />
+              </Route>
+              <Route element={<FeatureRoute feature="account" />}>
+                <Route path="cuenta" element={<Page><Account /></Page>} />
               </Route>
               <Route path="*" element={<NotFound inApp />} />
             </Route>
