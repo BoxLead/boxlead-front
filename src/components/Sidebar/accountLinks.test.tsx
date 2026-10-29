@@ -19,6 +19,15 @@ describe("account links", () => {
     expect(consumerLinks({ features: { ...off, billing: true } })).toEqual([]);
   });
 
+  it("shows the account page first when core enables it", () => {
+    const account = { sessionRevocation: false, passwordReset: false, emailVerification: false, settings: true, deletion: false };
+    expect(accountLinks({ features: { ...off, billing: true }, isReseller: false, account }).map((link) => link.to)).toEqual([
+      "/app/cuenta",
+      "/app/billing",
+    ]);
+    expect(accountLinks({ features: off, isReseller: false, account: { ...account, settings: false } })).toEqual([]);
+  });
+
   it("shows the reseller page only to resellers", () => {
     const features = { ...off, billing: true, referrals: true };
     expect(accountLinks({ features, isReseller: true }).map((link) => link.label)).toEqual(["Facturación", "Revendedor"]);
