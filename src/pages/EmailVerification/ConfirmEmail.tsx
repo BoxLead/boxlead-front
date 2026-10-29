@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiErrorCode } from "../../api/errors";
+import { isInvalidLink, takeFragmentToken } from "../../util/fragmentToken";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { Loading } from "../../components/Loading";
 import { verifyEmail } from "../../data/account";
-import { takeFragmentToken } from "../../util/fragmentToken";
 
 type Step = "checking" | "done" | "invalid" | "error";
 
@@ -21,7 +20,7 @@ export function ConfirmEmail() {
     }
     verifyEmail(token).then(
       () => setStep("done"),
-      (error: unknown) => setStep(apiErrorCode(error) === "INVALID_TOKEN" ? "invalid" : "error"),
+      (error: unknown) => setStep(isInvalidLink(error) ? "invalid" : "error"),
     );
   }, []);
 
