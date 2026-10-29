@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { agentApi, agentApiUrl, api, apiUrl, onPlanError } from "./client";
+import { ACCOUNT_FEATURES_OFF, agentApi, agentApiUrl, api, apiUrl, onEmailNotVerified, onPlanError } from "./client";
 import { clearQueryCache, fetchQuery, getQueryState } from "../data/queryCache";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -107,16 +107,18 @@ describe("session user", () => {
     await expect(api.me()).resolves.toMatchObject({ userId: "u-1", email: "ana@example.com", name: null });
   });
 
-  it("treats billing, referrals, legal and notifications as off when core does not send them yet", async () => {
+  it("treats every feature as off when core does not send them yet", async () => {
     fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", name: "Ana" }));
     await expect(api.me()).resolves.toEqual({
       userId: "u-1",
       email: "ana@example.com",
       name: "Ana",
-      features: { billing: false, referrals: false, legal: false, notifications: false },
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false },
       access: "FULL",
       isReseller: false,
       pendingLegal: [],
+      account: ACCOUNT_FEATURES_OFF,
+      emailVerificationPending: false,
     });
   });
 
@@ -126,14 +128,14 @@ describe("session user", () => {
         userId: "u-1",
         email: "ana@example.com",
         name: "Ana",
-        features: { billing: true, referrals: true, legal: true, notifications: true },
+        features: { billing: true, referrals: true, legal: true, clientErrors: true, onboarding: true, notifications: true },
         access: "RESTRICTED",
         isReseller: true,
         pendingLegal: [{ kind: "TERMS", version: "2026-11" }],
       }),
     );
     await expect(api.me()).resolves.toMatchObject({
-      features: { billing: true, referrals: true, legal: true, notifications: true },
+      features: { billing: true, referrals: true, legal: true, clientErrors: true, onboarding: true, notifications: true },
       access: "RESTRICTED",
       isReseller: true,
       pendingLegal: [{ kind: "TERMS", version: "2026-11" }],
@@ -145,21 +147,24 @@ describe("session user", () => {
       json({
         userId: "u-1",
         email: "ana@example.com",
-        features: { billing: "true", referrals: 1, legal: "yes", notifications: "true" },
+        features: { billing: "true", referrals: 1, legal: "yes", clientErrors: "true", onboarding: 1, notifications: "true" },
         access: "ADMIN",
         isReseller: "yes",
         pendingLegal: [{ kind: "COOKIES", version: "1" }, { kind: "PRIVACY" }, "TERMS", { kind: "PRIVACY", version: "2026-11", extra: 1 }],
       }),
     );
     await expect(api.me()).resolves.toMatchObject({
-      features: { billing: false, referrals: false, legal: false, notifications: false },
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false },
       access: "FULL",
       isReseller: false,
       pendingLegal: [{ kind: "PRIVACY", version: "2026-11" }],
     });
 
     fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@example.com", features: null, pendingLegal: {} }));
-    await expect(api.me()).resolves.toMatchObject({ features: { billing: false, referrals: false, legal: false, notifications: false }, pendingLegal: [] });
+    await expect(api.me()).resolves.toMatchObject({
+      features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false },
+      pendingLegal: [],
+    });
   });
 });
 
@@ -240,6 +245,80 @@ describe("plan errors", () => {
       message: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
     });
     expect(listener).not.toHaveBeenCalled();
+    stop();
+  });
+});
+
+describe("reports", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+  });
+
+  it("posts with keepalive, the session cookie and the CSRF header", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(api.report("/client-errors", { kind: "error" })).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.example.com/client-errors");
+    expect(init).toMatchObject({ method: "POST", credentials: "include", keepalive: true });
+    expect(init?.headers).toMatchObject({ "X-Requested-With": "boxlead-web", "Content-Type": "application/json" });
+  });
+
+  it("rejects with the status and leaves the session alone when it is gone", async () => {
+    sessionStorage.setItem("boxlead.test", "1");
+    fetchMock.mockResolvedValue(json({ message: "Unauthorized" }, 401));
+
+    await expect(api.report("/client-errors", {})).rejects.toMatchObject({ status: 401 });
+    expect(sessionStorage.getItem("boxlead.test")).toBe("1");
+    sessionStorage.clear();
+  });
+
+  it("keeps regular requests without keepalive", async () => {
+    fetchMock.mockResolvedValue(json([]));
+
+    await api.get("/leads");
+
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: false });
+  });
+});
+
+describe("account fields of the session", () => {
+  it("reads the account features and the pending email", async () => {
+    fetchMock.mockResolvedValueOnce(
+      json({
+        userId: "u-1",
+        email: "ana@negocio.com",
+        account: { passwordReset: true, emailVerification: true, settings: "yes" },
+        emailVerificationPending: true,
+      }),
+    );
+    const user = await api.me();
+    expect(user.account).toEqual({
+      sessionRevocation: false,
+      passwordReset: true,
+      emailVerification: true,
+      settings: false,
+      deletion: false,
+    });
+    expect(user.emailVerificationPending).toBe(true);
+  });
+
+  it("treats an older session answer as everything off", async () => {
+    fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@negocio.com" }));
+    const user = await api.me();
+    expect(user.account?.deletion).toBe(false);
+    expect(user.emailVerificationPending).toBe(false);
+  });
+
+  it("asks for a new session when the API says the email is not confirmed", async () => {
+    const listener = vi.fn();
+    const stop = onEmailNotVerified(listener);
+    fetchMock.mockResolvedValueOnce(
+      json({ error: "Forbidden", message: "Confirm your email first", code: "EMAIL_NOT_VERIFIED" }, 403),
+    );
+    await expect(api.get("/leads")).rejects.toThrow();
+    expect(listener).toHaveBeenCalledTimes(1);
     stop();
   });
 });

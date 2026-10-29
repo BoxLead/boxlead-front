@@ -1,0 +1,111 @@
+.account-sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--signal-space-md);
+  width: 100%;
+  max-width: var(--signal-measure);
+}
+
+.account-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--signal-space-md);
+  min-width: 0;
+  padding: var(--signal-space-lg);
+}
+
+@media (max-width: 480px) {
+  .account-section {
+    padding: var(--signal-space-md);
+  }
+}
+
+.account-skeleton {
+  height: var(--signal-space-20);
+}
+
+.account-form {
+  display: grid;
+  gap: var(--signal-space-md);
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--signal-space-3);
+}
+
+.account-value,
+.account-note {
+  margin: 0;
+  color: var(--signal-text);
+  font-size: var(--signal-text-base);
+  line-height: var(--signal-leading-normal);
+}
+
+.account-note {
+  color: var(--signal-text-muted);
+}
+
+.account-email {
+  color: var(--signal-heading);
+  font-weight: var(--signal-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.account-badge {
+  display: inline-flex;
+  padding: var(--signal-space-0-5) var(--signal-space-2);
+  border: 1px solid var(--signal-warning-border);
+  border-radius: var(--signal-radius-pill);
+  background: var(--signal-warning-muted);
+  color: var(--signal-warning);
+  font-size: var(--signal-text-xs);
+  font-weight: var(--signal-weight-semibold);
+}
+
+.account-badge-ok {
+  border-color: var(--signal-success-border);
+  background: var(--signal-success-muted);
+  color: var(--signal-success);
+}
+
+.account-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--signal-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-method {
+  padding: var(--signal-space-1) var(--signal-space-3);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--signal-radius-pill);
+  color: var(--signal-text);
+  font-size: var(--signal-text-sm);
+}
+
+.account-danger {
+  border-color: var(--signal-danger-border);
+}
+
+.account-delete-list {
+  display: grid;
+  gap: var(--signal-space-1);
+  margin: 0;
+  padding-left: var(--signal-space-5);
+  color: var(--signal-text);
+  font-size: var(--signal-text-base);
+}
+
+.account-actions-start {
+  justify-content: flex-start;
+}
+
+.account-form .form-error a {
+  color: inherit;
+  text-decoration: underline;
+}

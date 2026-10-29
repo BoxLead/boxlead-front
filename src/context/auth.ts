@@ -14,7 +14,7 @@ export type AuthContextValue = SessionFlags & {
 };
 
 export const SESSION_FLAGS_OFF: SessionFlags = {
-  features: { billing: false, referrals: false, legal: false, notifications: false },
+  features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false },
   access: "FULL",
   isReseller: false,
   pendingLegal: [],

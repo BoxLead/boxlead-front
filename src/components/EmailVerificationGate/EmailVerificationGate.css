@@ -1,0 +1,51 @@
+.email-gate {
+  display: flex;
+  justify-content: center;
+}
+
+.email-gate-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--signal-space-md);
+  width: 100%;
+  max-width: var(--signal-measure);
+  padding: var(--signal-space-6);
+}
+
+.email-gate-text {
+  margin: 0;
+  color: var(--signal-text);
+  font-size: var(--signal-text-base);
+  line-height: var(--signal-leading-normal);
+}
+
+.email-gate-email {
+  color: var(--signal-heading);
+  overflow-wrap: anywhere;
+}
+
+.email-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--signal-space-3);
+}
+
+.email-gate-footer {
+  margin: 0;
+  color: var(--signal-text-muted);
+  font-size: var(--signal-text-sm);
+}
+
+.email-gate-footer a {
+  text-decoration: underline;
+}
+
+.email-gate-logout {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--signal-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

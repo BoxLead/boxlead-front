@@ -14,6 +14,7 @@ import type { AuthUser, LegalVersion, LoginRequest, RegisterRequest } from "../a
 import { Loading } from "../components/Loading";
 import { clearQueryCache, sameData } from "../data/queryCache";
 import { onSessionRefresh } from "../data/session";
+import { startClientErrorReporting } from "../monitoring/clientErrors";
 import { DEFAULT_APP_PATH, safeAppPath } from "../util/redirect";
 import { AuthContext, sessionFlags } from "./auth";
 
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const needsSession = SESSION_ROUTES.test(pathname);
   const signedIn = user !== null;
+  const reportsErrors = user?.features.clientErrors === true;
   const syncing = useRef(false);
   const userRef = useRef<AuthUser | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
@@ -92,6 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stop();
     };
   }, [signedIn, syncSession]);
+
+  useEffect(() => {
+    if (!reportsErrors) return;
+    return startClientErrorReporting();
+  }, [reportsErrors]);
 
   const clearError = useCallback(() => setError(null), []);
 

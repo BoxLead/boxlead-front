@@ -7,7 +7,7 @@ import { FeatureRoute } from "./FeatureRoute";
 function session(billing: boolean, isReseller: boolean): AuthContextValue {
   return {
     user: null,
-    features: { billing, referrals: isReseller, legal: false, notifications: false },
+    features: { billing, referrals: isReseller, legal: false, clientErrors: false, onboarding: false, notifications: false },
     access: "FULL",
     isReseller,
     pendingLegal: [],

@@ -28,7 +28,7 @@ function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (check
 
 export function UserMenu() {
   const { user, logout, features, isReseller } = useAuth();
-  const links = accountLinks({ features, isReseller });
+  const links = accountLinks({ features, isReseller, account: user?.account });
   const legalLinks = consumerLinks({ features });
   const theme = useTheme();
   const [open, setOpen] = useState(false);

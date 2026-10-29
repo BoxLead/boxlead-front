@@ -9,7 +9,7 @@ const USER: AuthUser = {
   userId: "u-1",
   email: "ana@example.com",
   name: "Ana",
-  features: { billing: false, referrals: false, legal: false, notifications: false },
+  features: { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false },
   access: "FULL",
   isReseller: false,
   pendingLegal: [],

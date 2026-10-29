@@ -45,6 +45,8 @@ export type BillingOptions = {
   overrides?: PlanLimits;
   enforced?: boolean;
   providerDown?: boolean;
+  clientErrors?: boolean;
+  onboarding?: boolean;
   teamSubscription?: "ACTIVE" | "SUSPENDED" | "NONE";
   notifications?: boolean;
 };
@@ -192,6 +194,8 @@ export type BillingState = {
   billing: boolean;
   referrals: boolean;
   legal: boolean;
+  clientErrors: boolean;
+  onboarding: boolean;
   notifications: boolean;
   reseller: boolean;
   team: boolean;
@@ -356,6 +360,8 @@ function disabled(): BillingState {
     billing: false,
     referrals: false,
     legal: false,
+    clientErrors: false,
+    onboarding: false,
     notifications: false,
     reseller: false,
     team: false,
@@ -379,6 +385,8 @@ function disabled(): BillingState {
 
 export function buildBilling(scenario: string, options: BillingOptions = {}): BillingState {
   const state = disabled();
+  state.clientErrors = options.clientErrors === true;
+  state.onboarding = options.onboarding === true;
   state.notifications = options.notifications === true;
   if (!isBillingScenario(scenario)) return state;
   state.billing = true;
@@ -502,7 +510,14 @@ function limitOf(limits: PlanLimits, key: EntitlementKey): number {
 
 export function sessionFields(state: BillingState): SessionFlags {
   return {
-    features: { billing: state.billing, referrals: state.referrals, legal: state.legal, notifications: state.notifications },
+    features: {
+      billing: state.billing,
+      referrals: state.referrals,
+      legal: state.legal,
+      clientErrors: state.clientErrors,
+      onboarding: state.onboarding,
+      notifications: state.notifications,
+    },
     access: state.billing ? entitlements(state).access : "FULL",
     isReseller: state.referrals && state.reseller,
     pendingLegal: state.legal ? state.pendingLegal : [],

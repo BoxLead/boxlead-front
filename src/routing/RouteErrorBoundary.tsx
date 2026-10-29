@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
+import { reportClientError } from "../monitoring/clientErrors";
 import { RouteError } from "./RouteError";
 
 type Props = { children: ReactNode; resetKey: string; inline?: boolean };
@@ -14,6 +15,7 @@ class Boundary extends Component<Props, State> {
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
     if (import.meta.env.DEV) console.error(error, info.componentStack);
+    reportClientError("boundary", error);
   }
 
   componentDidUpdate(previous: Props): void {

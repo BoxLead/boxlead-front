@@ -1,6 +1,7 @@
 import { loginPathFor } from "../util/redirect";
 import type {
   Access,
+  AccountFeatures,
   AuthUser,
   Features,
   LegalDocumentKind,
@@ -62,13 +63,43 @@ const LEGAL_KINDS: readonly LegalDocumentKind[] = [
 
 function readFeatures(value: object): Features {
   const features = "features" in value ? value.features : null;
-  if (!features || typeof features !== "object") return { billing: false, referrals: false, legal: false, notifications: false };
+  if (!features || typeof features !== "object") {
+    return { billing: false, referrals: false, legal: false, clientErrors: false, onboarding: false, notifications: false };
+  }
   return {
     billing: "billing" in features && features.billing === true,
     referrals: "referrals" in features && features.referrals === true,
     legal: "legal" in features && features.legal === true,
+    clientErrors: "clientErrors" in features && features.clientErrors === true,
+    onboarding: "onboarding" in features && features.onboarding === true,
     notifications: "notifications" in features && features.notifications === true,
   };
+}
+
+const ACCOUNT_FEATURE_KEYS: readonly (keyof AccountFeatures)[] = [
+  "sessionRevocation",
+  "passwordReset",
+  "emailVerification",
+  "settings",
+  "deletion",
+];
+
+export const ACCOUNT_FEATURES_OFF: AccountFeatures = {
+  sessionRevocation: false,
+  passwordReset: false,
+  emailVerification: false,
+  settings: false,
+  deletion: false,
+};
+
+function readAccountFeatures(value: object): AccountFeatures {
+  const account = "account" in value ? value.account : null;
+  if (!account || typeof account !== "object") return ACCOUNT_FEATURES_OFF;
+  const features = { ...ACCOUNT_FEATURES_OFF };
+  for (const key of ACCOUNT_FEATURE_KEYS) {
+    features[key] = key in account && (account as Record<string, unknown>)[key] === true;
+  }
+  return features;
 }
 
 function readAccess(value: object): Access {
@@ -110,6 +141,8 @@ function toAuthUser(value: unknown): AuthUser | null {
       access: readAccess(value),
       isReseller: "isReseller" in value && value.isReseller === true,
       pendingLegal: readPendingLegal(value),
+      account: readAccountFeatures(value),
+      emailVerificationPending: "emailVerificationPending" in value && value.emailVerificationPending === true,
     };
   }
   return null;
@@ -153,6 +186,14 @@ export type PlanErrorCode = "PLAN_REQUIRED" | "PLAN_LIMIT_REACHED";
 export type PlanErrorListener = (code: PlanErrorCode, path: string | null) => void;
 
 const planErrorListeners = new Set<PlanErrorListener>();
+const emailNotVerifiedListeners = new Set<() => void>();
+
+export function onEmailNotVerified(listener: () => void): () => void {
+  emailNotVerifiedListeners.add(listener);
+  return () => {
+    emailNotVerifiedListeners.delete(listener);
+  };
+}
 
 export function onPlanError(listener: PlanErrorListener): () => void {
   planErrorListeners.add(listener);
@@ -183,6 +224,9 @@ export function toApiError(status: number, data: unknown, path: string | null = 
   if (status === 402 && (code === "PLAN_REQUIRED" || code === "PLAN_LIMIT_REACHED")) {
     planErrorListeners.forEach((listener) => listener(code, path));
   }
+  if (status === 403 && code === "EMAIL_NOT_VERIFIED") {
+    emailNotVerifiedListeners.forEach((listener) => listener());
+  }
   return new ApiError(errorMessage(status, data), status, data);
 }
 
@@ -196,11 +240,13 @@ export function handleUnauthorized(): void {
   clearAuthAndGoLogin();
 }
 
+type SendOptions = { body?: unknown; skipAuth?: boolean; keepalive?: boolean };
+
 async function send<T>(
   url: UrlBuilder,
   method: string,
   path: string,
-  options?: { body?: unknown; skipAuth?: boolean },
+  options?: SendOptions,
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -214,6 +260,7 @@ async function send<T>(
     method,
     headers,
     credentials: "include",
+    keepalive: options?.keepalive === true,
     body:
       options?.body === undefined ? undefined : JSON.stringify(options.body),
   });
@@ -238,7 +285,7 @@ async function send<T>(
 function request<T>(
   method: string,
   path: string,
-  options?: { body?: unknown; skipAuth?: boolean },
+  options?: SendOptions,
 ): Promise<T> {
   return send<T>(apiUrl, method, path, options);
 }
@@ -279,6 +326,8 @@ export const api = {
   me: () => requestUser("GET", "/auth/me"),
 
   logout: () => request<void>("POST", "/auth/logout", { skipAuth: true }),
+
+  report: (path: string, body: unknown) => request<void>("POST", path, { body, skipAuth: true, keepalive: true }),
 };
 
 export const agentApi = {

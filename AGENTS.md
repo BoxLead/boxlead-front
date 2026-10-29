@@ -22,6 +22,7 @@ src/
 ├── entry-server.ts   # Server entry used by the prerender, exports render() and the page table helpers
 ├── seo/              # Page table (pages.ts), RouteMeta (head tags per route), structured data, sitemap, robots and llms generators
 ├── analytics/        # Consent store, gtag loader, consent banner, cookie preferences link
+├── monitoring/       # Client error reporter (clientErrors.ts) and the sanitizer it uses (sanitize.ts)
 ├── App.tsx           # Routes (every page is lazy-loaded through routing/lazyRoute)
 ├── routing/          # lazyRoute with chunk retry, route preload, RouteErrorBoundary, NotFound, ScrollRestoration, RouteAnnouncer
 ├── index.css         # Design tokens (--signal-*) and shared primitives (.btn, .panel, .page, .skeleton)
@@ -82,6 +83,10 @@ To add a public page: create the component, add the route in `App.tsx` and `regi
 ## Analytics
 
 Google Analytics 4 runs only when `VITE_GA_MEASUREMENT_ID` is set at build time, and only on public pages. `src/analytics/gtag.ts` pushes the Consent Mode v2 defaults (everything denied) and loads `gtag.js` only after the visitor accepts in `ConsentBanner`, which `Analytics` renders in `AppProviders` outside `/app`. The choice lives in `localStorage` under `boxlead.consent`, the one documented exception to the no storage rule besides the theme, and `CookiePreferences` in the footers clears it so the banner asks again. Events are `cta_registro` (sign up buttons, with the place), `demo_play`, `contacto` (support email links), `canal_visita` (editorial pages) and `registro_inicio` (first focus on the sign up form), never with personal data, and `page_view` is sent by hand on every public route change. `/app` never loads the tag, and a tag already loaded on a public page sends nothing once the person enters the app. The CSP adds the Google origins only when the id is set.
+
+## Error reporting
+
+`src/monitoring` sends page errors to `POST /client-errors` in core. `AuthProvider` starts it only while the session has `features.clientErrors`, so nothing leaves the browser before login or with the flag off. It listens to `error` and `unhandledrejection` on `window` and to `RouteErrorBoundary`. Messages lose emails, runs of six or more digits, tokens and the query and fragment of every URL, and the route is `location.pathname` with ids as `:id`. The release is `__BOXLEAD_RELEASE__`, which `scripts/release.ts` takes from the commit or from a hash of `src` when the build has no git. Each message goes once, at most ten per page load, chunk load errors and errors from other origins or extensions are skipped, and a 401, 403, 404 or 429 stops it until the next load. Requests use `api.report`, a keepalive POST with the usual headers that never redirects to login.
 
 ## Social login
 
