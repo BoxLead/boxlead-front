@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { agentApi, agentApiUrl, api, apiUrl, onPlanError } from "./client";
+import { ACCOUNT_FEATURES_OFF, agentApi, agentApiUrl, api, apiUrl, onEmailNotVerified, onPlanError } from "./client";
 import { clearQueryCache, fetchQuery, getQueryState } from "../data/queryCache";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -117,6 +117,8 @@ describe("session user", () => {
       access: "FULL",
       isReseller: false,
       pendingLegal: [],
+      account: ACCOUNT_FEATURES_OFF,
+      emailVerificationPending: false,
     });
   });
 
@@ -240,6 +242,46 @@ describe("plan errors", () => {
       message: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
     });
     expect(listener).not.toHaveBeenCalled();
+    stop();
+  });
+});
+
+describe("account fields of the session", () => {
+  it("reads the account features and the pending email", async () => {
+    fetchMock.mockResolvedValueOnce(
+      json({
+        userId: "u-1",
+        email: "ana@negocio.com",
+        account: { passwordReset: true, emailVerification: true, settings: "yes" },
+        emailVerificationPending: true,
+      }),
+    );
+    const user = await api.me();
+    expect(user.account).toEqual({
+      sessionRevocation: false,
+      passwordReset: true,
+      emailVerification: true,
+      settings: false,
+      deletion: false,
+    });
+    expect(user.emailVerificationPending).toBe(true);
+  });
+
+  it("treats an older session answer as everything off", async () => {
+    fetchMock.mockResolvedValueOnce(json({ userId: "u-1", email: "ana@negocio.com" }));
+    const user = await api.me();
+    expect(user.account?.deletion).toBe(false);
+    expect(user.emailVerificationPending).toBe(false);
+  });
+
+  it("asks for a new session when the API says the email is not confirmed", async () => {
+    const listener = vi.fn();
+    const stop = onEmailNotVerified(listener);
+    fetchMock.mockResolvedValueOnce(
+      json({ error: "Forbidden", message: "Confirm your email first", code: "EMAIL_NOT_VERIFIED" }, 403),
+    );
+    await expect(api.get("/leads")).rejects.toThrow();
+    expect(listener).toHaveBeenCalledTimes(1);
     stop();
   });
 });

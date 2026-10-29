@@ -36,7 +36,7 @@ test("a recovery request always gets the same answer", async ({ page }) => {
 
   await page.getByRole("textbox", { name: "Email" }).fill("nadie@negocio.com");
   await page.getByRole("button", { name: "Mandar el link" }).click();
-  const answer = page.locator("p.recovery-notice");
+  const answer = page.locator("p.auth-notice");
   await expect(answer).toContainText("Si hay una cuenta con ese email");
   const unknownAnswer = await answer.textContent();
   expect(await sentEmails()).toEqual([]);
@@ -44,7 +44,7 @@ test("a recovery request always gets the same answer", async ({ page }) => {
   await page.goto("/recuperar-clave");
   await page.getByRole("textbox", { name: "Email" }).fill(DEMO_EMAIL);
   await page.getByRole("button", { name: "Mandar el link" }).click();
-  await expect(page.locator("p.recovery-notice")).toHaveText(unknownAnswer ?? "");
+  await expect(page.locator("p.auth-notice")).toHaveText(unknownAnswer ?? "");
   await screenshot(page, "recovery-sent");
   expect((await sentEmails()).map((email) => email.template)).toEqual(["PASSWORD_RESET"]);
 });
@@ -54,7 +54,7 @@ test("a recovery link sets a new password once and leaves the URL clean", async 
   await page.goto("/recuperar-clave");
   await page.getByRole("textbox", { name: "Email" }).fill(DEMO_EMAIL);
   await page.getByRole("button", { name: "Mandar el link" }).click();
-  await expect(page.locator("p.recovery-notice")).toBeVisible();
+  await expect(page.locator("p.auth-notice")).toBeVisible();
   const token = await lastToken("PASSWORD_RESET");
 
   await page.goto(`/nueva-clave#${token}`);
@@ -70,7 +70,7 @@ test("a recovery link sets a new password once and leaves the URL clean", async 
   await expect(page).toHaveURL(/\/nueva-clave$/);
   await page.locator('input[name="password"]').fill("una-clave-nueva");
   await page.getByRole("button", { name: "Guardar la contraseña" }).click();
-  await expect(page.locator("p.recovery-notice")).toContainText("cerramos las sesiones abiertas en otros dispositivos");
+  await expect(page.locator("p.auth-notice")).toContainText("cerramos las sesiones abiertas en otros dispositivos");
   await screenshot(page, "recovery-done");
   expect((await sentEmails()).map((email) => email.template)).toContain("PASSWORD_CHANGED");
   await page.getByRole("link", { name: "Iniciar sesión" }).click();

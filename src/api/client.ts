@@ -1,6 +1,7 @@
 import { loginPathFor } from "../util/redirect";
 import type {
   Access,
+  AccountFeatures,
   AuthUser,
   Features,
   LegalDocumentKind,
@@ -70,6 +71,32 @@ function readFeatures(value: object): Features {
   };
 }
 
+const ACCOUNT_FEATURE_KEYS: readonly (keyof AccountFeatures)[] = [
+  "sessionRevocation",
+  "passwordReset",
+  "emailVerification",
+  "settings",
+  "deletion",
+];
+
+export const ACCOUNT_FEATURES_OFF: AccountFeatures = {
+  sessionRevocation: false,
+  passwordReset: false,
+  emailVerification: false,
+  settings: false,
+  deletion: false,
+};
+
+function readAccountFeatures(value: object): AccountFeatures {
+  const account = "account" in value ? value.account : null;
+  if (!account || typeof account !== "object") return ACCOUNT_FEATURES_OFF;
+  const features = { ...ACCOUNT_FEATURES_OFF };
+  for (const key of ACCOUNT_FEATURE_KEYS) {
+    features[key] = key in account && (account as Record<string, unknown>)[key] === true;
+  }
+  return features;
+}
+
 function readAccess(value: object): Access {
   return "access" in value && value.access === "RESTRICTED" ? "RESTRICTED" : "FULL";
 }
@@ -109,6 +136,8 @@ function toAuthUser(value: unknown): AuthUser | null {
       access: readAccess(value),
       isReseller: "isReseller" in value && value.isReseller === true,
       pendingLegal: readPendingLegal(value),
+      account: readAccountFeatures(value),
+      emailVerificationPending: "emailVerificationPending" in value && value.emailVerificationPending === true,
     };
   }
   return null;
@@ -152,6 +181,14 @@ export type PlanErrorCode = "PLAN_REQUIRED" | "PLAN_LIMIT_REACHED";
 export type PlanErrorListener = (code: PlanErrorCode, path: string | null) => void;
 
 const planErrorListeners = new Set<PlanErrorListener>();
+const emailNotVerifiedListeners = new Set<() => void>();
+
+export function onEmailNotVerified(listener: () => void): () => void {
+  emailNotVerifiedListeners.add(listener);
+  return () => {
+    emailNotVerifiedListeners.delete(listener);
+  };
+}
 
 export function onPlanError(listener: PlanErrorListener): () => void {
   planErrorListeners.add(listener);
@@ -181,6 +218,9 @@ export function toApiError(status: number, data: unknown, path: string | null = 
   const code = codeOf(data);
   if (status === 402 && (code === "PLAN_REQUIRED" || code === "PLAN_LIMIT_REACHED")) {
     planErrorListeners.forEach((listener) => listener(code, path));
+  }
+  if (status === 403 && code === "EMAIL_NOT_VERIFIED") {
+    emailNotVerifiedListeners.forEach((listener) => listener());
   }
   return new ApiError(errorMessage(status, data), status, data);
 }

@@ -6,7 +6,6 @@ import { Loading } from "../../components/Loading";
 import { requestPasswordReset } from "../../data/account";
 import { useAuthOptions } from "../../hooks/useAuthOptions";
 import { SUPPORT_EMAIL } from "../../util/company";
-import "./PasswordRecovery.css";
 
 export const RECOVERY_SENT_MESSAGE =
   "Si hay una cuenta con ese email, te mandamos un link para elegir una contraseña nueva. Vence en 30 minutos. Si no lo ves, revisá la carpeta de spam.";
@@ -39,8 +38,8 @@ export function ForgotPassword() {
       {options === null ? (
         <Loading inline />
       ) : !options.passwordReset ? (
-        <div className="recovery-body">
-          <p className="recovery-notice">
+        <div className="auth-stack">
+          <p className="auth-notice">
             Por ahora la contraseña no se puede recuperar desde acá. Escribinos a{" "}
             <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> desde el email de tu cuenta y te ayudamos.
           </p>
@@ -49,8 +48,8 @@ export function ForgotPassword() {
           </p>
         </div>
       ) : sent ? (
-        <div className="recovery-body">
-          <p className="recovery-notice" role="status">
+        <div className="auth-stack">
+          <p className="auth-notice" role="status">
             {RECOVERY_SENT_MESSAGE}
           </p>
           <p className="auth-footer">
