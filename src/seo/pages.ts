@@ -182,6 +182,22 @@ export const PUBLIC_PAGES: PublicPage[] = [
     source: "src/pages/Invitation/Invitation.tsx",
   }),
   page({
+    path: "/recuperar-clave",
+    title: "Recuperar la contraseña",
+    description: "Pedí un link para elegir una contraseña nueva para tu cuenta de BoxLead.",
+    lang: "es-AR",
+    index: false,
+    source: "src/pages/PasswordRecovery/ForgotPassword.tsx",
+  }),
+  page({
+    path: "/nueva-clave",
+    title: "Elegir una contraseña nueva",
+    description: "Elegí una contraseña nueva para tu cuenta de BoxLead.",
+    lang: "es-AR",
+    index: false,
+    source: "src/pages/PasswordRecovery/ResetPassword.tsx",
+  }),
+  page({
     path: "/social/callback",
     title: "Iniciando sesión",
     description: "Estamos verificando tu cuenta.",

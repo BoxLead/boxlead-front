@@ -25,6 +25,7 @@ import {
   type StoredConversation,
   WHATSAPP_TEMPLATES,
 } from "./fixtures.ts";
+import { accountRoute, buildAccount, type AccountState } from "./account.ts";
 import { buildMetricsReport, parseMetricsSettings, validateRange } from "./metrics.ts";
 import { buildShowcase } from "./showcase.ts";
 import {
@@ -86,6 +87,7 @@ const NAME_IN_USE = "Category name already in use";
 
 let state: MockState = buildState("default");
 let billing: BillingState = buildBilling("default");
+let account: AccountState = buildAccount();
 
 type Json = Record<string, unknown> | unknown[] | null;
 
@@ -473,6 +475,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       teamSubscription: body.teamSubscription === "ACTIVE" || body.teamSubscription === "NONE" ? body.teamSubscription : undefined,
     });
     clearClientErrors();
+    account = buildAccount();
     return send(res, 200, { scenario });
   }
   if (path === "/__client-errors" && method === "GET") return reply(res, receivedClientErrors());
@@ -529,6 +532,17 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });
   }
+  const accountReply = await accountRoute(account, {
+    method,
+    path,
+    parts,
+    query: url.searchParams,
+    cookies: readCookies(req),
+    authed: isAuthed(req),
+    userEmail: USER.email,
+    readBody: () => readBody(req),
+  });
+  if (accountReply) return reply(res, accountReply);
   const billingReply = await billingRoute(billing, {
     method,
     path,

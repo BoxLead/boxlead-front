@@ -40,6 +40,8 @@ const Privacy = lazyRoute(() => import("./pages/Legal/Privacy"), "Privacy");
 const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContracts"), "AdhesionContracts");
 const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
+const ForgotPassword = lazyRoute(() => import("./pages/PasswordRecovery/ForgotPassword"), "ForgotPassword");
+const ResetPassword = lazyRoute(() => import("./pages/PasswordRecovery/ResetPassword"), "ResetPassword");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
@@ -47,6 +49,8 @@ for (const path of EDITORIAL_PATHS) registerRoutePreload(path, [EditorialPage]);
 const socialAuth = { preload: preloadSocialAuth };
 registerRoutePreload("/login", [Login, socialAuth]);
 registerRoutePreload("/register", [Register, socialAuth]);
+registerRoutePreload("/recuperar-clave", [ForgotPassword]);
+registerRoutePreload("/nueva-clave", [ResetPassword]);
 registerRoutePreload("/app", [Layout, Inbox]);
 registerRoutePreload("/app/inbox", [Layout, Inbox]);
 registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);
@@ -84,6 +88,8 @@ export default function App() {
           <Route path="/contratos" element={<AdhesionContracts />} />
           <Route path="/arrepentimiento" element={<Withdrawal />} />
           <Route path="/baja" element={<Cancellation />} />
+          <Route path="/recuperar-clave" element={<ForgotPassword />} />
+          <Route path="/nueva-clave" element={<ResetPassword />} />
           <Route element={<ProtectedRoute />}>
             <Route
               path="/app/oauth/callback/:platform"

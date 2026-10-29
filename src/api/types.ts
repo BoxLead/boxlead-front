@@ -413,7 +413,8 @@ export type ApiErrorCode =
   | "PROVIDER_UNAVAILABLE"
   | "CHECKOUT_PENDING"
   | "DEMO_SUBSCRIPTION_ACTIVE"
-  | "DEMO_TEAM_MEMBER";
+  | "DEMO_TEAM_MEMBER"
+  | "INVALID_TOKEN";
 
 export type FieldError = {
   field: string;
