@@ -8,6 +8,8 @@ export type AccountOptions = {
   settings: boolean;
   sessionRevocation: boolean;
   socialOnly: boolean;
+  deletion: boolean;
+  subscriptionOpen: boolean;
 };
 
 type AccountProfile = {
@@ -51,6 +53,8 @@ export function buildAccount(): AccountState {
       settings: false,
       sessionRevocation: false,
       socialOnly: false,
+      deletion: false,
+      subscriptionOpen: false,
     },
     profile: { name: null, email: null, pendingEmail: null, password: "demo1234" },
     sent: [],
@@ -80,7 +84,7 @@ function accountFeatures(account: AccountState) {
     passwordReset: account.options.passwordReset,
     emailVerification: account.options.emailVerification,
     settings: account.options.settings,
-    deletion: false,
+    deletion: account.options.deletion,
   };
 }
 
@@ -99,6 +103,8 @@ export async function accountRoute(
       settings: body.settings === true,
       sessionRevocation: body.sessionRevocation === true,
       socialOnly: body.socialOnly === true,
+      deletion: body.deletion === true,
+      subscriptionOpen: body.subscriptionOpen === true,
     };
     if (account.options.emailPending) {
       account.sent.push({
@@ -242,6 +248,25 @@ async function settingsRoute(
     account.profile.password = body.newPassword;
     account.sent.push({ template: "PASSWORD_CHANGED", to: request.userEmail, token: null });
     return { status: 204 };
+  }
+  if (path === "/account/deletion" && method === "POST") {
+    if (!account.options.deletion) return NOT_FOUND;
+    const body = await request.readBody();
+    if (body.confirmation !== "BORRAR") {
+      return { status: 400, body: { error: "Bad Request", message: "Confirm", code: "CONFIRMATION_MISMATCH" } };
+    }
+    if (account.options.socialOnly) {
+      if (typeof body.idToken !== "string" || body.idToken === "") {
+        return { status: 400, body: { error: "Bad Request", message: "Sign in again", code: "REAUTHENTICATION_REQUIRED" } };
+      }
+    } else if (body.password !== account.profile.password) {
+      return WRONG_PASSWORD;
+    }
+    if (account.options.subscriptionOpen) {
+      return { status: 409, body: { error: "Conflict", message: "Cancel first", code: "SUBSCRIPTION_OPEN" } };
+    }
+    account.sent.push({ template: "ACCOUNT_DELETED", to: request.userEmail, token: null });
+    return { status: 204, headers: { "Set-Cookie": "boxlead_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" } };
   }
   if (path === "/account/email" && method === "POST") {
     const body = await request.readBody();
