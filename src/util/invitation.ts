@@ -18,6 +18,9 @@ export function acceptInvitationError(error: unknown, invitedEmail: string | nul
   }
   if (code === "DEMO_ALREADY_USED") return "Ya usaste la Beta con esta cuenta. Elegí un plan para seguir.";
   if (code === "DEMO_SUBSCRIPTION_ACTIVE") return "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.";
+  if (code === "DEMO_TEAM_MEMBER") {
+    return "Tu cuenta es del equipo de BoxLead y ya tenés acceso, así que no necesitás la Beta. La invitación sigue abierta.";
+  }
   if (code === "INVITATION_INVALID") return INVITATION_INVALID_MESSAGE;
   if (error instanceof ApiError && error.status === 429) return error.message;
   return "No pudimos activar la Beta. Probá de nuevo en un rato.";

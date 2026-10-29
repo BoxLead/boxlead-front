@@ -54,6 +54,14 @@ export function failure(status: number, message: string, code?: string): MockRep
   return { status, body: code ? { error: message, message, code } : { error: message, message } };
 }
 
+const DAY_MS = 86_400_000;
+const MAX_DEMO_DAYS = 365;
+
+export function beyondDemoHorizon(instant: number, now = Date.now()): boolean {
+  const today = new Date(now).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+  return instant >= Date.parse(`${today}T00:00:00-03:00`) + (MAX_DEMO_DAYS + 1) * DAY_MS;
+}
+
 export function notFound(): MockReply {
   return failure(404, "Not found");
 }

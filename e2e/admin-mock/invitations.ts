@@ -1,12 +1,11 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { DemoGrant, DemoGrantStatus, Invitation, InvitationStatus } from "../../admin/src/areas/invitations/types.ts";
-import { failure, notFound, ok, page, type AdminIdentity, type MockArea, type MockReply, type ResetOptions } from "./http.ts";
+import { beyondDemoHorizon, failure, notFound, ok, page, type AdminIdentity, type MockArea, type MockReply, type ResetOptions } from "./http.ts";
 
 const DAY = 86_400_000;
 const PAGE_SIZE = 50;
 const MOCK_DEMO_DAYS = 14;
 const MAX_DEMO_DAYS = 365;
-const MAX_AHEAD_MS = 365 * DAY;
 const MAX_EMAIL_LENGTH = 254;
 const MIN_REASON = 10;
 const MAX_REASON = 500;
@@ -31,6 +30,7 @@ export const MOCK_SUBSCRIBED = { userId: MOCK_USERS[4].id, planCode: "STARTER", 
 export const MOCK_TEAM = { userId: MOCK_USERS[5].id, planCode: "BUSINESS", planSource: "TEAM" } as const;
 
 export const MOCK_RESELLER = { id: "0b0e0000-0000-4000-8000-000000000201", displayName: "Agencia Norte" };
+export const MOCK_OWN_RESELLER = { id: "0b0e0000-0000-4000-8000-000000000202", displayName: "Reventa del equipo" };
 
 type StoredInvitation = Omit<Invitation, "status">;
 type StoredGrant = Omit<DemoGrant, "status" | "email">;
@@ -199,10 +199,10 @@ function createInvitation(body: Record<string, unknown>, admin: AdminIdentity): 
   const resellerId = typeof body.resellerId === "string" ? body.resellerId : null;
   const at = email.indexOf("@");
   if (at < 1 || at === email.length - 1) return failure(400, "An invitation needs a valid email", "INVITATION_EMAIL_INVALID");
-  const self = selfOperation(admin, email === admin.email.toLowerCase(), true);
+  const self = selfOperation(admin, email === admin.email.toLowerCase(), true) ?? selfOperation(admin, resellerId === MOCK_OWN_RESELLER.id, true);
   if (self) return self;
   if (expiresAt <= Date.now()) return failure(400, "An invitation must expire in the future", "INVITATION_EXPIRY_PAST");
-  if (expiresAt > Date.now() + MAX_AHEAD_MS) return failure(400, "An invitation can expire at most 365 days from today", "INVITATION_EXPIRY_TOO_FAR");
+  if (beyondDemoHorizon(expiresAt)) return failure(400, "An invitation can expire at most at the end of day 365 from today", "INVITATION_EXPIRY_TOO_FAR");
   if (resellerId !== null && resellerId !== MOCK_RESELLER.id) {
     return failure(409, "The reseller does not exist or is not active", "INVITATION_RESELLER_INVALID");
   }
@@ -273,8 +273,9 @@ function extendDemo(userId: string, body: Record<string, unknown>, admin: AdminI
   if (self) return self;
   const grant = currentGrant(userId);
   if (!grant) return failure(404, "The user has no demo");
+  if (userId === MOCK_TEAM.userId) return failure(409, "The user has team access, extending the Demo would have no effect", "DEMO_TEAM_MEMBER");
   if (endsAt <= Date.now() || endsAt <= Date.parse(grant.endsAt)) return invalidRequest();
-  if (endsAt > Date.now() + MAX_AHEAD_MS) return failure(400, "A demo can end at most 365 days from today", "DEMO_END_TOO_FAR");
+  if (beyondDemoHorizon(endsAt)) return failure(400, "A demo can end at most at the end of day 365 from today", "DEMO_END_TOO_FAR");
   grant.endsAt = new Date(endsAt).toISOString();
   return ok(grantResponse(grant));
 }

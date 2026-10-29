@@ -16,7 +16,7 @@ import {
   type Subscription,
   type SubscriptionStatus,
 } from "../../admin/src/areas/customers/types.ts";
-import { failure, hasRole, notFound, ok, page, type AdminIdentity, type MockReply, type MockRequest, type MockArea } from "./http.ts";
+import { beyondDemoHorizon, failure, hasRole, notFound, ok, page, type AdminIdentity, type MockReply, type MockRequest, type MockArea } from "./http.ts";
 
 export const CUSTOMERS_SCENARIO = "customers";
 export const TEAM_CUSTOMER = { id: "0c000000-0000-4000-8000-000000000009", email: "cliente09@example.com" } as const;
@@ -601,10 +601,11 @@ const grantDemo: Action = (customer, _reason, { body }) => {
 const extendDemo: Action = (customer, _reason, { body }) => {
   const demo = currentDemo(customer);
   if (!demo) return notFound();
+  if (customer.team) return failure(409, "The user has team access, extending the Demo would have no effect", "DEMO_TEAM_MEMBER");
   const endsAt = futureInstant(body.endsAt);
   if (!endsAt) return badRequest("A demo can only be extended into the future");
-  if (Date.parse(endsAt) > new Date().getTime() + MAX_DEMO_DAYS * DAY) {
-    return failure(400, "A demo can end at most 365 days from today", "DEMO_END_TOO_FAR");
+  if (beyondDemoHorizon(Date.parse(endsAt))) {
+    return failure(400, "A demo can end at most at the end of day 365 from today", "DEMO_END_TOO_FAR");
   }
   demo.endsAt = endsAt;
   return ok(demo);

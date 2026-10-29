@@ -1,6 +1,6 @@
 import type { Page, Route } from "@playwright/test";
 import { todayInBuenosAires } from "../../admin/src/areas/operations/usage.ts";
-import { DIRECTORY, OPERATIONS_SCENARIO } from "../admin-mock/operations.ts";
+import { DIRECTORY, OPERATIONS_SCENARIO, REFUND_PENDING_SCENARIO, REFUND_REJECTED_SCENARIO } from "../admin-mock/operations.ts";
 import { ADMIN_APP_PORT, ADMIN_MOCK_ORIGIN } from "../ports.ts";
 import type { AdminScenario } from "./support.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, test, openFilters, settled, expireAdminSession, reauthenticate } from "./support.ts";
@@ -148,6 +148,32 @@ test.describe("consumer requests", () => {
     await expect(page.getByRole("row", { name: /BX-7KX2M9/ }).getByRole("link", { name: /^0b0e0000/ })).toBeVisible();
   });
 
+  for (const [scenario, message] of [
+    [REFUND_REJECTED_SCENARIO, "Mercado Pago rechazó el reembolso. El pedido sigue abierto, revisá el pago en Pagos antes de volver a intentar."],
+    [REFUND_PENDING_SCENARIO, "El reembolso sigue en proceso en Mercado Pago. Volvé a resolver el pedido cuando se acredite."],
+  ] as const) {
+    test(`keeps a withdrawal open when core answers ${scenario}`, async ({ page }) => {
+      await resetOperations({ roles: ["FINANCE"], scenario });
+      let lists = 0;
+      page.on("request", (request) => {
+        if (request.method() === "GET" && new URL(request.url()).pathname === "/admin/consumer-requests") lists += 1;
+      });
+      await enterAdmin(page, "/pedidos");
+      await page.getByRole("row", { name: /BX-7KX2M9/ }).getByRole("button", { name: "Cerrar pedido" }).click();
+      const dialog = page.getByRole("dialog", { name: "Cerrar el pedido BX-7KX2M9" });
+      await dialog.getByLabel("Respuesta para el cliente").fill("Te devolvemos el pago completo.");
+      await dialog.getByLabel("Motivo").fill("Pedido dentro de los diez días");
+      await dialog.getByRole("button", { name: "Resolver arrepentimiento" }).click();
+      await expect(dialog.getByText(message)).toBeVisible();
+      await noSideScroll(page);
+      const before = lists;
+      await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect.poll(() => lists).toBeGreaterThan(before);
+      await expect(page.getByRole("row", { name: /BX-7KX2M9/ })).toBeVisible();
+    });
+  }
+
   test("shows the empty and the error", async ({ page }) => {
     await resetOperations({ scenario: "default" });
     await enterAdmin(page, "/pedidos");
@@ -189,6 +215,7 @@ test.describe("team", () => {
     await expect(grant.getByText(/pasa a usar BoxLead sin pagar con los límites de Business/)).toBeVisible();
     await expect(grant.getByText("Tiene una suscripción viva")).toBeVisible();
     await expect(grant.getByText(/Hoy figura como Cuota impaga\./)).toBeVisible();
+    await expect(grant.getByText(/Mercado Pago le sigue cobrando hasta que se dé de baja/)).toBeVisible();
     await expect(grant.getByText("Está atribuida a un revendedor")).toBeVisible();
     await noSideScroll(page);
     await grant.getByLabel("Motivo").fill("Se suma a cobranzas");

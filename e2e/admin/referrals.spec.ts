@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { Page, Request } from "@playwright/test";
 import type { AdminRole } from "../../admin/src/api/types.ts";
+import { OWN_RESELLER_SCENARIO, REFERRALS_SCENARIO } from "../admin-mock/referrals.ts";
 import { adminMockUrl, enterAdmin, expect, expectAccessible, horizontalOverflow, resetAdmin, test, settled, expireAdminSession, reauthenticate } from "./support.ts";
 
 const NORTH = "00000101-0b0e-4000-8000-000000000001";
@@ -9,11 +10,11 @@ const EXPORTED_PAYOUT = "00000502-0b0e-4000-8000-000000000002";
 const REASON = "Pedido del equipo comercial por mail";
 const SCREENS = ["/revendedores", `/revendedores/${NORTH}`, "/comisiones", "/liquidaciones", `/liquidaciones/${EXPORTED_PAYOUT}`];
 
-async function seed(roles: AdminRole[]) {
+async function seed(roles: AdminRole[], scenario = REFERRALS_SCENARIO) {
   const res = await fetch(`${adminMockUrl()}/__reset`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Requested-With": "boxlead-web" },
-    body: JSON.stringify({ scenario: "referrals", roles }),
+    body: JSON.stringify({ scenario, roles }),
   });
   expect(res.ok).toBe(true);
 }
@@ -247,6 +248,31 @@ test("the mock answers with the codes core sends", async ({ page }) => {
   expect(first.status()).toBe(200);
   const again = await post(`/admin/commissions/${paidAccrual}/reverse`, { reason: REASON });
   expect([again.status(), (await again.json()).code]).toEqual([409, "COMMISSION_NOTHING_TO_REVERSE"]);
+});
+
+test("not even an owner operates on their own reseller", async ({ page }) => {
+  await seed(["OWNER"], OWN_RESELLER_SCENARIO);
+  await enterAdmin(page, `/revendedores/${NORTH}`);
+  await page.getByRole("button", { name: "Nuevo código" }).click();
+  await confirmWithReason(page, "Crear código", "/codes");
+  await expect(dialog(page).getByText(/^No podés hacer esto sobre tu propia cuenta ni sobre tu propio revendedor\./)).toBeVisible();
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+
+  const post = (path: string, data: Record<string, unknown>) =>
+    page.request.post(`${adminMockUrl()}${path}`, { headers: MOCK_HEADERS, data: { ...data, reason: REASON } });
+  const refused = [
+    await post("/admin/resellers", { userId: "0b0e0000-0000-4000-8000-0000000000a1", displayName: "Propia", legalName: "Propia SRL", taxId: "30-1", vatCondition: "MONOTRIBUTO" }),
+    await post("/admin/referral-codes/00000301-0b0e-4000-8000-000000000001/disable", {}),
+    await post(`/admin/customers/${WEST.id}/attribution`, { resellerId: NORTH }),
+    await post("/admin/commissions/approve", { ids: ["00000602-0b0e-4000-8000-000000000002"] }),
+    await post("/admin/commissions/00000601-0b0e-4000-8000-000000000001/hold", {}),
+    await post("/admin/commissions/00000604-0b0e-4000-8000-000000000004/release", {}),
+    await post("/admin/commissions/00000606-0b0e-4000-8000-000000000006/reverse", {}),
+    await post("/admin/payouts", { resellerId: NORTH, periodEnd: dayInBuenosAires(0) }),
+    await post(`/admin/payouts/${EXPORTED_PAYOUT}/export`, {}),
+    await post(`/admin/payouts/${EXPORTED_PAYOUT}/paid`, { transferReference: null }),
+  ];
+  for (const reply of refused) expect([reply.status(), (await reply.json()).code]).toEqual([403, "ADMIN_SELF_OPERATION"]);
 });
 
 test.describe("owner actions", () => {

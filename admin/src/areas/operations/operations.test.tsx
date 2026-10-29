@@ -434,6 +434,22 @@ describe("granting a role and team access", { timeout: 20_000 }, () => {
     expect(calls.some((call) => call.url.pathname === `/admin/customers/${LUCIA}`)).toBe(true);
   });
 
+  it.each([
+    ["PAUSED", "Pausada", /Mientras esté pausada Mercado Pago no le cobra, pero si se reanuda le vuelve a cobrar/],
+    ["INCOMPLETE", "Sin pagar", /Todavía no pagó la primera cuota\. Si completa el pago en Mercado Pago, empieza a cobrarle/],
+  ])("does not say Mercado Pago keeps charging a %s subscription", async (status, label, notice) => {
+    await openGrant(() => json(200, { id: LUCIA, subscription: { id: "s1", status }, attribution: null }));
+    expect(await screen.findByText("Tiene una suscripción viva")).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`Hoy figura como ${label}\\.`))).toBeInTheDocument();
+    expect(screen.getByText(notice)).toBeInTheDocument();
+    expect(screen.queryByText(/le sigue cobrando/)).toBeNull();
+  });
+
+  it.each(["PAST_DUE", "SUSPENDED"])("says Mercado Pago keeps charging a %s subscription", async (status) => {
+    await openGrant(() => json(200, { id: LUCIA, subscription: { id: "s1", status }, attribution: null }));
+    expect(await screen.findByText(/Mercado Pago le sigue cobrando hasta que se dé de baja/)).toBeInTheDocument();
+  });
+
   it("stays quiet without a subscription or a reseller", async () => {
     await openGrant(() => json(200, { id: LUCIA, subscription: { id: "s1", status: "CANCELED" }, attribution: null }));
     expect(screen.getByText(/pasa a usar BoxLead sin pagar con los límites de Business/)).toBeInTheDocument();

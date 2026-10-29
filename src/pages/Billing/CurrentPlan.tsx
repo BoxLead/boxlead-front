@@ -1,4 +1,4 @@
-import type { BillingSummary, PaidPlanCode } from "../../api/types";
+import type { BillingSummary, PaidPlanCode, SubscriptionSummary } from "../../api/types";
 import { Tag } from "../../components/ui/Tag";
 import { currentPlan } from "../../data/billing";
 import { isCheckoutUrl } from "../../util/checkout";
@@ -6,6 +6,12 @@ import { formatNumber } from "../../util/format";
 import { formatMinor } from "../../util/planPrice";
 import { SUBSCRIPTION_STATUS } from "./billingLabels";
 import { longDate } from "./dates";
+
+function teamChargeNote(subscription: SubscriptionSummary): string {
+  if (subscription.cancelAtPeriodEnd) return `Lo diste de baja y termina el ${longDate(subscription.currentPeriodEnd)}. No se te cobra más.`;
+  if (subscription.status === "PAUSED") return "Mientras esté pausado Mercado Pago no te lo cobra, pero si se reanuda te lo vuelve a cobrar.";
+  return "No lo necesitás para usar BoxLead, pero Mercado Pago te lo sigue cobrando hasta que lo des de baja.";
+}
 
 type CurrentPlanProps = {
   summary: BillingSummary;
@@ -29,7 +35,7 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
   const { usage, limits } = summary;
   const plan = currentPlan(summary);
   const team = plan?.source === "TEAM";
-  const subscription = team ? null : summary.subscription;
+  const subscription = summary.subscription;
   const demo = team ? null : summary.demo;
   const status = subscription ? SUBSCRIPTION_STATUS[subscription.status] : null;
   const canCancel =
@@ -71,19 +77,24 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
             backoffice, así que no hace falta contratar un plan.
           </p>
         ) : null}
+        {team && subscription && status ? (
+          <p>
+            También tenés un plan pago propio que hoy figura como <strong>{status.label}</strong>. {teamChargeNote(subscription)}
+          </p>
+        ) : null}
         {demo ? <p>Tu Beta gratis dura hasta el {longDate(demo.endsAt)}.</p> : null}
         {subscription && !subscription.cancelAtPeriodEnd && subscription.status === "ACTIVE" ? (
           <p>
             Próxima cuota de <strong>{formatMinor(subscription.price)}</strong> el {longDate(subscription.currentPeriodEnd)}.
           </p>
         ) : null}
-        {subscription?.cancelAtPeriodEnd ? (
+        {subscription?.cancelAtPeriodEnd && !team ? (
           <p>Lo diste de baja. Tenés acceso hasta el {longDate(subscription.currentPeriodEnd)}.</p>
         ) : null}
         {subscription?.status === "PAST_DUE" ? (
           <p>
             Mercado Pago no pudo cobrar la cuota.
-            {subscription.graceUntil ? ` Seguís con acceso hasta el ${longDate(subscription.graceUntil)}.` : null}
+            {subscription.graceUntil && !team ? ` Seguís con acceso hasta el ${longDate(subscription.graceUntil)}.` : null}
           </p>
         ) : null}
         {summary.access === "RESTRICTED" && (subscription?.status === "SUSPENDED" || subscription?.status === "PAUSED") ? (
@@ -128,14 +139,14 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
         </div>
       ) : null}
 
-      {paymentUrl || canCancel || subscription?.pendingPlanCode ? (
+      {paymentUrl || canCancel || (subscription?.pendingPlanCode && !team) ? (
         <div className="billing-card-actions">
           {paymentUrl ? (
             <a className="btn btn-primary btn-sm" href={paymentUrl} rel="noopener noreferrer">
               Cambiar el medio de pago
             </a>
           ) : null}
-          {subscription?.pendingPlanCode && plan ? (
+          {subscription?.pendingPlanCode && plan && !team ? (
             <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onKeep}>
               Seguir en {plan.name ?? "tu plan"}
             </button>
