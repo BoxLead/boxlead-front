@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BillingSummary, SubscriptionSummary } from "../../api/types";
-import { planErrorNotice, planNotice, safePaymentUrl } from "./planNotice";
+import { i18n } from "../../i18n";
+import { CHOOSE_PLAN, planErrorNotice, planNotice, safePaymentUrl } from "./planNotice";
 
 const NOW = new Date("2026-11-10T12:00:00Z");
 const PAY_URL = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_id=abc";
@@ -154,5 +155,34 @@ describe("planErrorNotice", () => {
     const noPlan = planNotice(summary({ access: "RESTRICTED", plan: null }), NOW);
     expect(planErrorNotice("PLAN_REQUIRED", noPlan)).toBeNull();
     expect(planErrorNotice("PLAN_REQUIRED", null)).toMatchObject({ title: "Necesitás un plan activo" });
+  });
+});
+
+describe("plan notices in English", () => {
+  it("explains a failed charge with the date in English", async () => {
+    await i18n.changeLanguage("en");
+    const notice = planNotice(
+      summary({ subscription: subscription({ status: "PAST_DUE", graceUntil: "2026-11-15T12:00:00Z", updatePaymentUrl: PAY_URL }) }),
+      NOW,
+    );
+    expect(notice).toMatchObject({
+      title: "We couldn't charge your plan",
+      text: "Update your payment method before November 15 to keep your access.",
+      action: { label: "Change payment method", href: PAY_URL },
+    });
+  });
+
+  it("names the shared actions and plan errors in English", async () => {
+    await i18n.changeLanguage("en");
+    expect(CHOOSE_PLAN.label).toBe("Choose a plan");
+    expect(planErrorNotice("PLAN_LIMIT_REACHED", null)).toMatchObject({
+      title: "You've reached your plan's limit",
+      action: { label: "See plans" },
+    });
+    const team = summary({
+      plan: { code: "BUSINESS", name: "Business", source: "TEAM" },
+      usage: { agentReplies: { used: 1000, limit: 1000 }, periodEnd: "2026-12-01T15:00:00Z" },
+    });
+    expect(planNotice(team, NOW)?.text).toBe("They used 1,000 of 1,000. They'll reply again on December 1.");
   });
 });

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
@@ -239,6 +240,7 @@ export function LeadDetail() {
         </section>
       </div>
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirmingDelete}
         title={`¿Eliminar ${name}?`}
         confirmLabel={deleting ? "Eliminando…" : "Eliminar"}

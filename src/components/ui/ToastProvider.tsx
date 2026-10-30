@@ -12,7 +12,12 @@ const ICONS: Record<ToastTone, ReactNode> = {
   danger: <AlertIcon />,
 };
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+type ToastProviderProps = {
+  closeLabel: string;
+  children: ReactNode;
+};
+
+export function ToastProvider({ closeLabel, children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -47,7 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div key={toast.id} className={`toast toast-${toast.tone}`} role={toast.tone === "danger" ? "alert" : "status"}>
             <span className="toast-icon">{ICONS[toast.tone]}</span>
             <span className="toast-message">{toast.message}</span>
-            <button type="button" className="toast-close" onClick={() => dismiss(toast.id)} aria-label="Cerrar aviso">
+            <button type="button" className="toast-close" onClick={() => dismiss(toast.id)} aria-label={closeLabel}>
               <CloseIcon width={16} height={16} />
             </button>
           </div>

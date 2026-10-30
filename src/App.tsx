@@ -4,6 +4,7 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { Loading } from "./components/Loading";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { preloadSocialAuth } from "./context/socialRoutes";
+import { messages } from "./i18n";
 import { EDITORIAL_PATHS } from "./landing/editorialPaths";
 import {
   lazyRoute,
@@ -64,17 +65,18 @@ registerRoutePreload("/nueva-clave", [ResetPassword]);
 registerRoutePreload("/confirmar-email", [ConfirmEmail]);
 registerRoutePreload("/nuevo-email", [ConfirmEmailChange]);
 registerRoutePreload("/reingresar", [Reauthenticate, socialAuth]);
-registerRoutePreload("/app/cuenta", [Layout, Account]);
-registerRoutePreload("/app", [Layout, Inbox]);
-registerRoutePreload("/app/inbox", [Layout, Inbox]);
-registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail]);
-registerRoutePreload("/app/metrics", [Layout, Metrics]);
-registerRoutePreload("/app/categories", [Layout, Categories]);
-registerRoutePreload("/app/agents", [Layout, Agents]);
-registerRoutePreload("/app/connections", [Layout, Connections]);
-registerRoutePreload("/app/billing", [Layout, Billing]);
-registerRoutePreload("/app/reseller", [Layout, Reseller]);
-registerRoutePreload("/app/notificaciones", [Layout, Notifications]);
+const appMessages = ["shell", "inbox", "leads", "metrics", "billing", "agents", "account", "connections"].map(messages);
+registerRoutePreload("/app/cuenta", [Layout, Account, ...appMessages]);
+registerRoutePreload("/app", [Layout, Inbox, ...appMessages]);
+registerRoutePreload("/app/inbox", [Layout, Inbox, ...appMessages]);
+registerRoutePreload("/app/leads", [Layout, Leads, LeadDetail, ...appMessages]);
+registerRoutePreload("/app/metrics", [Layout, Metrics, ...appMessages]);
+registerRoutePreload("/app/categories", [Layout, Categories, ...appMessages]);
+registerRoutePreload("/app/agents", [Layout, Agents, ...appMessages]);
+registerRoutePreload("/app/connections", [Layout, Connections, ...appMessages]);
+registerRoutePreload("/app/billing", [Layout, Billing, ...appMessages]);
+registerRoutePreload("/app/reseller", [Layout, Reseller, ...appMessages]);
+registerRoutePreload("/app/notificaciones", [Layout, Notifications, ...appMessages]);
 registerRoutePreload("/avisos/baja", [NotificationUnsubscribe]);
 
 function Page({ children }: { children: ReactNode }) {

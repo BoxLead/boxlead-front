@@ -138,7 +138,7 @@ function renderAs(roles: AdminRole[], ui: ReactNode, path = "/") {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <SessionContext.Provider value={session(roles)}>
-        <ToastProvider>{ui}</ToastProvider>
+        <ToastProvider closeLabel="Cerrar aviso">{ui}</ToastProvider>
       </SessionContext.Provider>
     </MemoryRouter>,
   );

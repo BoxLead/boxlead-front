@@ -134,6 +134,7 @@ export function DesignSystem() {
         </div>
         <div className="ds-row">
           <ChoiceGroup
+            unreadLabel={(count) => `, ${count} sin leer`}
             label="Chips"
             value="a"
             choices={[

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/client";
 import type { AgentResponse, AgentScope, CategoryResponse } from "../../api/types";
@@ -160,7 +161,7 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
                 aria-describedby={nameCounterId}
                 onChange={(event) => setName(event.target.value)}
               />
-              <CharCounter id={nameCounterId} length={name.length} max={AGENT_NAME_MAX} />
+              <CharCounter id={nameCounterId} length={name.length} max={AGENT_NAME_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
             </label>
             <label className="field">
               <span className="field-label">Instrucciones</span>
@@ -174,7 +175,7 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
                 aria-describedby={instructionsCounterId}
                 onChange={(event) => setInstructions(event.target.value)}
               />
-              <CharCounter id={instructionsCounterId} length={instructions.length} max={AGENT_INSTRUCTIONS_MAX} />
+              <CharCounter id={instructionsCounterId} length={instructions.length} max={AGENT_INSTRUCTIONS_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
             </label>
             <div className="field">
               <Switch

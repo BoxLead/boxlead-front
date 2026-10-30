@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
@@ -329,6 +330,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
         />
       ) : null}
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirmingDelete}
         title={`¿Eliminar la conversación con ${row.displayName}?`}
         confirmLabel={deleting ? "Eliminando…" : "Eliminar"}

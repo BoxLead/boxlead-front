@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ACCOUNT_FEATURES_OFF } from "../../api/client";
 import type { AuthUser } from "../../api/types";
 import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
+import { i18n } from "../../i18n";
 import { EmailVerificationGate } from "./EmailVerificationGate";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -88,5 +89,19 @@ describe("email verification gate", () => {
   it("links to the account page when it is on", () => {
     renderGate(session(true));
     expect(screen.getByRole("link", { name: "Corregilo desde tu cuenta" })).toHaveAttribute("href", "/app/cuenta");
+  });
+});
+
+describe("email verification gate in English", () => {
+  it("asks to confirm the email in English", async () => {
+    await i18n.changeLanguage("en");
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 202 }));
+    renderGate(session(true));
+    expect(screen.getByRole("heading", { name: "Confirm your email" })).toBeInTheDocument();
+    expect(screen.getByText(/The link expires in 2 hours/)).toHaveTextContent("We sent a link to nuevo@negocio.com.");
+    expect(screen.getByRole("link", { name: "Fix it from your account" })).toHaveAttribute("href", "/app/cuenta");
+    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Send the link again" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("We sent you a new link.");
   });
 });

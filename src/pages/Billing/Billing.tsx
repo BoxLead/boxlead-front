@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
@@ -237,6 +238,7 @@ export function Billing() {
       ) : null}
 
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={change !== null}
         title={`¿Pasar a ${change?.plan.name ?? "otro plan"}?`}
         confirmLabel={busy ? "Cambiando…" : `Pasar a ${change?.plan.name ?? "otro plan"}`}
@@ -260,6 +262,7 @@ export function Billing() {
       </ConfirmDialog>
 
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirmCancel}
         title={team ? "¿Dar de baja tu plan pago propio?" : "¿Dar de baja tu plan?"}
         confirmLabel={busy ? "Dando de baja…" : "Dar de baja"}

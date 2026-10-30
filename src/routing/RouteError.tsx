@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { AlertIcon } from "../components/icons/UiIcons";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -12,8 +13,9 @@ type RouteErrorProps = {
 };
 
 export function RouteError({ error, inline = false, onRetry }: RouteErrorProps) {
+  const { t } = useTranslation("shell", { useSuspense: false });
   const chunk = isChunkLoadError(error);
-  const title = chunk ? "Hay una versión nueva de BoxLead" : "Esta pantalla no se pudo mostrar";
+  const title = chunk ? t("routeError.chunkTitle") : t("routeError.title");
   const heading = useRef<HTMLHeadingElement>(null);
   useDocumentTitle(title);
 
@@ -30,22 +32,20 @@ export function RouteError({ error, inline = false, onRetry }: RouteErrorProps) 
         {title}
       </h1>
       <p className="route-error-hint">
-        {chunk
-          ? "Recargá la página para seguir con la versión actual."
-          : "Probá de nuevo. Si vuelve a pasar, escribinos a soporte y contanos qué estabas haciendo."}
+        {chunk ? t("routeError.chunkHint") : t("routeError.hint")}
       </p>
       <div className="route-error-actions">
         {chunk ? (
           <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
-            Recargar
+            {t("routeError.reload")}
           </button>
         ) : (
           <button type="button" className="btn btn-primary" onClick={onRetry}>
-            Reintentar
+            {t("routeError.retry")}
           </button>
         )}
         <Link to={inline ? "/app/inbox" : "/"} className="btn btn-secondary" onClick={onRetry}>
-          {inline ? "Ir a la bandeja" : "Ir al inicio"}
+          {inline ? t("notFound.inbox", { ns: "common" }) : t("notFound.home", { ns: "common" })}
         </Link>
       </div>
     </div>

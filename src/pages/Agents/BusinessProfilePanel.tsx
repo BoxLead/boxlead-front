@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useId, useState, type FormEvent } from "react";
 import type { BusinessProfile } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
@@ -73,7 +74,7 @@ function ProfileForm({ profile }: ProfileFormProps) {
           aria-describedby={descriptionCounterId}
           onChange={(event) => setDescription(event.target.value)}
         />
-        <CharCounter id={descriptionCounterId} length={description.length} max={PROFILE_DESCRIPTION_MAX} />
+        <CharCounter id={descriptionCounterId} length={description.length} max={PROFILE_DESCRIPTION_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
       </label>
       <label className="field">
         <span className="field-label">Tono</span>
@@ -87,7 +88,7 @@ function ProfileForm({ profile }: ProfileFormProps) {
           aria-describedby={toneCounterId}
           onChange={(event) => setTone(event.target.value)}
         />
-        <CharCounter id={toneCounterId} length={tone.length} max={PROFILE_TONE_MAX} />
+        <CharCounter id={toneCounterId} length={tone.length} max={PROFILE_TONE_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
       </label>
       <div className="field">
         <Switch label="Categorizar leads automáticamente" checked={autoCategorize} onChange={setAutoCategorize} />

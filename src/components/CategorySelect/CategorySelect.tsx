@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { CategoryResponse, LeadResponse } from "../../api/types";
 import { assignLeadCategory } from "../../data/categories";
@@ -17,6 +18,7 @@ type CategorySelectProps = {
 const NONE = "";
 
 export function CategorySelect({ lead, categories, size = "sm" }: CategorySelectProps) {
+  const { t } = useTranslation("shell");
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const current = categoryById(categories, lead.categoryId);
@@ -29,11 +31,15 @@ export function CategorySelect({ lead, categories, size = "sm" }: CategorySelect
       await assignLeadCategory(lead, categoryId);
       const name = leadDisplayName(lead);
       const target = categoryById(categories, categoryId);
-      toast({ message: target ? `${name} pasó a ${target.name}.` : `${name} quedó sin categoría.` });
+      toast({
+        message: target
+          ? t("categorySelect.changed", { name, category: target.name })
+          : t("categorySelect.cleared", { name }),
+      });
     } catch (error) {
       toast({
         tone: "danger",
-        message: error instanceof ApiError ? error.message : "No pudimos cambiar la categoría. Probá de nuevo.",
+        message: error instanceof ApiError ? error.message : t("categorySelect.failed"),
       });
     } finally {
       setSaving(false);
@@ -44,14 +50,14 @@ export function CategorySelect({ lead, categories, size = "sm" }: CategorySelect
     <label
       className={`category-select category-select-${size}${current ? ` ${colorClass(current.color)}` : " category-select-empty"}`}
     >
-      <span className="visually-hidden">Categoría de {leadDisplayName(lead)}</span>
+      <span className="visually-hidden">{t("categorySelect.label", { name: leadDisplayName(lead) })}</span>
       <select
         value={current?.id ?? NONE}
         disabled={saving}
         onChange={(event) => void change(event.target.value)}
         onClick={(event) => event.stopPropagation()}
       >
-        <option value={NONE}>Sin categoría</option>
+        <option value={NONE}>{t("categorySelect.none")}</option>
         {categories.map((category) => (
           <option key={category.id} value={category.id}>
             {category.name}

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { AccountConnectionResponse, AgentResponse, OnboardingResponse } from "../api/types";
 import { AGENT_KEY_PREFIX, invalidateQueries } from "./queryCache";
 
@@ -40,25 +41,25 @@ export function onboardingSteps({ connections, status, agents }: OnboardingSourc
   return [
     {
       id: "channel",
-      title: "Conectá un canal",
-      text: "Así los mensajes de tus clientes llegan a la bandeja.",
-      action: "Conectar",
+      title: i18next.t("onboarding.channel.title", { ns: "shell" }),
+      text: i18next.t("onboarding.channel.text", { ns: "shell" }),
+      action: i18next.t("onboarding.channel.action", { ns: "shell" }),
       to: "/app/connections",
       done: connections.length > 0,
     },
     {
       id: "agent",
-      title: "Creá tu agente",
-      text: "Contale qué vendés y cómo querés que responda.",
-      action: "Crear",
+      title: i18next.t("onboarding.agent.title", { ns: "shell" }),
+      text: i18next.t("onboarding.agent.text", { ns: "shell" }),
+      action: i18next.t("onboarding.agent.action", { ns: "shell" }),
       to: "/app/agents?id=new",
       done: status.agentCreated === true,
     },
     {
       id: "test",
-      title: "Probá tu agente",
-      text: "Mandale una consulta de prueba y mirá cómo contesta.",
-      action: "Probar",
+      title: i18next.t("onboarding.test.title", { ns: "shell" }),
+      text: i18next.t("onboarding.test.text", { ns: "shell" }),
+      action: i18next.t("onboarding.test.action", { ns: "shell" }),
       to: testPath(agents),
       done: status.agentTested === true,
     },

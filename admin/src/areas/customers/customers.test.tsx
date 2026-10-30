@@ -48,7 +48,7 @@ function renderAt(path: string, roles: AdminRole[], handler: (method: string, ur
   const calls = mockFetch(handler);
   render(
     <SessionContext.Provider value={session(roles)}>
-      <ToastProvider>
+      <ToastProvider closeLabel="Cerrar aviso">
         <ResellerDirectoryProvider>
           <MemoryRouter initialEntries={[path]}>
             <Routes>

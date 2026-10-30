@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { i18n } from "../../i18n";
 import { pendingDocuments } from "./legalDocuments";
 
 describe("pendingDocuments", () => {
@@ -22,5 +23,13 @@ describe("pendingDocuments", () => {
       [{ kind: "RESELLER_AGREEMENT", version: "1", language: "es", url: "//evil.example", requiresAcceptance: true }],
     );
     expect(doc.path).toBeNull();
+  });
+});
+
+describe("pendingDocuments in English", () => {
+  it("names the documents in English and keeps the Spanish pages", async () => {
+    await i18n.changeLanguage("en");
+    const [doc] = pendingDocuments([{ kind: "TERMS", version: "2026-11" }], undefined);
+    expect(doc).toEqual({ kind: "TERMS", version: "2026-11", label: "Terms and conditions", path: "/terminos" });
   });
 });

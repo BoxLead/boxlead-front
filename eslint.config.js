@@ -7,25 +7,11 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import { noLiteralText } from './eslint/noLiteralText.js'
 
 const I18N_PENDING = [
-  'src/App.tsx',
-  'src/components/CategorySelect/**',
-  'src/components/EmailVerificationGate/**',
   'src/components/EmptyState/**',
-  'src/components/FeatureRoute.tsx',
-  'src/components/Layout/**',
-  'src/components/LegalDialog/**',
   'src/components/Logo/**',
   'src/components/NotificationSettings/**',
   'src/components/Notifications/**',
-  'src/components/Onboarding/**',
-  'src/components/PlanBanner/**',
-  'src/components/ProtectedRoute.tsx',
-  'src/components/Sidebar/**',
-  'src/components/StatusSelect/**',
-  'src/components/TemperatureSelect/**',
   'src/components/icons/**',
-  'src/components/ui/**',
-  'src/context/**',
   'src/pages/Account/**',
   'src/pages/Agents/**',
   'src/pages/Billing/**',
@@ -39,10 +25,6 @@ const I18N_PENDING = [
   'src/pages/OAuthCallback/**',
   'src/pages/Reseller/**',
   'src/platforms/**',
-  'src/routing/RouteError.tsx',
-  'src/routing/RouteErrorBoundary.tsx',
-  'src/routing/RouteAnnouncer.tsx',
-  'src/monitoring/**',
 ]
 
 const UNTRANSLATED_NAMES = ['BoxLead', 'WhatsApp', 'WhatsApp Business', 'Instagram', 'Messenger', 'MercadoLibre', 'Facebook', 'Google', 'TikTok', 'LinkedIn', 'Google Ads', 'Meta', '24/7']

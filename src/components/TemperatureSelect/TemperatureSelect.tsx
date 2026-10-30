@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { LeadResponse, LeadTemperature } from "../../api/types";
 import { assignLeadTemperature } from "../../data/leads";
@@ -16,6 +17,7 @@ type TemperatureSelectProps = {
 const NONE = "";
 
 export function TemperatureSelect({ lead, size = "sm" }: TemperatureSelectProps) {
+  const { t } = useTranslation("shell");
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const current = lead.temperature ?? null;
@@ -29,13 +31,16 @@ export function TemperatureSelect({ lead, size = "sm" }: TemperatureSelectProps)
       const name = leadDisplayName(lead);
       toast({
         message: temperature
-          ? `${name} quedó ${leadTemperatureLabel(temperature).toLocaleLowerCase(intlLocale())}.`
-          : `${name} quedó sin evaluar.`,
+          ? t("temperatureSelect.changed", {
+              name,
+              temperature: leadTemperatureLabel(temperature).toLocaleLowerCase(intlLocale()),
+            })
+          : t("temperatureSelect.cleared", { name }),
       });
     } catch (error) {
       toast({
         tone: "danger",
-        message: error instanceof ApiError ? error.message : "No pudimos cambiar la temperatura. Probá de nuevo.",
+        message: error instanceof ApiError ? error.message : t("temperatureSelect.failed"),
       });
     } finally {
       setSaving(false);
@@ -46,14 +51,14 @@ export function TemperatureSelect({ lead, size = "sm" }: TemperatureSelectProps)
     <label
       className={`temperature-select temperature-select-${size} temperature-select-${current ? current.toLowerCase() : "unset"}`}
     >
-      <span className="visually-hidden">Temperatura de {leadDisplayName(lead)}</span>
+      <span className="visually-hidden">{t("temperatureSelect.label", { name: leadDisplayName(lead) })}</span>
       <select
         value={current ?? NONE}
         disabled={saving}
         onChange={(event) => void change(event.target.value)}
         onClick={(event) => event.stopPropagation()}
       >
-        <option value={NONE}>Sin evaluar</option>
+        <option value={NONE}>{t("temperatureSelect.none")}</option>
         {LEAD_TEMPERATURES.map((temperature) => (
           <option key={temperature} value={temperature}>
             {leadTemperatureLabel(temperature)}

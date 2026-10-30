@@ -122,7 +122,7 @@ export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerReq
         />
         <div className="consumer-form-hint">
           <span className="field-help">Si querés, contanos algo más en pocas palabras.</span>
-          <CharCounter id={counterId} length={details.length} max={DETAILS_MAX} />
+          <CharCounter id={counterId} length={details.length} max={DETAILS_MAX} overLimitLabel="caracteres, supera el máximo" />
         </div>
         {detailsError ? <p className="field-error">Revisá el detalle.</p> : null}
       </div>

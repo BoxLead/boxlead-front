@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
 import { SendIcon, TemplateIcon } from "../../components/icons/UiIcons";
 import { CharCounter } from "../../components/ui/CharCounter";
@@ -63,7 +64,7 @@ export function Composer({ policy, label, initialValue = "", onSend, onTemplates
             <span>Plantilla</span>
           </button>
         ) : null}
-        {policy.maxLength ? <CharCounter id={counterId} length={draft.length} max={policy.maxLength} /> : null}
+        {policy.maxLength ? <CharCounter id={counterId} length={draft.length} max={policy.maxLength} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} /> : null}
         <button
           type="submit"
           className="btn btn-primary btn-sm composer-send"

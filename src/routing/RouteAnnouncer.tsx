@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import i18next from "i18next";
 import { pageNameFrom } from "./pageName";
 
 const SETTLE_MS = 400;
@@ -13,6 +14,16 @@ function focusTarget(): HTMLElement | null {
     document.querySelector<HTMLElement>("[data-route-focus]") ??
     document.querySelector<HTMLElement>(".layout-content h1, main h1, h1")
   );
+}
+
+function announcePage(page: string, show: (message: string) => void): void {
+  const say = () =>
+    show(i18next.exists("announcer.loaded", { ns: "shell" }) ? i18next.t("announcer.loaded", { ns: "shell", page }) : page);
+  if (i18next.hasLoadedNamespace("shell")) {
+    say();
+    return;
+  }
+  void i18next.loadNamespaces("shell").then(say, say);
 }
 
 export function RouteAnnouncer() {
@@ -29,7 +40,7 @@ export function RouteAnnouncer() {
     const announce = () => {
       if (settled) return;
       settled = true;
-      setMessage(`${pageNameFrom(document.title)}, página cargada`);
+      announcePage(pageNameFrom(document.title), setMessage);
       const target = focusTarget();
       if (target) {
         if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");

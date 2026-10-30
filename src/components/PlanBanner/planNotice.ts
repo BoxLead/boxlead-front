@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { PlanErrorCode } from "../../api/client";
 import type { BillingSummary } from "../../api/types";
 import { BILLING_PATH, isTeamPlan } from "../../data/billing";
@@ -25,9 +26,25 @@ export const DEMO_WARNING_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PAYMENT_HOST = "www.mercadopago.com.ar";
 
-export const CHOOSE_PLAN: NoticeAction = { label: "Elegir un plan", href: BILLING_PATH, external: false };
-export const SEE_PLANS: NoticeAction = { label: "Ver planes", href: BILLING_PATH, external: false };
-const GO_TO_BILLING: NoticeAction = { label: "Ir a facturación", href: BILLING_PATH, external: false };
+type ActionKey = "choosePlan" | "seePlans" | "goToBilling" | "updatePayment";
+
+function actionLabel(key: ActionKey): string {
+  return i18next.t(`plan.actions.${key}`, { ns: "shell" });
+}
+
+function billingAction(key: ActionKey): NoticeAction {
+  return {
+    get label() {
+      return actionLabel(key);
+    },
+    href: BILLING_PATH,
+    external: false,
+  };
+}
+
+export const CHOOSE_PLAN = billingAction("choosePlan");
+export const SEE_PLANS = billingAction("seePlans");
+const GO_TO_BILLING = billingAction("goToBilling");
 
 export function longDate(iso: string): string {
   const date = new Date(iso);
@@ -47,7 +64,7 @@ export function safePaymentUrl(url: string | null | undefined): string | null {
 
 function updatePayment(url: string | null | undefined): NoticeAction {
   const safe = safePaymentUrl(url);
-  return safe ? { label: "Cambiar medio de pago", href: safe, external: true } : GO_TO_BILLING;
+  return safe ? { label: actionLabel("updatePayment"), href: safe, external: true } : GO_TO_BILLING;
 }
 
 function repliesLimitReached(summary: BillingSummary): boolean {
@@ -62,25 +79,26 @@ function demoEnding(summary: BillingSummary, now: Date): boolean {
 }
 
 function repliesLimitNotice(summary: BillingSummary, team: boolean): PlanNotice {
-  const limit = summary.limits.AGENT_REPLIES_PER_PERIOD ?? 0;
-  const until = longDate(summary.usage.periodEnd);
-  const used = `Usaron ${formatNumber(limit)} de ${formatNumber(limit)}.`;
+  const limit = formatNumber(summary.limits.AGENT_REPLIES_PER_PERIOD ?? 0);
+  const date = longDate(summary.usage.periodEnd);
   if (team) {
     return {
       kind: "replies-limit",
       tone: "warning",
-      title: "Tus agentes usaron todas las respuestas del período",
-      text: until ? `${used} Vuelven a responder el ${until}.` : `${used} Vuelven a responder cuando empiece el próximo período.`,
+      title: i18next.t("plan.repliesLimit.teamTitle", { ns: "shell" }),
+      text: date
+        ? i18next.t("plan.repliesLimit.teamUntil", { ns: "shell", limit, date })
+        : i18next.t("plan.repliesLimit.teamNextPeriod", { ns: "shell", limit }),
       action: GO_TO_BILLING,
     };
   }
   return {
     kind: "replies-limit",
     tone: "warning",
-    title: "Tus agentes usaron todas las respuestas del plan",
-    text: until
-      ? `${used} Vuelven a responder el ${until} o antes si cambiás de plan.`
-      : `${used} Cambiá de plan para que sigan respondiendo.`,
+    title: i18next.t("plan.repliesLimit.title", { ns: "shell" }),
+    text: date
+      ? i18next.t("plan.repliesLimit.until", { ns: "shell", limit, date })
+      : i18next.t("plan.repliesLimit.changePlan", { ns: "shell", limit }),
     action: SEE_PLANS,
   };
 }
@@ -93,10 +111,10 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
     return {
       kind: "suspended",
       tone: "danger",
-      title: "Tu plan está suspendido",
+      title: i18next.t("plan.suspended.title", { ns: "shell" }),
       text: restricted
-        ? "No pudimos cobrarlo. Tus agentes no responden y no podés enviar mensajes hasta que actualices el medio de pago."
-        : "No pudimos cobrarlo. Actualizá el medio de pago para regularizarlo.",
+        ? i18next.t("plan.suspended.restricted", { ns: "shell" })
+        : i18next.t("plan.suspended.open", { ns: "shell" }),
       action: updatePayment(subscription.updatePaymentUrl),
     };
   }
@@ -104,10 +122,8 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
     return {
       kind: "paused",
       tone: "danger",
-      title: "Tu plan está en pausa",
-      text: restricted
-        ? "Tus agentes no responden y no podés enviar mensajes hasta que lo reactives."
-        : "Reactivalo para seguir con tu plan.",
+      title: i18next.t("plan.paused.title", { ns: "shell" }),
+      text: restricted ? i18next.t("plan.paused.restricted", { ns: "shell" }) : i18next.t("plan.paused.open", { ns: "shell" }),
       action: GO_TO_BILLING,
     };
   }
@@ -115,20 +131,18 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
     return {
       kind: "no-plan",
       tone: "warning",
-      title: "No tenés un plan activo",
-      text: "Podés ver tus conversaciones, leads y métricas, pero tus agentes no responden y no podés enviar mensajes.",
+      title: i18next.t("plan.noPlan.title", { ns: "shell" }),
+      text: i18next.t("plan.noPlan.text", { ns: "shell" }),
       action: CHOOSE_PLAN,
     };
   }
   if (subscription?.status === "PAST_DUE") {
-    const until = subscription.graceUntil ? longDate(subscription.graceUntil) : "";
+    const date = subscription.graceUntil ? longDate(subscription.graceUntil) : "";
     return {
       kind: "past-due",
       tone: "warning",
-      title: "No pudimos cobrar tu plan",
-      text: until
-        ? `Actualizá el medio de pago antes del ${until} para no perder el acceso.`
-        : "Actualizá el medio de pago para no perder el acceso.",
+      title: i18next.t("plan.pastDue.title", { ns: "shell" }),
+      text: date ? i18next.t("plan.pastDue.until", { ns: "shell", date }) : i18next.t("plan.pastDue.text", { ns: "shell" }),
       action: updatePayment(subscription.updatePaymentUrl),
     };
   }
@@ -137,8 +151,8 @@ export function planNotice(summary: BillingSummary, now: Date = new Date()): Pla
     return {
       kind: "demo-ending",
       tone: "info",
-      title: "Tu Beta termina pronto",
-      text: `Termina el ${longDate(summary.demo.endsAt)}. Elegí un plan para que tus agentes sigan respondiendo.`,
+      title: i18next.t("plan.demoEnding.title", { ns: "shell" }),
+      text: i18next.t("plan.demoEnding.text", { ns: "shell", date: longDate(summary.demo.endsAt) }),
       action: CHOOSE_PLAN,
     };
   }
@@ -157,14 +171,14 @@ export function planErrorNotice(code: PlanErrorCode, notice: PlanNotice | null):
   if (code === "PLAN_REQUIRED") {
     if (notice && RESTRICTED_KINDS.includes(notice.kind)) return null;
     return {
-      title: "Necesitás un plan activo",
-      text: "Sin un plan tus agentes no responden y no podés enviar mensajes.",
+      title: i18next.t("plan.required.title", { ns: "shell" }),
+      text: i18next.t("plan.required.text", { ns: "shell" }),
       action: CHOOSE_PLAN,
     };
   }
   return {
-    title: "Llegaste al límite de tu plan",
-    text: "Para seguir, pasate a un plan con más capacidad.",
+    title: i18next.t("plan.limitReached.title", { ns: "shell" }),
+    text: i18next.t("plan.limitReached.text", { ns: "shell" }),
     action: SEE_PLANS,
   };
 }

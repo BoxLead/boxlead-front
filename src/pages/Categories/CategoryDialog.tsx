@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useId, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/client";
 import type { CategoryColor, CategoryResponse } from "../../api/types";
@@ -72,7 +73,7 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
             aria-describedby={nameCounterId}
             onChange={(event) => setName(event.target.value)}
           />
-          <CharCounter id={nameCounterId} length={name.length} max={CATEGORY_NAME_MAX} />
+          <CharCounter id={nameCounterId} length={name.length} max={CATEGORY_NAME_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
         </label>
         <label className="field">
           <span className="field-label">Descripción</span>
@@ -86,7 +87,7 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
             aria-describedby={descriptionCounterId}
             onChange={(event) => setDescription(event.target.value)}
           />
-          <CharCounter id={descriptionCounterId} length={description.length} max={CATEGORY_DESCRIPTION_MAX} />
+          <CharCounter id={descriptionCounterId} length={description.length} max={CATEGORY_DESCRIPTION_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
         </label>
         <ColorPicker value={color} onChange={setColor} />
         <div className="dialog-actions">
