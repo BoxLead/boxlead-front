@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { trackEvent } from "../../analytics/gtag";
-import { ArrowRightIcon, CheckIcon, HandoffIcon } from "../../components/icons/UiIcons";
+import { ArrowRightIcon, CheckIcon } from "../../components/icons/UiIcons";
 import { getPlatform } from "../../platforms";
 import { preloadRoute } from "../../routing/routePreload";
 import { CtaSection } from "../components/CtaSection";
@@ -10,6 +10,7 @@ import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { RollText } from "../components/RollText";
 import { EDITORIAL_PAGES, editorialPage, type EditorialPageData } from "../editorial";
+import { useScrollReveal } from "../useScrollReveal";
 import "../LandingPage.css";
 import "./EditorialPage.css";
 
@@ -52,6 +53,7 @@ export function EditorialPage() {
   useEffect(() => {
     trackEvent("canal_visita", { canal: page.slug });
   }, [page.slug]);
+  useScrollReveal(page.slug);
 
   return (
     <div className="landing editorial">
@@ -95,7 +97,7 @@ export function EditorialPage() {
           </div>
         </section>
 
-        <section className="landing-section landing-section-alt" aria-labelledby="editorial-capabilities-heading">
+        <section className="landing-section landing-section-alt editorial-body" aria-labelledby="editorial-capabilities-heading">
           <div className="landing-container">
             <div className="landing-section-head" data-reveal>
               <span className="landing-section-label">Qué hace</span>
@@ -105,7 +107,7 @@ export function EditorialPage() {
             </div>
             <ul className="editorial-grid">
               {page.capabilities.map((capability, index) => (
-                <li className="editorial-card landing-card landing-glow" data-glow data-reveal={index} key={capability.title}>
+                <li className="editorial-card landing-card" data-reveal={index} key={capability.title}>
                   <span className="landing-icon-tile">
                     <CheckIcon width={20} height={20} aria-hidden="true" />
                   </span>
@@ -114,56 +116,24 @@ export function EditorialPage() {
                 </li>
               ))}
             </ul>
-          </div>
-        </section>
-
-        <section className="landing-section" aria-labelledby="editorial-steps-heading">
-          <div className="landing-container">
-            <div className="landing-section-head" data-reveal>
-              <span className="landing-section-label">Conexión</span>
-              <h2 className="landing-section-title" id="editorial-steps-heading">
+            <div className="editorial-connect" data-reveal>
+              <h2 className="editorial-connect-heading" id="editorial-steps-heading">
                 {page.stepsHeading}
               </h2>
+              <ol className="editorial-steps" aria-labelledby="editorial-steps-heading">
+                {page.steps.map((step, index) => (
+                  <li className="editorial-step" key={step.title}>
+                    <span className="editorial-step-number" aria-hidden="true">
+                      0{index + 1}
+                    </span>
+                    <div>
+                      <h3 className="editorial-step-title">{step.title}</h3>
+                      <p className="editorial-step-desc">{step.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <ol className="editorial-steps">
-              {page.steps.map((step, index) => (
-                <li className="editorial-step" data-reveal={index} key={step.title}>
-                  <span className="editorial-step-number" aria-hidden="true">
-                    0{index + 1}
-                  </span>
-                  <div>
-                    <h3 className="editorial-step-title">{step.title}</h3>
-                    <p className="editorial-step-desc">{step.description}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="landing-section landing-section-alt" aria-labelledby="editorial-agent-heading">
-          <div className="landing-container editorial-agent">
-            <div className="landing-section-head" data-reveal>
-              <span className="landing-section-label">El agente</span>
-              <h2 className="landing-section-title" id="editorial-agent-heading">
-                {page.agentHeading}
-              </h2>
-              <p className="editorial-agent-lead">{page.agentLead}</p>
-            </div>
-            <ul className="editorial-points" data-reveal>
-              {page.agentPoints.map((point) => (
-                <li className="editorial-point" key={point}>
-                  <span className="editorial-point-icon">
-                    <CheckIcon width={14} height={14} aria-hidden="true" />
-                  </span>
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="editorial-handoff" data-reveal>
-              <HandoffIcon width={18} height={18} aria-hidden="true" />
-              Mirá <Link to="/#demo">la demo</Link> para ver al agente trabajando con datos de ejemplo.
-            </p>
           </div>
         </section>
 
