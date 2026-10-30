@@ -14,6 +14,7 @@ import type {
 } from "../api/types";
 import { getPlatform, stageChoices } from "../platforms";
 import { formatNumber } from "./format";
+import { intlLocale } from "../i18n/locale";
 
 export const AGENT_NAME_MAX = 80;
 export const AGENT_INSTRUCTIONS_MAX = 4000;
@@ -130,7 +131,7 @@ export function describeChannelRules(rules: ChannelRules): RuleLine[] {
   return [
     { label: "Canal", value: rules.channelName },
     { label: "Quién lo lee", value: rules.audience === "PUBLIC" ? "Cualquiera (pública)" : "Solo el cliente (privada)" },
-    { label: "Largo máximo", value: rules.maxLength ? `${rules.maxLength.toLocaleString("es-AR")} caracteres` : "Sin límite" },
+    { label: "Largo máximo", value: rules.maxLength ? `${rules.maxLength.toLocaleString(intlLocale())} caracteres` : "Sin límite" },
     { label: "Respuesta única", value: rules.singleReply ? "Sí, no se puede corregir ni seguir" : "No" },
     { label: "Datos de contacto", value: rules.contactDetailsAllowed ? "Permitidos" : "No permitidos" },
   ];

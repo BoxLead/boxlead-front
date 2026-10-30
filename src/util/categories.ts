@@ -1,4 +1,5 @@
 import type { CategoryColor, CategoryResponse } from "../api/types";
+import { intlLocale } from "../i18n/locale";
 
 export const CATEGORY_NAME_MAX = 40;
 export const CATEGORY_DESCRIPTION_MAX = 280;
@@ -26,7 +27,7 @@ export function colorClass(color: CategoryColor): string {
 }
 
 export function leadCountLabel(count: number): string {
-  return count === 1 ? "1 lead" : `${count.toLocaleString("es-AR")} leads`;
+  return count === 1 ? "1 lead" : `${count.toLocaleString(intlLocale())} leads`;
 }
 
 export function categoryById(categories: CategoryResponse[] | undefined, id: string | null | undefined) {

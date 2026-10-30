@@ -1,6 +1,7 @@
 import type { LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { UNCATEGORIZED } from "../../util/categories";
 import { LEAD_STATUSES, leadDisplayName } from "../../util/labels";
+import { intlLocale } from "../../i18n/locale";
 
 export const UNEVALUATED = "none";
 
@@ -26,7 +27,7 @@ function matchesTemperature(lead: LeadResponse, temperature: LeadFilters["temper
 }
 
 function normalize(text: string): string {
-  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es-AR");
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase(intlLocale());
 }
 
 export function filterLeads(leads: LeadResponse[], filters: LeadFilters): LeadResponse[] {

@@ -6,6 +6,7 @@ import { LEAD_STATUSES, leadDisplayName, leadStatusLabel } from "../../util/labe
 import { ChevronDownIcon } from "../icons/UiIcons";
 import { useToast } from "../ui/toast";
 import "./StatusSelect.css";
+import { intlLocale } from "../../i18n/locale";
 
 type StatusSelectProps = {
   lead: LeadResponse;
@@ -21,7 +22,7 @@ export function StatusSelect({ lead, size = "sm" }: StatusSelectProps) {
     setSaving(true);
     try {
       await updateLeadStatus(lead, status);
-      toast({ message: `${leadDisplayName(lead)} pasó a ${leadStatusLabel(status).toLocaleLowerCase("es-AR")}.` });
+      toast({ message: `${leadDisplayName(lead)} pasó a ${leadStatusLabel(status).toLocaleLowerCase(intlLocale())}.` });
     } catch (error) {
       toast({
         tone: "danger",

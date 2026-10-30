@@ -3,6 +3,7 @@ import type { BillingSummary } from "../../api/types";
 import { BILLING_PATH, isTeamPlan } from "../../data/billing";
 import { formatNumber } from "../../util/format";
 import type { BannerTone } from "../ui/Banner";
+import { intlLocale } from "../../i18n/locale";
 
 export type PlanNoticeKind = "suspended" | "paused" | "no-plan" | "past-due" | "replies-limit" | "demo-ending";
 
@@ -31,7 +32,7 @@ const GO_TO_BILLING: NoticeAction = { label: "Ir a facturación", href: BILLING_
 export function longDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("es-AR", { day: "numeric", month: "long" });
+  return date.toLocaleDateString(intlLocale(), { day: "numeric", month: "long" });
 }
 
 export function safePaymentUrl(url: string | null | undefined): string | null {

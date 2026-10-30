@@ -1,7 +1,7 @@
 import type { CommissionStatus, Money, SubscriptionStatus } from "../../api/types";
 import type { TagTone } from "../../components/ui/Tag";
+import { intlLocale } from "../../i18n/locale";
 
-const LOCALE = "es-AR";
 const FALLBACK_DIGITS = 2;
 
 type StatusLabel = { label: string; tone: TagTone };
@@ -35,7 +35,7 @@ export function subscriptionLabel(status: SubscriptionStatus): StatusLabel {
 
 function currencyDigits(currency: string): number | null {
   try {
-    return new Intl.NumberFormat(LOCALE, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? FALLBACK_DIGITS;
+    return new Intl.NumberFormat(intlLocale(), { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? FALLBACK_DIGITS;
   } catch {
     return null;
   }
@@ -48,8 +48,8 @@ export function formatAmount(money: Money): string {
   const fraction = minor % scale === 0 ? 0 : (digits ?? FALLBACK_DIGITS);
   const options = { minimumFractionDigits: fraction, maximumFractionDigits: fraction };
   const value = minor / scale;
-  if (digits === null) return `${money.currency} ${value.toLocaleString(LOCALE, options)}`.trim();
-  return new Intl.NumberFormat(LOCALE, { style: "currency", currency: money.currency, ...options }).format(value);
+  if (digits === null) return `${money.currency} ${value.toLocaleString(intlLocale(), options)}`.trim();
+  return new Intl.NumberFormat(intlLocale(), { style: "currency", currency: money.currency, ...options }).format(value);
 }
 
 export function cycleLabel(cycle: number, maxCycles: number): string {
