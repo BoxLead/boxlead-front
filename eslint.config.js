@@ -4,6 +4,21 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import { noLiteralText } from './eslint/noLiteralText.js'
+
+const I18N_PENDING = [
+  'src/App.tsx',
+  'src/components/**',
+  'src/context/**',
+  'src/pages/**',
+  'src/platforms/**',
+  'src/routing/RouteError.tsx',
+  'src/routing/RouteErrorBoundary.tsx',
+  'src/routing/RouteAnnouncer.tsx',
+  'src/monitoring/**',
+]
+
+const UNTRANSLATED_NAMES = ['BoxLead', 'WhatsApp', 'WhatsApp Business', 'Instagram', 'Messenger', 'MercadoLibre', 'Facebook', 'Google', 'TikTok', 'LinkedIn', 'Google Ads', 'Meta', '24/7']
 
 export default defineConfig([
   globalIgnores(['dist', 'dist-admin', 'dist-admin-e2e', 'coverage', 'playwright-report', 'test-results']),
@@ -50,6 +65,14 @@ export default defineConfig([
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/**/*.test.tsx', 'src/pages/Legal/**', 'src/pages/DesignSystem/**', ...I18N_PENDING],
+    plugins: { i18n: { rules: { 'no-literal-text': noLiteralText } } },
+    rules: {
+      'i18n/no-literal-text': ['error', { allow: UNTRANSLATED_NAMES }],
     },
   },
   {
