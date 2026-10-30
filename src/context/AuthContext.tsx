@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import {
   Fragment,
   startTransition,
@@ -129,13 +130,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     (body: LoginRequest, redirectTo?: string) =>
-      authenticate(() => api.login(body), "No pudimos iniciar sesión.", redirectTo),
+      authenticate(() => api.login(body), i18next.t("login.failed", { ns: "auth" }), redirectTo),
     [authenticate],
   );
 
   const register = useCallback(
     (body: RegisterRequest, redirectTo?: string) =>
-      authenticate(() => api.register(body), "No pudimos crear la cuenta.", redirectTo, true),
+      authenticate(() => api.register(body), i18next.t("register.failed", { ns: "auth" }), redirectTo, true),
     [authenticate],
   );
 
@@ -143,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (idToken: string, redirectTo?: string, acceptedLegal?: LegalVersion[]) =>
       authenticate(
         () => api.socialLogin(acceptedLegal ? { idToken, acceptedLegal } : { idToken }),
-        "No pudimos iniciar sesión.",
+        i18next.t("login.failed", { ns: "auth" }),
         redirectTo,
         true,
       ),

@@ -1,8 +1,11 @@
+import i18next from "i18next";
 import type { BillingPlan, Money } from "../api/types";
 import { parseIsoDate } from "./dates";
 import { intlLocale } from "../i18n/locale";
 
-export const NATIONAL_TAXES_LEGEND = "PRECIO SIN IMPUESTOS NACIONALES";
+export function nationalTaxesLegend(): string {
+  return i18next.t("price.withoutNationalTaxes");
+}
 
 export type PlanPrice = {
   amount: string;
@@ -32,8 +35,8 @@ export function formatMinor(money: Money): string {
 }
 
 export function formatPeriod(frequencyMonths: number | null): string {
-  if (frequencyMonths === 1) return "por mes";
-  if (frequencyMonths && frequencyMonths > 1) return `cada ${frequencyMonths} meses`;
+  if (frequencyMonths === 1) return i18next.t("price.perMonth");
+  if (frequencyMonths && frequencyMonths > 1) return i18next.t("price.everyMonths", { count: frequencyMonths });
   return "";
 }
 
@@ -46,12 +49,11 @@ export function planPrice(plan: BillingPlan): PlanPrice | null {
   const today = plan.chargeToday ?? null;
   const main = today ?? plan.price;
   if (!main) return null;
-  const vat = plan.priceIncludesVat ? " con IVA incluido" : "";
   return {
     amount: formatMinor(main),
     period: formatPeriod(plan.frequencyMonths),
     withoutNationalTaxes: plan.priceWithoutNationalTaxes ? formatMinor(plan.priceWithoutNationalTaxes) : null,
-    reference: today && plan.price ? `${formatMinor(plan.price)}${vat}` : null,
+    reference: today && plan.price ? (plan.priceIncludesVat ? i18next.t("price.vatIncluded", { price: formatMinor(plan.price) }) : formatMinor(plan.price)) : null,
     rateDay: today ? formatRateDay(plan.fxRate?.day) : null,
   };
 }

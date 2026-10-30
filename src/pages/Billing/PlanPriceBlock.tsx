@@ -1,5 +1,5 @@
 import type { PlanPrice } from "../../util/planPrice";
-import { NATIONAL_TAXES_LEGEND } from "../../util/planPrice";
+import { nationalTaxesLegend } from "../../util/planPrice";
 import { rateNote } from "./billingLabels";
 
 type PlanPriceBlockProps = {
@@ -18,7 +18,7 @@ export function PlanPriceBlock({ price, includesVat }: PlanPriceBlockProps) {
       {note ? <p className="plan-price-note">{note}</p> : null}
       {price.withoutNationalTaxes ? (
         <p className="plan-price-net">
-          {NATIONAL_TAXES_LEGEND} {price.withoutNationalTaxes}
+          {nationalTaxesLegend()} {price.withoutNationalTaxes}
         </p>
       ) : null}
       {price.reference ? (

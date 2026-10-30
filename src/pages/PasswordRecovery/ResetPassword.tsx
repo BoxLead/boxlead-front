@@ -1,3 +1,5 @@
+import i18next from "i18next";
+import { useTranslation } from "react-i18next";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../api/client";
@@ -14,12 +16,13 @@ type Step = "reading" | "form" | "invalid" | "done";
 function resetError(error: unknown): string {
   if (error instanceof ApiError && error.status === 429) return error.message;
   if (error instanceof ApiError && error.status === 400) {
-    return `La contraseña tiene que tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+    return i18next.t("reset.tooShort", { ns: "auth", count: MIN_PASSWORD_LENGTH });
   }
-  return "No pudimos guardar la contraseña. Revisá tu conexión y probá de nuevo.";
+  return i18next.t("reset.failed", { ns: "auth" });
 }
 
 export function ResetPassword() {
+  const { t } = useTranslation("auth");
   const [step, setStep] = useState<Step>("reading");
   const [token, setToken] = useState<string | null>(null);
   const taken = useRef<string | null | undefined>(undefined);
@@ -54,25 +57,25 @@ export function ResetPassword() {
 
   return (
     <AuthLayout>
-      <h1 className="auth-title">Elegí una contraseña nueva</h1>
+      <h1 className="auth-title">{t("reset.title")}</h1>
       {step === "reading" ? <Loading inline /> : null}
       {step === "invalid" ? (
         <div className="auth-stack">
           <p className="auth-notice" role="alert">
-            Este link no sirve. Puede que haya vencido, que ya lo hayas usado o que hayas pedido otro después.
+            {t("reset.invalid")}
           </p>
           <p className="auth-footer">
-            <Link to="/recuperar-clave">Pedir un link nuevo</Link>
+            <Link to="/recuperar-clave">{t("reset.newLink")}</Link>
           </p>
         </div>
       ) : null}
       {step === "done" ? (
         <div className="auth-stack">
           <p className="auth-notice" role="status">
-            Listo, guardamos tu contraseña nueva y cerramos las sesiones abiertas en otros dispositivos.
+            {t("reset.done")}
           </p>
           <Link className="auth-submit auth-action" to="/login">
-            Iniciar sesión
+            {t("reset.signIn")}
           </Link>
         </div>
       ) : null}
@@ -86,12 +89,12 @@ export function ResetPassword() {
           <PasswordField
             autoComplete="new-password"
             minLength={MIN_PASSWORD_LENGTH}
-            hint={`Al menos ${MIN_PASSWORD_LENGTH} caracteres.`}
+            hint={t("password.atLeast", { count: MIN_PASSWORD_LENGTH })}
             value={password}
             onChange={setPassword}
           />
           <button className="auth-submit" type="submit" disabled={saving}>
-            {saving ? "Guardando…" : "Guardar la contraseña"}
+            {saving ? t("reset.submitting") : t("reset.submit")}
           </button>
         </form>
       ) : null}

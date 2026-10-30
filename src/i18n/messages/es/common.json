@@ -42,5 +42,29 @@
     "minutes": "{{value}} min",
     "hours": "{{value}} h",
     "points": "{{value}} pp"
+  },
+  "loading": "Cargando…",
+  "apiErrors": {
+    "tooManyRequests": "Hiciste demasiados intentos seguidos. Probá de nuevo en un rato.",
+    "ACCOUNT_EXISTS_WITH_PASSWORD": "Ya tenés una cuenta con este email. Entrá con tu email y contraseña.",
+    "PLAN_REQUIRED": "Necesitás un plan activo para hacer esto.",
+    "PLAN_LIMIT_REACHED": "Llegaste al límite de tu plan.",
+    "ENTITLEMENTS_UNAVAILABLE": "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
+    "LEGAL_ACCEPTANCE_REQUIRED": "Para seguir tenés que aceptar los términos y la política de privacidad vigentes."
+  },
+  "price": {
+    "withoutNationalTaxes": "PRECIO SIN IMPUESTOS NACIONALES",
+    "perMonth": "por mes",
+    "everyMonths": "cada {{count}} meses",
+    "vatIncluded": "{{price}} con IVA incluido"
+  },
+  "invitationErrors": {
+    "invalid": "Este link de invitación no sirve. Puede que haya vencido, que ya se haya usado o que lo hayan revocado. Pedile uno nuevo a quien te invitó.",
+    "emailMismatch": "Esta invitación es para {{email}}. Salí y entrá con ese email para activar la Beta.",
+    "otherEmail": "Esta invitación es para otro email. Salí y entrá con el email invitado para activar la Beta.",
+    "demoUsed": "Ya usaste la Beta con esta cuenta. Elegí un plan para seguir.",
+    "subscriptionActive": "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.",
+    "teamMember": "Tu cuenta es del equipo de BoxLead y ya tenés acceso, así que no necesitás la Beta. La invitación sigue abierta.",
+    "acceptFailed": "No pudimos activar la Beta. Probá de nuevo en un rato."
   }
 }

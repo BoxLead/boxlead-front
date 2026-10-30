@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { loginPathFor } from "../util/redirect";
 import type {
   Access,
@@ -172,16 +173,13 @@ async function parseBody(res: Response): Promise<unknown> {
   }
 }
 
-const TOO_MANY_REQUESTS_MESSAGE = "Hiciste demasiados intentos seguidos. Probá de nuevo en un rato.";
+const CODE_MESSAGES = ["ACCOUNT_EXISTS_WITH_PASSWORD", "PLAN_REQUIRED", "PLAN_LIMIT_REACHED", "ENTITLEMENTS_UNAVAILABLE", "LEGAL_ACCEPTANCE_REQUIRED"] as const;
 
-const CODE_MESSAGES: Record<string, string> = {
-  ACCOUNT_EXISTS_WITH_PASSWORD:
-    "Ya tenés una cuenta con este email. Entrá con tu email y contraseña.",
-  PLAN_REQUIRED: "Necesitás un plan activo para hacer esto.",
-  PLAN_LIMIT_REACHED: "Llegaste al límite de tu plan.",
-  ENTITLEMENTS_UNAVAILABLE: "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
-  LEGAL_ACCEPTANCE_REQUIRED: "Para seguir tenés que aceptar los términos y la política de privacidad vigentes.",
-};
+type MessageCode = (typeof CODE_MESSAGES)[number];
+
+function hasMessage(code: string): code is MessageCode {
+  return (CODE_MESSAGES as readonly string[]).includes(code);
+}
 
 export type PlanErrorCode = "PLAN_REQUIRED" | "PLAN_LIMIT_REACHED";
 
@@ -211,9 +209,9 @@ function codeOf(data: unknown): string | null {
 }
 
 function errorMessage(status: number, data: unknown): string {
-  if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
+  if (status === 429) return i18next.t("apiErrors.tooManyRequests");
   const code = codeOf(data);
-  if (code && code in CODE_MESSAGES) return CODE_MESSAGES[code];
+  if (code && hasMessage(code)) return i18next.t(`apiErrors.${code}`);
   if (data && typeof data === "object" && "message" in data) {
     const m = (data as { message: unknown }).message;
     if (typeof m === "string") return m;

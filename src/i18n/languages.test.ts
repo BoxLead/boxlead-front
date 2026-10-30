@@ -45,7 +45,8 @@ describe("languages and paths", () => {
     expect(routeLanguage("/")).toBe("es");
     expect(routeLanguage("/en/agencias")).toBe("en");
     expect(routeLanguage("/terms-of-service")).toBe("en");
-    expect(routeLanguage("/esto-no-existe")).toBe("es");
+    expect(routeLanguage("/esto-no-existe")).toBeNull();
+    expect(routeLanguage("/login")).toBeNull();
     expect(routeLanguage("/app/inbox")).toBeNull();
   });
 

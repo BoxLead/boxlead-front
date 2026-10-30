@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { PasswordField } from "../../../src/components/AuthLayout/PasswordField";
+import { PasswordInput } from "../../../src/components/AuthLayout/PasswordInput";
 import { Banner } from "../../../src/components/ui/Banner";
 import { AdminApiError, errorText } from "../api/errors";
 import { useSession } from "../session/session";
@@ -50,7 +50,7 @@ export function LoginScreen({ notice }: { notice: string | null }) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </label>
-        <PasswordField autoComplete="current-password" value={password} onChange={setPassword} />
+        <PasswordInput autoComplete="current-password" value={password} onChange={setPassword} label="Contraseña" showLabel="Mostrar" hideLabel="Ocultar" />
         <button className="auth-submit" type="submit" disabled={busy}>
           {busy ? "Entrando…" : "Entrar"}
         </button>
