@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ReferralsResponse } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
 import { REFERRALS_KEY, activeCodes } from "../../data/referrals";
@@ -24,7 +25,8 @@ function ResellerSkeleton() {
 }
 
 export function Reseller() {
-  useDocumentTitle("Revendedor");
+  const { t } = useTranslation("billing");
+  useDocumentTitle(t("reseller.title"));
 
   const referrals = useApiQuery<ReferralsResponse>(REFERRALS_KEY);
   const data = referrals.data;
@@ -33,18 +35,18 @@ export function Reseller() {
     <div className="page reseller-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Revendedor</h1>
-          <p className="page-header-desc">Compartí tu link y seguí a los clientes que traés y tus comisiones.</p>
+          <h1 className="page-title">{t("reseller.title")}</h1>
+          <p className="page-header-desc">{t("reseller.description")}</p>
         </div>
       </header>
 
       {referrals.error && !data ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar tus datos de revendedor"
+          title={t("reseller.loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void referrals.reload()}>
-              Reintentar
+              {t("retry")}
             </button>
           }
         >
@@ -52,7 +54,7 @@ export function Reseller() {
         </Banner>
       ) : !data ? (
         <>
-          <span className="visually-hidden" role="status">Cargando…</span>
+          <span className="visually-hidden" role="status">{t("reseller.loading")}</span>
           <ResellerSkeleton />
         </>
       ) : (

@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import type { AccountView } from "../../api/types";
 import { peekReauthToken } from "../../data/reauth";
@@ -7,6 +8,7 @@ import { DeleteAccountDialog } from "./DeleteAccountDialog";
 const DELETE_PARAM = "borrar";
 
 export function DeleteAccountSection({ account }: { account: AccountView }) {
+  const { t } = useTranslation("account");
   const id = useId();
   const [searchParams] = useSearchParams();
   const [open, setOpen] = useState(() => searchParams.get(DELETE_PARAM) === "1" && peekReauthToken() !== null);
@@ -16,15 +18,12 @@ export function DeleteAccountSection({ account }: { account: AccountView }) {
       <div className="account-group-head">
         <div className="account-group-text">
           <h2 id={id} className="panel-title">
-            Borrar la cuenta
+            {t("deletion.title")}
           </h2>
-          <p className="account-group-desc">
-            Borramos tus conexiones, leads, conversaciones y agentes, y no se pueden recuperar. Guardamos solo lo que
-            la ley nos pide conservar, como facturas y pagos.
-          </p>
+          <p className="account-group-desc">{t("deletion.description")}</p>
         </div>
         <button type="button" className="btn btn-danger" onClick={() => setOpen(true)}>
-          Borrar la cuenta
+          {t("deletion.title")}
         </button>
       </div>
       {open ? <DeleteAccountDialog account={account} onClose={() => setOpen(false)} /> : null}

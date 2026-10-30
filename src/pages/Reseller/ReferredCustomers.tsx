@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ReferredCustomer } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { UsersIcon } from "../../components/icons/UiIcons";
@@ -10,22 +11,23 @@ type ReferredCustomersProps = {
 };
 
 export function ReferredCustomers({ customers }: ReferredCustomersProps) {
+  const { t } = useTranslation("billing");
   return (
     <section className="reseller-section" aria-labelledby="reseller-customers-title">
       <div className="reseller-section-head">
-        <h2 id="reseller-customers-title" className="reseller-section-title">Clientes</h2>
-        <p className="reseller-hint">Cada cobro aprobado de un cliente te suma una comisión.</p>
+        <h2 id="reseller-customers-title" className="reseller-section-title">{t("reseller.customers")}</h2>
+        <p className="reseller-hint">{t("reseller.customersHint")}</p>
       </div>
       {customers.length === 0 ? (
         <div className="panel">
           <EmptyState
             icon={<UsersIcon />}
-            title="Todavía no tenés clientes"
-            hint="Cuando alguien se registre con tu link lo vas a ver acá."
+            title={t("reseller.noCustomers")}
+            hint={t("reseller.noCustomersHint")}
           />
         </div>
       ) : (
-        <ul className="panel reseller-customers" aria-label="Clientes">
+        <ul className="panel reseller-customers" aria-label={t("reseller.customers")}>
           {customers.map((customer, index) => {
             const status = subscriptionLabel(customer.subscriptionStatus);
             return (

@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { NotificationSettings as Settings } from "../../api/types";
 import { useAuth } from "../../context/auth";
 import { NOTIFICATION_SETTINGS_KEY, saveNotificationSettings } from "../../data/notifications";
@@ -12,9 +13,8 @@ import "./NotificationSettings.css";
 
 type SettingKey = keyof Settings;
 
-const SAVE_ERROR = "No pudimos guardar el cambio. Probá de nuevo.";
-
 function SettingsForm({ settings }: { settings: Settings }) {
+  const { t } = useTranslation("account");
   const toast = useToast();
   const [saving, setSaving] = useState(false);
 
@@ -26,7 +26,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
       await saveNotificationSettings(next);
     } catch {
       setQueryData<Settings>(NOTIFICATION_SETTINGS_KEY, (current) => ({ ...(current ?? next), [key]: settings[key] }));
-      toast({ tone: "danger", message: SAVE_ERROR });
+      toast({ tone: "danger", message: t("notifications.saveFailed") });
     } finally {
       setSaving(false);
     }
@@ -35,36 +35,36 @@ function SettingsForm({ settings }: { settings: Settings }) {
   return (
     <div className="notification-settings-groups" aria-busy={saving}>
       <fieldset className="notification-settings-group">
-        <legend className="notification-settings-legend">Por mail</legend>
+        <legend className="notification-settings-legend">{t("notifications.byEmail")}</legend>
         <div className="field">
           <Switch
-            label="Mail cuando entra un lead nuevo"
+            label={t("notifications.newLeadEmail")}
             checked={settings.newLeadEmail}
             disabled={saving}
             onChange={(value) => void change("newLeadEmail", value)}
           />
-          <span className="field-help">Juntamos los leads de unos minutos en un solo mail, con la cantidad por canal.</span>
+          <span className="field-help">{t("notifications.newLeadEmailHelp")}</span>
         </div>
         <div className="field">
           <Switch
-            label="Mail cuando el agente pasa una conversación a una persona"
+            label={t("notifications.handoffEmail")}
             checked={settings.handoffEmail}
             disabled={saving}
             onChange={(value) => void change("handoffEmail", value)}
           />
-          <span className="field-help">Te escribimos cuando una conversación necesita que respondas vos.</span>
+          <span className="field-help">{t("notifications.handoffEmailHelp")}</span>
         </div>
       </fieldset>
       <fieldset className="notification-settings-group">
-        <legend className="notification-settings-legend">En el navegador</legend>
+        <legend className="notification-settings-legend">{t("notifications.inBrowser")}</legend>
         <div className="field">
           <Switch
-            label="Avisos en el navegador con la app abierta"
+            label={t("notifications.browser")}
             checked={settings.browser}
             disabled={saving}
             onChange={(value) => void change("browser", value)}
           />
-          <span className="field-help">Mostramos un aviso en pantalla y sumamos la cantidad al título de la pestaña.</span>
+          <span className="field-help">{t("notifications.browserHelp")}</span>
         </div>
         <SystemNotifications browserOn={settings.browser} />
       </fieldset>
@@ -73,6 +73,7 @@ function SettingsForm({ settings }: { settings: Settings }) {
 }
 
 function SettingsPanel() {
+  const { t } = useTranslation("account");
   const titleId = useId();
   const settings = useApiQuery<Settings>(NOTIFICATION_SETTINGS_KEY);
 
@@ -80,29 +81,26 @@ function SettingsPanel() {
     <section className="panel notification-settings" aria-labelledby={titleId}>
       <div className="notification-settings-head">
         <h2 id={titleId} className="panel-title">
-          Cómo te avisamos
+          {t("notifications.panelTitle")}
         </h2>
-        <p className="notification-settings-desc">
-          Te avisamos cuando entra un lead nuevo o cuando una conversación necesita una persona. Los avisos nunca muestran
-          nombres ni mensajes.
-        </p>
+        <p className="notification-settings-desc">{t("notifications.panelDescription")}</p>
       </div>
       {settings.data ? (
         <SettingsForm settings={settings.data} />
       ) : settings.error ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar tus preferencias"
+          title={t("notifications.loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void settings.reload()}>
-              Reintentar
+              {t("retry")}
             </button>
           }
         >
           {settings.error}
         </Banner>
       ) : (
-        <div className="notification-settings-loading" role="status" aria-label="Cargando preferencias">
+        <div className="notification-settings-loading" role="status" aria-label={t("notifications.loading")}>
           <span className="skeleton notification-settings-skeleton" />
           <span className="skeleton notification-settings-skeleton" />
           <span className="skeleton notification-settings-skeleton" />

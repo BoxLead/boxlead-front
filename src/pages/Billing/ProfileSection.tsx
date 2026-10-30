@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { BillingProfile } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { PackageIcon } from "../../components/icons/UiIcons";
@@ -7,7 +8,8 @@ import { Dialog } from "../../components/ui/Dialog";
 import { useToast } from "../../components/ui/toast";
 import { PROFILE_KEY } from "../../data/subscription";
 import { useApiQuery } from "../../hooks/useApiQuery";
-import { emptyProfile, formatCuit, vatConditionLabel } from "../../util/billingProfile";
+import { emptyProfile, formatCuit } from "../../util/billingProfile";
+import { vatConditionName } from "./billingLabels";
 import { ProfileForm } from "./ProfileForm";
 
 type ProfileSectionProps = {
@@ -16,6 +18,7 @@ type ProfileSectionProps = {
 };
 
 export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) {
+  const { t } = useTranslation("billing");
   const toast = useToast();
   const profile = useApiQuery<BillingProfile>(complete ? PROFILE_KEY : null);
   const [editing, setEditing] = useState(false);
@@ -29,7 +32,7 @@ export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) 
       disabled={complete && !data}
       onClick={() => setEditing(true)}
     >
-      {data ? "Editar" : "Cargar datos fiscales"}
+      {data ? t("profile.edit") : t("profile.add")}
     </button>
   );
 
@@ -37,17 +40,17 @@ export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) 
     <section className="billing-section" aria-labelledby="billing-profile-title">
       <div className="billing-section-head">
         <h2 id="billing-profile-title" className="billing-section-title">
-          Datos fiscales
+          {t("profile.title")}
         </h2>
         {data ? editButton : null}
       </div>
       {complete && profile.error && !profile.data ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar tus datos fiscales"
+          title={t("profile.loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void profile.reload()}>
-              Reintentar
+              {t("retry")}
             </button>
           }
         >
@@ -58,7 +61,7 @@ export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) 
       ) : data ? (
         <dl className="panel billing-profile">
           <div>
-            <dt>Razón social</dt>
+            <dt>{t("profile.legalName")}</dt>
             <dd>{data.legalName}</dd>
           </div>
           <div>
@@ -66,15 +69,22 @@ export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) 
             <dd>{data.taxIdType === "CUIT" ? formatCuit(data.taxId) : data.taxId}</dd>
           </div>
           <div>
-            <dt>Condición frente al IVA</dt>
-            <dd>{vatConditionLabel(data.vatCondition)}</dd>
+            <dt>{t("profile.vatCondition")}</dt>
+            <dd>{vatConditionName(data.vatCondition)}</dd>
           </div>
           <div>
-            <dt>Domicilio</dt>
-            <dd>{`${data.addressLine}, ${data.city}, ${data.province}, CP ${data.postalCode}`}</dd>
+            <dt>{t("profile.address")}</dt>
+            <dd>
+              {t("profile.addressValue", {
+                addressLine: data.addressLine,
+                city: data.city,
+                province: data.province,
+                postalCode: data.postalCode,
+              })}
+            </dd>
           </div>
           <div>
-            <dt>Email para las facturas</dt>
+            <dt>{t("profile.billingEmail")}</dt>
             <dd>{data.billingEmail}</dd>
           </div>
         </dl>
@@ -82,8 +92,8 @@ export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) 
         <div className="panel">
           <EmptyState
             icon={<PackageIcon />}
-            title="Todavía no cargaste tus datos fiscales"
-            hint="Los necesitamos para hacerte la factura antes del primer pago."
+            title={t("profile.empty")}
+            hint={t("profile.emptyHint")}
             action={editButton}
           />
         </div>
@@ -91,20 +101,20 @@ export function ProfileSection({ complete, defaultEmail }: ProfileSectionProps) 
 
       <Dialog
         open={editing}
-        title="Datos fiscales"
-        description="Los usamos para hacerte la factura."
+        title={t("profile.title")}
+        description={t("profile.dialogDescription")}
         size="lg"
         busy={busy}
         onClose={() => setEditing(false)}
       >
         <ProfileForm
           initial={data ?? emptyProfile(defaultEmail)}
-          submitLabel="Guardar"
+          submitLabel={t("profile.save")}
           onBusyChange={setBusy}
           onCancel={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);
-            toast({ message: "Guardaste tus datos fiscales." });
+            toast({ message: t("profile.saved") });
           }}
         />
       </Dialog>

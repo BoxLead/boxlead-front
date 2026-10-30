@@ -5,6 +5,7 @@ import { api, ApiError } from "../../api/client";
 import type { NotificationSettings as Settings } from "../../api/types";
 import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
 import { NOTIFICATION_SETTINGS_KEY } from "../../data/notifications";
+import { i18n } from "../../i18n";
 import { clearQueryCache, getQueryState } from "../../data/queryCache";
 import { ToastContext, type ToastInput } from "../ui/toast";
 import { NotificationSettings } from "./NotificationSettings";
@@ -144,5 +145,15 @@ describe("NotificationSettings", () => {
     expect("Notification" in window).toBe(false);
     renderSettings();
     expect(await screen.findByText("No disponibles")).toBeInTheDocument();
+  });
+
+  it("reads in English", async () => {
+    await i18n.changeLanguage("en");
+    renderSettings();
+    expect(await screen.findByRole("switch", { name: "Email when a new lead comes in" })).toBeChecked();
+    expect(screen.getByRole("heading", { name: "How we notify you" })).toBeInTheDocument();
+    expect(screen.getByText("System notifications")).toBeInTheDocument();
+    expect(screen.getByText("Off")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Turn on system notifications" })).toBeInTheDocument();
   });
 });

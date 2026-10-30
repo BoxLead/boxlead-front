@@ -1,14 +1,11 @@
+import i18next from "i18next";
 import type { BillingProfile, FieldError } from "../api/types";
+import { cuitDigits } from "./taxId";
+
+export { cuitDigits, formatCuit, VAT_CONDITIONS, vatConditionLabel } from "./taxId";
 
 export type ProfileField = keyof BillingProfile;
 export type ProfileErrors = Partial<Record<ProfileField, string>>;
-
-export const VAT_CONDITIONS = [
-  { value: "RESPONSABLE_INSCRIPTO", label: "Responsable inscripto" },
-  { value: "MONOTRIBUTO", label: "Monotributo" },
-  { value: "EXENTO", label: "Exento" },
-  { value: "CONSUMIDOR_FINAL", label: "Consumidor final" },
-] as const;
 
 export const PROFILE_FIELDS: readonly ProfileField[] = [
   "country",
@@ -41,10 +38,6 @@ export function emptyProfile(billingEmail = ""): BillingProfile {
   };
 }
 
-export function cuitDigits(value: string): string {
-  return value.replace(/[\s.-]/g, "");
-}
-
 export function isValidCuit(value: string): boolean {
   const digits = cuitDigits(value);
   if (!/^\d{11}$/.test(digits)) return false;
@@ -54,16 +47,6 @@ export function isValidCuit(value: string): boolean {
   return check !== 10 && check === Number(digits[10]);
 }
 
-export function formatCuit(value: string): string {
-  const digits = cuitDigits(value);
-  if (!/^\d{11}$/.test(digits)) return value;
-  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
-}
-
-export function vatConditionLabel(value: string): string {
-  return VAT_CONDITIONS.find((condition) => condition.value === value)?.label ?? value;
-}
-
 export function isEmail(value: string): boolean {
   return EMAIL.test(value.trim());
 }
@@ -71,13 +54,13 @@ export function isEmail(value: string): boolean {
 export function validateProfile(profile: BillingProfile): ProfileErrors {
   const errors: ProfileErrors = {};
   for (const field of PROFILE_FIELDS) {
-    if (!profile[field].trim()) errors[field] = "Completá este dato.";
+    if (!profile[field].trim()) errors[field] = i18next.t("profile.errors.required", { ns: "billing" });
   }
   if (!errors.taxId && profile.taxIdType === "CUIT" && !isValidCuit(profile.taxId)) {
-    errors.taxId = "Revisá el CUIT, el dígito verificador no coincide.";
+    errors.taxId = i18next.t("profile.errors.cuit", { ns: "billing" });
   }
   if (!errors.billingEmail && !isEmail(profile.billingEmail)) {
-    errors.billingEmail = "Escribí un email válido.";
+    errors.billingEmail = i18next.t("profile.errors.email", { ns: "billing" });
   }
   return errors;
 }
@@ -91,15 +74,16 @@ function isProfileField(value: string): value is ProfileField {
   return PROFILE_FIELDS.some((field) => field === value);
 }
 
-const SERVER_MESSAGES: Partial<Record<ProfileField, string>> = {
-  taxId: "Revisá el CUIT, el dígito verificador no coincide.",
-  billingEmail: "Escribí un email válido.",
-};
+function serverMessage(field: ProfileField): string {
+  if (field === "taxId") return i18next.t("profile.errors.cuit", { ns: "billing" });
+  if (field === "billingEmail") return i18next.t("profile.errors.email", { ns: "billing" });
+  return i18next.t("profile.errors.invalid", { ns: "billing" });
+}
 
 export function serverProfileErrors(fields: FieldError[]): ProfileErrors {
   const errors: ProfileErrors = {};
   for (const { field } of fields) {
-    if (isProfileField(field) && !errors[field]) errors[field] = SERVER_MESSAGES[field] ?? "Revisá este dato.";
+    if (isProfileField(field) && !errors[field]) errors[field] = serverMessage(field);
   }
   return errors;
 }

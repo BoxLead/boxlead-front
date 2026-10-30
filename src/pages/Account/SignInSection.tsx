@@ -1,4 +1,6 @@
+import type { TFunction } from "i18next";
 import { type FormEvent, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import { apiErrorCode } from "../../api/errors";
 import type { AccountView } from "../../api/types";
@@ -8,16 +10,17 @@ import { AccountRow } from "./AccountRow";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-function passwordError(error: unknown): string {
-  if (apiErrorCode(error) === "WRONG_PASSWORD") return "La contraseña actual no es correcta.";
+function passwordError(t: TFunction<"account">, error: unknown): string {
+  if (apiErrorCode(error) === "WRONG_PASSWORD") return t("password.wrongCurrent");
   if (error instanceof ApiError && error.status === 429) return error.message;
   if (error instanceof ApiError && error.status === 400) {
-    return `La contraseña nueva tiene que tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+    return t("password.tooShort", { min: MIN_PASSWORD_LENGTH });
   }
-  return "No pudimos cambiar la contraseña. Probá de nuevo.";
+  return t("password.failed");
 }
 
 export function SignInSection({ account }: { account: AccountView }) {
+  const { t } = useTranslation("account");
   const id = useId();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -35,9 +38,9 @@ export function SignInSection({ account }: { account: AccountView }) {
       setEditing(false);
       setCurrent("");
       setNext("");
-      toast({ message: "Cambiaste tu contraseña y cerramos las sesiones de los otros dispositivos." });
+      toast({ message: t("password.saved") });
     } catch (failure) {
-      setError(passwordError(failure));
+      setError(passwordError(t, failure));
     } finally {
       setSaving(false);
     }
@@ -46,20 +49,20 @@ export function SignInSection({ account }: { account: AccountView }) {
   if (!account.hasPassword) {
     return (
       <AccountRow
-        title="Contraseña"
-        description="Tu cuenta no tiene contraseña. Entrás con el mismo botón con el que la creaste."
+        title={t("password.title")}
+        description={t("password.none")}
       />
     );
   }
 
   return (
     <AccountRow
-      title="Contraseña"
-      description="Al cambiarla cerramos las sesiones de los otros dispositivos."
+      title={t("password.title")}
+      description={t("password.description")}
       action={
         editing ? null : (
           <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
-            Cambiar la contraseña
+            {t("password.change")}
           </button>
         )
       }
@@ -69,7 +72,7 @@ export function SignInSection({ account }: { account: AccountView }) {
           <div className="account-fields">
             <div className="field">
               <label className="field-label" htmlFor={`${id}-current`}>
-                Contraseña actual
+                {t("password.current")}
               </label>
               <input
                 id={`${id}-current`}
@@ -84,7 +87,7 @@ export function SignInSection({ account }: { account: AccountView }) {
             </div>
             <div className="field">
               <label className="field-label" htmlFor={`${id}-next`}>
-                Contraseña nueva
+                {t("password.next")}
               </label>
               <input
                 id={`${id}-next`}
@@ -99,7 +102,7 @@ export function SignInSection({ account }: { account: AccountView }) {
                 onChange={(event) => setNext(event.target.value)}
               />
               <span id={`${id}-hint`} className="field-help">
-                Al menos {MIN_PASSWORD_LENGTH} caracteres.
+                {t("password.hint", { min: MIN_PASSWORD_LENGTH })}
               </span>
             </div>
           </div>
@@ -110,10 +113,10 @@ export function SignInSection({ account }: { account: AccountView }) {
           ) : null}
           <div className="account-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)} disabled={saving}>
-              Cancelar
+              {t("cancel")}
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Guardando…" : "Guardar la contraseña"}
+              {saving ? t("saving") : t("password.save")}
             </button>
           </div>
         </form>

@@ -1,24 +1,26 @@
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import type { AccountView, SignInProvider } from "../../api/types";
 import { Avatar } from "../../components/ui/Avatar";
 import { Tag } from "../../components/ui/Tag";
 
-const PROVIDER_LABELS: Record<SignInProvider, string> = {
+const PROVIDER_NAMES: Partial<Record<SignInProvider, string>> = {
   GOOGLE: "Google",
   FACEBOOK: "Facebook",
-  OTHER: "Otro proveedor",
 };
 
-function signInMethods(account: AccountView): string[] {
+function signInMethods(t: TFunction<"account">, account: AccountView): string[] {
   return [
-    ...(account.hasPassword ? ["Email y contraseña"] : []),
-    ...account.providers.map((provider) => PROVIDER_LABELS[provider]),
+    ...(account.hasPassword ? [t("identity.password")] : []),
+    ...account.providers.map((provider) => PROVIDER_NAMES[provider] ?? t("identity.otherProvider")),
   ];
 }
 
 export function AccountIdentity({ account }: { account: AccountView }) {
+  const { t } = useTranslation("account");
   const name = account.name?.trim() || account.email;
   return (
-    <section className="panel account-identity" aria-label="Quién sos">
+    <section className="panel account-identity" aria-label={t("identity.label")}>
       <Avatar name={name} size="lg" />
       <div className="account-identity-text">
         <p className="account-identity-name">{name}</p>
@@ -27,9 +29,9 @@ export function AccountIdentity({ account }: { account: AccountView }) {
         </p>
       </div>
       <div className="account-identity-methods">
-        <span className="account-methods-label">Entrás con</span>
-        <ul className="account-methods" aria-label="Formas de entrar">
-          {signInMethods(account).map((method) => (
+        <span className="account-methods-label">{t("identity.signInWith")}</span>
+        <ul className="account-methods" aria-label={t("identity.methods")}>
+          {signInMethods(t, account).map((method) => (
             <li key={method}>
               <Tag>{method}</Tag>
             </li>

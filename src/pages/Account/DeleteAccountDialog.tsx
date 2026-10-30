@@ -1,4 +1,6 @@
+import type { TFunction } from "i18next";
 import { type FormEvent, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { apiErrorCode } from "../../api/errors";
@@ -16,24 +18,25 @@ const PROVIDER_IDS: Partial<Record<SignInProvider, string>> = { GOOGLE: "google"
 
 type Failure = { message: string; billing?: boolean };
 
-function failureOf(error: unknown): Failure {
+function failureOf(t: TFunction<"account">, error: unknown): Failure {
   const code = apiErrorCode(error);
-  if (code === "WRONG_PASSWORD") return { message: "La contraseña no es correcta." };
+  if (code === "WRONG_PASSWORD") return { message: t("wrongPassword") };
   if (code === "REAUTHENTICATION_REQUIRED") {
-    return { message: "Tenés que volver a entrar con tu proveedor justo antes de borrar la cuenta." };
+    return { message: t("deletion.reauthRequired") };
   }
-  if (code === "CONFIRMATION_MISMATCH") return { message: `Escribí ${CONFIRMATION_WORD} en mayúsculas.` };
+  if (code === "CONFIRMATION_MISMATCH") return { message: t("deletion.wordMismatch", { word: CONFIRMATION_WORD }) };
   if (code === "SUBSCRIPTION_OPEN") {
-    return { message: "Primero cancelá tu suscripción. Después vas a poder borrar la cuenta.", billing: true };
+    return { message: t("deletion.subscriptionOpen"), billing: true };
   }
   if (code === "RESELLER_ACTIVE" || code === "ADMIN_ACTIVE") {
-    return { message: `Esta cuenta se cierra a mano. Escribinos a ${SUPPORT_EMAIL} desde el email de la cuenta.` };
+    return { message: t("deletion.manual", { email: SUPPORT_EMAIL }) };
   }
   if (error instanceof ApiError && error.status === 429) return { message: error.message };
-  return { message: "No pudimos borrar la cuenta. Probá de nuevo." };
+  return { message: t("deletion.failed") };
 }
 
 export function DeleteAccountDialog({ account, onClose }: { account: AccountView; onClose: () => void }) {
+  const { t } = useTranslation("account");
   const id = useId();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -61,7 +64,7 @@ export function DeleteAccountDialog({ account, onClose }: { account: AccountView
       window.location.assign("/");
     } catch (error) {
       if (apiErrorCode(error) === "REAUTHENTICATION_REQUIRED") clearReauthToken();
-      setFailure(failureOf(error));
+      setFailure(failureOf(t, error));
       setBusy(false);
     }
   }
@@ -72,18 +75,18 @@ export function DeleteAccountDialog({ account, onClose }: { account: AccountView
   }
 
   return (
-    <Dialog open title="¿Borrar tu cuenta?" busy={busy} onClose={close}>
+    <Dialog open title={t("deletion.dialogTitle")} busy={busy} onClose={close}>
       <form className="account-form" onSubmit={submit}>
         <ul className="account-delete-list">
-          <li>Borramos tus conexiones con Meta, WhatsApp y Mercado Libre.</li>
-          <li>Borramos tus leads, conversaciones, categorías y agentes.</li>
-          <li>Guardamos facturas, pagos y aceptaciones de términos porque la ley nos lo pide.</li>
-          <li>No se puede deshacer.</li>
+          <li>{t("deletion.connections")}</li>
+          <li>{t("deletion.data")}</li>
+          <li>{t("deletion.kept")}</li>
+          <li>{t("deletion.final")}</li>
         </ul>
         {account.hasPassword ? (
           <div className="field">
             <label className="field-label" htmlFor={`${id}-password`}>
-              Tu contraseña
+              {t("yourPassword")}
             </label>
             <input
               id={`${id}-password`}
@@ -97,15 +100,15 @@ export function DeleteAccountDialog({ account, onClose }: { account: AccountView
           </div>
         ) : reauthToken ? (
           <p className="account-note" role="status">
-            Ya confirmaste que sos vos.
+            {t("deletion.proven")}
           </p>
         ) : (
           <div className="field">
-            <span className="field-label">Confirmá que sos vos</span>
+            <span className="field-label">{t("deletion.prove")}</span>
             <div className="account-actions account-actions-start">
               {providers.map((provider) => (
                 <a key={provider.id} className="btn btn-secondary" href={`${REAUTH_PATH}?proveedor=${provider.id}`}>
-                  Entrar con {provider.name}
+                  {t("deletion.signInWith", { provider: provider.name })}
                 </a>
               ))}
             </div>
@@ -113,7 +116,7 @@ export function DeleteAccountDialog({ account, onClose }: { account: AccountView
         )}
         <div className="field">
           <label className="field-label" htmlFor={`${id}-confirmation`}>
-            Escribí {CONFIRMATION_WORD} para confirmar
+            {t("deletion.typeWord", { word: CONFIRMATION_WORD })}
           </label>
           <input
             id={`${id}-confirmation`}
@@ -130,17 +133,17 @@ export function DeleteAccountDialog({ account, onClose }: { account: AccountView
             {failure.billing ? (
               <>
                 {" "}
-                <Link to="/baja">Pedir la baja</Link>
+                <Link to="/baja">{t("deletion.requestCancellation")}</Link>
               </>
             ) : null}
           </p>
         ) : null}
         <div className="account-actions">
           <button type="button" className="btn btn-secondary" onClick={close} disabled={busy}>
-            Cancelar
+            {t("cancel")}
           </button>
           <button type="submit" className="btn btn-danger" disabled={!ready || busy}>
-            {busy ? "Borrando…" : "Borrar mi cuenta"}
+            {busy ? t("deletion.deleting") : t("deletion.submit")}
           </button>
         </div>
       </form>

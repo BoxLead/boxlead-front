@@ -210,6 +210,11 @@
   width: auto;
 }
 
+.account-language {
+  flex: 0 1 220px;
+  width: auto;
+}
+
 .account-actions {
   display: flex;
   flex-wrap: wrap;

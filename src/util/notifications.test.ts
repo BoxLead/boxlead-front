@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppNotification, NotificationKind, PlatformType } from "../api/types";
+import { i18n } from "../i18n";
 import { noticeMessages } from "./notifications";
 
 let nextId = 0;
@@ -33,5 +34,13 @@ describe("notice messages", () => {
 
   it("says nothing without notices", () => {
     expect(noticeMessages([])).toEqual([]);
+  });
+
+  it("reads in English", async () => {
+    await i18n.changeLanguage("en");
+    expect(noticeMessages([notice("NEW_LEAD")])[0].text).toBe("A new lead came in on WhatsApp");
+    expect(noticeMessages([notice("NEW_LEAD"), notice("NEW_LEAD", "INSTAGRAM")])[0].text).toBe("2 new leads came in");
+    expect(noticeMessages([notice("HANDOFF"), notice("HANDOFF")])[0].text).toBe("2 conversations need your reply");
+    expect(noticeMessages([notice("HANDOFF")])[0].text).toBe("A conversation needs your reply");
   });
 });

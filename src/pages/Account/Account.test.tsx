@@ -7,6 +7,7 @@ import type { AccountView, AuthUser } from "../../api/types";
 import { ToastContext } from "../../components/ui/toast";
 import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
 import { clearQueryCache } from "../../data/queryCache";
+import { i18n } from "../../i18n";
 import { Account } from "./Account";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -141,5 +142,28 @@ describe("account page", () => {
     fetchMock.mockResolvedValueOnce(json({ error: "x", message: "Server error" }, 500));
     renderAccount();
     expect(await screen.findByText("No pudimos cargar tu cuenta")).toBeInTheDocument();
+  });
+
+  it("reads in English", async () => {
+    await i18n.changeLanguage("en");
+    fetchMock.mockResolvedValueOnce(json({ ...PASSWORD_ACCOUNT, pendingEmail: "ana@otro.com", providers: ["GOOGLE"] }));
+    renderAccount(true);
+    expect(await screen.findByRole("heading", { level: 1, name: "Your account" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Sign-in methods" })).toHaveTextContent("Email and passwordGoogle");
+    expect(screen.getByText("Confirmed")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "We sent a link to ana@otro.com to confirm the change. Until you open it you keep signing in with ana@negocio.com.",
+    );
+    expect(screen.getByRole("button", { name: "Change password" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out of all devices" })).toBeInTheDocument();
+  });
+
+  it("offers the language setting", async () => {
+    fetchMock.mockResolvedValueOnce(json(PASSWORD_ACCOUNT));
+    renderAccount();
+    expect(await screen.findByRole("heading", { name: "Preferencias" })).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Idioma" }), "en");
+    expect(await screen.findByRole("heading", { level: 1, name: "Your account" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Language" })).toHaveValue("en");
   });
 });
