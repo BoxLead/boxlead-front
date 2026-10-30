@@ -23,6 +23,7 @@ export type PublicPage = {
   changefreq?: "weekly" | "monthly" | "yearly";
   priority?: number;
   source: string;
+  followsPreference?: boolean;
   jsonLd?: () => Record<string, unknown>[];
 };
 
@@ -178,6 +179,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/login",
+    followsPreference: true,
     title: "Iniciar sesión",
     description: "Ingresá a tu cuenta de BoxLead.",
     lang: "es-AR",
@@ -186,6 +188,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/register",
+    followsPreference: true,
     title: "Crear cuenta",
     description: "Creá tu cuenta de BoxLead y conectá tus canales en minutos.",
     lang: "es-AR",
@@ -194,6 +197,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/invitacion",
+    followsPreference: true,
     title: "Invitación",
     description: "Activá tu invitación a la Beta de BoxLead.",
     lang: "es-AR",
@@ -202,6 +206,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/recuperar-clave",
+    followsPreference: true,
     title: "Recuperar la contraseña",
     description: "Pedí un link para elegir una contraseña nueva para tu cuenta de BoxLead.",
     lang: "es-AR",
@@ -210,6 +215,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/nueva-clave",
+    followsPreference: true,
     title: "Elegir una contraseña nueva",
     description: "Elegí una contraseña nueva para tu cuenta de BoxLead.",
     lang: "es-AR",
@@ -218,6 +224,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/confirmar-email",
+    followsPreference: true,
     title: "Confirmar tu email",
     description: "Confirmá el email de tu cuenta de BoxLead.",
     lang: "es-AR",
@@ -226,6 +233,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/nuevo-email",
+    followsPreference: true,
     title: "Confirmar el email nuevo",
     description: "Confirmá el email nuevo de tu cuenta de BoxLead.",
     lang: "es-AR",
@@ -234,6 +242,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/reingresar",
+    followsPreference: true,
     title: "Confirmá que sos vos",
     description: "Volvé a entrar con tu proveedor para confirmar un cambio en tu cuenta de BoxLead.",
     lang: "es-AR",
@@ -242,6 +251,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/social/callback",
+    followsPreference: true,
     title: "Iniciando sesión",
     description: "Estamos verificando tu cuenta.",
     lang: "es-AR",
@@ -250,6 +260,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/avisos/baja",
+    followsPreference: true,
     title: "Dejar de recibir avisos",
     description: "Dejá de recibir los mails de avisos de BoxLead desde el enlace del último mail.",
     lang: "es-AR",
@@ -260,6 +271,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
 
 export const NOT_FOUND_PAGE: PublicPage = {
   path: "/404",
+  followsPreference: true,
   title: "Página no encontrada",
   description: "El enlace puede estar mal escrito o la página ya no existe.",
   lang: "es-AR",

@@ -59,4 +59,8 @@ i18n.on("languageChanged", (language) => {
   if (isLanguage(language)) setCurrentLanguage(language);
 });
 
+export function messages(namespace: string): { preload: () => Promise<void> } {
+  return { preload: () => i18n.loadNamespaces(namespace).then(() => undefined) };
+}
+
 export { i18n };
