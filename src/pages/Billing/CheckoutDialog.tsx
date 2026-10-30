@@ -6,7 +6,7 @@ import { CheckoutUrlError, fetchCheckoutLegal, startCheckout } from "../../data/
 import { emptyProfile, isEmail } from "../../util/billingProfile";
 import { checkoutLegal } from "../../util/checkout";
 import { LEGAL_ENTITY_NAME, SUPPORT_EMAIL } from "../../util/company";
-import { NATIONAL_TAXES_LEGEND, planPrice } from "../../util/planPrice";
+import { nationalTaxesLegend, planPrice } from "../../util/planPrice";
 import { billingErrorMessage, MERCADO_PAGO_BANNER, MERCADO_PAGO_TERMS_URL, rateNote } from "./billingLabels";
 import { LegalConsent } from "./LegalConsent";
 import { ProfileForm } from "./ProfileForm";
@@ -136,7 +136,7 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
                   {note ? <span className="checkout-note">{note}</span> : null}
                   {price.withoutNationalTaxes ? (
                     <span className="checkout-net">
-                      {NATIONAL_TAXES_LEGEND} {price.withoutNationalTaxes}
+                      {nationalTaxesLegend()} {price.withoutNationalTaxes}
                     </span>
                   ) : null}
                   {price.reference ? (
