@@ -10,6 +10,7 @@ import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { RollText } from "../components/RollText";
 import { EDITORIAL_PAGES, editorialPage, type EditorialPageData } from "../editorial";
+import { useScrollReveal } from "../useScrollReveal";
 import "../LandingPage.css";
 import "./EditorialPage.css";
 
@@ -52,6 +53,7 @@ export function EditorialPage() {
   useEffect(() => {
     trackEvent("canal_visita", { canal: page.slug });
   }, [page.slug]);
+  useScrollReveal(page.slug);
 
   return (
     <div className="landing editorial">

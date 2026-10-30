@@ -1,5 +1,25 @@
+import type { Locator } from "@playwright/test";
 import { expect, expectAccessible, screenshot, test } from "./support.ts";
 import { MOCK_API_ORIGIN } from "./ports.ts";
+
+function hiddenText(section: Locator): Promise<string[]> {
+  return section.evaluate((root) => {
+    const hidden: string[] = [];
+    for (const node of root.querySelectorAll<HTMLElement>("h1, h2, h3, p, li, summary, a")) {
+      const text = node.innerText.trim();
+      if (!text || node.closest("[aria-hidden='true']")) continue;
+      let opacity = 1;
+      let clipped = false;
+      for (let current: HTMLElement | null = node; current && current !== root.parentElement; current = current.parentElement) {
+        const style = getComputedStyle(current);
+        opacity *= Number(style.opacity);
+        if (style.clipPath.includes("100%")) clipped = true;
+      }
+      if (opacity < 0.99 || clipped) hidden.push(text.slice(0, 60));
+    }
+    return hidden;
+  });
+}
 
 const PAGES = [
   { path: "/whatsapp", heading: "Un agente de IA que atiende tu WhatsApp Business las 24 horas" },
@@ -27,6 +47,30 @@ for (const { path, heading } of PAGES) {
     await expectAccessible(page);
     await screenshot(page, `editorial${path.replace("/", "-")}`);
     expect(calls).toEqual([]);
+  });
+}
+
+for (const { path } of PAGES) {
+  test(`${path} shows every section once it scrolls into view`, async ({ page }) => {
+    test.slow();
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const sections = page.locator("main > section");
+    const count = await sections.count();
+    expect(count).toBeGreaterThanOrEqual(5);
+    for (let index = 0; index < count; index += 1) {
+      const section = sections.nth(index);
+      const box = await section.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        return { top: rect.top + window.scrollY, height: rect.height };
+      });
+      const viewport = page.viewportSize()?.height ?? 600;
+      for (let top = box.top; top < box.top + box.height; top += viewport / 2) {
+        await page.evaluate((y) => window.scrollTo(0, y), top);
+        await page.waitForTimeout(50);
+      }
+      await expect.poll(() => hiddenText(section), { message: `hidden text in section ${index} of ${path}` }).toEqual([]);
+    }
   });
 }
 
