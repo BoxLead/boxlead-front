@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { AgentResponse, AgentScope, CategoryResponse } from "../../api/types";
 import { CharCounter } from "../../components/ui/CharCounter";
@@ -40,9 +41,9 @@ function initialDrafts(agent: AgentResponse | null): ScopeDraft[] {
 }
 
 function scopeProblem(drafts: ScopeDraft[], categories: CategoryResponse[] | undefined): string | null {
-  if (drafts.length === 0 || drafts.length > MAX_SCOPES) return `Usá entre 1 y ${MAX_SCOPES} reglas.`;
-  if (hasDuplicateScopes(drafts.map((draft) => draft.scope))) return "Hay reglas repetidas: cada combinación solo puede estar una vez.";
-  if (drafts.some((draft) => isOrphanedCategory(draft.scope, categories))) return "Quitá las reglas con categorías que ya no existen.";
+  if (drafts.length === 0 || drafts.length > MAX_SCOPES) return i18next.t("form.scopeCount", { ns: "agents", max: MAX_SCOPES });
+  if (hasDuplicateScopes(drafts.map((draft) => draft.scope))) return i18next.t("form.scopeDuplicates", { ns: "agents" });
+  if (drafts.some((draft) => isOrphanedCategory(draft.scope, categories))) return i18next.t("form.scopeOrphaned", { ns: "agents" });
   return null;
 }
 
@@ -56,6 +57,7 @@ function sameScope(left: AgentScope, right: AgentScope): boolean {
 }
 
 export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyChange, onSnapshot }: AgentFormProps) {
+  const { t } = useTranslation("agents");
   const nameCounterId = useId();
   const instructionsCounterId = useId();
   const [name, setName] = useState(agent?.name ?? "");
@@ -131,15 +133,15 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
     } catch (e) {
       setError(
         e instanceof ApiError
-          ? agentErrorMessage(e, "No pudimos guardar el agente. Probá de nuevo.")
-          : "No pudimos guardar el agente. Probá de nuevo.",
+          ? agentErrorMessage(e, t("form.saveFailed"))
+          : t("form.saveFailed"),
       );
       setSaving(false);
     }
   }
 
   return (
-    <form className="agent-config" aria-label="Configuración del agente" onSubmit={(event) => void submit(event)} noValidate>
+    <form className="agent-config" aria-label={t("form.label")} onSubmit={(event) => void submit(event)} noValidate>
       <div className="agent-config-body">
         {error ? (
           <p className="form-error" role="alert">
@@ -149,14 +151,14 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
         <div className="agent-form-grid">
           <div className="agent-form-main">
             <label className="field">
-              <span className="field-label">Nombre</span>
+              <span className="field-label">{t("form.name")}</span>
               <input
                 className="input"
                 name="name"
                 value={name}
                 autoComplete="off"
                 required
-                placeholder="Por ejemplo, Ventas"
+                placeholder={t("form.namePlaceholder")}
                 aria-invalid={name.length > AGENT_NAME_MAX || undefined}
                 aria-describedby={nameCounterId}
                 onChange={(event) => setName(event.target.value)}
@@ -164,13 +166,13 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
               <CharCounter id={nameCounterId} length={name.length} max={AGENT_NAME_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
             </label>
             <label className="field">
-              <span className="field-label">Instrucciones</span>
+              <span className="field-label">{t("form.instructions")}</span>
               <textarea
                 className="input agent-textarea"
                 name="instructions"
                 rows={8}
                 value={instructions}
-                placeholder="Cómo querés que responda: estrategia, personalidad, qué ofrecer y qué evitar"
+                placeholder={t("form.instructionsPlaceholder")}
                 aria-invalid={instructions.length > AGENT_INSTRUCTIONS_MAX || undefined}
                 aria-describedby={instructionsCounterId}
                 onChange={(event) => setInstructions(event.target.value)}
@@ -179,14 +181,12 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
             </label>
             <div className="field">
               <Switch
-                label="Responder comentarios en público"
+                label={t("form.publicReplies")}
                 checked={publicCommentReplies}
                 disabled={saving}
                 onChange={setPublicCommentReplies}
               />
-              <span className="field-help">
-                La respuesta se publica en el comentario. Si el agente no está seguro, se lo deja a una persona.
-              </span>
+              <span className="field-help">{t("form.publicRepliesHelp")}</span>
             </div>
           </div>
           <ScopesEditor drafts={drafts} categories={categories} onChange={setDrafts} />
@@ -199,10 +199,10 @@ export function AgentForm({ agent, categories, onSaved, onDiscardNew, onDirtyCha
       </div>
       <div className="agent-savebar">
         <button type="button" className="btn btn-secondary" onClick={discard} disabled={saving || (agent !== null && !dirty)}>
-          Descartar
+          {t("form.discard")}
         </button>
         <button type="submit" className="btn btn-primary" disabled={invalid || saving}>
-          {saving ? "Guardando…" : agent ? "Guardar cambios" : "Crear agente"}
+          {saving ? t("form.saving") : agent ? t("form.saveChanges") : t("form.create")}
         </button>
       </div>
     </form>

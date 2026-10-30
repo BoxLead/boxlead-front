@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useId, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { CategoryColor, CategoryResponse } from "../../api/types";
 import { CharCounter } from "../../components/ui/CharCounter";
@@ -21,6 +22,7 @@ type CategoryDialogProps = {
 };
 
 export function CategoryDialog({ open, category, defaultColor, onClose, onSaved }: CategoryDialogProps) {
+  const { t } = useTranslation("agents");
   const nameCounterId = useId();
   const descriptionCounterId = useId();
   const [name, setName] = useState(category?.name ?? "");
@@ -43,7 +45,7 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
       const saved = category ? await updateCategory(category.id, body) : await createCategory(body);
       onSaved(saved, category === null);
     } catch (e) {
-      setError(e instanceof ApiError ? categoryErrorMessage(e.message) : "No pudimos guardar la categoría. Probá de nuevo.");
+      setError(e instanceof ApiError ? categoryErrorMessage(e.message) : t("categories.saveFailed"));
       setSaving(false);
     }
   }
@@ -51,7 +53,7 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
   return (
     <Dialog
       open={open}
-      title={category ? "Editar categoría" : "Nueva categoría"}
+      title={category ? t("categories.editTitle") : t("categories.newTitle")}
       busy={saving}
       onClose={onClose}
     >
@@ -62,7 +64,7 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
           </p>
         ) : null}
         <label className="field">
-          <span className="field-label">Nombre</span>
+          <span className="field-label">{t("categories.name")}</span>
           <input
             className="input"
             name="name"
@@ -76,13 +78,13 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
           <CharCounter id={nameCounterId} length={name.length} max={CATEGORY_NAME_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
         </label>
         <label className="field">
-          <span className="field-label">Descripción</span>
+          <span className="field-label">{t("categories.descriptionLabel")}</span>
           <textarea
             className="input category-textarea"
             name="description"
             rows={3}
             value={description}
-            placeholder="Qué tipo de leads entran en esta categoría"
+            placeholder={t("categories.descriptionPlaceholder")}
             aria-invalid={description.length > CATEGORY_DESCRIPTION_MAX || undefined}
             aria-describedby={descriptionCounterId}
             onChange={(event) => setDescription(event.target.value)}
@@ -92,10 +94,10 @@ export function CategoryDialog({ open, category, defaultColor, onClose, onSaved 
         <ColorPicker value={color} onChange={setColor} />
         <div className="dialog-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
-            Cancelar
+            {t("categories.cancel")}
           </button>
           <button type="submit" className="btn btn-primary" disabled={invalid || saving}>
-            {saving ? "Guardando…" : category ? "Guardar cambios" : "Crear categoría"}
+            {saving ? t("categories.saving") : category ? t("categories.saveChanges") : t("categories.create")}
           </button>
         </div>
       </form>

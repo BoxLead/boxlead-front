@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { PlaygroundResult } from "../../api/types";
+import { i18n } from "../../i18n";
 import { PlaygroundResultView } from "./PlaygroundResultView";
 
 const result = (patch: Partial<PlaygroundResult> = {}): PlaygroundResult => ({
@@ -54,5 +55,14 @@ describe("PlaygroundResultView", () => {
     expect(screen.getByText("WhatsApp")).toBeInTheDocument();
     expect(screen.getByText("2.000 caracteres")).toBeInTheDocument();
     expect(screen.getByText("Respondé en el idioma del cliente.")).toBeInTheDocument();
+  });
+  it("explains the result and the rules in English", async () => {
+    await i18n.changeLanguage("en");
+    render(<PlaygroundResultView result={result({ replyMode: "DRAFT" })} saved />);
+    expect(screen.getByText("The agent would reply")).toBeInTheDocument();
+    expect(screen.getByText("In production it would reply in draft mode.")).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Channel rules it applied"));
+    expect(screen.getByText("2,000 characters")).toBeInTheDocument();
+    expect(screen.getByText("Only the customer (private)")).toBeInTheDocument();
   });
 });

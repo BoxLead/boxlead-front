@@ -1,15 +1,13 @@
 import type { AgentScope, CategoryResponse, PlatformType, ReplyMode, SalesStage } from "../../api/types";
+import { useTranslation } from "react-i18next";
 import { Banner } from "../../components/ui/Banner";
 import { CONNECTABLE_PLATFORMS, stageChoices } from "../../platforms";
 import {
-  ALL_CATEGORIES,
-  ALL_CHANNELS,
-  ALL_STAGES,
-  DELETED_CATEGORY,
   MAX_SCOPES,
   REPLY_MODES,
-  REPLY_MODE_LABELS,
+  deletedCategoryLabel,
   newScopeDraft,
+  replyModeLabel,
   isOrphanedCategory,
   withPlatform,
   type ScopeDraft,
@@ -24,6 +22,7 @@ type ScopesEditorProps = {
 const ANY = "";
 
 export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps) {
+  const { t } = useTranslation("agents");
   function update(key: string, scope: AgentScope) {
     onChange(drafts.map((draft) => (draft.key === key ? { key, scope } : draft)));
   }
@@ -36,12 +35,9 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
     <section className="scopes-editor" aria-labelledby="scopes-editor-title">
       <div className="scopes-editor-head">
         <h3 id="scopes-editor-title" className="scopes-editor-title">
-          Dónde trabaja
+          {t("scopes.title")}
         </h3>
-        <p className="field-help">
-          Cada regla define un lugar y cómo responde ahí. Si varias reglas coinciden con una conversación, gana la más
-          específica: primero la categoría, después la etapa y por último el canal.
-        </p>
+        <p className="field-help">{t("scopes.help")}</p>
       </div>
       <ol className="scope-list">
         {drafts.map(({ key, scope }, index) => {
@@ -50,7 +46,7 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
           return (
             <li key={key}>
               <fieldset className="scope-row">
-                <legend className="visually-hidden">Regla {index + 1}</legend>
+                <legend className="visually-hidden">{t("scopes.rule", { number: index + 1 })}</legend>
                 <div className="scope-row-top">
                   <span className="scope-index" aria-hidden="true">
                     {index + 1}
@@ -60,13 +56,13 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                     className="btn btn-secondary btn-sm"
                     onClick={() => remove(key)}
                     disabled={drafts.length === 1}
-                    aria-label={`Quitar regla ${index + 1}`}
+                    aria-label={t("scopes.removeLabel", { number: index + 1 })}
                   >
-                    Quitar
+                    {t("scopes.remove")}
                   </button>
                 </div>
                 <label className="field">
-                  <span className="field-label">Canal</span>
+                  <span className="field-label">{t("scopes.channel")}</span>
                   <select
                     className="select"
                     value={scope.platform ?? ANY}
@@ -74,7 +70,7 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                       update(key, withPlatform(scope, event.target.value === ANY ? null : (event.target.value as PlatformType)))
                     }
                   >
-                    <option value={ANY}>{ALL_CHANNELS}</option>
+                    <option value={ANY}>{t("scopes.allChannels")}</option>
                     {CONNECTABLE_PLATFORMS.map((platform) => (
                       <option key={platform.id} value={platform.id}>
                         {platform.name}
@@ -83,15 +79,15 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                   </select>
                 </label>
                 <label className="field">
-                  <span className="field-label">Categoría</span>
+                  <span className="field-label">{t("scopes.category")}</span>
                   <select
                     className="select"
                     value={scope.categoryId ?? ANY}
                     aria-invalid={orphaned || undefined}
                     onChange={(event) => update(key, { ...scope, categoryId: event.target.value === ANY ? null : event.target.value })}
                   >
-                    <option value={ANY}>{ALL_CATEGORIES}</option>
-                    {orphaned && scope.categoryId ? <option value={scope.categoryId}>{DELETED_CATEGORY}</option> : null}
+                    <option value={ANY}>{t("scopes.allCategories")}</option>
+                    {orphaned && scope.categoryId ? <option value={scope.categoryId}>{deletedCategoryLabel()}</option> : null}
                     {(categories ?? []).map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -100,7 +96,7 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                   </select>
                 </label>
                 <label className="field">
-                  <span className="field-label">Etapa</span>
+                  <span className="field-label">{t("scopes.stage")}</span>
                   <select
                     className="select"
                     value={scope.salesStage ?? ANY}
@@ -108,7 +104,7 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                       update(key, { ...scope, salesStage: event.target.value === ANY ? null : (event.target.value as SalesStage) })
                     }
                   >
-                    <option value={ANY}>{ALL_STAGES}</option>
+                    <option value={ANY}>{t("scopes.allStages")}</option>
                     {stages.map((stage) => (
                       <option key={stage.value} value={stage.value}>
                         {stage.label}
@@ -117,7 +113,7 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                   </select>
                 </label>
                 <label className="field">
-                  <span className="field-label">Modo</span>
+                  <span className="field-label">{t("scopes.mode")}</span>
                   <select
                     className="select"
                     value={scope.replyMode}
@@ -125,13 +121,13 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
                   >
                     {REPLY_MODES.map((mode) => (
                       <option key={mode} value={mode}>
-                        {REPLY_MODE_LABELS[mode]}
+                        {replyModeLabel(mode)}
                       </option>
                     ))}
                   </select>
                 </label>
                 {orphaned ? (
-                  <p className="field-error scope-row-error">Esta categoría ya no existe. Quitá la regla o elegí otra.</p>
+                  <p className="field-error scope-row-error">{t("scopes.orphaned")}</p>
                 ) : null}
               </fieldset>
             </li>
@@ -139,10 +135,10 @@ export function ScopesEditor({ drafts, categories, onChange }: ScopesEditorProps
         })}
       </ol>
       {drafts.length >= MAX_SCOPES ? (
-        <Banner tone="info">Podés tener hasta {MAX_SCOPES} reglas por agente.</Banner>
+        <Banner tone="info">{t("scopes.maxRules", { max: MAX_SCOPES })}</Banner>
       ) : (
         <button type="button" className="btn btn-secondary btn-sm scope-add" onClick={() => onChange([...drafts, newScopeDraft()])}>
-          Agregar regla
+          {t("scopes.add")}
         </button>
       )}
     </section>

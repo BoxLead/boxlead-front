@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { CategoryResponse } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -19,7 +20,8 @@ const MAX_CATEGORIES = 30;
 type Editing = { category: CategoryResponse | null; key: number };
 
 export function Categories() {
-  useDocumentTitle("Categorías");
+  const { t } = useTranslation("agents");
+  useDocumentTitle(t("categories.title"));
 
   const toast = useToast();
   const categories = useApiQuery<CategoryResponse[]>(CATEGORIES_KEY);
@@ -41,12 +43,12 @@ export function Categories() {
     setDeleting(true);
     try {
       await deleteCategory(pendingDelete.id);
-      toast({ tone: "info", message: `Eliminaste ${pendingDelete.name}.` });
+      toast({ tone: "info", message: t("categories.deleted", { name: pendingDelete.name }) });
       setPendingDelete(null);
     } catch (error) {
       toast({
         tone: "danger",
-        message: error instanceof ApiError ? categoryErrorMessage(error.message) : "No pudimos eliminar la categoría.",
+        message: error instanceof ApiError ? categoryErrorMessage(error.message) : t("categories.deleteFailed"),
       });
     } finally {
       setDeleting(false);
@@ -55,7 +57,7 @@ export function Categories() {
 
   const createButton = (
     <button type="button" className="btn btn-primary" onClick={() => openEditor(null)} disabled={atLimit || !categories.data}>
-      Nueva categoría
+      {t("categories.new")}
     </button>
   );
 
@@ -63,27 +65,25 @@ export function Categories() {
     <div className="page categories-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Categorías</h1>
-          <p className="page-header-desc">
-            Agrupá tus leads según lo que necesitan. Cada lead puede estar en una categoría.
-          </p>
+          <h1 className="page-title">{t("categories.title")}</h1>
+          <p className="page-header-desc">{t("categories.description")}</p>
         </div>
         {list.length > 0 ? createButton : null}
       </header>
 
       {atLimit ? (
-        <Banner tone="info" className="categories-banner" title="Llegaste al máximo de categorías">
-          Podés tener hasta {MAX_CATEGORIES}. Eliminá una para crear otra.
+        <Banner tone="info" className="categories-banner" title={t("categories.limitTitle")}>
+          {t("categories.limitBody", { max: MAX_CATEGORIES })}
         </Banner>
       ) : null}
 
       {categories.error && !categories.data ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar las categorías"
+          title={t("categories.loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void categories.reload()}>
-              Reintentar
+              {t("categories.retry")}
             </button>
           }
         >
@@ -99,13 +99,13 @@ export function Categories() {
         <div className="panel categories-empty">
           <EmptyState
             illustration="categories"
-            title="Creá tu primera categoría"
-            hint="Las categorías te ayudan a agrupar a tus leads según lo que necesitan."
+            title={t("categories.emptyTitle")}
+            hint={t("categories.emptyHint")}
             action={createButton}
           />
         </div>
       ) : (
-        <ul className="category-grid rise-list" aria-label="Categorías">
+        <ul className="category-grid rise-list" aria-label={t("categories.listLabel")}>
           {list.map((category) => (
             <CategoryCard
               key={category.id}
@@ -126,7 +126,7 @@ export function Categories() {
           onClose={() => setEditing(null)}
           onSaved={(saved, created) => {
             setEditing(null);
-            toast({ message: created ? `Creaste ${saved.name}.` : `Guardaste ${saved.name}.` });
+            toast({ message: created ? t("categories.created", { name: saved.name }) : t("categories.saved", { name: saved.name }) });
           }}
         />
       ) : null}
@@ -134,8 +134,8 @@ export function Categories() {
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pendingDelete !== null}
-        title={`¿Eliminar ${pendingDelete?.name ?? "la categoría"}?`}
-        confirmLabel={deleting ? "Eliminando…" : "Eliminar"}
+        title={t("categories.deleteTitle", { name: pendingDelete?.name ?? t("categories.deleteFallbackName") })}
+        confirmLabel={deleting ? t("categories.deleting") : t("categories.delete")}
         tone="danger"
         busy={deleting}
         onConfirm={() => void confirmDelete()}
@@ -143,10 +143,10 @@ export function Categories() {
       >
         <p>
           {!pendingDelete || pendingDelete.leadCount === 0
-            ? "No tiene leads asignados."
+            ? t("categories.deleteNoLeads")
             : pendingDelete.leadCount === 1
-              ? "El lead asignado queda sin categoría."
-              : `Sus ${leadCountLabel(pendingDelete.leadCount)} quedan sin categoría.`}
+              ? t("categories.deleteOneLead")
+              : t("categories.deleteLeads", { leads: leadCountLabel(pendingDelete.leadCount) })}
         </p>
       </ConfirmDialog>
     </div>

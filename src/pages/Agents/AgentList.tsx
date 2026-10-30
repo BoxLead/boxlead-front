@@ -1,4 +1,5 @@
 import type { AgentResponse, CategoryResponse } from "../../api/types";
+import { useTranslation } from "react-i18next";
 import { agentStatusLabel, scopeLabel, type ActivityNumbers } from "../../util/agents";
 import { cx } from "../../util/classNames";
 import { formatNumber } from "../../util/format";
@@ -11,13 +12,10 @@ type AgentListProps = {
   onSelect: (id: string) => void;
 };
 
-function repliedLabel(count: number): string {
-  return count === 1 ? "1 respondido" : `${formatNumber(count)} respondidos`;
-}
-
 export function AgentList({ agents, categories, selectedId, activityForId, onSelect }: AgentListProps) {
+  const { t } = useTranslation("agents");
   return (
-    <ul className="agent-list" aria-label="Agentes">
+    <ul className="agent-list" aria-label={t("list.label")}>
       {agents.map((agent) => {
         const selected = agent.id === selectedId;
         const counts = activityForId(agent.id);
@@ -39,7 +37,7 @@ export function AgentList({ agents, categories, selectedId, activityForId, onSel
                   {agentStatusLabel(agent)}
                 </span>
               </span>
-              {agent.instructions ? null : <span className="agent-row-note">Sin instrucciones</span>}
+              {agent.instructions ? null : <span className="agent-row-note">{t("list.noInstructions")}</span>}
               <span className="agent-row-scopes">
                 {agent.scopes.map((scope) => (
                   <span key={scope.id} className="agent-row-scope">
@@ -47,7 +45,7 @@ export function AgentList({ agents, categories, selectedId, activityForId, onSel
                   </span>
                 ))}
               </span>
-              {counts ? <span className="agent-row-metric">{repliedLabel(counts.sent)}</span> : null}
+              {counts ? <span className="agent-row-metric">{t("list.replied", { count: counts.sent, value: formatNumber(counts.sent) })}</span> : null}
             </button>
           </li>
         );

@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
 import type { CategoryResponse, PlatformType, PlaygroundResult, SalesStage } from "../../api/types";
 import { SendIcon } from "../../components/icons/UiIcons";
 import { PlanLink } from "../../components/PlanBanner/PlanLink";
@@ -30,6 +31,7 @@ function toHistory(entries: Entry[]): PlaygroundTurn[] {
 }
 
 export function Playground({ agentName, target, categories, restricted = false }: PlaygroundProps) {
+  const { t } = useTranslation("agents");
   const counterId = useId();
   const inputId = useId();
   const abort = useRef<AbortController | null>(null);
@@ -99,7 +101,7 @@ export function Playground({ agentName, target, categories, restricted = false }
       if (controller.signal.aborted) return;
       setEntries((current) => current.filter((entry) => entry.id !== customer.id));
       setDraft(content);
-      setError(playgroundErrorMessage(e, "No pudimos completar la prueba. Probá de nuevo."));
+      setError(playgroundErrorMessage(e, t("errors.playgroundFailed")));
     } finally {
       if (abort.current === controller) setRunning(false);
     }
@@ -114,19 +116,19 @@ export function Playground({ agentName, target, categories, restricted = false }
 
   return (
     <div className="playground">
-      <p className="playground-intro">Escribí como si fueras un cliente. Nada se envía ni se guarda en tus conversaciones.</p>
+      <p className="playground-intro">{t("playground.intro")}</p>
       {restricted ? (
         <Banner
           tone="warning"
-          title="Necesitás un plan para probar agentes"
+          title={t("playground.restrictedTitle")}
           action={<PlanLink action={CHOOSE_PLAN} />}
         >
-          Con un plan activo podés ver cómo responde este agente antes de que hable con tus clientes.
+          {t("playground.restrictedBody")}
         </Banner>
       ) : null}
       <div className="playground-scenario">
         <label className="field">
-          <span className="field-label">Canal</span>
+          <span className="field-label">{t("playground.channel")}</span>
           <select
             className="select"
             value={platform}
@@ -141,7 +143,7 @@ export function Playground({ agentName, target, categories, restricted = false }
           </select>
         </label>
         <label className="field">
-          <span className="field-label">Etapa</span>
+          <span className="field-label">{t("playground.stage")}</span>
           <select
             className="select"
             value={stage}
@@ -159,7 +161,7 @@ export function Playground({ agentName, target, categories, restricted = false }
           </select>
         </label>
         <label className="field">
-          <span className="field-label">Categoría del lead</span>
+          <span className="field-label">{t("playground.category")}</span>
           <select
             className="select"
             value={categoryId}
@@ -169,7 +171,7 @@ export function Playground({ agentName, target, categories, restricted = false }
               restart();
             }}
           >
-            <option value={NO_CATEGORY}>Sin categoría</option>
+            <option value={NO_CATEGORY}>{t("playground.noCategory")}</option>
             {(categories ?? []).map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -180,7 +182,7 @@ export function Playground({ agentName, target, categories, restricted = false }
         {getPlatform(platform).commentReply ? (
           <div className="field">
             <Switch
-              label="Probar como comentario"
+              label={t("playground.asComment")}
               checked={asComment}
               disabled={running}
               onChange={(checked) => {
@@ -195,22 +197,22 @@ export function Playground({ agentName, target, categories, restricted = false }
       <div className={cx("playground-stage", showAside && "playground-stage-split")}>
         <div className="playground-thread">
           {entries.length === 0 && !running ? (
-            <p className="playground-chat-empty">Escribí el primer mensaje del cliente para empezar.</p>
+            <p className="playground-chat-empty">{t("playground.empty")}</p>
           ) : (
-            <ol className="playground-chat" aria-label="Conversación de prueba" aria-live="polite" tabIndex={0}>
+            <ol className="playground-chat" aria-label={t("playground.chatLabel")} aria-live="polite" tabIndex={0}>
               {entries.map((entry) => (
                 <li
                   key={entry.id}
                   className={`playground-turn${entry.turn.role === "assistant" ? " playground-turn-agent" : ""}`}
                 >
-                  <span className="playground-turn-who">{entry.turn.role === "assistant" ? agentName : "Cliente"}</span>
+                  <span className="playground-turn-who">{entry.turn.role === "assistant" ? agentName : t("playground.customer")}</span>
                   <span className="playground-turn-text">{entry.turn.content}</span>
                 </li>
               ))}
               {running ? (
                 <li className="playground-turn playground-turn-agent playground-turn-pending">
                   <span className="playground-turn-who">{agentName}</span>
-                  <span className="playground-turn-text">Pensando…</span>
+                  <span className="playground-turn-text">{t("playground.thinking")}</span>
                 </li>
               ) : null}
             </ol>
@@ -219,28 +221,28 @@ export function Playground({ agentName, target, categories, restricted = false }
         {showAside ? (
           <div className="playground-side">
             {error ? (
-              <Banner tone="danger" title="No se pudo hacer la prueba">
+              <Banner tone="danger" title={t("playground.errorTitle")}>
                 {error}
               </Banner>
             ) : null}
             {result && !running ? <PlaygroundResultView result={result} saved={saved} /> : null}
             {full ? (
               <Banner tone="info">
-                Llegaste al máximo de {PLAYGROUND_MAX_MESSAGES} mensajes. Reiniciá la conversación para seguir probando.
+                {t("playground.full", { max: PLAYGROUND_MAX_MESSAGES })}
               </Banner>
             ) : null}
           </div>
         ) : null}
         <form className="playground-form" onSubmit={(event) => void send(event)}>
           <label className="visually-hidden" htmlFor={inputId}>
-            Mensaje del cliente
+            {t("playground.message")}
           </label>
           <textarea
             id={inputId}
             className="input playground-input"
             rows={2}
             value={draft}
-            placeholder="Mensaje del cliente"
+            placeholder={t("playground.message")}
             disabled={full || restricted}
             aria-invalid={tooLong || undefined}
             aria-describedby={counterId}
@@ -255,11 +257,11 @@ export function Playground({ agentName, target, categories, restricted = false }
               onClick={restart}
               disabled={running || (entries.length === 0 && !error)}
             >
-              Reiniciar
+              {t("playground.restart")}
             </button>
             <button type="submit" className="btn btn-primary btn-sm" disabled={!canSend}>
               <SendIcon width={16} height={16} />
-              <span>Enviar</span>
+              <span>{t("playground.send")}</span>
             </button>
           </div>
         </form>

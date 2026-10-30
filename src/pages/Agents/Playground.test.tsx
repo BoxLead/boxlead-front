@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/client";
 import * as playground from "../../data/agentPlayground";
+import { i18n } from "../../i18n";
 import { Playground } from "./Playground";
 
 describe("Playground", () => {
@@ -40,5 +41,17 @@ describe("Playground", () => {
 
     await userEvent.selectOptions(screen.getByLabelText("Canal"), "MELI");
     expect(screen.queryByRole("switch", { name: "Probar como comentario" })).not.toBeInTheDocument();
+  });
+  it("runs the trial in English", async () => {
+    await i18n.changeLanguage("en");
+    vi.spyOn(playground, "runPlayground").mockRejectedValue(new ApiError("Too many", 429));
+    render(<Playground agentName="Ventas" target={{ agentId: "a-1" }} categories={[]} />);
+    await userEvent.type(screen.getByPlaceholderText("Customer message"), "Do you have stock?");
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(screen.getByText("Write as if you were a customer. Nothing is sent or saved to your conversations.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lead category")).toHaveDisplayValue("No category");
+    expect(await screen.findByText("You ran too many tests in a row. Try again in a while.")).toBeInTheDocument();
+    expect(screen.getByText("The test didn't go through")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Restart" })).toBeEnabled();
   });
 });

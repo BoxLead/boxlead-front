@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { AgentActivityDetail, AgentResponse, CategoryResponse } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
 import { agentActivityKey } from "../../data/agents";
@@ -6,13 +7,13 @@ import { useApiQuery } from "../../hooks/useApiQuery";
 import { activityOutcomeLabel, activityReasonLabel, labeledLeadLabel, type ActivityNumbers } from "../../util/agents";
 import { formatNumber, formatRelative } from "../../util/format";
 
-const STATS: { key: keyof ActivityNumbers; label: string }[] = [
-  { key: "labeled", label: "Etiquetados" },
-  { key: "sent", label: "Respondidos" },
-  { key: "drafted", label: "Borradores" },
-  { key: "skipped", label: "Omitidos" },
-  { key: "handedOff", label: "Derivados" },
-];
+const STATS = [
+  { key: "labeled", label: "activity.statLabeled" },
+  { key: "sent", label: "activity.statSent" },
+  { key: "drafted", label: "activity.statDrafted" },
+  { key: "skipped", label: "activity.statSkipped" },
+  { key: "handedOff", label: "activity.statHandedOff" },
+] as const satisfies readonly { key: keyof ActivityNumbers; label: string }[];
 
 type AgentActivityProps = {
   agent: AgentResponse;
@@ -22,6 +23,7 @@ type AgentActivityProps = {
 };
 
 export function AgentActivity({ agent, categories, counts, activityDays }: AgentActivityProps) {
+  const { t } = useTranslation("agents");
   const detail = useApiQuery<AgentActivityDetail>(agentActivityKey(agent.id));
   const days = detail.data?.days ?? activityDays ?? 30;
   const events = detail.data?.events ?? [];
@@ -29,12 +31,12 @@ export function AgentActivity({ agent, categories, counts, activityDays }: Agent
   return (
     <div className="agent-activity-panel">
       {counts && activityDays ? (
-        <section className="agent-stats" aria-label={`Actividad de ${agent.name}, últimos ${activityDays} días`}>
-          <p className="agent-stats-period">Últimos {activityDays} días</p>
+        <section className="agent-stats" aria-label={t("activity.statsLabel", { name: agent.name, days: activityDays })}>
+          <p className="agent-stats-period">{t("activity.period", { days: activityDays })}</p>
           <dl className="agent-stats-grid">
             {STATS.map((stat) => (
               <div key={stat.key} className="agent-stat">
-                <dt>{stat.label}</dt>
+                <dt>{t(stat.label)}</dt>
                 <dd>{formatNumber(counts[stat.key])}</dd>
               </div>
             ))}
@@ -50,19 +52,19 @@ export function AgentActivity({ agent, categories, counts, activityDays }: Agent
       ) : detail.error ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar la actividad"
+          title={t("activity.loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void detail.reload()}>
-              Reintentar
+              {t("activity.retry")}
             </button>
           }
         >
           {detail.error}
         </Banner>
       ) : events.length === 0 ? (
-        <p className="agent-activity-empty">Todavía no hay actividad en los últimos {days} días.</p>
+        <p className="agent-activity-empty">{t("activity.empty", { days })}</p>
       ) : (
-        <ul className="agent-activity" aria-label={`Actividad de ${agent.name}`}>
+        <ul className="agent-activity" aria-label={t("activity.listLabel", { name: agent.name })}>
           {events.map((event) => {
             const reason = activityReasonLabel(event.reason);
             const labeled = labeledLeadLabel(event.labeledCategoryId, categories);
@@ -74,7 +76,7 @@ export function AgentActivity({ agent, categories, counts, activityDays }: Agent
                 </div>
                 {labeled ? <p className="agent-activity-detail">{labeled}</p> : null}
                 {reason ? <p className="agent-activity-detail">{reason}</p> : null}
-                {event.conversationId ? <Link to={`/app/inbox?id=${event.conversationId}`}>Ver conversación</Link> : null}
+                {event.conversationId ? <Link to={`/app/inbox?id=${event.conversationId}`}>{t("activity.viewConversation")}</Link> : null}
               </li>
             );
           })}

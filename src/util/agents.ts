@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { ApiError } from "../api/client";
 import { apiErrorCode } from "../api/errors";
 import type {
@@ -24,17 +25,15 @@ export const MAX_SCOPES = 20;
 export const PLAYGROUND_MAX_MESSAGES = 20;
 export const PLAYGROUND_MESSAGE_MAX = 2000;
 
-export const ALL_CHANNELS = "Todos los canales";
-export const ALL_CATEGORIES = "Todas las categorías";
-export const ALL_STAGES = "Todas las etapas";
-export const DELETED_CATEGORY = "Categoría eliminada";
+export const REPLY_MODES: ReplyMode[] = ["AUTO", "DRAFT"];
 
-export const REPLY_MODE_LABELS: Record<ReplyMode, string> = {
-  AUTO: "Automático",
-  DRAFT: "Borrador",
-};
+export function replyModeLabel(mode: ReplyMode): string {
+  return i18next.t(`replyModes.${mode}`, { ns: "agents" });
+}
 
-export const REPLY_MODES = Object.keys(REPLY_MODE_LABELS) as ReplyMode[];
+export function deletedCategoryLabel(): string {
+  return i18next.t("scopes.deletedCategory", { ns: "agents" });
+}
 
 export function emptyScope(): AgentScope {
   return { platform: null, categoryId: null, salesStage: null, replyMode: "AUTO" };
@@ -69,15 +68,15 @@ function stageName(platform: PlatformType | null, stage: SalesStage): string {
 }
 
 function categoryName(scope: AgentScope, categories: CategoryResponse[] | undefined): string {
-  if (isOrphanedCategory(scope, categories)) return DELETED_CATEGORY;
-  return categories?.find((category) => category.id === scope.categoryId)?.name ?? "Categoría";
+  if (isOrphanedCategory(scope, categories)) return deletedCategoryLabel();
+  return categories?.find((category) => category.id === scope.categoryId)?.name ?? i18next.t("scopes.unknownCategory", { ns: "agents" });
 }
 
 export function scopeLabel(scope: AgentScope, categories: CategoryResponse[] | undefined): string {
-  const parts = [scope.platform ? getPlatform(scope.platform).name : ALL_CHANNELS];
+  const parts = [scope.platform ? getPlatform(scope.platform).name : i18next.t("scopes.allChannels", { ns: "agents" })];
   if (scope.categoryId) parts.push(categoryName(scope, categories));
   if (scope.salesStage) parts.push(stageName(scope.platform, scope.salesStage));
-  parts.push(REPLY_MODE_LABELS[scope.replyMode]);
+  parts.push(replyModeLabel(scope.replyMode));
   return parts.join(" · ");
 }
 
@@ -101,21 +100,20 @@ export function agentErrorMessage(error: unknown, fallback: string): string {
   if (!(error instanceof ApiError)) return fallback;
   const code = apiErrorCode(error);
   if (code === "PLAN_REQUIRED" || code === "PLAN_LIMIT_REACHED" || code === "ENTITLEMENTS_UNAVAILABLE") return error.message;
-  if (error.status === 429) return "Hiciste muchas pruebas seguidas. Probá de nuevo en un rato.";
-  if (error.status === 503) return "No pudimos verificar tus categorías ahora. Probá de nuevo en unos minutos.";
+  if (error.status === 429) return i18next.t("errors.tooManyTests", { ns: "agents" });
+  if (error.status === 503) return i18next.t("errors.categoriesUnavailable", { ns: "agents" });
   if (error.status === 422 && /unknown categories/i.test(error.message)) {
-    return "Alguna regla usa una categoría que ya no existe. Quitala o elegí otra.";
+    return i18next.t("errors.unknownCategories", { ns: "agents" });
   }
-  if (error.status === 422) return "Revisá los datos: hay campos con valores inválidos.";
-  if (error.status === 404) return "Este agente ya no existe. Actualizá la página.";
+  if (error.status === 422) return i18next.t("errors.invalidFields", { ns: "agents" });
+  if (error.status === 404) return i18next.t("errors.agentGone", { ns: "agents" });
   return fallback;
 }
 
-export const PLAYGROUND_LIMIT_MESSAGE =
-  "Tu plan no tiene más pruebas disponibles en este período. Para seguir probando, pasate a un plan con más capacidad.";
-
 export function playgroundErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError && apiErrorCode(error) === "PLAN_LIMIT_REACHED") return PLAYGROUND_LIMIT_MESSAGE;
+  if (error instanceof ApiError && apiErrorCode(error) === "PLAN_LIMIT_REACHED") {
+    return i18next.t("errors.playgroundLimit", { ns: "agents" });
+  }
   return agentErrorMessage(error, fallback);
 }
 
@@ -128,21 +126,25 @@ export function newScopeDraft(scope: AgentScope = emptyScope()): ScopeDraft {
 export type RuleLine = { label: string; value: string };
 
 export function describeChannelRules(rules: ChannelRules): RuleLine[] {
+  const t = i18next.getFixedT(null, "agents");
   return [
-    { label: "Canal", value: rules.channelName },
-    { label: "Quién lo lee", value: rules.audience === "PUBLIC" ? "Cualquiera (pública)" : "Solo el cliente (privada)" },
-    { label: "Largo máximo", value: rules.maxLength ? `${rules.maxLength.toLocaleString(intlLocale())} caracteres` : "Sin límite" },
-    { label: "Respuesta única", value: rules.singleReply ? "Sí, no se puede corregir ni seguir" : "No" },
-    { label: "Datos de contacto", value: rules.contactDetailsAllowed ? "Permitidos" : "No permitidos" },
+    { label: t("rules.channel"), value: rules.channelName },
+    { label: t("rules.audience"), value: rules.audience === "PUBLIC" ? t("rules.audiencePublic") : t("rules.audiencePrivate") },
+    {
+      label: t("rules.maxLength"),
+      value: rules.maxLength ? t("rules.maxLengthValue", { value: rules.maxLength.toLocaleString(intlLocale()) }) : t("rules.noLimit"),
+    },
+    { label: t("rules.singleReply"), value: rules.singleReply ? t("rules.singleReplyYes") : t("rules.singleReplyNo") },
+    { label: t("rules.contactDetails"), value: rules.contactDetailsAllowed ? t("rules.contactAllowed") : t("rules.contactNotAllowed") },
   ];
 }
 
 export function answeredByLabel(agentName: string): string {
-  return `Respondido por ${agentName}`;
+  return i18next.t("answeredBy", { ns: "agents", name: agentName });
 }
 
 export function workingAgentLabel(agentName: string): string {
-  return `${agentName} está respondiendo`;
+  return i18next.t("working", { ns: "agents", name: agentName });
 }
 
 export type ActivityNumbers = {
@@ -153,28 +155,24 @@ export type ActivityNumbers = {
   handedOff: number;
 };
 
-const OUTCOME_LABELS: Record<AgentRunOutcome, string> = {
-  SENT: "Respondió",
-  DRAFTED: "Dejó un borrador",
-  HANDOFF: "Derivó",
-  SKIPPED: "Omitió",
-  SUPERSEDED: "Omitió",
-};
+const REASON_KEYS = {
+  event_too_old: "eventTooOld",
+  not_latest_inbound: "newerMessage",
+  last_message_not_inbound: "lastNotInbound",
+  needs_attention: "needsAttention",
+  human_took_over: "humanTookOver",
+  no_matching_scope: "noMatchingScope",
+  public_comments_disabled: "publicCommentsDisabled",
+  comments_not_supported: "commentsNotSupported",
+  "a newer message arrived": "newerMessage",
+  plan: "noPlan",
+  plan_limit: "planLimit",
+  public_comments_not_in_plan: "publicCommentsNotInPlan",
+} as const;
 
-const REASON_LABELS: Record<string, string> = {
-  event_too_old: "El mensaje era demasiado viejo",
-  not_latest_inbound: "Llegó un mensaje más nuevo",
-  last_message_not_inbound: "El último mensaje no es del cliente",
-  needs_attention: "La conversación ya necesitaba atención",
-  human_took_over: "Una persona ya había respondido",
-  no_matching_scope: "Ninguna regla coincidía",
-  public_comments_disabled: "Este agente no responde comentarios públicos",
-  comments_not_supported: "El canal no permite responder comentarios",
-  "a newer message arrived": "Llegó un mensaje más nuevo",
-  plan: "Tu cuenta no tiene un plan activo",
-  plan_limit: "Se alcanzó el límite del plan",
-  public_comments_not_in_plan: "Tu plan no incluye respuestas públicas en comentarios",
-};
+function isKnownReason(reason: string): reason is keyof typeof REASON_KEYS {
+  return Object.hasOwn(REASON_KEYS, reason);
+}
 
 const REASON_LIMIT = 180;
 
@@ -190,12 +188,12 @@ export function activityFor(summary: AgentActivitySummary, agentId: string): Act
 }
 
 export function activityOutcomeLabel(outcome: AgentRunOutcome): string {
-  return OUTCOME_LABELS[outcome];
+  return i18next.t(`outcomes.${outcome}`, { ns: "agents" });
 }
 
 export function activityReasonLabel(reason: string | null): string | null {
   if (!reason) return null;
-  const text = REASON_LABELS[reason] ?? reason;
+  const text = isKnownReason(reason) ? i18next.t(`reasons.${REASON_KEYS[reason]}`, { ns: "agents" }) : reason;
   if (text.length <= REASON_LIMIT) return text;
   return `${text.slice(0, REASON_LIMIT - 1)}…`;
 }
@@ -205,41 +203,39 @@ export function labeledLeadLabel(
   categories: CategoryResponse[] | undefined,
 ): string | null {
   if (!categoryId) return null;
-  if (!categories) return "Etiquetó el lead";
+  if (!categories) return i18next.t("labeled.lead", { ns: "agents" });
   const name = categories.find((category) => category.id === categoryId)?.name;
-  return `Etiquetó como ${name ?? DELETED_CATEGORY}`;
+  return i18next.t("labeled.as", { ns: "agents", name: name ?? deletedCategoryLabel() });
 }
 
 export function unassignedActivityLine(unassigned: { skipped: number; labeled: number }): string | null {
+  const t = i18next.getFixedT(null, "agents");
   const parts: string[] = [];
   if (unassigned.skipped > 0) {
-    parts.push(
-      unassigned.skipped === 1
-        ? "1 mensaje no llegó a ningún agente"
-        : `${formatNumber(unassigned.skipped)} mensajes no llegaron a ningún agente`,
-    );
+    parts.push(t("unassigned.skipped", { count: unassigned.skipped, value: formatNumber(unassigned.skipped) }));
   }
   if (unassigned.labeled > 0) {
-    parts.push(
-      unassigned.labeled === 1
-        ? "1 lead se etiquetó sin agente"
-        : `${formatNumber(unassigned.labeled)} leads se etiquetaron sin agente`,
-    );
+    parts.push(t("unassigned.labeled", { count: unassigned.labeled, value: formatNumber(unassigned.labeled) }));
   }
   if (parts.length === 0) return null;
-  return `${parts.join(" y ")}.`;
+  if (parts.length === 1) return t("unassigned.single", { part: parts[0] });
+  return t("unassigned.both", { first: parts[0], second: parts[1] });
 }
 
 export function agentStatusLabel(agent: AgentResponse): string {
-  if (!agent.enabled) return "Pausado";
-  return agent.overPlanLimit ? "Fuera del plan" : "Activo";
+  const t = i18next.getFixedT(null, "agents");
+  if (!agent.enabled) return t("status.paused");
+  return agent.overPlanLimit ? t("status.overPlan") : t("status.active");
 }
 
 export function overPlanLimitLine(agents: AgentResponse[], max: number | null | undefined): string | null {
   const names = agents.filter((agent) => agent.overPlanLimit).map((agent) => agent.name);
   if (names.length === 0) return null;
-  const who = names.length === 1 ? `${names[0]} no responde` : `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]} no responden`;
-  const allowed =
-    typeof max === "number" ? `Tu plan permite ${max === 1 ? "1 agente activo" : `${formatNumber(max)} agentes activos`}. ` : "";
-  return `${allowed}${who} hasta que pauses otro agente o cambies de plan.`;
+  const t = i18next.getFixedT(null, "agents");
+  const who =
+    names.length === 1
+      ? t("overPlan.one", { name: names[0] })
+      : t("overPlan.many", { names: names.slice(0, -1).join(", "), last: names[names.length - 1] });
+  if (typeof max !== "number") return t("overPlan.line", { who });
+  return t("overPlan.lineWithMax", { who, allowed: t("overPlan.allowed", { count: max, value: formatNumber(max) }) });
 }
