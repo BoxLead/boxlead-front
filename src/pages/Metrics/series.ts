@@ -16,17 +16,16 @@ export type DayTotals = {
 
 export type MetricDefinition = {
   key: MetricKey;
-  label: string;
   kind: "count" | "rate" | "duration";
   better: "up" | "down";
   forecast: boolean;
 };
 
 export const METRICS: MetricDefinition[] = [
-  { key: "leads", label: "Leads", kind: "count", better: "up", forecast: true },
-  { key: "fast", label: "Respuesta en 5 min", kind: "rate", better: "up", forecast: false },
-  { key: "response", label: "Primera respuesta", kind: "duration", better: "down", forecast: false },
-  { key: "qualification", label: "Calificación", kind: "rate", better: "up", forecast: false },
+  { key: "leads", kind: "count", better: "up", forecast: true },
+  { key: "fast", kind: "rate", better: "up", forecast: false },
+  { key: "response", kind: "duration", better: "down", forecast: false },
+  { key: "qualification", kind: "rate", better: "up", forecast: false },
 ];
 
 export function metricDefinition(key: MetricKey): MetricDefinition {

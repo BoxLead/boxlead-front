@@ -19,7 +19,6 @@ const I18N_PENDING = [
   'src/pages/Connections/**',
   'src/pages/LeadDetail/**',
   'src/pages/Leads/**',
-  'src/pages/Metrics/**',
   'src/pages/Notifications/**',
   'src/pages/OAuthCallback/**',
   'src/pages/Reseller/**',

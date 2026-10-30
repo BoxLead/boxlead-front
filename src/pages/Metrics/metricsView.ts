@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { CategoryResponse, MetricsReport, MetricsSettings, PlatformType } from "../../api/types";
 import { CONNECTABLE_PLATFORMS } from "../../platforms";
 import { UNCATEGORIZED } from "../../util/categories";
@@ -85,7 +86,9 @@ export function buildMetricsView(input: MetricsInput): MetricsView {
 
   const names = new Map(categories.map((category) => [category.id, category.name]));
   const categoryName = (id: string) =>
-    id === UNCATEGORIZED ? "Sin categoría" : (names.get(id) ?? "Categoría eliminada");
+    id === UNCATEGORIZED
+      ? i18next.t("categories.uncategorized", { ns: "metrics" })
+      : (names.get(id) ?? i18next.t("categories.deleted", { ns: "metrics" }));
   const present = new Set(current.segments.map((segment) => segment.platform));
 
   return {

@@ -1,4 +1,6 @@
+import i18next from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimatedNumber } from "../../../components/ui/AnimatedNumber";
 import { cx } from "../../../util/classNames";
 import { formatNumber, formatPercent } from "../../../util/format";
@@ -17,17 +19,31 @@ type FunnelChartProps = {
 function describe(steps: FunnelStep[], index: number | null): string {
   const last = steps[steps.length - 1];
   if (index === null) {
-    return `De ${formatNumber(steps[0].value)} leads, ${formatNumber(last.value)} llegaron a ${last.label.toLowerCase()} (${formatPercent(last.fromStart)})`;
+    return i18next.t("funnel.summary", {
+      ns: "metrics",
+      leads: formatNumber(steps[0].value),
+      reached: formatNumber(last.value),
+      stage: last.noun,
+      share: formatPercent(last.fromStart),
+    });
   }
   const step = steps[index];
-  if (index === 0) return `${formatNumber(step.value)} leads en el período, ${formatNumber(step.previous)} en el anterior`;
+  if (index === 0) {
+    return i18next.t("funnel.first", { ns: "metrics", value: formatNumber(step.value), previous: formatNumber(step.previous) });
+  }
   const before = steps[index - 1];
   const dropped = before.value - step.value;
-  const progress = `${formatPercent(step.fromPrevious)} de los ${before.label.toLowerCase()} avanzó, ${formatNumber(dropped)} quedaron en el camino`;
+  const progress = i18next.t("funnel.progress", {
+    ns: "metrics",
+    share: formatPercent(step.fromPrevious),
+    stage: before.noun,
+    dropped: formatNumber(dropped),
+  });
   return step.explanation ? `${progress}. ${step.explanation}` : progress;
 }
 
 export function FunnelChart({ steps }: FunnelChartProps) {
+  const { t } = useTranslation("metrics");
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -61,7 +77,7 @@ export function FunnelChart({ steps }: FunnelChartProps) {
           >
             <span className="funnel-chart-label">{step.label}</span>
             <AnimatedNumber className="funnel-chart-value" value={step.value} format={formatNumber} />
-            <span className="funnel-chart-share">{index === 0 ? "Total" : `${formatPercent(step.fromStart)} del total`}</span>
+            <span className="funnel-chart-share">{index === 0 ? t("funnel.total") : t("funnel.ofTotal", { share: formatPercent(step.fromStart) })}</span>
           </button>
         ))}
       </div>
@@ -109,11 +125,11 @@ export function FunnelChart({ steps }: FunnelChartProps) {
       <ul className="funnel-chart-legend" aria-hidden="true">
         <li>
           <span className="funnel-chart-swatch" />
-          Este período
+          {t("legend.current")}
         </li>
         <li>
           <span className="funnel-chart-swatch funnel-chart-swatch-previous" />
-          Anterior
+          {t("legend.previous")}
         </li>
       </ul>
     </div>

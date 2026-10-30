@@ -1,1 +1,185 @@
-{}
+{
+  "title": "Metrics",
+  "weekdays": {
+    "long": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "short": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun"
+    },
+    "inSentence": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    }
+  },
+  "plan": {
+    "notCovered": "Your plan doesn't cover this period",
+    "notCoveredHint": "Pick a shorter period or move to a plan with more days of history.",
+    "noHistory": "Your plan doesn't include metrics history",
+    "noHistoryHint": "To see a period and compare it with the previous one you need a plan with more days of history.",
+    "historyNote_one": "Your plan includes {{count}} day of history.",
+    "historyNote_other": "Your plan includes {{count}} days of history."
+  },
+  "load": {
+    "error": "We couldn't load the metrics",
+    "retry": "Try again"
+  },
+  "empty": {
+    "filtered": "No data with these filters",
+    "clearFilters": "Clear filters",
+    "title": "No data in this period yet",
+    "hint": "They fill in on their own with the leads that come in through your channels.",
+    "connect": "Connect a channel"
+  },
+  "range": "{{from}} to {{to}}",
+  "header": {
+    "against": "vs {{from}} to {{to}}",
+    "settings": "Assumptions",
+    "exportPdf": "Export PDF",
+    "period": "Period",
+    "periodDays": "{{days}} days",
+    "channel": "Channel",
+    "allChannels": "All channels",
+    "allChannelsShort": "Channels",
+    "category": "Category",
+    "allCategories": "All categories",
+    "allCategoriesShort": "Categories",
+    "clear": "Clear"
+  },
+  "categories": {
+    "uncategorized": "Uncategorized",
+    "deleted": "Deleted category"
+  },
+  "indicators": {
+    "label": "Key metrics",
+    "leads": "Leads",
+    "fast": "Replied in 5 min",
+    "response": "First response",
+    "qualification": "Qualification"
+  },
+  "change": {
+    "flat": "No change",
+    "against": "vs the previous period"
+  },
+  "signals": {
+    "title": "Signals",
+    "unanswered": "{{value}} conversations without a reply",
+    "reply": "Reply",
+    "speed": "Replying in under 5 min qualifies {{factor}} more",
+    "channelQuality": "{{best}} qualifies {{factor}} more than {{leader}}",
+    "seeLeads": "See leads",
+    "outsideHours": "{{share}} of inquiries come in after hours",
+    "categoryGrowth": "{{category}} grew {{change}}"
+  },
+  "performance": {
+    "label": "Performance in the period",
+    "summaryDay": "{{metric}} per day from {{from}} to {{to}}, compared with the previous period.",
+    "summaryWeek": "{{metric}} per week from {{from}} to {{to}}, compared with the previous period.",
+    "legend": "Legend",
+    "forecast": "Next {{days}} days",
+    "leadCount_one": "{{value}} lead",
+    "leadCount_other": "{{value}} leads"
+  },
+  "legend": {
+    "current": "This period",
+    "previous": "Previous"
+  },
+  "chart": {
+    "roleDescription": "chart",
+    "label": "{{summary}} Use the arrow keys to move through it.",
+    "noData": "no data",
+    "approximately": "about {{value}}",
+    "previousInline": ", previous {{value}}",
+    "previous": "Previous {{value}}",
+    "between": "Between {{low}} and {{high}}",
+    "untilNow": "{{when}}, so far",
+    "estimated": "{{when}}, estimated"
+  },
+  "breakdown": {
+    "title": "Breakdown",
+    "groupBy": "Group by",
+    "channel": "Channel",
+    "category": "Category",
+    "captionChannel": "Leads, qualification and first response by channel. Pick a row to filter.",
+    "captionCategory": "Leads, qualification and first response by category. Pick a row to filter.",
+    "leads": "Leads",
+    "change": "Change",
+    "qualification": "Qualification",
+    "response": "Response"
+  },
+  "funnel": {
+    "title": "Funnel",
+    "lost": "Lost",
+    "notContacted": "Not contacted",
+    "stages": {
+      "leads": "Leads",
+      "contacted": "Contacted",
+      "qualified": "Qualified"
+    },
+    "stagesInSentence": {
+      "leads": "leads",
+      "contacted": "contacted leads",
+      "qualified": "qualified leads"
+    },
+    "qualifiedExplanation": "Warm or Hot, or marked as qualified",
+    "summary": "Of {{leads}} leads, {{reached}} became {{stage}} ({{share}})",
+    "first": "{{value}} leads in the period, {{previous}} in the previous one",
+    "progress": "{{share}} of {{stage}} moved on, {{dropped}} dropped off",
+    "total": "Total",
+    "ofTotal": "{{share}} of total"
+  },
+  "attention": {
+    "title": "Service",
+    "firstResponse": "First response",
+    "resolved": "Resolved by the agent",
+    "agent": "Agent",
+    "team": "Your team",
+    "outsideHours": "After hours",
+    "outsideHoursValue": "{{share}} within 5 min",
+    "hoursSaved": "Hours saved",
+    "hoursSavedValue": "≈ {{value}} h"
+  },
+  "hours": {
+    "title": "When people message you",
+    "hovered": "{{day}} {{hour}}:00 · {{value}} messages",
+    "peak": "Peak on {{day}} from {{from}}:00 to {{to}}:00",
+    "gridLabel": "Messages by day and hour.",
+    "gridLabelPeak": "Messages by day and hour. Peak on {{day}} from {{from}}:00 to {{to}}:00.",
+    "less": "Less",
+    "more": "More",
+    "businessHours": "Business hours"
+  },
+  "settings": {
+    "title": "Assumptions",
+    "description": "Used to work out the hours saved and the inquiries that come in after hours.",
+    "saveFailed": "We couldn't save the assumptions. Try again.",
+    "saved": "Assumptions saved.",
+    "minutes": "Minutes per manual reply",
+    "minutesHelp": "How long it takes someone on your team to read and answer a message.",
+    "businessHours": "Business hours",
+    "from": "From",
+    "to": "To",
+    "hour": "{{hour}}:00",
+    "hoursError": "Closing time has to be after opening time.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…"
+  }
+}

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { PlatformType } from "../../api/types";
 import { getPlatform } from "../../platforms";
 import { formatFactor, formatNumber, formatPercent } from "../../util/format";
@@ -31,8 +32,8 @@ function unanswered({ current }: InsightInput): Insight | null {
   return {
     id: "unanswered",
     tone: "attention",
-    title: `${formatNumber(count)} conversaciones sin respuesta`,
-    action: { label: "Responder", to: "/app/inbox?unread=1" },
+    title: i18next.t("signals.unanswered", { ns: "metrics", value: formatNumber(count) }),
+    action: { label: i18next.t("signals.reply", { ns: "metrics" }), to: "/app/inbox?unread=1" },
     weight: 100,
   };
 }
@@ -46,7 +47,7 @@ function speed({ current }: InsightInput): Insight | null {
   return {
     id: "speed",
     tone: "info",
-    title: `Responder en menos de 5 min califica ${formatFactor(factor)} más`,
+    title: i18next.t("signals.speed", { ns: "metrics", factor: formatFactor(factor) }),
     action: null,
     weight: 80,
   };
@@ -64,8 +65,13 @@ function channelQuality({ channels }: InsightInput): Insight | null {
   return {
     id: "channel-quality",
     tone: "info",
-    title: `${bestName} califica ${formatFactor(factor)} más que ${getPlatform(leader.id as PlatformType).name}`,
-    action: { label: "Ver leads", to: `/app/leads?channel=${best.id}` },
+    title: i18next.t("signals.channelQuality", {
+      ns: "metrics",
+      best: bestName,
+      factor: formatFactor(factor),
+      leader: getPlatform(leader.id as PlatformType).name,
+    }),
+    action: { label: i18next.t("signals.seeLeads", { ns: "metrics" }), to: `/app/leads?channel=${best.id}` },
     weight: 70,
   };
 }
@@ -80,7 +86,7 @@ function outsideHours({ current }: InsightInput): Insight | null {
   return {
     id: "outside-hours",
     tone: answered >= 0.8 ? "positive" : "attention",
-    title: `${formatPercent(outside.conversations / conversations)} de las consultas llega fuera de horario`,
+    title: i18next.t("signals.outsideHours", { ns: "metrics", share: formatPercent(outside.conversations / conversations) }),
     action: null,
     weight: 55 + (outside.conversations / conversations) * 20,
   };
@@ -96,8 +102,12 @@ function categoryGrowth({ categories, categoryName }: InsightInput): Insight | n
   return {
     id: "category-growth",
     tone: "attention",
-    title: `${categoryName(growing.row.id)} creció ${formatPercent(growing.change)}`,
-    action: { label: "Ver leads", to: `/app/leads?category=${growing.row.id}&buyers=1` },
+    title: i18next.t("signals.categoryGrowth", {
+      ns: "metrics",
+      category: categoryName(growing.row.id),
+      change: formatPercent(growing.change),
+    }),
+    action: { label: i18next.t("signals.seeLeads", { ns: "metrics" }), to: `/app/leads?category=${growing.row.id}&buyers=1` },
     weight: 45 + Math.min(30, growing.change * 20),
   };
 }

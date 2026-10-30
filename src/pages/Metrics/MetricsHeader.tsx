@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { CategoryResponse, PlatformType } from "../../api/types";
 import { PrintIcon, SlidersIcon } from "../../components/icons/UiIcons";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
@@ -37,6 +38,7 @@ export function MetricsHeader({
   onFiltersChange,
   onEditSettings,
 }: MetricsHeaderProps) {
+  const { t } = useTranslation("metrics");
   const filtered = filters.platform !== "ALL" || filters.category !== null;
   const compact = useMediaQuery("(max-width: 520px)");
   const { platform, category } = filters;
@@ -47,14 +49,14 @@ export function MetricsHeader({
     <header className="m-header">
       <div className="m-header-title">
         <div className="m-header-name">
-          <h1 className="page-title">Métricas</h1>
+          <h1 className="page-title">{t("title")}</h1>
         </div>
         {range ? (
           <p className="m-header-range">
-            {formatShortDate(range.from)} al {formatShortDate(range.to)}
+            {t("range", { from: formatShortDate(range.from), to: formatShortDate(range.to) })}
             <span aria-hidden="true"> · </span>
             <span>
-              contra {formatShortDate(range.previousFrom)} al {formatShortDate(range.previousTo)}
+              {t("header.against", { from: formatShortDate(range.previousFrom), to: formatShortDate(range.previousTo) })}
             </span>
           </p>
         ) : null}
@@ -65,8 +67,8 @@ export function MetricsHeader({
         <button
           type="button"
           className="btn btn-icon"
-          aria-label="Supuestos"
-          title="Supuestos"
+          aria-label={t("header.settings")}
+          title={t("header.settings")}
           disabled={!range}
           onClick={onEditSettings}
         >
@@ -75,8 +77,8 @@ export function MetricsHeader({
         <button
           type="button"
           className="btn btn-icon"
-          aria-label="Exportar PDF"
-          title="Exportar PDF"
+          aria-label={t("header.exportPdf")}
+          title={t("header.exportPdf")}
           disabled={!range}
           onClick={() => window.print()}
         >
@@ -87,20 +89,20 @@ export function MetricsHeader({
       {controls ? (
         <div className="m-header-controls">
           <ChoiceGroup
-            label="Período"
+            label={t("header.period")}
             variant="segmented"
             value={String(period)}
             onChange={(value) => onPeriodChange(Number(value) as MetricsPeriod)}
-            choices={periods.map((days) => ({ value: String(days), label: `${days} días` }))}
+            choices={periods.map((days) => ({ value: String(days), label: t("header.periodDays", { days }) }))}
           />
           <label className="m-filter">
-            <span className="visually-hidden">Canal</span>
+            <span className="visually-hidden">{t("header.channel")}</span>
             <select
               className="select"
               value={filters.platform}
               onChange={(event) => onFiltersChange({ platform: event.target.value as PlatformType | "ALL" })}
             >
-              <option value="ALL">{compact ? "Canales" : "Todos los canales"}</option>
+              <option value="ALL">{compact ? t("header.allChannelsShort") : t("header.allChannels")}</option>
               {channelOptions.map((id) => (
                 <option key={id} value={id}>
                   {getPlatform(id).name}
@@ -109,20 +111,20 @@ export function MetricsHeader({
             </select>
           </label>
           <label className="m-filter">
-            <span className="visually-hidden">Categoría</span>
+            <span className="visually-hidden">{t("header.category")}</span>
             <select
               className="select"
               value={filters.category ?? ""}
               onChange={(event) => onFiltersChange({ category: event.target.value || null })}
             >
-              <option value="">{compact ? "Categorías" : "Todas las categorías"}</option>
+              <option value="">{compact ? t("header.allCategoriesShort") : t("header.allCategories")}</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
               ))}
-              <option value={UNCATEGORIZED}>Sin categoría</option>
-              {missingCategory ? <option value={missingCategory}>Categoría eliminada</option> : null}
+              <option value={UNCATEGORIZED}>{t("categories.uncategorized")}</option>
+              {missingCategory ? <option value={missingCategory}>{t("categories.deleted")}</option> : null}
             </select>
           </label>
           {filtered ? (
@@ -131,7 +133,7 @@ export function MetricsHeader({
               className="m-header-clear"
               onClick={() => onFiltersChange({ platform: "ALL", category: null })}
             >
-              Limpiar
+              {t("header.clear")}
             </button>
           ) : null}
         </div>
