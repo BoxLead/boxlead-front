@@ -1,0 +1,46 @@
+{
+  "languageLabel": "Language",
+  "languages": {
+    "es": "Español",
+    "en": "English"
+  },
+  "notFound": {
+    "title": "We couldn't find this page",
+    "hintPage": "The link may be mistyped or the page no longer exists.",
+    "hintSection": "The link may be mistyped or the section no longer exists.",
+    "home": "Go to the home page",
+    "signIn": "Sign in",
+    "inbox": "Go to the inbox",
+    "leads": "See leads"
+  },
+  "provider": {
+    "legalName": "Company name",
+    "taxId": "Tax ID (CUIT)",
+    "address": "Address",
+    "email": "Support email",
+    "hours": "Support hours"
+  },
+  "consumer": {
+    "withdrawal": "Withdrawal button",
+    "cancellation": "Cancellation button"
+  },
+  "consent": {
+    "title": "Can we measure visits?",
+    "text": "We only use Google Analytics if you accept, to learn which pages help and improve the site. We don't sell your data. You can change your mind from the footer. More in the [Privacy Policy](/privacy-policy).",
+    "reject": "Reject",
+    "accept": "Accept",
+    "preferences": "Cookie preferences"
+  },
+  "time": {
+    "empty": "—",
+    "justNow": "just now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} h ago",
+    "yesterday": "yesterday",
+    "daysAgo": "{{count}} days ago",
+    "seconds": "{{value}} s",
+    "minutes": "{{value}} min",
+    "hours": "{{value}} h",
+    "points": "{{value}} pp"
+  }
+}

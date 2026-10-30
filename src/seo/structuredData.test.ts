@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isoDuration } from "../landing/demoVideo";
-import { LANDING_FAQS } from "../landing/faq";
+import { landingFaqs } from "../landing/faq";
 import { serializeJsonLd } from "./jsonLd";
 import { PUBLIC_PAGES } from "./pages";
 import { breadcrumbs, demoVideo, faqPage, organization, softwareApplication } from "./structuredData";
@@ -12,7 +12,7 @@ describe("structured data", () => {
   });
 
   it("describes the video from the landing constants", () => {
-    const video = demoVideo();
+    const video = demoVideo("es");
     expect(video).toMatchObject({
       "@type": "VideoObject",
       duration: "PT2M27S",
@@ -23,14 +23,17 @@ describe("structured data", () => {
   });
 
   it("flattens the FAQ answers into plain text", () => {
-    const faq = faqPage(LANDING_FAQS);
+    const faq = faqPage(landingFaqs("es"));
     const questions = faq.mainEntity as { name: string; acceptedAnswer: { text: string } }[];
     expect(questions[1].acceptedAnswer.text).toContain("Mirá la Política de privacidad o pedí la eliminación de tus datos");
-    expect(questions).toHaveLength(LANDING_FAQS.length);
+    expect(questions).toHaveLength(landingFaqs("es").length);
+    const english = faqPage(landingFaqs("en")).mainEntity as { name: string; acceptedAnswer: { text: string } }[];
+    expect(english[1].acceptedAnswer.text).toContain("Read the Privacy Policy");
   });
 
   it("never declares prices on the application", () => {
-    expect(JSON.stringify(softwareApplication())).not.toMatch(/offers|price/i);
+    expect(JSON.stringify(softwareApplication("es"))).not.toMatch(/offers|price/i);
+    expect(JSON.stringify(softwareApplication("en"))).not.toMatch(/offers|price/i);
     expect(organization()).toMatchObject({ legalName: "Catvin SRL" });
   });
 

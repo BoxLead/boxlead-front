@@ -1,0 +1,22 @@
+{
+  "home": {
+    "title": "AI agent that sells on WhatsApp, Instagram and MercadoLibre",
+    "description": "Grow your business with an AI agent that answers, qualifies and organizes leads from WhatsApp, Instagram, Messenger and MercadoLibre automatically. Around the clock, for a monthly subscription."
+  },
+  "breadcrumbHome": "Home",
+  "imageAlt": "BoxLead, AI sales agents",
+  "product": {
+    "description": "AI sales agent that brings together and automatically answers leads from WhatsApp, Instagram, Messenger and MercadoLibre, qualifies them and organizes them in a single inbox.",
+    "features": [
+      "One inbox for WhatsApp, Instagram, Messenger and MercadoLibre",
+      "AI agents that answer with the business information around the clock",
+      "Automatic lead qualification and an organized pipeline",
+      "Drafts to approve when a person is needed",
+      "Response and qualification metrics per channel"
+    ]
+  },
+  "video": {
+    "title": "See BoxLead in action",
+    "description": "Your agents answering, organizing every lead and showing you what works. Recorded in Spanish with sample data."
+  }
+}

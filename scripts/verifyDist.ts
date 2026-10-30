@@ -27,6 +27,8 @@ function scripts(dir: string): string[] {
   })
 }
 
+const ENGLISH_PATHS = ['/terms-of-service', '/privacy-policy', '/data-deletion']
+
 async function main() {
   const root = process.cwd()
   const server = await preview({ root, preview: { port: 0, strictPort: false, open: false }, logLevel: 'silent' })
@@ -43,6 +45,8 @@ async function main() {
   check('llms.txt exists', readFileSync(resolve(root, 'dist/llms.txt'), 'utf8').startsWith('# BoxLead'))
 
   const seen = new Map<string, string>()
+  const alternatesOf = new Map<string, string[][]>()
+  check('the sitemap lists the English pages', sitemapUrls.includes('https://boxlead.app/en') && sitemapUrls.includes('https://boxlead.app/en/whatsapp'))
   for (const url of sitemapUrls) {
     const path = new URL(url).pathname
     const response = await fetch(`${base}${path}`)
@@ -51,6 +55,9 @@ async function main() {
     const description = attr(html, /<meta name="description" content="([^"]*)"/)
     const canonical = attr(html, /<link rel="canonical" href="([^"]*)"/)
     const h1s = count(html, /<h1[\s>]/g)
+    const lang = attr(html, /<html lang="([^"]*)"/)
+    const english = path === '/en' || path.startsWith('/en/') || ENGLISH_PATHS.includes(path)
+    alternatesOf.set(url, [...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map((match) => [match[1], match[2]]))
     const graph = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((match) => match[1])
     let graphOk = graph.length > 0
     for (const json of graph) {
@@ -69,8 +76,17 @@ async function main() {
     check(`${path} has Open Graph and Twitter tags`, /property="og:title"/.test(html) && /property="og:image"/.test(html) && /name="twitter:card" content="summary_large_image"/.test(html))
     check(`${path} has valid JSON-LD`, graphOk)
     check(`${path} is not noindex`, !/name="robots" content="noindex"/.test(html))
+    check(`${path} declares its language`, lang === (english ? 'en' : 'es-AR'), lang ?? 'missing')
     seen.set(`title:${title}`, path)
     seen.set(`description:${description}`, path)
+  }
+
+  for (const [url, alternates] of alternatesOf) {
+    for (const [hreflang, href] of alternates) {
+      if (hreflang === 'x-default' || href === url) continue
+      const back = alternatesOf.get(href) ?? []
+      check(`${new URL(url).pathname} and ${new URL(href).pathname} link each other with hreflang`, back.some(([, target]) => target === url), href)
+    }
   }
 
   for (const path of ['/login', '/register', '/arrepentimiento', '/baja', '/avisos/baja', '/invitacion', '/social/callback', '/recuperar-clave', '/nueva-clave', '/confirmar-email', '/nuevo-email', '/reingresar', '/app/inbox', '/app']) {

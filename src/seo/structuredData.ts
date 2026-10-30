@@ -1,7 +1,11 @@
-import { DURATION_LABEL, isoDuration, POSTER_SRC, VIDEO_DESCRIPTION, VIDEO_SRC, VIDEO_TITLE, VIDEO_UPLOAD_DATE } from "../landing/demoVideo";
-import { faqText, type Faq } from "../landing/faq";
+import { i18n } from "../i18n";
+import { HTML_LANG, type Language } from "../i18n/languages";
+import { localizedPath } from "../i18n/paths";
+import { plainText } from "../i18n/richText";
+import { DURATION_LABEL, isoDuration, POSTER_SRC, VIDEO_SRC, VIDEO_UPLOAD_DATE } from "../landing/demoVideo";
+import type { Faq } from "../landing/faq";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../util/company";
-import { absoluteUrl, SITE_LOCALE } from "./site";
+import { absoluteUrl } from "./site";
 
 export type JsonLd = Record<string, unknown>;
 
@@ -11,16 +15,9 @@ const APP_ID = absoluteUrl("/#software");
 
 export const LOGO_PATH = "/icons/icon-512.png";
 
-export const PRODUCT_DESCRIPTION =
-  "Agente de ventas con IA que centraliza y responde en automático los leads de WhatsApp, Instagram, Messenger y MercadoLibre, los califica y los ordena en una sola bandeja.";
-
-export const PRODUCT_FEATURES = [
-  "Bandeja única para WhatsApp, Instagram, Messenger y MercadoLibre",
-  "Agentes de IA que responden con la información del negocio las 24 horas",
-  "Calificación automática de leads y pipeline ordenado",
-  "Borradores para aprobar cuando hace falta una persona",
-  "Métricas de respuesta y de calificación por canal",
-];
+export function productDescription(language: Language): string {
+  return i18n.getFixedT(language, "seo")("product.description");
+}
 
 export function organization(): JsonLd {
   return {
@@ -41,18 +38,19 @@ export function organization(): JsonLd {
   };
 }
 
-export function webSite(): JsonLd {
+export function webSite(language: Language): JsonLd {
   return {
     "@type": "WebSite",
     "@id": WEBSITE_ID,
-    url: absoluteUrl("/"),
+    url: absoluteUrl(localizedPath("/", language)),
     name: PRODUCT_NAME,
-    inLanguage: SITE_LOCALE,
+    inLanguage: HTML_LANG[language],
     publisher: { "@id": ORGANIZATION_ID },
   };
 }
 
-export function softwareApplication(): JsonLd {
+export function softwareApplication(language: Language): JsonLd {
+  const t = i18n.getFixedT(language, "seo");
   return {
     "@type": "SoftwareApplication",
     "@id": APP_ID,
@@ -60,24 +58,25 @@ export function softwareApplication(): JsonLd {
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "CRM",
     operatingSystem: "Web",
-    url: absoluteUrl("/"),
-    description: PRODUCT_DESCRIPTION,
-    featureList: PRODUCT_FEATURES,
-    inLanguage: SITE_LOCALE,
+    url: absoluteUrl(localizedPath("/", language)),
+    description: t("product.description"),
+    featureList: t("product.features", { returnObjects: true }),
+    inLanguage: HTML_LANG[language],
     publisher: { "@id": ORGANIZATION_ID },
   };
 }
 
-export function demoVideo(): JsonLd {
+export function demoVideo(language: Language): JsonLd {
+  const t = i18n.getFixedT(language, "seo");
   return {
     "@type": "VideoObject",
-    name: VIDEO_TITLE,
-    description: VIDEO_DESCRIPTION,
+    name: t("video.title"),
+    description: t("video.description"),
     thumbnailUrl: [absoluteUrl(POSTER_SRC)],
     contentUrl: absoluteUrl(VIDEO_SRC),
     uploadDate: VIDEO_UPLOAD_DATE,
     duration: isoDuration(DURATION_LABEL),
-    inLanguage: SITE_LOCALE,
+    inLanguage: HTML_LANG.es,
     publisher: { "@id": ORGANIZATION_ID },
   };
 }
@@ -88,7 +87,7 @@ export function faqPage(faqs: Faq[]): JsonLd {
     mainEntity: faqs.map((faq) => ({
       "@type": "Question",
       name: faq.question,
-      acceptedAnswer: { "@type": "Answer", text: faqText(faq.answer) },
+      acceptedAnswer: { "@type": "Answer", text: plainText(faq.answer) },
     })),
   };
 }

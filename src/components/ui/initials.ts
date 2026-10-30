@@ -1,3 +1,5 @@
+import { intlLocale } from "../../i18n/locale";
+
 const HUES = [208, 32, 152, 268, 340, 186, 12, 96];
 
 export function initialsOf(name: string): string {
@@ -8,7 +10,7 @@ export function initialsOf(name: string): string {
     .filter((word) => /^\p{L}/u.test(word));
   if (words.length === 0) return "?";
   const letters = words.length === 1 ? words[0].slice(0, 2) : `${words[0][0]}${words[1][0]}`;
-  return letters.toLocaleUpperCase("es-AR");
+  return letters.toLocaleUpperCase(intlLocale());
 }
 
 export function hueOf(name: string): number {

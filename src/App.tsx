@@ -51,7 +51,11 @@ const NotificationUnsubscribe = lazyRoute(() => import("./pages/NotificationUnsu
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
 registerRoutePreload("/", [LandingPage]);
-for (const path of EDITORIAL_PATHS) registerRoutePreload(path, [EditorialPage]);
+registerRoutePreload("/en", [LandingPage]);
+for (const path of EDITORIAL_PATHS) {
+  registerRoutePreload(path, [EditorialPage]);
+  registerRoutePreload(`/en${path}`, [EditorialPage]);
+}
 const socialAuth = { preload: preloadSocialAuth };
 registerRoutePreload("/login", [Login, socialAuth]);
 registerRoutePreload("/register", [Register, socialAuth]);
@@ -85,8 +89,12 @@ export default function App() {
         <RouteAnnouncer />
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/en" element={<LandingPage />} />
           {EDITORIAL_PATHS.map((path) => (
             <Route path={path} element={<EditorialPage />} key={path} />
+          ))}
+          {EDITORIAL_PATHS.map((path) => (
+            <Route path={`/en${path}`} element={<EditorialPage />} key={`/en${path}`} />
           ))}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

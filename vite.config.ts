@@ -4,6 +4,7 @@ import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite
 import react from '@vitejs/plugin-react'
 import { prerenderSite, type RouteFiles } from './scripts/prerender'
 import { releaseOf } from './scripts/release'
+import { EDITORIAL_PATHS } from './src/landing/editorialPaths'
 import { staticSiteMiddleware } from './scripts/staticSite'
 
 const FACEBOOK_SOURCES = 'https://*.facebook.com https://*.facebook.net https://*.fbcdn.net'
@@ -45,6 +46,10 @@ const ROUTE_ENTRIES: Record<string, string[]> = {
   '/app/agents': ['src/components/Layout/Layout.tsx', 'src/pages/Agents/Agents.tsx'],
   '/app/categories': ['src/components/Layout/Layout.tsx', 'src/pages/Categories/Categories.tsx'],
   '/app/connections': ['src/components/Layout/Layout.tsx', 'src/pages/Connections/Connections.tsx'],
+}
+
+for (const route of ['/', ...EDITORIAL_PATHS]) {
+  ROUTE_ENTRIES[route === '/' ? '/en' : `/en${route}`] = ROUTE_ENTRIES[route]
 }
 
 const PRELOAD_FONT = /inter-latin-wght-normal.*\.woff2$/

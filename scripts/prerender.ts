@@ -9,6 +9,7 @@ export type RouteFiles = { scripts: string[]; styles: string[] }
 type PublicPage = {
   path: string
   title: string
+  lang: string
   index: boolean
   source: string
   changefreq?: string
@@ -66,8 +67,11 @@ function fileFor(path: string): string {
   return path === '/' ? 'index.html' : `${path.slice(1)}.html`
 }
 
-function assemble(template: string, head: string, body: string): string {
-  const cleaned = template.replace(TEMPLATE_HEAD, '')
+const HTML_LANG = /<html lang="[^"]*">/
+
+function assemble(template: string, head: string, body: string, lang: string): string {
+  if (!HTML_LANG.test(template)) throw new Error('The template has no html lang attribute')
+  const cleaned = template.replace(TEMPLATE_HEAD, '').replace(HTML_LANG, `<html lang="${lang}">`)
   const withHead = cleaned.replace('</head>', `    ${head}\n  </head>`)
   if (!withHead.includes(ROOT_OPEN)) throw new Error('The template has no empty root element')
   return withHead.replace(ROOT_OPEN, `<div id="root">${body}</div>`)
@@ -118,14 +122,14 @@ export async function prerenderSite({ root, outDir, serverDir, base, routes }: P
     const { head, body } = splitRendered(rendered)
     if (!head.includes('<title>')) throw new Error(`No title rendered for ${page.path}`)
     if (!body.startsWith('<')) throw new Error(`Unexpected markup for ${page.path}`)
-    write(fileFor(page.path), assemble(template, `${head}\n    ${routeLinks(base, routes[page.path])}`, body))
+    write(fileFor(page.path), assemble(template, `${head}\n    ${routeLinks(base, routes[page.path])}`, body, page.lang))
   }
 
   const notFound = splitRendered(await entry.render('/__not_found__'))
-  write(NOT_FOUND_FILE, assemble(template, notFound.head, notFound.body))
+  write(NOT_FOUND_FILE, assemble(template, notFound.head, notFound.body, entry.NOT_FOUND_PAGE.lang))
 
   const shell = splitRendered(await entry.render(entry.APP_SHELL_PATH))
-  write(APP_SHELL_FILE, assemble(template, shell.head, shell.body))
+  write(APP_SHELL_FILE, assemble(template, shell.head, shell.body, entry.NOT_FOUND_PAGE.lang))
 
   const recorded = recordedDates(root)
   const entries = entry.indexablePages().map((page) => ({ page, lastmod: lastModified(root, page.source, recorded) }))

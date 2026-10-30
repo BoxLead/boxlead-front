@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { trackEvent } from "../../analytics/gtag";
 import { PlayIcon } from "../../components/icons/UiIcons";
-import { DURATION_LABEL, POSTER_SRC, VIDEO_SRC, VIDEO_TITLE } from "../demoVideo";
+import { DURATION_LABEL, POSTER_SRC, VIDEO_SRC } from "../demoVideo";
 import "./DemoVideo.css";
 
 export function DemoVideo() {
+  const { t } = useTranslation("landing");
   const video = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
 
@@ -18,11 +20,9 @@ export function DemoVideo() {
     <section id="demo" className="landing-section">
       <div className="landing-container">
         <div className="landing-section-head" data-reveal>
-          <span className="landing-section-label">Demo</span>
-          <h2 className="landing-section-title">{VIDEO_TITLE}</h2>
-          <p className="demo-video-lead">
-            Tus agentes respondiendo, ordenando cada lead y mostrándote qué rinde.
-          </p>
+          <span className="landing-section-label">{t("demo.label")}</span>
+          <h2 className="landing-section-title">{t("demo.title")}</h2>
+          <p className="demo-video-lead">{t("demo.lead")}</p>
         </div>
 
         <div className="demo-video-frame landing-card" data-reveal="1">
@@ -33,7 +33,7 @@ export function DemoVideo() {
             preload="none"
             playsInline
             controls={started}
-            aria-label="Demo de BoxLead"
+            aria-label={t("demo.video")}
           >
             <source src={VIDEO_SRC} type="video/mp4" />
           </video>
@@ -43,13 +43,13 @@ export function DemoVideo() {
                 <span className="demo-video-play-icon">
                   <PlayIcon width={18} height={18} />
                 </span>
-                <span className="demo-video-play-label">Ver la demo</span>
+                <span className="demo-video-play-label">{t("actions.watchDemo")}</span>
                 <span className="demo-video-play-time">{DURATION_LABEL}</span>
               </span>
             </button>
           )}
         </div>
-        <p className="demo-video-note">Grabada con datos de ejemplo.</p>
+        <p className="demo-video-note">{t("demo.note")}</p>
       </div>
     </section>
   );

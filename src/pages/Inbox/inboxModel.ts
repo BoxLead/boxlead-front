@@ -8,6 +8,7 @@ import type {
 } from "../../api/types";
 import { getPlatform } from "../../platforms";
 import { leadDisplayName } from "../../util/labels";
+import { intlLocale } from "../../i18n/locale";
 
 export type ChannelFilter = PlatformType | "ALL";
 
@@ -49,7 +50,7 @@ export function toRows(
 }
 
 function normalize(text: string): string {
-  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es-AR");
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase(intlLocale());
 }
 
 export function filterRows(rows: ConversationRow[], filters: InboxFilters): ConversationRow[] {
@@ -149,7 +150,7 @@ export function dayLabel(iso: string, now = Date.now()): string {
   const yesterday = new Date(now - 86_400_000);
   if (date.toDateString() === today.toDateString()) return "Hoy";
   if (date.toDateString() === yesterday.toDateString()) return "Ayer";
-  return date.toLocaleDateString("es-AR", {
+  return date.toLocaleDateString(intlLocale(), {
     weekday: "long",
     day: "numeric",
     month: "long",

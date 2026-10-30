@@ -1,0 +1,20 @@
+.language-switch {
+  display: inline-flex;
+}
+
+.language-switch-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--signal-control-sm);
+  padding-inline: var(--signal-space-2);
+  border-radius: var(--signal-radius-sm);
+  color: var(--landing-text);
+  font-size: var(--signal-text-sm);
+  font-weight: var(--signal-weight-semibold);
+  letter-spacing: var(--signal-tracking-wide);
+  text-decoration: none;
+}
+
+.language-switch-link:hover {
+  color: var(--landing-accent);
+}

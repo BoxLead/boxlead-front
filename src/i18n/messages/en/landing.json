@@ -1,0 +1,324 @@
+{
+  "header": {
+    "home": "BoxLead — home",
+    "nav": "Main",
+    "links": {
+      "demo": "Demo",
+      "howItWorks": "How it works",
+      "agent": "The agent",
+      "plans": "Plans",
+      "faq": "FAQ"
+    },
+    "signIn": "Sign in",
+    "start": "Get started"
+  },
+  "actions": {
+    "start": "Get started",
+    "watchDemo": "Watch the demo",
+    "talkToUs": "Talk to us"
+  },
+  "hero": {
+    "badge": "AI sales agents",
+    "titleLines": [
+      "Grow your sales",
+      "with an agent"
+    ],
+    "titleAccent": "that works on its own.",
+    "subtitle": "BoxLead answers, qualifies and organizes every lead from all your channels. Automatically, around the clock.",
+    "scroll": "Scroll to see more"
+  },
+  "agentDemo": {
+    "label": "BoxLead agent demo",
+    "channels": "Channels",
+    "agent": "BoxLead agent",
+    "status": [
+      "Reading",
+      "Typing",
+      "Answered",
+      "Answered on its own"
+    ],
+    "scenes": [
+      {
+        "contact": "Carla Méndez",
+        "context": "Direct message",
+        "inbound": "Hi! I saw the ad. Do you have it in black, and do you ship to Córdoba?",
+        "reply": "Hi Carla! Yes, we have it in black and we ship to Córdoba in 48 hours. Want me to send you the payment link?",
+        "outcomes": [
+          "Lead qualified",
+          "Pipeline updated"
+        ]
+      },
+      {
+        "contact": "@tomas.rios",
+        "context": "Comment on a post",
+        "inbound": "Price? Do you offer installments?",
+        "reply": "Hi Tomás! We just sent you prices and installment options in a direct message.",
+        "outcomes": [
+          "Comment answered",
+          "Lead created"
+        ]
+      },
+      {
+        "contact": "Buyer",
+        "context": "Question on a listing",
+        "inbound": "Hi, can you issue an invoice?",
+        "reply": "Hi! Yes, we do. You can add your billing details when you check out.",
+        "outcomes": [
+          "Question answered",
+          "Lead created"
+        ]
+      }
+    ]
+  },
+  "marquee": {
+    "label": "Connected to the platforms where your customers are"
+  },
+  "demo": {
+    "label": "Demo",
+    "title": "See BoxLead in action",
+    "lead": "Your agents answering, organizing every lead and showing you what works.",
+    "video": "BoxLead demo",
+    "note": "Recorded in Spanish with sample data."
+  },
+  "problem": {
+    "label": "The problem",
+    "title": "If every reply depends on a person, your business can't scale",
+    "lead": "Questions come from everywhere, at any hour. Here are the same three, handled by hand and with BoxLead.",
+    "beforeTag": "Today, by hand",
+    "pending_one": "{{count}} unanswered",
+    "pending_other": "{{count}} unanswered",
+    "unanswered": "Unanswered messages",
+    "unansweredState": "Unanswered",
+    "afterTag": "With BoxLead",
+    "working": "Your agents at work",
+    "answered": "Messages answered by your agents",
+    "leads": [
+      {
+        "contact": "Carla Méndez",
+        "inbound": "Is it in stock in black? Do you ship to Córdoba?",
+        "waiting": "3 h ago",
+        "reply": "Hi Carla! Yes, it's in stock and we ship to Córdoba.",
+        "outcome": "Qualified"
+      },
+      {
+        "contact": "@tomas.rios",
+        "inbound": "Price? Do you offer installments?",
+        "waiting": "last night",
+        "reply": "Hi Tomás! We sent you prices and installments in a DM.",
+        "outcome": "Lead created"
+      },
+      {
+        "contact": "Buyer",
+        "inbound": "Hi, can you issue an invoice?",
+        "waiting": "yesterday",
+        "reply": "Hi! Yes, we can.",
+        "outcome": "Answered"
+      }
+    ],
+    "pains": [
+      {
+        "title": "Scattered messages",
+        "description": "You jump between WhatsApp, Instagram and MercadoLibre so you don't miss any."
+      },
+      {
+        "title": "Customers left waiting",
+        "description": "At night or on a busy day nobody replies, and the customer buys somewhere else."
+      },
+      {
+        "title": "Growing means hiring",
+        "description": "When messages pile up, you need one more person to handle them."
+      }
+    ],
+    "gains": [
+      {
+        "title": "One inbox",
+        "description": "All your channels in one place, every lead organized and with its status."
+      },
+      {
+        "title": "Replies in seconds, around the clock",
+        "description": "Your agents answer with your business information, at night too."
+      },
+      {
+        "title": "More sales with the same team",
+        "description": "Your team focuses on closing and on the cases that need a person."
+      }
+    ]
+  },
+  "kinetic": {
+    "label": "What your agent does on every channel",
+    "actions": [
+      "Reads",
+      "Replies",
+      "Qualifies",
+      "Organizes"
+    ],
+    "summary": "{{actions}} on {{channels}}."
+  },
+  "howItWorks": {
+    "label": "How it works",
+    "title": "On autopilot in three steps",
+    "channels": "Channels",
+    "steps": [
+      {
+        "title": "Connect your channels",
+        "description": "In a few clicks, with each platform's official access."
+      },
+      {
+        "title": "Set up your agent",
+        "description": "Tell it what you sell and how you like to serve customers."
+      },
+      {
+        "title": "Scale on autopilot",
+        "description": "It handles all your conversations at once, around the clock."
+      }
+    ],
+    "setup": [
+      "Products",
+      "Prices",
+      "FAQs",
+      "Tone"
+    ],
+    "scale": [
+      "24/7",
+      "All at once",
+      "No waiting"
+    ]
+  },
+  "agentFlow": {
+    "label": "The agent",
+    "title": "What it does on its own, with every message",
+    "stages": [
+      {
+        "title": "Reads",
+        "description": "Understands every message, on any channel."
+      },
+      {
+        "title": "Replies",
+        "description": "Answers right away, with your business information."
+      },
+      {
+        "title": "Qualifies",
+        "description": "Spots who is ready to buy."
+      },
+      {
+        "title": "Organizes",
+        "description": "Adds the lead to your pipeline, with its full history."
+      }
+    ],
+    "handoff": "Need a person? It lets you know and leaves a draft ready."
+  },
+  "plans": {
+    "label": "Plans",
+    "title": "Choose how to start",
+    "lead": "Every plan connects all your channels. You see the price when you create your account, before you pay.",
+    "choose": "Choose {{plan}}",
+    "invitationNote": "Activated with your invitation link",
+    "beta": {
+      "tag": "By invitation",
+      "description": "For the businesses we invite to try BoxLead.",
+      "features": [
+        "All your channels",
+        "Agents that reply or leave you drafts",
+        "Inbox, leads and metrics",
+        "For a limited time"
+      ]
+    },
+    "starter": {
+      "tag": "Monthly subscription",
+      "description": "To put your business messages on autopilot.",
+      "features": [
+        "All your channels",
+        "Agents that reply or leave you drafts",
+        "Unified inbox, leads and categories",
+        "Metrics on your customer service"
+      ]
+    },
+    "business": {
+      "tag": "Monthly subscription",
+      "description": "For businesses that get lots of messages every day.",
+      "features": [
+        "Everything in Starter",
+        "More agents",
+        "More agent replies per month",
+        "Longer metrics history"
+      ]
+    }
+  },
+  "faq": {
+    "label": "FAQ",
+    "title": "Before you start",
+    "more": "Any other question? Write to us at",
+    "items": [
+      {
+        "question": "Does the agent reply on its own?",
+        "answer": "Yes. And you choose how much to hand off: it can reply automatically or leave you a draft to approve."
+      },
+      {
+        "question": "What happens with my data?",
+        "answer": "We only use it to provide the service and we don't sell it. Read the [Privacy Policy](/privacy-policy) or request the [deletion of your data](/data-deletion) whenever you want."
+      },
+      {
+        "question": "Which channels does it work with?",
+        "answer": "[WhatsApp Business](/whatsapp), [Instagram](/instagram), [Messenger](/messenger) and [MercadoLibre](/mercadolibre), all with each platform's official access and in a single inbox."
+      },
+      {
+        "question": "Is it a good fit for agencies and community managers?",
+        "answer": "Yes. You can set up one agent per client with each business's information and tone. See [BoxLead for agencies](/agencias)."
+      },
+      {
+        "question": "How do I pay?",
+        "answer": "With a monthly subscription that includes all your channels."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Put your sales on autopilot",
+    "subtitle": "Your next customer is already writing to you. Let your agent answer.",
+    "note": "One monthly subscription · All your channels",
+    "feedHead": "Your agent",
+    "live": "On autopilot",
+    "activity": [
+      {
+        "title": "Stock question",
+        "result": "Answered"
+      },
+      {
+        "title": "Comment on a post",
+        "result": "Answered"
+      },
+      {
+        "title": "Invoicing question",
+        "result": "Answered"
+      },
+      {
+        "title": "Price request",
+        "result": "Lead qualified"
+      },
+      {
+        "title": "Shipping question",
+        "result": "Lead qualified"
+      }
+    ]
+  },
+  "footer": {
+    "tagline": "AI agents that sell for you, on all your channels.",
+    "brand": "{{product}} is a brand of {{entity}}.",
+    "product": "Product",
+    "faq": "FAQ",
+    "signIn": "Sign in",
+    "channels": "Channels",
+    "legal": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "termsEn": "Terms of Service",
+    "privacyEn": "Privacy Policy",
+    "contracts": "Adhesion contracts under Consumer Protection Law 24,240, in Spanish",
+    "dataDeletion": "Data deletion",
+    "support": "Customer support",
+    "consumer": "Consumer protection",
+    "provider": "Provider details",
+    "rights": "© {{year}} {{entity}}. All rights reserved.",
+    "trademarks": "Third-party trademarks and logos belong to their respective owners.",
+    "dataFiscal": "Data Fiscal, ARCA form 960/D"
+  }
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   InstagramIcon,
   MercadoLibreMark,
@@ -14,18 +15,16 @@ import "./HowItWorks.css";
 
 type Step = {
   icon: ReactNode;
-  title: string;
-  description: string;
   visual: ReactNode;
 };
 
-const steps: Step[] = [
+function useSteps(): Step[] {
+  const { t } = useTranslation("landing");
+  return [
   {
     icon: <PlugIcon />,
-    title: "Conectá tus canales",
-    description: "En pocos clics, con el acceso oficial de cada plataforma.",
     visual: (
-      <ul className="how-visual how-visual-channels" aria-label="Canales">
+      <ul className="how-visual how-visual-channels" aria-label={t("howItWorks.channels")}>
         <li title="WhatsApp">
           <WhatsAppIcon width={24} height={24} />
         </li>
@@ -43,38 +42,37 @@ const steps: Step[] = [
   },
   {
     icon: <SlidersIcon />,
-    title: "Configurá tu agente",
-    description: "Contale qué vendés y cómo te gusta atender.",
     visual: (
       <ul className="how-visual how-visual-chips">
-        <li>Productos</li>
-        <li>Precios</li>
-        <li>Preguntas frecuentes</li>
-        <li>Tono</li>
+        {t("howItWorks.setup", { returnObjects: true }).map((chip) => (
+          <li key={chip}>{chip}</li>
+        ))}
       </ul>
     ),
   },
   {
     icon: <BoltIcon />,
-    title: "Escalá en automático",
-    description: "Atiende todas tus conversaciones a la vez, las 24 horas.",
     visual: (
       <ul className="how-visual how-visual-chips how-visual-done">
-        <li>24/7</li>
-        <li>En simultáneo</li>
-        <li>Sin esperas</li>
+        {t("howItWorks.scale", { returnObjects: true }).map((chip) => (
+          <li key={chip}>{chip}</li>
+        ))}
       </ul>
     ),
   },
-];
+  ];
+}
 
 export function HowItWorks() {
+  const { t } = useTranslation("landing");
+  const visuals = useSteps();
+  const steps = t("howItWorks.steps", { returnObjects: true }).map((step, index) => ({ ...step, ...visuals[index] }));
   return (
     <section id="como-funciona" className="landing-section landing-section-alt">
       <div className="landing-container">
         <div className="landing-section-head" data-reveal>
-          <span className="landing-section-label">Cómo funciona</span>
-          <h2 className="landing-section-title">En automático en tres pasos</h2>
+          <span className="landing-section-label">{t("howItWorks.label")}</span>
+          <h2 className="landing-section-title">{t("howItWorks.title")}</h2>
         </div>
 
         <ol className="how-steps">

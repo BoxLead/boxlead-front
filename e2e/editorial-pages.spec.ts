@@ -50,7 +50,27 @@ for (const { path, heading } of PAGES) {
   });
 }
 
-for (const { path } of PAGES) {
+const ENGLISH_PAGES = [
+  { path: "/en/whatsapp", heading: "An AI agent that answers your WhatsApp Business around the clock" },
+  { path: "/en/instagram", heading: "Instagram direct messages and comments, answered by your agent" },
+  { path: "/en/messenger", heading: "Messages to your Facebook Page, answered automatically" },
+  { path: "/en/mercadolibre", heading: "MercadoLibre questions and post-sale messages, answered right away" },
+  { path: "/en/agencias", heading: "Add an AI agent to every client you manage" },
+];
+
+for (const { path, heading } of ENGLISH_PAGES) {
+  test(`${path} is the English version of its channel page`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Home" })).toHaveAttribute("href", "/en");
+    await expect(page.locator(`link[rel="alternate"][hreflang="es-AR"]`)).toHaveAttribute("href", `https://boxlead.app${path.replace("/en", "")}`);
+    await expect(page.getByRole("contentinfo").getByRole("navigation", { name: "Channels" }).getByRole("link")).toHaveCount(5);
+    await expectAccessible(page);
+  });
+}
+
+for (const { path } of [...PAGES, ...ENGLISH_PAGES]) {
   test(`${path} shows every section once it scrolls into view`, async ({ page }) => {
     test.slow();
     await page.goto(path);

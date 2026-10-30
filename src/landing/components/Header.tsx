@@ -1,26 +1,34 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { trackEvent } from "../../analytics/gtag";
 import { Logo } from "../../components/Logo/Logo";
+import { stripLanguage } from "../../i18n/languages";
+import { useLocalizedPath } from "../../i18n/useLanguage";
 import { BILLING_ENABLED } from "../flags";
+import { LanguageSwitch } from "./LanguageSwitch";
 import { RollText } from "./RollText";
 import "./Header.css";
 
 const HIDE_AFTER = 480;
 const SCROLL_TOLERANCE = 6;
-const NAV_LINKS = [
-  { href: "#demo", label: "Demo" },
-  { href: "#como-funciona", label: "Cómo funciona" },
-  { href: "#agente", label: "El agente" },
-  ...(BILLING_ENABLED ? [{ href: "#planes", label: "Planes" }] : []),
-  { href: "#faq", label: "Preguntas" },
+type NavLink = { href: string; label: "demo" | "howItWorks" | "agent" | "plans" | "faq" };
+
+const NAV_LINKS: NavLink[] = [
+  { href: "#demo", label: "demo" },
+  { href: "#como-funciona", label: "howItWorks" },
+  { href: "#agente", label: "agent" },
+  ...(BILLING_ENABLED ? [{ href: "#planes", label: "plans" } as const] : []),
+  { href: "#faq", label: "faq" },
 ];
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
-  const onLanding = useLocation().pathname === "/";
+  const { t } = useTranslation("landing");
+  const localized = useLocalizedPath();
+  const onLanding = stripLanguage(useLocation().pathname) === "/";
 
   useEffect(() => {
     if (!("IntersectionObserver" in window)) return;
@@ -61,31 +69,32 @@ export function Header() {
       onFocus={() => setHidden(false)}
     >
       <div className="landing-header-inner">
-        <Link to="/" className="header-logo" aria-label="BoxLead — inicio">
+        <Link to={localized("/")} className="header-logo" aria-label={t("header.home")}>
           <Logo />
         </Link>
-        <nav className="header-nav" aria-label="Principal">
+        <nav className="header-nav" aria-label={t("header.nav")}>
           {NAV_LINKS.map((link) => (
             <a
-              href={onLanding ? link.href : `/${link.href}`}
+              href={onLanding ? link.href : localized(`/${link.href}`)}
               className={`header-nav-link${current === link.href ? " is-current" : ""}`}
               aria-current={current === link.href ? "location" : undefined}
               key={link.href}
             >
-              <RollText>{link.label}</RollText>
+              <RollText>{t(`header.links.${link.label}`)}</RollText>
             </a>
           ))}
         </nav>
         <div className="header-actions">
-          <Link to="/login" className="header-signin">
-            <RollText>Ingresar</RollText>
+          <LanguageSwitch className="header-language" />
+          <Link to={localized("/login")} className="header-signin">
+            <RollText>{t("header.signIn")}</RollText>
           </Link>
           <Link
-            to="/register"
+            to={localized("/register")}
             className="landing-btn landing-btn-primary landing-btn-sm"
             onClick={() => trackEvent("cta_registro", { ubicacion: "header" })}
           >
-            <RollText>Empezar</RollText>
+            <RollText>{t("header.start")}</RollText>
           </Link>
         </div>
       </div>

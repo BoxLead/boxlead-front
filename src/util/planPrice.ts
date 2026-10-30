@@ -1,7 +1,6 @@
 import type { BillingPlan, Money } from "../api/types";
 import { parseIsoDate } from "./dates";
-
-const LOCALE = "es-AR";
+import { intlLocale } from "../i18n/locale";
 
 export const NATIONAL_TAXES_LEGEND = "PRECIO SIN IMPUESTOS NACIONALES";
 
@@ -14,13 +13,13 @@ export type PlanPrice = {
 };
 
 function currencyDigits(currency: string): number {
-  return new Intl.NumberFormat(LOCALE, { style: "currency", currency }).resolvedOptions().minimumFractionDigits ?? 2;
+  return new Intl.NumberFormat(intlLocale(), { style: "currency", currency }).resolvedOptions().minimumFractionDigits ?? 2;
 }
 
 export function formatMinor(money: Money): string {
   try {
     const value = money.amountMinor / 10 ** currencyDigits(money.currency);
-    return new Intl.NumberFormat(LOCALE, {
+    return new Intl.NumberFormat(intlLocale(), {
       style: "currency",
       currency: money.currency,
       currencyDisplay: money.currency === "ARS" ? "symbol" : "code",
@@ -40,7 +39,7 @@ export function formatPeriod(frequencyMonths: number | null): string {
 
 function formatRateDay(day: string | undefined): string | null {
   if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
-  return parseIsoDate(day).toLocaleDateString(LOCALE, { day: "numeric", month: "long" });
+  return parseIsoDate(day).toLocaleDateString(intlLocale(), { day: "numeric", month: "long" });
 }
 
 export function planPrice(plan: BillingPlan): PlanPrice | null {

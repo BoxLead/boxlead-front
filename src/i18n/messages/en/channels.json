@@ -1,0 +1,263 @@
+{
+  "page": {
+    "crumbs": "Breadcrumb",
+    "home": "Home",
+    "capabilitiesLabel": "What it does",
+    "related": "Also on your other channels"
+  },
+  "whatsapp": {
+    "label": "WhatsApp Business",
+    "title": "AI agent for WhatsApp Business",
+    "description": "An AI agent that answers your WhatsApp Business around the clock, qualifies every lead and respects the 24 hour window with approved templates. For small businesses in Argentina and Latin America.",
+    "heading": "An AI agent that answers your WhatsApp Business around the clock",
+    "lead": "WhatsApp messages arrive at any hour and whoever answers first usually makes the sale. BoxLead connects your number through Meta's official API and puts an agent on every chat.",
+    "capabilitiesHeading": "What BoxLead does with your WhatsApp",
+    "capabilities": [
+      {
+        "title": "Your number, in a single inbox",
+        "description": "Chats from your WhatsApp Business number reach BoxLead along with your other channels, and every reply goes out from that same number."
+      },
+      {
+        "title": "24 hour window and templates",
+        "description": "Once 24 hours have passed since the person's last message, BoxLead offers your approved templates to keep the conversation going."
+      },
+      {
+        "title": "Official Meta connection",
+        "description": "You connect with Facebook login and WhatsApp Business embedded signup. No virtual numbers or third-party apps on your phone."
+      }
+    ],
+    "stepsHeading": "How to connect",
+    "steps": [
+      {
+        "title": "Log in with Facebook",
+        "description": "Pick your WhatsApp Business number from Meta's embedded signup."
+      },
+      {
+        "title": "Chats reach the inbox",
+        "description": "Every message that number receives shows up in BoxLead with its contact."
+      },
+      {
+        "title": "Set up your agent",
+        "description": "Tell it what you sell and how you serve customers, and choose whether it replies on its own or leaves drafts."
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Do I need the WhatsApp Business API?",
+        "answer": "BoxLead uses Meta's official WhatsApp Business API. You connect from BoxLead with your Facebook account and your number, with no technical setup on your side."
+      },
+      {
+        "question": "What happens after 24 hours?",
+        "answer": "WhatsApp closes free-form text 24 hours after the person's last message. BoxLead lets you know and offers one of your approved templates to reply."
+      },
+      {
+        "question": "Does it work with Instagram and MercadoLibre at the same time?",
+        "answer": "Yes. The same inbox brings together WhatsApp, [Instagram](/instagram), [Messenger](/messenger) and [MercadoLibre](/mercadolibre), and the same agent can handle all of them."
+      }
+    ]
+  },
+  "instagram": {
+    "label": "Instagram",
+    "title": "Answer Instagram messages and comments with AI",
+    "description": "An AI agent that answers direct messages and comments on your Instagram posts and reels, brings each person into one conversation and qualifies your leads.",
+    "heading": "Instagram direct messages and comments, answered by your agent",
+    "lead": "Instagram questions come in by DM and in the comments. BoxLead brings them into one conversation per person and puts an agent to answer with your business information.",
+    "capabilitiesHeading": "What BoxLead does with your Instagram",
+    "capabilities": [
+      {
+        "title": "Direct messages and comments together",
+        "description": "Direct messages and comments on posts and reels land in each person's conversation, with a link to the post."
+      },
+      {
+        "title": "Public or private reply",
+        "description": "Reply to the comment publicly or by direct message from the same screen. If DMs are already closed, it goes out as a private reply to their last comment."
+      },
+      {
+        "title": "Official Meta access",
+        "description": "You authorize BoxLead from your Instagram professional account with Meta's official access."
+      }
+    ],
+    "stepsHeading": "How to connect",
+    "steps": [
+      {
+        "title": "Authorize your professional account",
+        "description": "From BoxLead, with Instagram's official access."
+      },
+      {
+        "title": "Everything lands in one conversation",
+        "description": "Direct messages and comments, per person and with their history."
+      },
+      {
+        "title": "Set up your agent",
+        "description": "Add your products, prices and tone, and choose how much to hand off."
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Does it answer comments or only direct messages?",
+        "answer": "Both. Comments on posts and reels show up in the person's conversation and can be answered publicly, and direct messages are answered privately."
+      },
+      {
+        "question": "Do I need a professional account?",
+        "answer": "Yes. Instagram only lets you connect professional accounts, business or creator, with Meta's official access."
+      },
+      {
+        "question": "What if the person never sent me a DM?",
+        "answer": "You can answer publicly on their comment. If Instagram no longer accepts direct messages for that person, BoxLead sends the reply as a private reply to their last comment."
+      }
+    ]
+  },
+  "messenger": {
+    "label": "Messenger",
+    "title": "AI agent for Messenger and your Facebook Page",
+    "description": "An AI agent that handles the messages your Facebook Page receives on Messenger, replies on behalf of the Page and keeps every lead organized in your inbox.",
+    "heading": "Messages to your Facebook Page, answered automatically",
+    "lead": "Every message that reaches your Page on Messenger is a question waiting for an answer. BoxLead brings them to your inbox and puts an agent to reply on behalf of the Page.",
+    "capabilitiesHeading": "What BoxLead does with your Page",
+    "capabilities": [
+      {
+        "title": "Your Page messages in your inbox",
+        "description": "Messages your Page receives reach BoxLead as leads, and replies go out on behalf of the Page."
+      },
+      {
+        "title": "24 hour window",
+        "description": "Messenger lets you reply within 24 hours of the person's last message. BoxLead tells you when that window has closed."
+      },
+      {
+        "title": "Several Pages, one inbox",
+        "description": "You can connect more than one Page and see them next to WhatsApp, Instagram and MercadoLibre."
+      }
+    ],
+    "stepsHeading": "How to connect",
+    "steps": [
+      {
+        "title": "Log in with Facebook",
+        "description": "Pick the Page you want to connect."
+      },
+      {
+        "title": "Messages reach the inbox",
+        "description": "Every Page conversation shows up with its history."
+      },
+      {
+        "title": "Set up your agent",
+        "description": "Tell it what you sell and how you serve customers, and choose how much to hand off."
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Does it work for my business's Facebook Page?",
+        "answer": "Yes. BoxLead connects to Facebook Pages and handles the messages they receive on Messenger."
+      },
+      {
+        "question": "Can I connect the Page and the Instagram account of the same business?",
+        "answer": "Yes. Each channel connects separately and they all land in the same inbox. See how it works with [Instagram](/instagram)."
+      },
+      {
+        "question": "What if more than 24 hours have passed?",
+        "answer": "Messenger only lets you reply within 24 hours of the person's last message. You'll be able to write back when they message your Page again."
+      }
+    ]
+  },
+  "mercadolibre": {
+    "label": "MercadoLibre",
+    "title": "Answer MercadoLibre questions automatically with AI",
+    "description": "An AI agent that answers questions on your MercadoLibre listings and the post-sale messages of every order, with your business information and within minutes.",
+    "heading": "MercadoLibre questions and post-sale messages, answered right away",
+    "lead": "On MercadoLibre an unanswered question is a sale that goes to another listing. BoxLead brings questions and order messages into one inbox and puts an agent to answer them.",
+    "capabilitiesHeading": "What BoxLead does with your MercadoLibre account",
+    "capabilities": [
+      {
+        "title": "Questions on your listings",
+        "description": "Every new question reaches the inbox with the listing it belongs to, and the answer is published on MercadoLibre."
+      },
+      {
+        "title": "Post-sale with the order context",
+        "description": "Messages from each order arrive with the order status, and the buyer's contact details are saved on the lead."
+      },
+      {
+        "title": "Within MercadoLibre's rules",
+        "description": "One answer per question, up to 2000 characters, and post-sale messages up to 350. BoxLead warns you before something can't be sent."
+      }
+    ],
+    "stepsHeading": "How to connect",
+    "steps": [
+      {
+        "title": "Authorize your seller account",
+        "description": "From BoxLead, with MercadoLibre's official access."
+      },
+      {
+        "title": "Questions and orders in the inbox",
+        "description": "Every question and every post-sale message shows up with its context."
+      },
+      {
+        "title": "Set up your agent",
+        "description": "Add your catalog, your shipping and payment terms, and choose how much to hand off."
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Does it only answer questions or post-sale messages too?",
+        "answer": "Both. Questions on your listings and messages from each order land in the same inbox and the agent can handle both stages."
+      },
+      {
+        "question": "Can I review the answer before it's published?",
+        "answer": "Yes. You can leave the agent in draft mode and approve every answer before it goes out to MercadoLibre."
+      },
+      {
+        "question": "What if the question was already answered?",
+        "answer": "MercadoLibre allows a single answer per question. BoxLead answers the oldest pending question and tells you when there are none left open."
+      }
+    ]
+  },
+  "agencias": {
+    "label": "Agencies and community managers",
+    "title": "BoxLead for agencies and community managers",
+    "description": "Add an AI agent to every client you manage. Connect their WhatsApp, Instagram, Messenger and MercadoLibre channels, set the tone and show results without adding support hours.",
+    "heading": "Add an AI agent to every client you manage",
+    "lead": "Your clients' customers don't wait for your office hours. BoxLead lets you build one agent per client that answers with that business's information.",
+    "capabilitiesHeading": "What BoxLead gives your agency",
+    "capabilities": [
+      {
+        "title": "One account per client",
+        "description": "Each business has its own inbox, its connected channels and its agents, with that client's information and tone."
+      },
+      {
+        "title": "No-code setup",
+        "description": "You add products, prices, FAQs and tone in a form, and choose whether each agent replies on its own or leaves drafts."
+      },
+      {
+        "title": "The four channels your clients use",
+        "description": "WhatsApp Business, Instagram, Messenger and MercadoLibre with each platform's official access."
+      }
+    ],
+    "stepsHeading": "How you work with BoxLead",
+    "steps": [
+      {
+        "title": "Connect the client's channels",
+        "description": "With their own accounts and Meta's and MercadoLibre's official access."
+      },
+      {
+        "title": "Build the agent",
+        "description": "Name, instructions, tone and the business information."
+      },
+      {
+        "title": "Show results",
+        "description": "The metrics page sums up what was answered, how fast and which leads were qualified."
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Do you have an agency program?",
+        "answer": "Yes. Write to us at [support@boxlead.app](mailto:support@boxlead.app) and we'll tell you how to work with BoxLead for several clients."
+      },
+      {
+        "question": "Does the client see the inbox or only me?",
+        "answer": "Each account belongs to the business. Anyone with access to that account sees its inbox, leads and metrics, and you can work together with your client."
+      },
+      {
+        "question": "Can I review what the agent replies?",
+        "answer": "Yes. Each agent can work automatically or leave drafts for a person to approve before sending."
+      }
+    ]
+  }
+}

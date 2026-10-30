@@ -1,69 +1,40 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRightIcon, CheckIcon } from "../../components/icons/UiIcons";
+import { useLocalizedPath } from "../../i18n/useLanguage";
 import { cx } from "../../util/classNames";
 import { RollText } from "./RollText";
 import "./PlansSection.css";
 
-type Plan = {
+type PlanSource = {
+  key: "beta" | "starter" | "business";
   name: string;
-  tag: string;
-  description: string;
-  features: string[];
   signupPath: string | null;
   featured?: boolean;
 };
 
-const plans: Plan[] = [
-  {
-    name: "Beta",
-    tag: "Por invitación",
-    description: "Para los negocios que invitamos a probar BoxLead.",
-    features: [
-      "Todos tus canales",
-      "Agentes que responden o te dejan borradores",
-      "Inbox, leads y métricas",
-      "Por un tiempo limitado",
-    ],
-    signupPath: null,
-  },
-  {
-    name: "Starter",
-    tag: "Suscripción mensual",
-    description: "Para poner en automático las consultas de tu negocio.",
-    features: [
-      "Todos tus canales",
-      "Agentes que responden o te dejan borradores",
-      "Inbox unificado, leads y categorías",
-      "Métricas de tu atención",
-    ],
-    signupPath: "/register?plan=STARTER",
-  },
-  {
-    name: "Business",
-    tag: "Suscripción mensual",
-    description: "Para negocios que reciben muchas consultas todos los días.",
-    features: [
-      "Todo lo de Starter",
-      "Más agentes",
-      "Más respuestas de tus agentes por mes",
-      "Más historial de métricas",
-    ],
-    signupPath: "/register?plan=BUSINESS",
-    featured: true,
-  },
+const PLANS: PlanSource[] = [
+  { key: "beta", name: "Beta", signupPath: null },
+  { key: "starter", name: "Starter", signupPath: "/register?plan=STARTER" },
+  { key: "business", name: "Business", signupPath: "/register?plan=BUSINESS", featured: true },
 ];
 
 export function PlansSection() {
+  const { t } = useTranslation("landing");
+  const localized = useLocalizedPath();
+  const plans = PLANS.map((plan) => ({
+    ...plan,
+    tag: t(`plans.${plan.key}.tag`),
+    description: t(`plans.${plan.key}.description`),
+    features: t(`plans.${plan.key}.features`, { returnObjects: true }),
+  }));
   return (
     <section id="planes" className="landing-section">
       <div className="landing-container">
         <div className="landing-section-head" data-reveal>
-          <span className="landing-section-label">Planes</span>
-          <h2 className="landing-section-title">Elegí cómo empezar</h2>
-          <p className="plans-lead">
-            Todos los planes conectan todos tus canales. Ves el precio al crear
-            tu cuenta, antes de pagar.
-          </p>
+          <span className="landing-section-label">{t("plans.label")}</span>
+          <h2 className="landing-section-title">{t("plans.title")}</h2>
+          <p className="plans-lead">{t("plans.lead")}</p>
         </div>
 
         <ul className="plans-grid">
@@ -89,17 +60,17 @@ export function PlansSection() {
               </ul>
               {plan.signupPath ? (
                 <Link
-                  to={plan.signupPath}
+                  to={localized(plan.signupPath)}
                   className={cx(
                     "plan-cta landing-btn",
                     plan.featured ? "landing-btn-primary" : "landing-btn-secondary",
                   )}
                 >
-                  <RollText>{`Elegir ${plan.name}`}</RollText>
+                  <RollText>{t("plans.choose", { plan: plan.name })}</RollText>
                   <ArrowRightIcon width={18} height={18} />
                 </Link>
               ) : (
-                <p className="plan-cta plan-note">Se activa con el link de tu invitación</p>
+                <p className="plan-cta plan-note">{t("plans.invitationNote")}</p>
               )}
             </li>
           ))}

@@ -1,5 +1,6 @@
 import type { LeadResponse } from "../api/types";
 import type { ContactField, PlatformErrorView } from "./types";
+import { intlLocale } from "../i18n/locale";
 
 export function emailAndPhone(lead: LeadResponse): ContactField[] {
   const fields: ContactField[] = [];
@@ -24,7 +25,7 @@ export function reconnectError(platformName: string, message: string): PlatformE
 export function lengthError(maxLength: number): PlatformErrorView {
   return {
     title: "El mensaje es demasiado largo",
-    detail: `El máximo para este canal es de ${maxLength.toLocaleString("es-AR")} caracteres.`,
+    detail: `El máximo para este canal es de ${maxLength.toLocaleString(intlLocale())} caracteres.`,
     action: null,
   };
 }

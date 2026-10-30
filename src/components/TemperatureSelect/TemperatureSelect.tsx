@@ -6,6 +6,7 @@ import { LEAD_TEMPERATURES, leadDisplayName, leadTemperatureLabel } from "../../
 import { ChevronDownIcon } from "../icons/UiIcons";
 import { useToast } from "../ui/toast";
 import "./TemperatureSelect.css";
+import { intlLocale } from "../../i18n/locale";
 
 type TemperatureSelectProps = {
   lead: LeadResponse;
@@ -28,7 +29,7 @@ export function TemperatureSelect({ lead, size = "sm" }: TemperatureSelectProps)
       const name = leadDisplayName(lead);
       toast({
         message: temperature
-          ? `${name} quedó ${leadTemperatureLabel(temperature).toLocaleLowerCase("es-AR")}.`
+          ? `${name} quedó ${leadTemperatureLabel(temperature).toLocaleLowerCase(intlLocale())}.`
           : `${name} quedó sin evaluar.`,
       });
     } catch (error) {
