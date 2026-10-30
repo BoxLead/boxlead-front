@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import type { RefObject } from "react";
+import { useTranslation } from "react-i18next";
 import type { PlatformType, SalesStage } from "../../api/types";
 import { SearchIcon } from "../../components/icons/UiIcons";
 import { ChoiceGroup, type Choice } from "../../components/ui/ChoiceGroup";
@@ -35,13 +36,14 @@ export function ConversationList({
   linkFor,
   onFiltersChange,
 }: ConversationListProps) {
+  const { t } = useTranslation("inbox");
   const { shown, remaining, showMore, sentinelRef } = useRenderWindow(visible, windowKey);
   const unreadByChannel = unreadBy(rows, (row) => row.platform);
   const channelRows = filters.channel === "ALL" ? rows : rows.filter((row) => row.platform === filters.channel);
   const unreadByStage = unreadBy(channelRows, (row) => row.salesStage);
 
   const channelChoices: Choice<ChannelFilter>[] = [
-    { value: "ALL", label: "Todos" },
+    { value: "ALL", label: t("list.allChannels") },
     ...channels.map((id) => ({
       value: id,
       label: getPlatform(id).name,
@@ -57,11 +59,11 @@ export function ConversationList({
       <div className="conversation-list-tools">
         <label className="conversation-search">
           <SearchIcon width={18} height={18} />
-          <span className="visually-hidden">Buscar conversaciones</span>
+          <span className="visually-hidden">{t("list.searchLabel")}</span>
           <input
             ref={searchRef}
             type="search"
-            placeholder="Buscar por nombre o mensaje"
+            placeholder={t("list.searchPlaceholder")}
             value={filters.query}
             aria-keyshortcuts="/"
             onChange={(event) => onFiltersChange({ query: event.target.value })}
@@ -72,7 +74,7 @@ export function ConversationList({
         </label>
         {channels.length > 1 ? (
           <ChoiceGroup
-            label="Canal"
+            label={t("list.channel")}
             className="conversation-channels"
             choices={channelChoices}
             unreadLabel={(count) => i18next.t("ui.unread", { ns: "shell", count })}
@@ -82,14 +84,14 @@ export function ConversationList({
         ) : null}
         {showStages && filters.channel !== "ALL" ? (
           <ChoiceGroup<"ALL" | SalesStage>
-            label="Etapa"
+            label={t("list.stage")}
             variant="segmented"
             className="conversation-stages"
             unreadLabel={(count) => i18next.t("ui.unread", { ns: "shell", count })}
             value={filters.stage ?? "ALL"}
             onChange={(stage) => onFiltersChange({ stage: stage === "ALL" ? null : stage })}
             choices={[
-              { value: "ALL", label: "Todo" },
+              { value: "ALL", label: t("list.allStages") },
               ...STAGES.map((stage) => ({
                 value: stage,
                 label: stageLabel(filters.channel as PlatformType, stage),
@@ -104,22 +106,22 @@ export function ConversationList({
             checked={filters.unreadOnly}
             onChange={(event) => onFiltersChange({ unreadOnly: event.target.checked })}
           />
-          Solo sin leer
+          {t("list.unreadOnly")}
         </label>
       </div>
       {visible.length === 0 ? (
         <p className="conversation-list-empty">
-          {filters.query ? `No hay conversaciones que coincidan con “${filters.query}”.` : "No hay conversaciones con estos filtros."}
+          {filters.query ? t("list.noMatch", { query: filters.query }) : t("list.noResults")}
         </p>
       ) : (
-        <ul className="conversation-items rise" aria-label="Conversaciones">
+        <ul className="conversation-items rise" aria-label={t("list.items")}>
           {shown.map((row) => (
             <ConversationItem key={row.id} row={row} to={linkFor(row.id)} selected={row.id === selectedId} />
           ))}
           {remaining > 0 ? (
             <li className="conversation-items-more">
               <button type="button" className="btn btn-secondary btn-sm" ref={sentinelRef} onClick={showMore}>
-                Mostrar más ({remaining})
+                {t("list.showMore", { remaining })}
               </button>
             </li>
           ) : null}

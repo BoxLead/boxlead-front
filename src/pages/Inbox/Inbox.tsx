@@ -1,4 +1,5 @@
 import { useCallback, useDeferredValue, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import type { ConversationResponse, LeadResponse, PlatformType, SalesStage } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -32,7 +33,8 @@ function parseStage(value: string | null): SalesStage | null {
 }
 
 export function Inbox() {
-  useDocumentTitle("Bandeja");
+  const { t } = useTranslation("inbox");
+  useDocumentTitle(t("title"));
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useUrlQuery(searchParams, setSearchParams);
@@ -102,14 +104,14 @@ export function Inbox() {
   return (
     <div className={`inbox${isOpen ? " inbox-open" : ""}`}>
       <header className="inbox-header">
-        <h1 className="page-title">Bandeja</h1>
+        <h1 className="page-title">{t("title")}</h1>
       </header>
 
       <div className={`inbox-panels${isOpen ? " inbox-panels-open" : ""}`}>
-        <aside className="inbox-list" aria-label="Lista de conversaciones">
+        <aside className="inbox-list" aria-label={t("listLabel")}>
           {conversations.error && !conversations.data ? (
             <div className="inbox-list-message">
-              <Banner tone="danger" title="No pudimos cargar la bandeja">
+              <Banner tone="danger" title={t("loadError")}>
                 {conversations.error}
               </Banner>
             </div>
@@ -125,11 +127,11 @@ export function Inbox() {
           ) : rows.length === 0 ? (
             <EmptyState
               illustration="inbox"
-              title="Tu bandeja está vacía"
-              hint="Cuando alguien te escriba o comente en un canal conectado, la conversación aparece acá."
+              title={t("empty.title")}
+              hint={t("empty.hint")}
               action={
                 <Link to="/app/connections" className="btn btn-secondary btn-sm">
-                  Conectar un canal
+                  {t("empty.connect")}
                 </Link>
               }
             />
@@ -154,19 +156,19 @@ export function Inbox() {
           ) : selectedId && !conversations.loading ? (
             <EmptyState
               illustration="missing"
-              title="No encontramos esta conversación"
-              hint="Puede que se haya eliminado o que el enlace sea de otra cuenta."
+              title={t("missing.title")}
+              hint={t("missing.hint")}
               action={
                 <Link to={backTo} className="btn btn-secondary btn-sm">
-                  Volver a la bandeja
+                  {t("missing.back")}
                 </Link>
               }
             />
           ) : (
             <EmptyState
               illustration="inbox"
-              title="Elegí una conversación"
-              hint="Respondé desde acá y el mensaje sale por el canal de origen."
+              title={t("pick.title")}
+              hint={t("pick.hint")}
             />
           )}
         </div>

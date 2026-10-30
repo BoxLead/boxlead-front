@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { PendingMessage } from "./useConversationSender";
 
 type PendingBubbleProps = {
@@ -7,19 +8,20 @@ type PendingBubbleProps = {
 };
 
 export function PendingBubble({ pending, onRetry, onDiscard }: PendingBubbleProps) {
+  const { t } = useTranslation("inbox");
   return (
     <li className={`bubble bubble-outbound bubble-pending${pending.status === "failed" ? " bubble-failed" : ""}`}>
       <span className="bubble-content">{pending.content}</span>
       {pending.status === "sending" ? (
-        <span className="bubble-time">Enviando…</span>
+        <span className="bubble-time">{t("actions.sending")}</span>
       ) : (
         <span className="bubble-failed-actions">
-          <span>No se envió.</span>
+          <span>{t("pending.failed")}</span>
           <button type="button" onClick={() => onRetry(pending.tempId)}>
-            Reintentar
+            {t("actions.retry")}
           </button>
           <button type="button" onClick={() => onDiscard(pending.tempId)}>
-            Descartar
+            {t("actions.discard")}
           </button>
         </span>
       )}

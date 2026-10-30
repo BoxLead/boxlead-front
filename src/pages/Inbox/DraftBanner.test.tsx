@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ReplyDraft } from "../../api/types";
+import { i18n } from "../../i18n";
 import { DraftBanner } from "./DraftBanner";
 
 const draft: ReplyDraft = {
@@ -48,5 +49,18 @@ describe("DraftBanner", () => {
       />,
     );
     expect(screen.getByRole("region", { name: "Borrador del agente" })).toBeInTheDocument();
+  });
+});
+
+describe("DraftBanner in English", () => {
+  it("names the agent and warns about a long draft", async () => {
+    await i18n.changeLanguage("en");
+    render(<DraftBanner draft={draft} tooLong busy={false} onSend={vi.fn()} onEdit={vi.fn()} onDiscard={vi.fn()} />);
+
+    expect(screen.getByRole("region", { name: "Draft by Ventas" })).toBeInTheDocument();
+    expect(screen.getByText("The draft is longer than this channel allows. Edit it before sending.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send draft" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Edit draft" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Discard draft" })).toBeInTheDocument();
   });
 });

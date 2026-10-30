@@ -1,7 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ContextItem, MessageResponse } from "../../api/types";
+import { i18n } from "../../i18n";
 import { getPlatform } from "../../platforms";
 import { ChatThread } from "./ChatThread";
 
@@ -173,5 +174,44 @@ describe("ChatThread comments", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Responder en público" })).toBeNull();
+  });
+});
+
+describe("ChatThread in English", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  it("describes comments and offers a public reply", async () => {
+    renderThread([
+      message({ id: "m-1", content: "" }),
+      message({ id: "m-2", kind: "COMMENT", externalMessageId: "c-1", contextRef: "media-1", content: "" }),
+    ]);
+
+    expect(screen.getByText("Message with no text (attachment or unsupported type)")).toBeInTheDocument();
+    expect(screen.getByText("Comment with no text")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Reply publicly" }));
+    expect(screen.getByLabelText("Reply publicly to nico.audio")).toBeInTheDocument();
+    expect(screen.getByText("Your reply is posted as a reply to this comment.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("falls back to a generic post without a comment policy", () => {
+    render(
+      <ChatThread
+        messages={[message({ kind: "COMMENT", externalMessageId: "c-1", content: "¿Precio?" })]}
+        pending={[{ tempId: "p-1", content: "Hola", createdAt: NOW, status: "failed" }]}
+        contactName="nico.audio"
+        posts={new Map()}
+        onRetry={vi.fn()}
+        onDiscard={vi.fn()}
+        onReplyToComment={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Commented on a post")).toBeInTheDocument();
+    expect(screen.getByText("Not sent.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
   });
 });
