@@ -2,9 +2,11 @@ import { type FormEvent, useId, useState } from "react";
 import { ApiError } from "../../api/client";
 import { apiErrorCode } from "../../api/errors";
 import type { AccountView } from "../../api/types";
+import { Tag } from "../../components/ui/Tag";
 import { useAuth } from "../../context/auth";
 import { ACCOUNT_KEY, changeEmail } from "../../data/account";
 import { invalidateQueries } from "../../data/queryCache";
+import { AccountRow } from "./AccountRow";
 
 function emailError(error: unknown): string {
   const code = apiErrorCode(error);
@@ -25,6 +27,7 @@ export function EmailSection({ account }: { account: AccountView }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requested, setRequested] = useState<string | null>(null);
+  const pending = requested ?? account.pendingEmail;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,57 +47,57 @@ export function EmailSection({ account }: { account: AccountView }) {
     }
   }
 
+  const description = !account.hasPassword
+    ? "Viene de la cuenta con la que entrás, así que se cambia desde ahí."
+    : "Es con el que entrás y donde te escribimos.";
+
   return (
-    <section className="panel account-section" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="panel-title">
-        Email
-      </h2>
-      <p className="account-value">
-        <span className="account-email">{account.email}</span>{" "}
-        <span className={account.emailVerified ? "account-badge account-badge-ok" : "account-badge"}>
-          {account.emailVerified ? "Confirmado" : "Sin confirmar"}
-        </span>
-      </p>
-      {requested || account.pendingEmail ? (
-        <p className="account-note" role="status">
-          Te mandamos un link a <strong className="account-email">{requested ?? account.pendingEmail}</strong> para
-          confirmar el cambio. Hasta que lo abras seguís entrando con {account.email}.
-        </p>
-      ) : null}
-      {!account.hasPassword ? (
-        <p className="account-note">Tu email viene de la cuenta con la que entrás, así que se cambia desde ahí.</p>
-      ) : !canChange ? null : editing ? (
+    <AccountRow
+      title="Email"
+      description={description}
+      action={
+        canChange && !editing ? (
+          <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
+            Cambiar el email
+          </button>
+        ) : null
+      }
+    >
+      {editing ? (
         <form className="account-form" onSubmit={submit}>
-          <div className="field">
-            <label className="field-label" htmlFor={`${id}-email`}>
-              Email nuevo
-            </label>
-            <input
-              id={`${id}-email`}
-              className="input"
-              type="email"
-              name="newEmail"
-              autoComplete="email"
-              required
-              value={newEmail}
-              onChange={(event) => setNewEmail(event.target.value)}
-            />
+          <div className="account-fields">
+            <div className="field">
+              <label className="field-label" htmlFor={`${id}-email`}>
+                Email nuevo
+              </label>
+              <input
+                id={`${id}-email`}
+                className="input"
+                type="email"
+                name="newEmail"
+                autoComplete="email"
+                required
+                value={newEmail}
+                onChange={(event) => setNewEmail(event.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label className="field-label" htmlFor={`${id}-password`}>
+                Tu contraseña
+              </label>
+              <input
+                id={`${id}-password`}
+                className="input"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
           </div>
-          <div className="field">
-            <label className="field-label" htmlFor={`${id}-password`}>
-              Tu contraseña
-            </label>
-            <input
-              id={`${id}-password`}
-              className="input"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
+          <p className="field-help">Te mandamos un link al email nuevo. Hasta que lo abras seguís entrando con {account.email}.</p>
           {error ? (
             <p className="form-error" role="alert">
               {error}
@@ -110,12 +113,19 @@ export function EmailSection({ account }: { account: AccountView }) {
           </div>
         </form>
       ) : (
-        <div className="account-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
-            Cambiar el email
-          </button>
-        </div>
+        <p className="account-value">
+          <span className="account-email">{account.email}</span>
+          <Tag tone={account.emailVerified ? "success" : "warning"}>
+            {account.emailVerified ? "Confirmado" : "Sin confirmar"}
+          </Tag>
+        </p>
       )}
-    </section>
+      {pending ? (
+        <p className="account-note" role="status">
+          Te mandamos un link a <strong className="account-email">{pending}</strong> para confirmar el cambio. Hasta
+          que lo abras seguís entrando con {account.email}.
+        </p>
+      ) : null}
+    </AccountRow>
   );
 }
