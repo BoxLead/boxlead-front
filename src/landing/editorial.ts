@@ -20,19 +20,9 @@ export type EditorialPageData = {
   capabilities: Capability[];
   stepsHeading: string;
   steps: EditorialStep[];
-  agentHeading: string;
-  agentLead: string;
-  agentPoints: string[];
   faqs: Faq[];
   related: EditorialSlug[];
 };
-
-const AGENT_POINTS = [
-  "Contesta con la información que cargaste, productos, precios, condiciones y preguntas frecuentes, en el tono que elegiste.",
-  "Califica cada lead como frío, tibio o caliente y lo deja ordenado en tu pipeline con su historial completo.",
-  "Cuando hace falta una persona te avisa y deja el borrador listo para aprobar.",
-  "Podés elegir por agente si responde en automático o si siempre te deja un borrador.",
-];
 
 export const EDITORIAL_PAGES: EditorialPageData[] = [
   {
@@ -45,20 +35,16 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       "Un agente de IA que responde tu WhatsApp Business las 24 horas, califica cada lead y respeta la ventana de 24 horas con plantillas aprobadas. Para pymes de Argentina y Latinoamérica.",
     heading: "Un agente de IA que atiende tu WhatsApp Business las 24 horas",
     lead:
-      "Las consultas por WhatsApp llegan a cualquier hora y el que responde primero suele vender. BoxLead conecta tu número de WhatsApp Business con la API oficial de Meta y pone un agente a responder, calificar y ordenar cada chat.",
+      "Las consultas por WhatsApp llegan a cualquier hora y el que responde primero suele vender. BoxLead conecta tu número con la API oficial de Meta y pone un agente a responder cada chat.",
     capabilitiesHeading: "Lo que BoxLead hace con tu WhatsApp",
     capabilities: [
       {
         title: "Tu número, en una sola bandeja",
-        description: "Los chats que recibe tu número de WhatsApp Business llegan a la bandeja de BoxLead junto con tus otros canales, con el nombre y el teléfono de cada contacto.",
-      },
-      {
-        title: "Respondés con el mismo número",
-        description: "Cada respuesta sale desde tu número de WhatsApp Business, la escriba el agente o una persona de tu equipo.",
+        description: "Los chats de tu número de WhatsApp Business llegan a BoxLead junto con tus otros canales, y cada respuesta sale desde ese mismo número.",
       },
       {
         title: "Ventana de 24 horas y plantillas",
-        description: "WhatsApp solo deja escribir texto libre dentro de las 24 horas del último mensaje de la persona. Pasado ese tiempo BoxLead te ofrece tus plantillas aprobadas para seguir la conversación.",
+        description: "Pasadas 24 horas del último mensaje de la persona, BoxLead te ofrece tus plantillas aprobadas para seguir la conversación.",
       },
       {
         title: "Conexión oficial de Meta",
@@ -71,9 +57,6 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       { title: "Los chats llegan a la bandeja", description: "Cada mensaje que recibe ese número aparece en BoxLead con su contacto." },
       { title: "Configurá tu agente", description: "Le contás qué vendés y cómo atendés, y elegís si responde solo o deja borradores." },
     ],
-    agentHeading: "Qué hace el agente en cada chat",
-    agentLead: "Lee el mensaje, entiende qué pide la persona y responde en segundos con la información de tu negocio.",
-    agentPoints: AGENT_POINTS,
     faqs: [
       {
         question: "¿Necesito la API de WhatsApp Business?",
@@ -82,10 +65,6 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       {
         question: "¿Qué pasa después de las 24 horas?",
         answer: ["WhatsApp cierra el texto libre 24 horas después del último mensaje de la persona. BoxLead te lo avisa y te deja elegir una de tus plantillas aprobadas para responder."],
-      },
-      {
-        question: "¿Puedo seguir usando mi WhatsApp a mano?",
-        answer: ["Sí. Tu equipo responde desde la bandeja de BoxLead cuando quiere, y el agente puede quedar en modo borrador para que una persona apruebe cada respuesta."],
       },
       {
         question: "¿Funciona con Instagram y MercadoLibre a la vez?",
@@ -104,23 +83,19 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       "Un agente de IA que responde los mensajes directos y los comentarios de tus publicaciones y reels de Instagram, reúne cada persona en una conversación y califica tus leads.",
     heading: "Mensajes directos y comentarios de Instagram, respondidos por tu agente",
     lead:
-      "Las consultas en Instagram llegan por privado y en los comentarios de cada publicación. BoxLead las junta en una sola conversación por persona y pone un agente a responder con la información de tu negocio.",
+      "Las consultas en Instagram llegan por privado y en los comentarios. BoxLead las junta en una conversación por persona y pone un agente a responder con la información de tu negocio.",
     capabilitiesHeading: "Lo que BoxLead hace con tu Instagram",
     capabilities: [
       {
         title: "Mensajes directos y comentarios juntos",
-        description: "Los mensajes directos y los comentarios en publicaciones y reels llegan a la conversación de la persona que los escribió, con el enlace a la publicación.",
+        description: "Los mensajes directos y los comentarios en publicaciones y reels llegan a la conversación de cada persona, con el enlace a la publicación.",
       },
       {
         title: "Respuesta pública o privada",
-        description: "Respondés el comentario en público o le escribís por mensaje directo desde la misma pantalla.",
+        description: "Respondés el comentario en público o por mensaje directo desde la misma pantalla. Si el privado ya se cerró, sale como respuesta privada a su último comentario.",
       },
       {
-        title: "Cuando el privado se cierra",
-        description: "Si Instagram ya no acepta mensajes directos, la respuesta sale como respuesta privada a su último comentario, una sola vez.",
-      },
-      {
-        title: "Cuenta profesional y acceso oficial",
+        title: "Acceso oficial de Meta",
         description: "Autorizás a BoxLead desde tu cuenta profesional de Instagram con el acceso oficial de Meta.",
       },
     ],
@@ -130,9 +105,6 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       { title: "Todo llega a una conversación", description: "Mensajes directos y comentarios, por persona y con su historial." },
       { title: "Configurá tu agente", description: "Le cargás productos, precios y tono, y elegís cuánto delegar." },
     ],
-    agentHeading: "Qué hace el agente con cada mensaje",
-    agentLead: "Lee el comentario o el mensaje, entiende qué pregunta la persona y responde con lo que cargaste de tu negocio.",
-    agentPoints: AGENT_POINTS,
     faqs: [
       {
         question: "¿Responde los comentarios o solo los mensajes directos?",
@@ -159,20 +131,16 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       "Un agente de IA que atiende los mensajes que recibe tu página de Facebook por Messenger, responde en nombre de la página y deja cada lead ordenado en tu bandeja.",
     heading: "Los mensajes de tu página de Facebook, atendidos en automático",
     lead:
-      "Cada mensaje que llega a tu página por Messenger es una consulta que espera. BoxLead los trae a la misma bandeja que tus otros canales y pone un agente a responder en nombre de la página.",
+      "Cada mensaje que llega a tu página por Messenger es una consulta que espera. BoxLead los trae a tu bandeja y pone un agente a responder en nombre de la página.",
     capabilitiesHeading: "Lo que BoxLead hace con tu página",
     capabilities: [
       {
         title: "Los mensajes de la página en tu bandeja",
-        description: "Los mensajes que recibe la página llegan a BoxLead con el nombre de cada persona y quedan como leads.",
-      },
-      {
-        title: "Respondés en nombre de la página",
-        description: "Las respuestas salen desde tu página de Facebook, la escriba el agente o alguien de tu equipo.",
+        description: "Los mensajes que recibe tu página llegan a BoxLead como leads, y las respuestas salen en nombre de la página.",
       },
       {
         title: "Ventana de 24 horas",
-        description: "Messenger deja responder dentro de las 24 horas del último mensaje de la persona. BoxLead te lo avisa cuando esa ventana se cerró.",
+        description: "Messenger deja responder dentro de las 24 horas del último mensaje de la persona. BoxLead te avisa cuando esa ventana se cerró.",
       },
       {
         title: "Varias páginas, una bandeja",
@@ -185,9 +153,6 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       { title: "Los mensajes llegan a la bandeja", description: "Cada conversación de la página aparece con su historial." },
       { title: "Configurá tu agente", description: "Le contás qué vendés y cómo atendés, y elegís cuánto delegar." },
     ],
-    agentHeading: "Qué hace el agente con cada mensaje",
-    agentLead: "Lee el mensaje, responde con la información de tu negocio y deja el lead calificado y ordenado.",
-    agentPoints: AGENT_POINTS,
     faqs: [
       {
         question: "¿Sirve para la página de mi negocio en Facebook?",
@@ -214,7 +179,7 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       "Un agente de IA que responde las preguntas de tus publicaciones de MercadoLibre y los mensajes de postventa de cada venta, con la información de tu negocio y en minutos.",
     heading: "Preguntas y postventa de MercadoLibre con respuesta inmediata",
     lead:
-      "En MercadoLibre la pregunta sin responder es una venta que se va a otra publicación. BoxLead trae las preguntas y los mensajes de tus ventas a una bandeja y pone un agente a contestarlos con los datos de tu negocio.",
+      "En MercadoLibre la pregunta sin responder es una venta que se va a otra publicación. BoxLead trae las preguntas y los mensajes de tus ventas a una bandeja y pone un agente a contestarlos.",
     capabilitiesHeading: "Lo que BoxLead hace con tu cuenta de MercadoLibre",
     capabilities: [
       {
@@ -222,12 +187,8 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
         description: "Cada pregunta nueva llega a la bandeja con la publicación a la que pertenece y la respuesta se publica en MercadoLibre.",
       },
       {
-        title: "Mensajes de postventa",
-        description: "Los mensajes de cada venta llegan con el estado de la compra, para acompañar al comprador hasta la entrega.",
-      },
-      {
-        title: "Datos de contacto de cada compra",
-        description: "Los datos de contacto de tus ventas quedan en el lead, para seguir la relación después de la compra.",
+        title: "Postventa con el contexto de la compra",
+        description: "Los mensajes de cada venta llegan con el estado de la compra, y los datos de contacto del comprador quedan en el lead.",
       },
       {
         title: "Dentro de las reglas de MercadoLibre",
@@ -240,9 +201,6 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       { title: "Preguntas y ventas en la bandeja", description: "Cada pregunta y cada mensaje de postventa aparece con su contexto." },
       { title: "Configurá tu agente", description: "Le cargás tu catálogo, tus condiciones de envío y de pago, y elegís cuánto delegar." },
     ],
-    agentHeading: "Qué hace el agente con cada pregunta",
-    agentLead: "Lee la pregunta, responde con la información de tu publicación y de tu negocio, y deja el lead calificado.",
-    agentPoints: AGENT_POINTS,
     faqs: [
       {
         question: "¿Responde solo las preguntas o también la postventa?",
@@ -269,7 +227,7 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       "Sumá un agente de IA a cada cliente que atendés. Conectá sus canales de WhatsApp, Instagram, Messenger y MercadoLibre, configurá el tono y mostrá resultados sin sumar horas de atención.",
     heading: "Sumá un agente de IA a cada cliente que atendés",
     lead:
-      "Si manejás las redes o la atención de varios negocios, sabés que las consultas no esperan a tu horario. BoxLead te deja armar un agente por cliente que responde con la información de ese negocio y te muestra qué rinde.",
+      "Las consultas de tus clientes no esperan a tu horario. BoxLead te deja armar un agente por cliente que responde con la información de ese negocio.",
     capabilitiesHeading: "Lo que BoxLead le da a tu agencia",
     capabilities: [
       {
@@ -278,11 +236,7 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       },
       {
         title: "Configuración sin código",
-        description: "Cargás productos, precios, preguntas frecuentes y tono en un formulario. Podés elegir por agente si responde solo o deja borradores para aprobar.",
-      },
-      {
-        title: "Métricas para mostrar",
-        description: "Leads por canal, tiempo de primera respuesta, respuestas en cinco minutos y calificación, listas para compartir con el cliente.",
+        description: "Cargás productos, precios, preguntas frecuentes y tono en un formulario, y elegís si cada agente responde solo o deja borradores.",
       },
       {
         title: "Los cuatro canales que usan tus clientes",
@@ -295,9 +249,6 @@ export const EDITORIAL_PAGES: EditorialPageData[] = [
       { title: "Armás el agente", description: "Nombre, instrucciones, tono y la información del negocio." },
       { title: "Mostrás resultados", description: "La página de métricas resume qué se respondió, en cuánto tiempo y qué leads quedaron calificados." },
     ],
-    agentHeading: "Qué hace el agente por tus clientes",
-    agentLead: "Responde las consultas de cada negocio con su información, califica los leads y te avisa cuando hace falta una persona.",
-    agentPoints: AGENT_POINTS,
     faqs: [
       {
         question: "¿Tienen un programa para agencias?",
