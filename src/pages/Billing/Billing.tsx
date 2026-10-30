@@ -1,5 +1,6 @@
-import i18next from "i18next";
+import i18next, { type TFunction } from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import type { BillingPlan, BillingSummary, PaidPlanCode } from "../../api/types";
@@ -18,7 +19,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { paidPlanCode } from "../../util/checkout";
 import { SUPPORT_EMAIL } from "../../util/company";
 import { planPrice } from "../../util/planPrice";
-import { billingErrorMessage, CANCEL_REQUESTED, PLAN_RANK, rateNote } from "./billingLabels";
+import { billingErrorMessage, cancelRequested, PLAN_RANK, rateNote } from "./billingLabels";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { CheckoutNotice } from "./CheckoutNotice";
 import { CurrentPlan } from "./CurrentPlan";
@@ -32,16 +33,20 @@ const PLAN_NAMES: Record<PaidPlanCode, string> = { STARTER: "Starter", BUSINESS:
 
 type Change = { plan: BillingPlan; code: PaidPlanCode };
 
-function changeResult(summary: BillingSummary, target: string): string {
-  if (summary.plan?.code === target) return `Ahora tenés ${summary.plan.name}.`;
+function changeResult(t: TFunction<"billing">, summary: BillingSummary, target: string): string {
+  if (summary.plan?.code === target) return t("change.now", { plan: summary.plan.name });
   if (summary.subscription?.pendingPlanCode === target) {
-    return `Pasás a ${PLAN_NAMES[summary.subscription.pendingPlanCode]} el ${longDate(summary.subscription.currentPeriodEnd)}.`;
+    return t("change.pending", {
+      plan: PLAN_NAMES[summary.subscription.pendingPlanCode],
+      date: longDate(summary.subscription.currentPeriodEnd),
+    });
   }
-  return "Guardamos el cambio de plan.";
+  return t("change.saved");
 }
 
 export function Billing() {
-  useDocumentTitle("Facturación");
+  const { t } = useTranslation("billing");
+  useDocumentTitle(t("title"));
 
   const toast = useToast();
   const { user } = useAuth();
@@ -87,13 +92,13 @@ export function Billing() {
   async function confirmChange() {
     if (!change) return;
     const target = change.code;
-    const done = await run(() => changePlan(target), (result) => changeResult(result, target), "No pudimos cambiar el plan. Probá de nuevo.");
+    const done = await run(() => changePlan(target), (result) => changeResult(t, result, target), t("change.failed"));
     if (done) setChange(null);
   }
 
   async function keepPlan() {
     if (!currentCode) return;
-    await run(() => changePlan(currentCode), () => `Seguís en ${planName(currentCode)}.`, "No pudimos deshacer el cambio. Probá de nuevo.");
+    await run(() => changePlan(currentCode), () => t("change.kept", { plan: planName(currentCode) }), t("change.keepFailed"));
   }
 
   async function cancel() {
@@ -103,18 +108,18 @@ export function Billing() {
       toast({
         message: result.subscription?.cancelAtPeriodEnd
           ? team
-            ? `Diste de baja tu plan pago propio. Termina el ${longDate(result.subscription.currentPeriodEnd)}.`
-            : `Diste de baja tu plan. Tenés acceso hasta el ${longDate(result.subscription.currentPeriodEnd)}.`
-          : CANCEL_REQUESTED,
+            ? t("cancelPlan.teamDone", { date: longDate(result.subscription.currentPeriodEnd) })
+            : t("cancelPlan.done", { date: longDate(result.subscription.currentPeriodEnd) })
+          : cancelRequested(),
       });
       setConfirmCancel(false);
     } catch (error) {
       if (error instanceof ApiError && error.status === 502) {
-        toast({ message: CANCEL_REQUESTED });
+        toast({ message: cancelRequested() });
         setConfirmCancel(false);
         void invalidateQueries(BILLING_SUMMARY_KEY);
       } else {
-        toast({ tone: "danger", message: billingErrorMessage(error, "No pudimos dar de baja el plan. Probá de nuevo.") });
+        toast({ tone: "danger", message: billingErrorMessage(error, t("cancelPlan.failed")) });
       }
     } finally {
       setBusy(false);
@@ -123,25 +128,25 @@ export function Billing() {
 
   const upgrade = change && currentCode ? PLAN_RANK[change.code] > PLAN_RANK[currentCode] : false;
   const changePrice = change ? planPrice(change.plan) : null;
-  const changeLabel = changePrice ? `${changePrice.amount} ${changePrice.period}` : "el precio del plan nuevo";
+  const changeLabel = changePrice ? `${changePrice.amount} ${changePrice.period}` : t("change.newPlanPrice");
   const changeNote = changePrice ? rateNote(changePrice.rateDay) : null;
 
   return (
     <div className="page billing-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Facturación</h1>
-          <p className="page-header-desc">Tu plan, el uso del período, tus pagos y tus datos fiscales.</p>
+          <h1 className="page-title">{t("title")}</h1>
+          <p className="page-header-desc">{t("description")}</p>
         </div>
       </header>
 
       {summary.error && !data ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar tu plan"
+          title={t("loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void summary.reload()}>
-              Reintentar
+              {t("retry")}
             </button>
           }
         >
@@ -177,15 +182,15 @@ export function Billing() {
           {team ? null : (
             <section className="billing-section" aria-labelledby="billing-plans-title">
               <h2 id="billing-plans-title" className="billing-section-title">
-                Planes
+                {t("plans.title")}
               </h2>
               {plans.error && !plans.data ? (
                 <Banner
                   tone="danger"
-                  title="No pudimos cargar los planes"
+                  title={t("plans.loadFailed")}
                   action={
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => void plans.reload()}>
-                      Reintentar
+                      {t("retry")}
                     </button>
                   }
                 >
@@ -201,8 +206,8 @@ export function Billing() {
                 <div className="panel">
                   <EmptyState
                     icon={<CardIcon />}
-                    title="No hay planes disponibles ahora"
-                    hint={`Escribinos a ${SUPPORT_EMAIL} y te ayudamos a elegir.`}
+                    title={t("plans.empty")}
+                    hint={t("plans.emptyHint", { email: SUPPORT_EMAIL })}
                   />
                 </div>
               ) : (
@@ -240,32 +245,31 @@ export function Billing() {
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={change !== null}
-        title={`¿Pasar a ${change?.plan.name ?? "otro plan"}?`}
-        confirmLabel={busy ? "Cambiando…" : `Pasar a ${change?.plan.name ?? "otro plan"}`}
+        title={t("change.title", { plan: change?.plan.name ?? t("change.otherPlan") })}
+        confirmLabel={busy ? t("change.busy") : t("change.confirm", { plan: change?.plan.name ?? t("change.otherPlan") })}
         busy={busy}
         onConfirm={() => void confirmChange()}
         onCancel={() => setChange(null)}
       >
         {upgrade ? (
-          <p>
-            Desde la próxima cuota pagás {changeLabel}, sin cobros extra por lo que queda de este período. Si es la primera vez
-            que subís de plan, el cambio rige ahora. Si ya subiste antes, rige cuando se cobre la cuota con el monto nuevo.
-          </p>
+          <p>{t("change.upgrade", { price: changeLabel })}</p>
         ) : (
           <p>
-            Seguís con {data?.plan?.name ?? "tu plan"} hasta el{" "}
-            {data?.subscription ? longDate(data.subscription.currentPeriodEnd) : "fin del período"} y desde ahí pagás{" "}
-            {changeLabel}. Si subiste de plan en este período, el cambio rige ahora.
+            {t("change.downgrade", {
+              plan: data?.plan?.name ?? t("yourPlan"),
+              date: data?.subscription ? longDate(data.subscription.currentPeriodEnd) : t("change.periodEnd"),
+              price: changeLabel,
+            })}
           </p>
         )}
-        {changeNote ? <p className="billing-confirm-note">Precio de hoy. {changeNote}.</p> : null}
+        {changeNote ? <p className="billing-confirm-note">{t("change.todayPrice", { note: changeNote })}</p> : null}
       </ConfirmDialog>
 
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirmCancel}
-        title={team ? "¿Dar de baja tu plan pago propio?" : "¿Dar de baja tu plan?"}
-        confirmLabel={busy ? "Dando de baja…" : "Dar de baja"}
+        title={team ? t("cancelPlan.teamTitle") : t("cancelPlan.title")}
+        confirmLabel={busy ? t("cancelPlan.busy") : t("cancelPlan.confirm")}
         tone="danger"
         busy={busy}
         onConfirm={() => void cancel()}
@@ -273,18 +277,19 @@ export function Billing() {
       >
         {team ? (
           <p>
-            No se te va a cobrar más y termina el{" "}
-            {data?.subscription ? longDate(data.subscription.currentPeriodEnd) : "fin del período pagado"}. Mientras tengas un rol en el
-            backoffice seguís usando BoxLead sin pagar con los límites de Business.
+            {t("cancelPlan.team", {
+              date: data?.subscription ? longDate(data.subscription.currentPeriodEnd) : t("cancelPlan.paidPeriodEnd"),
+            })}
           </p>
         ) : (
           <p>
-            No se te va a cobrar más. Seguís usando {data?.plan?.name ?? "tu plan"} hasta el{" "}
-            {data?.subscription ? longDate(data.subscription.currentPeriodEnd) : "fin del período pagado"}. Después tus agentes dejan de
-            responder.
+            {t("cancelPlan.text", {
+              plan: data?.plan?.name ?? t("yourPlan"),
+              date: data?.subscription ? longDate(data.subscription.currentPeriodEnd) : t("cancelPlan.paidPeriodEnd"),
+            })}
           </p>
         )}
-        <p>La baja no se puede deshacer. Para volver, contratás de nuevo cuando termine el período.</p>
+        <p>{t("cancelPlan.final")}</p>
       </ConfirmDialog>
     </div>
   );

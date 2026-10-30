@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CommissionStatus, SubscriptionStatus } from "../../api/types";
 import { COMMISSION_STATUSES } from "../../data/referrals";
 import {
-  COMMISSION_LABELS,
-  SUBSCRIPTION_LABELS,
+  COMMISSION_TONES,
   commissionLabel,
   cycleLabel,
   cycleProgress,
@@ -53,20 +52,20 @@ describe("labels", () => {
   it("names every commission status", () => {
     const statuses: CommissionStatus[] = ["ACCRUED", "HELD", "APPROVED", "PAID", "REVERSED"];
     expect(COMMISSION_STATUSES).toEqual(statuses);
-    expect(statuses.map((status) => COMMISSION_LABELS[status].label)).toEqual([
+    expect(statuses.map((status) => commissionLabel(status).label)).toEqual([
       "Pendiente",
       "Retenida",
       "Aprobada",
       "Pagada",
       "Revertida",
     ]);
-    expect(COMMISSION_LABELS.PAID.tone).toBe("success");
-    expect(COMMISSION_LABELS.REVERSED.tone).toBe("danger");
+    expect(COMMISSION_TONES.PAID).toBe("success");
+    expect(COMMISSION_TONES.REVERSED).toBe("danger");
   });
 
   it("names every subscription status", () => {
     const statuses: SubscriptionStatus[] = ["INCOMPLETE", "ACTIVE", "PAST_DUE", "SUSPENDED", "PAUSED", "CANCELED"];
-    expect(statuses.map((status) => SUBSCRIPTION_LABELS[status].label)).toEqual([
+    expect(statuses.map((status) => subscriptionLabel(status).label)).toEqual([
       "Sin pago",
       "Activo",
       "Pago atrasado",

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { CommissionStatus, Money, SubscriptionStatus } from "../../api/types";
 import type { TagTone } from "../../components/ui/Tag";
 import { intlLocale } from "../../i18n/locale";
@@ -8,29 +9,35 @@ type StatusLabel = { label: string; tone: TagTone };
 
 type CommissionLabel = StatusLabel & { hint: string | null };
 
-export const COMMISSION_LABELS: Record<CommissionStatus, CommissionLabel> = {
-  ACCRUED: { label: "Pendiente", tone: "neutral", hint: "Se liberan cuando termina el plazo de espera" },
-  HELD: { label: "Retenida", tone: "warning", hint: "En revisión por una disputa o un control" },
-  APPROVED: { label: "Aprobada", tone: "accent", hint: "Entran en la próxima liquidación" },
-  PAID: { label: "Pagada", tone: "success", hint: "Ya te las pagamos" },
-  REVERSED: { label: "Revertida", tone: "danger", hint: "Por reembolsos o contracargos" },
+export const COMMISSION_TONES: Record<CommissionStatus, TagTone> = {
+  ACCRUED: "neutral",
+  HELD: "warning",
+  APPROVED: "accent",
+  PAID: "success",
+  REVERSED: "danger",
 };
 
-export const SUBSCRIPTION_LABELS: Record<SubscriptionStatus, StatusLabel> = {
-  INCOMPLETE: { label: "Sin pago", tone: "neutral" },
-  ACTIVE: { label: "Activo", tone: "success" },
-  PAST_DUE: { label: "Pago atrasado", tone: "warning" },
-  SUSPENDED: { label: "Suspendido", tone: "danger" },
-  PAUSED: { label: "Pausado", tone: "neutral" },
-  CANCELED: { label: "Dado de baja", tone: "neutral" },
+export const SUBSCRIPTION_TONES: Record<SubscriptionStatus, TagTone> = {
+  INCOMPLETE: "neutral",
+  ACTIVE: "success",
+  PAST_DUE: "warning",
+  SUSPENDED: "danger",
+  PAUSED: "neutral",
+  CANCELED: "neutral",
 };
 
 export function commissionLabel(status: CommissionStatus): CommissionLabel {
-  return Object.hasOwn(COMMISSION_LABELS, status) ? COMMISSION_LABELS[status] : { label: status, tone: "neutral", hint: null };
+  if (!Object.hasOwn(COMMISSION_TONES, status)) return { label: status, tone: "neutral", hint: null };
+  return {
+    label: i18next.t(`reseller.commission.${status}`, { ns: "billing" }),
+    tone: COMMISSION_TONES[status],
+    hint: i18next.t(`reseller.commissionHint.${status}`, { ns: "billing" }),
+  };
 }
 
 export function subscriptionLabel(status: SubscriptionStatus): StatusLabel {
-  return Object.hasOwn(SUBSCRIPTION_LABELS, status) ? SUBSCRIPTION_LABELS[status] : { label: status, tone: "neutral" };
+  if (!Object.hasOwn(SUBSCRIPTION_TONES, status)) return { label: status, tone: "neutral" };
+  return { label: i18next.t(`reseller.subscription.${status}`, { ns: "billing" }), tone: SUBSCRIPTION_TONES[status] };
 }
 
 function currencyDigits(currency: string): number | null {
@@ -53,8 +60,8 @@ export function formatAmount(money: Money): string {
 }
 
 export function cycleLabel(cycle: number, maxCycles: number): string {
-  if (cycle <= 0) return "Sin cobros todavía";
-  return `Cobro ${cycle} de ${maxCycles}`;
+  if (cycle <= 0) return i18next.t("reseller.noCharges", { ns: "billing" });
+  return i18next.t("reseller.cycle", { ns: "billing", cycle, max: maxCycles });
 }
 
 export function cycleProgress(cycle: number, maxCycles: number): boolean[] {

@@ -1,4 +1,4 @@
-import { formatCuit, vatConditionLabel } from "../../../../src/util/billingProfile";
+import { formatCuit, vatConditionLabel } from "../../../../src/util/taxId";
 import type { InvoiceReceiver } from "./types";
 
 function receiverName(receiver: InvoiceReceiver | null): string | null {

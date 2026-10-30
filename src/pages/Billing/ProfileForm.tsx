@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { apiFieldErrors } from "../../api/errors";
 import type { BillingProfile } from "../../api/types";
 import { saveProfile } from "../../data/subscription";
@@ -23,34 +24,33 @@ type ProfileFormProps = {
 
 type TextField = {
   field: Exclude<ProfileField, "vatCondition" | "country" | "taxIdType">;
-  label: string;
   autoComplete: string;
   type?: "email" | "text";
   inputMode?: "numeric" | "email" | "text";
-  help?: string;
+  help?: "cuit";
   half?: boolean;
 };
 
 const HEAD_FIELDS: TextField[] = [
-  { field: "legalName", label: "Razón social o nombre completo", autoComplete: "organization" },
-  { field: "taxId", label: "CUIT", autoComplete: "off", inputMode: "numeric", help: "Con o sin guiones.", half: true },
+  { field: "legalName", autoComplete: "organization" },
+  { field: "taxId", autoComplete: "off", inputMode: "numeric", help: "cuit", half: true },
 ];
 
 const TAIL_FIELDS: TextField[] = [
-  { field: "addressLine", label: "Domicilio", autoComplete: "street-address" },
-  { field: "city", label: "Ciudad", autoComplete: "address-level2", half: true },
-  { field: "province", label: "Provincia", autoComplete: "address-level1", half: true },
-  { field: "postalCode", label: "Código postal", autoComplete: "postal-code", half: true },
+  { field: "addressLine", autoComplete: "street-address" },
+  { field: "city", autoComplete: "address-level2", half: true },
+  { field: "province", autoComplete: "address-level1", half: true },
+  { field: "postalCode", autoComplete: "postal-code", half: true },
   {
     field: "billingEmail",
-    label: "Email para las facturas",
     autoComplete: "email",
     type: "email",
     inputMode: "email",
   },
 ];
 
-export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", onCancel, onSaved, onBusyChange }: ProfileFormProps) {
+export function ProfileForm({ initial, submitLabel, cancelLabel, onCancel, onSaved, onBusyChange }: ProfileFormProps) {
+  const { t } = useTranslation("billing");
   const idPrefix = useId();
   const [profile, setProfile] = useState<BillingProfile>(initial);
   const [errors, setErrors] = useState<ProfileErrors>({});
@@ -84,8 +84,8 @@ export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", on
       setErrors(fields);
       setFormError(
         Object.keys(fields).length > 0
-          ? "Revisá los datos marcados."
-          : billingErrorMessage(error, "No pudimos guardar tus datos fiscales. Probá de nuevo."),
+          ? t("profile.checkMarked")
+          : billingErrorMessage(error, t("profile.saveFailed")),
       );
       setBusy(false);
     }
@@ -94,11 +94,11 @@ export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", on
   const inputId = (field: ProfileField) => `${idPrefix}-${field}`;
   const errorId = (field: ProfileField) => `${idPrefix}-${field}-error`;
 
-  function renderField({ field, label, autoComplete, type = "text", inputMode, help, half }: TextField) {
+  function renderField({ field, autoComplete, type = "text", inputMode, help, half }: TextField) {
     return (
       <div key={field} className={half ? "field billing-field-half" : "field"}>
         <label className="field-label" htmlFor={inputId(field)}>
-          {label}
+          {t(`profile.fields.${field}`)}
         </label>
         <input
           id={inputId(field)}
@@ -117,7 +117,7 @@ export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", on
             {errors[field]}
           </span>
         ) : help ? (
-          <span className="field-help">{help}</span>
+          <span className="field-help">{t(`profile.help.${help}`)}</span>
         ) : null}
       </div>
     );
@@ -134,7 +134,7 @@ export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", on
         {HEAD_FIELDS.map(renderField)}
         <div className="field billing-field-half">
           <label className="field-label" htmlFor={inputId("vatCondition")}>
-            Condición frente al IVA
+            {t("profile.vatCondition")}
           </label>
           <select
             id={inputId("vatCondition")}
@@ -145,10 +145,10 @@ export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", on
             aria-describedby={errors.vatCondition ? errorId("vatCondition") : undefined}
             onChange={(event) => update("vatCondition", event.target.value)}
           >
-            <option value="">Elegí una opción</option>
+            <option value="">{t("profile.chooseOption")}</option>
             {VAT_CONDITIONS.map((condition) => (
               <option key={condition.value} value={condition.value}>
-                {condition.label}
+                {t(`vatConditions.${condition.value}`)}
               </option>
             ))}
           </select>
@@ -162,10 +162,10 @@ export function ProfileForm({ initial, submitLabel, cancelLabel = "Cancelar", on
       </div>
       <div className="dialog-actions">
         <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={saving}>
-          {cancelLabel}
+          {cancelLabel ?? t("cancel")}
         </button>
         <button type="submit" className="btn btn-primary" disabled={saving}>
-          {saving ? "Guardando…" : submitLabel}
+          {saving ? t("profile.saving") : submitLabel}
         </button>
       </div>
     </form>

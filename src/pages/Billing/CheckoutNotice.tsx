@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { CheckoutSummary } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
 
@@ -8,10 +9,11 @@ type CheckoutNoticeProps = {
 };
 
 export function CheckoutNotice({ checkout, planName, onResume }: CheckoutNoticeProps) {
+  const { t } = useTranslation("billing");
   if (checkout.status === "PENDING") {
     return (
-      <Banner tone="warning" className="billing-notice" title={`Tu pago de ${planName} está pendiente`}>
-        Mercado Pago lo está revisando. Cuando se confirme, tu plan se activa solo.
+      <Banner tone="warning" className="billing-notice" title={t("notice.pendingTitle", { plan: planName })}>
+        {t("notice.pendingText")}
       </Banner>
     );
   }
@@ -20,16 +22,14 @@ export function CheckoutNotice({ checkout, planName, onResume }: CheckoutNoticeP
     <Banner
       tone={rejected ? "danger" : "info"}
       className="billing-notice"
-      title={rejected ? `Mercado Pago rechazó el pago de ${planName}` : `Tenés un pago de ${planName} sin terminar`}
+      title={rejected ? t("notice.rejectedTitle", { plan: planName }) : t("notice.unfinishedTitle", { plan: planName })}
       action={
         <button type="button" className="btn btn-secondary btn-sm" onClick={onResume}>
-          {rejected ? "Probar de nuevo" : "Retomar el pago"}
+          {rejected ? t("notice.retry") : t("notice.resume")}
         </button>
       }
     >
-      {rejected
-        ? "Revisá que pagues con la cuenta de Mercado Pago del email que indicaste, o probá con otro medio de pago."
-        : "Si ya pagaste, Mercado Pago puede tardar unos minutos en confirmarlo."}
+      {rejected ? t("notice.rejectedText") : t("notice.unfinishedText")}
     </Banner>
   );
 }

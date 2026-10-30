@@ -1,4 +1,6 @@
+import type { TFunction } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import type { BillingSummary } from "../../api/types";
 import { AlertIcon, CheckIcon, ClockIcon } from "../../components/icons/UiIcons";
@@ -30,7 +32,7 @@ type View = {
   actions: ReactNode;
 };
 
-function billingLink(primary = false, label = "Ver facturación") {
+function billingLink(label: string, primary = false) {
   return (
     <Link className={primary ? "btn btn-primary" : "btn btn-secondary"} to={BILLING_PATH}>
       {label}
@@ -38,25 +40,26 @@ function billingLink(primary = false, label = "Ver facturación") {
   );
 }
 
-function viewFor(poll: Poll, retry: () => void): View {
+function viewFor(t: TFunction<"billing">, poll: Poll, retry: () => void): View {
   const { summary, outcome, failed, done } = poll;
+  const viewBilling = billingLink(t("return.viewBilling"));
   const again = (
     <button type="button" className="btn btn-secondary" onClick={retry}>
-      Volver a consultar
+      {t("return.checkAgain")}
     </button>
   );
   if (outcome === "approved") {
     return {
       tone: "success",
       icon: <CheckIcon />,
-      title: "Tu pago está confirmado",
-      text: summary?.plan?.name ? `Ya tenés ${summary.plan.name}. Tus agentes pueden responder.` : "Tu plan ya está activo.",
+      title: t("return.approvedTitle"),
+      text: summary?.plan?.name ? t("return.approvedPlan", { plan: summary.plan.name }) : t("return.approved"),
       actions: (
         <>
           <Link className="btn btn-primary" to="/app/inbox">
-            Ir a la bandeja
+            {t("return.goInbox")}
           </Link>
-          {billingLink()}
+          {viewBilling}
         </>
       ),
     };
@@ -66,14 +69,14 @@ function viewFor(poll: Poll, retry: () => void): View {
     return {
       tone: "danger",
       icon: <AlertIcon />,
-      title: "Mercado Pago rechazó el pago",
-      text: "Revisá que pagues con la cuenta de Mercado Pago del email que indicaste, o probá con otro medio de pago.",
+      title: t("return.rejectedTitle"),
+      text: t("return.rejected"),
       actions: (
         <>
           <Link className="btn btn-primary" to={plan ? `${BILLING_PATH}?checkout=${plan}` : BILLING_PATH}>
-            Probar de nuevo
+            {t("return.retry")}
           </Link>
-          {billingLink()}
+          {viewBilling}
         </>
       ),
     };
@@ -82,31 +85,31 @@ function viewFor(poll: Poll, retry: () => void): View {
     return {
       tone: "warning",
       icon: <ClockIcon />,
-      title: "Tu pago está pendiente",
-      text: "Mercado Pago lo está revisando. Cuando se confirme, tu plan se activa solo y lo vas a ver en Facturación.",
+      title: t("return.pendingTitle"),
+      text: t("return.pending"),
       busy: !done,
-      actions: billingLink(true),
+      actions: billingLink(t("return.viewBilling"), true),
     };
   }
   if (outcome === "none") {
     return {
       tone: "info",
       icon: <AlertIcon />,
-      title: "No encontramos un pago en curso",
-      text: "Si querés contratar un plan, elegilo en Facturación.",
-      actions: billingLink(true, "Ir a Facturación"),
+      title: t("return.noneTitle"),
+      text: t("return.none"),
+      actions: billingLink(t("return.goBilling"), true),
     };
   }
   if (outcome === "unpaid" && done) {
     return {
       tone: "warning",
       icon: <ClockIcon />,
-      title: "Todavía no vemos el pago de la cuota",
-      text: "Si cambiaste el medio de pago, Mercado Pago vuelve a intentar el cobro. Cuando se apruebe lo vas a ver en Facturación.",
+      title: t("return.unpaidTitle"),
+      text: t("return.unpaid"),
       actions: (
         <>
           {again}
-          {billingLink()}
+          {viewBilling}
         </>
       ),
     };
@@ -115,12 +118,12 @@ function viewFor(poll: Poll, retry: () => void): View {
     return {
       tone: "info",
       icon: <ClockIcon />,
-      title: "Todavía no tenemos la confirmación",
-      text: "Si ya pagaste, Mercado Pago puede tardar unos minutos en avisarnos. El estado también se ve en Facturación.",
+      title: t("return.waitingTitle"),
+      text: t("return.waiting"),
       actions: (
         <>
           {again}
-          {billingLink()}
+          {viewBilling}
         </>
       ),
     };
@@ -129,12 +132,12 @@ function viewFor(poll: Poll, retry: () => void): View {
     return {
       tone: "danger",
       icon: <AlertIcon />,
-      title: "No pudimos consultar tu pago",
-      text: "Revisá tu conexión y volvé a consultar. Si pagaste, el pago no se pierde.",
+      title: t("return.failedTitle"),
+      text: t("return.failed"),
       actions: (
         <>
           {again}
-          {billingLink()}
+          {viewBilling}
         </>
       ),
     };
@@ -142,15 +145,16 @@ function viewFor(poll: Poll, retry: () => void): View {
   return {
     tone: "info",
     icon: <ClockIcon />,
-    title: "Estamos confirmando tu pago",
-    text: "Le preguntamos a Mercado Pago cómo salió. Esto puede tardar unos segundos.",
+    title: t("return.checkingTitle"),
+    text: t("return.checking"),
     busy: true,
     actions: null,
   };
 }
 
 export function BillingReturn() {
-  useDocumentTitle("Estado del pago");
+  const { t } = useTranslation("billing");
+  useDocumentTitle(t("return.title"));
 
   const [poll, setPoll] = useState<Poll>(INITIAL);
   const [round, setRound] = useState(0);
@@ -192,12 +196,12 @@ export function BillingReturn() {
     setRound((value) => value + 1);
   }
 
-  const view = viewFor(poll, retry);
+  const view = viewFor(t, poll, retry);
 
   return (
     <div className="page billing-return-page">
       <header className="page-header">
-        <h1 className="page-title">Estado del pago</h1>
+        <h1 className="page-title">{t("return.title")}</h1>
       </header>
       <section className={cx("panel billing-return", `billing-return-${view.tone}`)} aria-live="polite" aria-busy={view.busy || undefined}>
         <span className="billing-return-icon" aria-hidden="true">

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReferralsResponse } from "../../api/types";
 import { ToastContext, type ToastInput } from "../../components/ui/toast";
 import { REFERRALS_KEY } from "../../data/referrals";
+import { i18n } from "../../i18n";
 import { Reseller } from "./Reseller";
 
 type Query = {
@@ -162,5 +163,18 @@ describe("Reseller", () => {
     renderPage(toast);
     await user.click(screen.getByRole("button", { name: "Copiar link" }));
     expect(toast).toHaveBeenCalledWith({ tone: "danger", message: "No pudimos copiar el link. Seleccionalo y copialo a mano." });
+  });
+
+  it("reads in English", async () => {
+    await i18n.changeLanguage("en");
+    respond(filled);
+    renderPage();
+    expect(screen.getByRole("heading", { name: "Reseller" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument();
+    expect(screen.getByText("Clicks in 30 days")).toBeInTheDocument();
+    expect(screen.getByText("Charge 3 of 6")).toBeInTheDocument();
+    expect(screen.getByText("Payment late")).toBeInTheDocument();
+    expect(screen.getByText("Released when the waiting period ends")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Release" })).toBeInTheDocument();
   });
 });

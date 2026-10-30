@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { BillingPlan, BillingSummary, CurrentPlan as Plan, SubscriptionSummary } from "../../api/types";
+import { i18n } from "../../i18n";
 import { CurrentPlan } from "./CurrentPlan";
 import { PlanList } from "./PlanList";
 
@@ -147,5 +148,30 @@ describe("PlanList", () => {
     render(<PlanList plans={PLANS} summary={summary(null)} busy={false} onBuy={() => undefined} onChange={() => undefined} />);
     expect(screen.getByRole("button", { name: "Contratar Starter" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Contratar Business" })).toBeEnabled();
+  });
+
+  it("reads in English", async () => {
+    await i18n.changeLanguage("en");
+    render(<PlanList plans={PLANS} summary={summary(null)} busy={false} onBuy={() => undefined} onChange={() => undefined} />);
+    expect(screen.getByRole("button", { name: "Get Starter" })).toBeEnabled();
+    expect(screen.getAllByText("Final price with VAT")).toHaveLength(2);
+    expect(screen.getAllByText("per month")).toHaveLength(2);
+  });
+});
+
+describe("CurrentPlan in English", () => {
+  it("reads the team plan and its usage", async () => {
+    await i18n.changeLanguage("en");
+    const active: SubscriptionSummary = { ...SUSPENDED, status: "ACTIVE", graceUntil: null, updatePaymentUrl: null, pendingPlanCode: null };
+    renderPlan(summary(TEAM, { subscription: active }));
+    expect(screen.getByRole("heading", { name: "Your plan" })).toBeInTheDocument();
+    expect(screen.getByText("BoxLead team")).toBeInTheDocument();
+    expect(screen.getByText(/^You also have your own paid plan/)).toHaveTextContent(
+      "You also have your own paid plan, currently Active. You don't need it to use BoxLead, but Mercado Pago keeps charging you until you cancel it.",
+    );
+    expect(screen.getByText(/^Next payment of/)).toHaveTextContent(/^Next payment of ARS\s87,000 on October \d+\.$/);
+    expect(screen.getByText("30 of 5,000 replies")).toBeInTheDocument();
+    expect(screen.getByText("Up to 10 agents")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel plan" })).toBeEnabled();
   });
 });

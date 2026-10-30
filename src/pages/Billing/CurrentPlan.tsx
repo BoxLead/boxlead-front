@@ -1,16 +1,18 @@
+import type { TFunction } from "i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { BillingSummary, PaidPlanCode, SubscriptionSummary } from "../../api/types";
 import { Tag } from "../../components/ui/Tag";
 import { currentPlan } from "../../data/billing";
 import { isCheckoutUrl } from "../../util/checkout";
 import { formatNumber } from "../../util/format";
 import { formatMinor } from "../../util/planPrice";
-import { SUBSCRIPTION_STATUS } from "./billingLabels";
+import { subscriptionStatus } from "./billingLabels";
 import { longDate } from "./dates";
 
-function teamChargeNote(subscription: SubscriptionSummary): string {
-  if (subscription.cancelAtPeriodEnd) return `Lo diste de baja y termina el ${longDate(subscription.currentPeriodEnd)}. No se te cobra más.`;
-  if (subscription.status === "PAUSED") return "Mientras esté pausado Mercado Pago no te lo cobra, pero si se reanuda te lo vuelve a cobrar.";
-  return "No lo necesitás para usar BoxLead, pero Mercado Pago te lo sigue cobrando hasta que lo des de baja.";
+function teamChargeNote(t: TFunction<"billing">, subscription: SubscriptionSummary): string {
+  if (subscription.cancelAtPeriodEnd) return t("current.teamCanceled", { date: longDate(subscription.currentPeriodEnd) });
+  if (subscription.status === "PAUSED") return t("current.teamPaused");
+  return t("current.teamCharged");
 }
 
 type CurrentPlanProps = {
@@ -21,9 +23,9 @@ type CurrentPlanProps = {
   onKeep: () => void;
 };
 
-function usageLabel(used: number, limit: number | null): string {
-  if (limit === null) return `${formatNumber(used)} respuestas, sin límite`;
-  return `${formatNumber(used)} de ${formatNumber(limit)} respuestas`;
+function usageLabel(t: TFunction<"billing">, used: number, limit: number | null): string {
+  if (limit === null) return t("current.usageUnlimited", { used: formatNumber(used) });
+  return t("current.usage", { used: formatNumber(used), limit: formatNumber(limit) });
 }
 
 function usageRatio(used: number, limit: number | null): number {
@@ -32,12 +34,13 @@ function usageRatio(used: number, limit: number | null): number {
 }
 
 export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: CurrentPlanProps) {
+  const { t } = useTranslation("billing");
   const { usage, limits } = summary;
   const plan = currentPlan(summary);
   const team = plan?.source === "TEAM";
   const subscription = summary.subscription;
   const demo = team ? null : summary.demo;
-  const status = subscription ? SUBSCRIPTION_STATUS[subscription.status] : null;
+  const status = subscription ? subscriptionStatus(subscription.status) : null;
   const canCancel =
     subscription !== null &&
     (subscription.status === "ACTIVE" || subscription.status === "PAST_DUE") &&
@@ -49,60 +52,68 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
   return (
     <section className="panel billing-card" aria-labelledby="billing-current-title">
       <h2 id="billing-current-title" className="panel-title">
-        Tu plan
+        {t("current.title")}
       </h2>
 
       {team ? (
         <div className="billing-current-head">
-          <p className="billing-current-name">Equipo de BoxLead</p>
-          <Tag tone="accent">Sin cargo</Tag>
+          <p className="billing-current-name">{t("current.team")}</p>
+          <Tag tone="accent">{t("current.free")}</Tag>
         </div>
       ) : plan ? (
         <div className="billing-current-head">
-          <p className="billing-current-name">{plan.name ?? "Tu plan"}</p>
+          <p className="billing-current-name">{plan.name ?? t("current.title")}</p>
           {status ? <Tag tone={status.tone}>{status.label}</Tag> : null}
-          {plan.source === "DEMO" ? <Tag tone="accent">Gratis</Tag> : null}
+          {plan.source === "DEMO" ? <Tag tone="accent">{t("current.demo")}</Tag> : null}
         </div>
       ) : (
         <div className="billing-current-head">
-          <p className="billing-current-name">Sin plan</p>
+          <p className="billing-current-name">{t("current.none")}</p>
         </div>
       )}
 
       <div className="billing-current-lines">
-        {!plan ? <p>Elegí un plan para que tus agentes respondan y puedas enviar mensajes.</p> : null}
+        {!plan ? <p>{t("current.choose")}</p> : null}
         {team ? (
-          <p>
-            Esta cuenta es del equipo de BoxLead. Usás la app sin pagar con los límites de Business mientras tengas un rol en el
-            backoffice, así que no hace falta contratar un plan.
-          </p>
+          <p>{t("current.teamText")}</p>
         ) : null}
         {team && subscription && status ? (
           <p>
-            También tenés un plan pago propio que hoy figura como <strong>{status.label}</strong>. {teamChargeNote(subscription)}
+            <Trans
+              t={t}
+              i18nKey="current.teamOwnPlan"
+              values={{ status: status.label, note: teamChargeNote(t, subscription) }}
+              components={{ strong: <strong /> }}
+            />
           </p>
         ) : null}
-        {demo ? <p>Tu Beta gratis dura hasta el {longDate(demo.endsAt)}.</p> : null}
+        {demo ? <p>{t("current.demoEnds", { date: longDate(demo.endsAt) })}</p> : null}
         {subscription && !subscription.cancelAtPeriodEnd && subscription.status === "ACTIVE" ? (
           <p>
-            Próxima cuota de <strong>{formatMinor(subscription.price)}</strong> el {longDate(subscription.currentPeriodEnd)}.
+            <Trans
+              t={t}
+              i18nKey="current.nextCharge"
+              values={{ amount: formatMinor(subscription.price), date: longDate(subscription.currentPeriodEnd) }}
+              components={{ strong: <strong /> }}
+            />
           </p>
         ) : null}
         {subscription?.cancelAtPeriodEnd && !team ? (
-          <p>Lo diste de baja. Tenés acceso hasta el {longDate(subscription.currentPeriodEnd)}.</p>
+          <p>{t("current.canceled", { date: longDate(subscription.currentPeriodEnd) })}</p>
         ) : null}
         {subscription?.status === "PAST_DUE" ? (
           <p>
-            Mercado Pago no pudo cobrar la cuota.
-            {subscription.graceUntil && !team ? ` Seguís con acceso hasta el ${longDate(subscription.graceUntil)}.` : null}
+            {subscription.graceUntil && !team
+              ? t("current.pastDueGrace", { date: longDate(subscription.graceUntil) })
+              : t("current.pastDue")}
           </p>
         ) : null}
         {summary.access === "RESTRICTED" && (subscription?.status === "SUSPENDED" || subscription?.status === "PAUSED") ? (
-          <p>Tus agentes están apagados hasta que se regularice el pago.</p>
+          <p>{t("current.restricted")}</p>
         ) : null}
         {subscription?.pendingPlanCode ? (
           <p>
-            Pasás a {planName(subscription.pendingPlanCode)} el {longDate(subscription.currentPeriodEnd)}.
+            {t("change.pending", { plan: planName(subscription.pendingPlanCode), date: longDate(subscription.currentPeriodEnd) })}
           </p>
         ) : null}
       </div>
@@ -110,8 +121,8 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
       {plan ? (
         <div className="billing-usage">
           <div className="billing-usage-head">
-            <span>Respuestas de agentes</span>
-            <span>{usageLabel(usage.agentReplies.used, usage.agentReplies.limit)}</span>
+            <span>{t("current.replies")}</span>
+            <span>{usageLabel(t, usage.agentReplies.used, usage.agentReplies.limit)}</span>
           </div>
           {usage.agentReplies.limit !== null && usage.agentReplies.limit > 0 ? (
             <meter
@@ -122,17 +133,21 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
               high={0.95}
               optimum={0}
               value={ratio}
-              aria-label="Respuestas usadas en el período"
+              aria-label={t("current.meter")}
             />
           ) : null}
-          <p className="billing-usage-hint">El contador vuelve a cero el {longDate(usage.periodEnd)}.</p>
+          <p className="billing-usage-hint">{t("current.resets", { date: longDate(usage.periodEnd) })}</p>
           {limits.AGENTS_MAX !== undefined || limits.METRICS_HISTORY_DAYS !== undefined ? (
             <ul className="billing-limits">
               {limits.AGENTS_MAX !== undefined ? (
-                <li>{limits.AGENTS_MAX === null ? "Agentes sin límite" : `Hasta ${limits.AGENTS_MAX} agentes`}</li>
+                <li>
+                  {limits.AGENTS_MAX === null
+                    ? t("limits.agentsUnlimited")
+                    : t("limits.agents", { count: limits.AGENTS_MAX, value: limits.AGENTS_MAX })}
+                </li>
               ) : null}
               {limits.METRICS_HISTORY_DAYS !== undefined && limits.METRICS_HISTORY_DAYS !== null ? (
-                <li>{`Métricas de los últimos ${limits.METRICS_HISTORY_DAYS} días`}</li>
+                <li>{t("limits.metrics", { count: limits.METRICS_HISTORY_DAYS, value: limits.METRICS_HISTORY_DAYS })}</li>
               ) : null}
             </ul>
           ) : null}
@@ -143,17 +158,17 @@ export function CurrentPlan({ summary, planName, busy, onCancel, onKeep }: Curre
         <div className="billing-card-actions">
           {paymentUrl ? (
             <a className="btn btn-primary btn-sm" href={paymentUrl} rel="noopener noreferrer">
-              Cambiar el medio de pago
+              {t("current.updatePayment")}
             </a>
           ) : null}
           {subscription?.pendingPlanCode && plan && !team ? (
             <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onKeep}>
-              Seguir en {plan.name ?? "tu plan"}
+              {t("current.keep", { plan: plan.name ?? t("yourPlan") })}
             </button>
           ) : null}
           {canCancel ? (
             <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={onCancel}>
-              Dar de baja
+              {t("cancelPlan.confirm")}
             </button>
           ) : null}
         </div>

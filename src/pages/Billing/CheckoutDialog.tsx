@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { apiErrorCode, apiFieldErrors } from "../../api/errors";
 import type { BillingPlan, LegalDocument, PaidPlanCode } from "../../api/types";
 import { Dialog } from "../../components/ui/Dialog";
@@ -22,6 +23,7 @@ type CheckoutDialogProps = {
 type Legal = { status: "loading" } | { status: "error" } | { status: "ready"; documents: LegalDocument[] };
 
 export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onClose }: CheckoutDialogProps) {
+  const { t } = useTranslation("billing");
   const emailId = useId();
   const emailHelpId = useId();
   const emailErrorId = useId();
@@ -56,11 +58,11 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
     if (busy || legal.status !== "ready") return;
     setError(null);
     if (!isEmail(payerEmail)) {
-      setEmailError("Escribí el email de tu cuenta de Mercado Pago.");
+      setEmailError(t("checkout.payerEmailError"));
       return;
     }
     if (!accepted) {
-      setError("Para seguir tenés que aceptar las condiciones.");
+      setError(t("checkout.acceptRequired"));
       return;
     }
     setBusy(true);
@@ -79,13 +81,13 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
         loadLegal();
       }
       if (apiFieldErrors(failure).some((field) => field.field === "payerEmail")) {
-        setEmailError("Escribí el email de tu cuenta de Mercado Pago.");
+        setEmailError(t("checkout.payerEmailError"));
         return;
       }
       setError(
         failure instanceof CheckoutUrlError
-          ? `No pudimos abrir el pago de Mercado Pago. Escribinos a ${SUPPORT_EMAIL}.`
-          : billingErrorMessage(failure, "No pudimos iniciar el pago. Probá de nuevo."),
+          ? t("checkout.openFailed", { email: SUPPORT_EMAIL })
+          : billingErrorMessage(failure, t("checkout.startFailed")),
       );
     }
   }
@@ -94,15 +96,15 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
     return (
       <Dialog
         open
-        title="Tus datos fiscales"
-        description={`Antes de contratar ${plan.name} necesitamos tus datos para hacerte la factura.`}
+        title={t("checkout.profileTitle")}
+        description={t("checkout.profileDescription", { plan: plan.name })}
         size="lg"
         busy={busy}
         onClose={onClose}
       >
         <ProfileForm
           initial={emptyProfile(userEmail)}
-          submitLabel="Seguir"
+          submitLabel={t("checkout.continue")}
           onBusyChange={setBusy}
           onCancel={onClose}
           onSaved={() => setStep("summary")}
@@ -112,23 +114,28 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
   }
 
   return (
-    <Dialog open title={`Contratar ${plan.name}`} size="lg" busy={busy} onClose={onClose}>
+    <Dialog open title={t("plans.buy", { plan: plan.name })} size="lg" busy={busy} onClose={onClose}>
       <form className="dialog-form checkout" onSubmit={(event) => void pay(event)} noValidate>
-        <section className="checkout-summary" aria-label="Resumen de la compra">
+        <section className="checkout-summary" aria-label={t("checkout.summary")}>
           <dl className="checkout-terms">
             <div>
-              <dt>Proveedor</dt>
+              <dt>{t("checkout.provider")}</dt>
               <dd>
-                {LEGAL_ENTITY_NAME}, atención en <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+                <Trans
+                  t={t}
+                  i18nKey="checkout.providerValue"
+                  values={{ name: LEGAL_ENTITY_NAME, email: SUPPORT_EMAIL }}
+                  components={{ mail: <a href={`mailto:${SUPPORT_EMAIL}`} /> }}
+                />
               </dd>
             </div>
             <div>
-              <dt>Plan</dt>
+              <dt>{t("checkout.plan")}</dt>
               <dd>{plan.name}</dd>
             </div>
             {price ? (
               <div>
-                <dt>{plan.priceIncludesVat ? "Precio final con IVA" : "Precio final"}</dt>
+                <dt>{plan.priceIncludesVat ? t("price.finalWithVat") : t("price.final")}</dt>
                 <dd>
                   <span className="checkout-price">
                     {price.amount} {price.period}
@@ -140,34 +147,29 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
                     </span>
                   ) : null}
                   {price.reference ? (
-                    <span className="checkout-note">Referencia {price.reference}</span>
+                    <span className="checkout-note">{t("price.reference", { price: price.reference })}</span>
                   ) : null}
                 </dd>
               </div>
             ) : null}
             <div>
-              <dt>Renovación</dt>
-              <dd>
-                Se cobra todos los meses hasta que lo des de baja. El monto en pesos sale del dólar oficial del Banco
-                Nación del día de cada cobro.
-              </dd>
+              <dt>{t("checkout.renewal")}</dt>
+              <dd>{t("checkout.renewalText")}</dd>
             </div>
             <div>
-              <dt>Baja</dt>
-              <dd>
-                Cuando quieras desde esta página, sin cargo. Seguís usando BoxLead hasta el final del período pagado.
-              </dd>
+              <dt>{t("checkout.cancellation")}</dt>
+              <dd>{t("checkout.cancellationText")}</dd>
             </div>
             <div>
-              <dt>Arrepentimiento</dt>
-              <dd>Tenés 10 días desde el primer cobro para arrepentirte y te devolvemos el total.</dd>
+              <dt>{t("checkout.withdrawal")}</dt>
+              <dd>{t("checkout.withdrawalText")}</dd>
             </div>
           </dl>
         </section>
 
         <div className="field">
           <label className="field-label" htmlFor={emailId}>
-            Email de tu cuenta de Mercado Pago
+            {t("checkout.payerEmail")}
           </label>
           <input
             id={emailId}
@@ -190,8 +192,7 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
             </span>
           ) : null}
           <span id={emailHelpId} className="field-help">
-            Tiene que ser el mismo con el que entrás a Mercado Pago para pagar. Si pagás con otra cuenta, Mercado Pago
-            rechaza el pago.
+            {t("checkout.payerEmailHelp")}
           </span>
         </div>
 
@@ -201,14 +202,14 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
             src={MERCADO_PAGO_BANNER}
             width={468}
             height={60}
-            alt="Pagás a través de Mercado Pago con tarjetas de crédito y débito"
+            alt={t("checkout.bannerAlt")}
           />
           <p>
-            El pago lo procesa Mercado Pago y también se rige por sus{" "}
-            <a href={MERCADO_PAGO_TERMS_URL} target="_blank" rel="noopener noreferrer">
-              términos y condiciones
-            </a>
-            . BoxLead no ve ni guarda los datos de tu tarjeta.
+            <Trans
+              t={t}
+              i18nKey="checkout.processor"
+              components={{ terms: <a href={MERCADO_PAGO_TERMS_URL} target="_blank" rel="noopener noreferrer" /> }}
+            />
           </p>
         </div>
 
@@ -232,10 +233,10 @@ export function CheckoutDialog({ plan, planCode, profileComplete, userEmail, onC
 
         <div className="dialog-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>
-            Cancelar
+            {t("cancel")}
           </button>
           <button type="submit" className="btn btn-primary" disabled={busy || legal.status !== "ready"}>
-            {busy ? "Abriendo Mercado Pago…" : "Ir a pagar"}
+            {busy ? t("checkout.opening") : t("checkout.pay")}
           </button>
         </div>
       </form>
