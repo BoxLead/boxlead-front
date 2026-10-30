@@ -1,6 +1,5 @@
 {
   "logout": "Log out",
-  "closeNotice": "Dismiss",
   "ui": {
     "cancel": "Cancel",
     "unread": ", {{count}} unread",
@@ -183,16 +182,5 @@
       "max": "You've reached the category limit. Delete one to create another.",
       "notFound": "This category no longer exists. Refresh the page."
     }
-  },
-  "routeError": {
-    "chunkTitle": "There's a new version of BoxLead",
-    "title": "This screen couldn't load",
-    "chunkHint": "Reload the page to keep going with the latest version.",
-    "hint": "Try again. If it happens again, write to support and tell us what you were doing.",
-    "reload": "Reload",
-    "retry": "Try again"
-  },
-  "announcer": {
-    "loaded": "{{page}}, page loaded"
   }
 }

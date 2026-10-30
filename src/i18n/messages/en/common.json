@@ -66,5 +66,17 @@
     "subscriptionActive": "Your subscription already gives you a plan, so you don't need the Beta. The invitation stays open.",
     "teamMember": "Your account belongs to the BoxLead team and you already have access, so you don't need the Beta. The invitation stays open.",
     "acceptFailed": "We couldn't activate the Beta. Try again in a while."
-  }
+  },
+  "routeError": {
+    "chunkTitle": "There's a new version of BoxLead",
+    "title": "This screen couldn't load",
+    "chunkHint": "Reload the page to keep going with the latest version.",
+    "hint": "Try again. If it happens again, write to support and tell us what you were doing.",
+    "reload": "Reload",
+    "retry": "Try again"
+  },
+  "announcer": {
+    "loaded": "{{page}}, page loaded"
+  },
+  "closeNotice": "Dismiss"
 }

@@ -17,13 +17,7 @@ function focusTarget(): HTMLElement | null {
 }
 
 function announcePage(page: string, show: (message: string) => void): void {
-  const say = () =>
-    show(i18next.exists("announcer.loaded", { ns: "shell" }) ? i18next.t("announcer.loaded", { ns: "shell", page }) : page);
-  if (i18next.hasLoadedNamespace("shell")) {
-    say();
-    return;
-  }
-  void i18next.loadNamespaces("shell").then(say, say);
+  show(i18next.t("announcer.loaded", { page }));
 }
 
 export function RouteAnnouncer() {
