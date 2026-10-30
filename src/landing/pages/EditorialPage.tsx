@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "react-router-dom";
 import { trackEvent } from "../../analytics/gtag";
 import { ArrowRightIcon, CheckIcon } from "../../components/icons/UiIcons";
 import { getPlatform } from "../../platforms";
@@ -9,22 +10,25 @@ import { FaqSection } from "../components/FaqSection";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { RollText } from "../components/RollText";
-import { EDITORIAL_PAGES, editorialPage, type EditorialPageData } from "../editorial";
+import { stripLanguage } from "../../i18n/languages";
+import { useLanguage, useLocalizedPath } from "../../i18n/useLanguage";
+import { editorialPage, editorialPages, type EditorialPageData } from "../editorial";
 import { useScrollReveal } from "../useScrollReveal";
 import "../LandingPage.css";
 import "./EditorialPage.css";
 
 const LOGO_SIZE = 56;
 
-function Related({ page }: { page: EditorialPageData }) {
-  const related = page.related.map((slug) => EDITORIAL_PAGES.find((candidate) => candidate.slug === slug)).filter(
+function Related({ page, pages }: { page: EditorialPageData; pages: EditorialPageData[] }) {
+  const { t } = useTranslation("channels");
+  const related = page.related.map((slug) => pages.find((candidate) => candidate.slug === slug)).filter(
     (candidate): candidate is EditorialPageData => candidate !== undefined,
   );
   return (
     <section className="landing-section editorial-related" aria-labelledby="editorial-related-heading">
       <div className="landing-container">
         <h2 className="editorial-related-heading" id="editorial-related-heading">
-          También con tus otros canales
+          {t("page.related")}
         </h2>
         <ul className="editorial-related-list">
           {related.map((item) => (
@@ -47,13 +51,18 @@ function Related({ page }: { page: EditorialPageData }) {
 
 export function EditorialPage() {
   const { pathname } = useLocation();
-  const page = editorialPage(pathname.replace(/\/+$/, "")) ?? EDITORIAL_PAGES[0];
+  const { t } = useTranslation("channels");
+  const { t: tl } = useTranslation("landing");
+  const language = useLanguage();
+  const localized = useLocalizedPath();
+  const pages = editorialPages(language);
+  const page = editorialPage(stripLanguage(pathname.replace(/\/+$/, "")), language) ?? pages[0];
   const platform = page.platform ? getPlatform(page.platform) : null;
 
   useEffect(() => {
     trackEvent("canal_visita", { canal: page.slug });
   }, [page.slug]);
-  useScrollReveal(page.slug);
+  useScrollReveal(page.path);
 
   return (
     <div className="landing editorial">
@@ -63,8 +72,8 @@ export function EditorialPage() {
         <section className="landing-section editorial-hero">
           <div className="hero-backdrop" aria-hidden="true" />
           <div className="landing-container editorial-hero-inner">
-            <nav className="editorial-crumbs" aria-label="Ubicación">
-              <Link to="/">Inicio</Link>
+            <nav className="editorial-crumbs" aria-label={t("page.crumbs")}>
+              <Link to={localized("/")}>{t("page.home")}</Link>
               <span aria-hidden="true">/</span>
               <span aria-current="page">{page.label}</span>
             </nav>
@@ -79,17 +88,17 @@ export function EditorialPage() {
                 <p className="editorial-lead">{page.lead}</p>
                 <div className="hero-actions">
                   <Link
-                    to="/register"
+                    to={localized("/register")}
                     className="landing-btn landing-btn-primary"
-                    onPointerEnter={() => void preloadRoute("/register")}
-                    onFocus={() => void preloadRoute("/register")}
+                    onPointerEnter={() => void preloadRoute(localized("/register"))}
+                    onFocus={() => void preloadRoute(localized("/register"))}
                     onClick={() => trackEvent("cta_registro", { ubicacion: page.slug })}
                   >
-                    <RollText>Empezar ahora</RollText>
+                    <RollText>{tl("actions.start")}</RollText>
                     <ArrowRightIcon width={18} height={18} />
                   </Link>
-                  <Link to="/#demo" className="landing-btn landing-btn-secondary">
-                    <RollText>Ver la demo</RollText>
+                  <Link to={localized("/#demo")} className="landing-btn landing-btn-secondary">
+                    <RollText>{tl("actions.watchDemo")}</RollText>
                   </Link>
                 </div>
               </div>
@@ -100,7 +109,7 @@ export function EditorialPage() {
         <section className="landing-section landing-section-alt editorial-body" aria-labelledby="editorial-capabilities-heading">
           <div className="landing-container">
             <div className="landing-section-head" data-reveal>
-              <span className="landing-section-label">Qué hace</span>
+              <span className="landing-section-label">{t("page.capabilitiesLabel")}</span>
               <h2 className="landing-section-title" id="editorial-capabilities-heading">
                 {page.capabilitiesHeading}
               </h2>
@@ -138,7 +147,7 @@ export function EditorialPage() {
         </section>
 
         <FaqSection faqs={page.faqs} />
-        <Related page={page} />
+        <Related page={page} pages={pages} />
         <CtaSection />
       </main>
       <Footer />

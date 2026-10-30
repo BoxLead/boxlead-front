@@ -1,6 +1,7 @@
+import { useTranslation } from "react-i18next";
+import { intlLocale } from "../../i18n/locale";
 import "./KineticBand.css";
 
-const actions = ["Lee", "Responde", "Califica", "Ordena"];
 const channels = ["WhatsApp", "Instagram", "Messenger", "MercadoLibre"];
 
 function Row({ words, hidden = false }: { words: string[]; hidden?: boolean }) {
@@ -17,10 +18,12 @@ function Row({ words, hidden = false }: { words: string[]; hidden?: boolean }) {
 }
 
 export function KineticBand() {
+  const { t } = useTranslation("landing");
+  const actions = t("kinetic.actions", { returnObjects: true });
   return (
-    <section className="kinetic" aria-label="Lo que hace tu agente en cada canal">
+    <section className="kinetic" aria-label={t("kinetic.label")}>
       <p className="visually-hidden">
-        {actions.join(", ").toLocaleLowerCase("es-AR")} en {channels.join(", ")}.
+        {t("kinetic.summary", { actions: actions.join(", ").toLocaleLowerCase(intlLocale()), channels: channels.join(", ") })}
       </p>
       <p className="kinetic-row kinetic-row-main" aria-hidden="true">
         <span className="kinetic-track">

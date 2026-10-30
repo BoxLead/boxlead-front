@@ -1,10 +1,13 @@
-import { EDITORIAL_PAGES } from "../landing/editorial";
-import { LANDING_FAQS } from "../landing/faq";
+import { i18n } from "../i18n";
+import { HTML_LANG, languageOfHtmlLang, LANGUAGES, type HtmlLang, type Language } from "../i18n/languages";
+import { localizedPath } from "../i18n/paths";
+import { editorialPages } from "../landing/editorial";
+import { landingFaqs } from "../landing/faq";
 import { PRODUCT_NAME } from "../util/company";
 import { normalizePath } from "./site";
 import { breadcrumbs, demoVideo, faqPage, organization, softwareApplication, webPage, webSite, type JsonLd } from "./structuredData";
 
-export type PageLanguage = "es-AR" | "en";
+export type PageLanguage = HtmlLang;
 
 export type Alternate = { lang: PageLanguage; path: string };
 
@@ -34,29 +37,54 @@ const LEGAL_ALTERNATES = {
   ],
 } satisfies Record<string, Alternate[]>;
 
-export const LANDING_TITLE = "Agente de IA que vende por WhatsApp, Instagram y MercadoLibre";
+function translations(basePath: string): Alternate[] {
+  return LANGUAGES.map((language) => ({ lang: HTML_LANG[language], path: localizedPath(basePath, language) }));
+}
 
-const editorialPages: PublicPage[] = EDITORIAL_PAGES.map((page) => ({
-  path: page.path,
-  title: page.title,
-  description: page.description,
-  lang: "es-AR",
-  index: true,
-  image: `/og/${page.slug}.png`,
-  imageAlt: page.heading,
-  changefreq: "monthly",
-  priority: 0.8,
-  source: "src/landing/editorial.ts",
-  jsonLd: () => [
-    webPage(page.path, page.title, page.description, "es-AR"),
-    breadcrumbs([{ name: "Inicio", path: "/" }, { name: page.label, path: page.path }]),
-    faqPage(page.faqs),
-  ],
-}));
+function homePage(language: Language): PublicPage {
+  const t = i18n.getFixedT(language, "seo");
+  const lang = HTML_LANG[language];
+  return {
+    jsonLd: () => [organization(), webSite(language), softwareApplication(language), demoVideo(language), faqPage(landingFaqs(language))],
+    path: localizedPath("/", language),
+    title: t("home.title"),
+    description: t("home.description"),
+    lang,
+    index: true,
+    alternates: translations("/"),
+    changefreq: "weekly",
+    priority: language === "es" ? 1 : 0.9,
+    source: "src/landing",
+  };
+}
+
+function channelPages(language: Language): PublicPage[] {
+  const home = i18n.getFixedT(language, "seo")("breadcrumbHome");
+  const lang = HTML_LANG[language];
+  return editorialPages(language).map((page) => ({
+    path: page.path,
+    title: page.title,
+    description: page.description,
+    lang,
+    index: true,
+    image: `/og/${page.slug}.png`,
+    imageAlt: page.heading,
+    alternates: translations(page.basePath),
+    changefreq: "monthly",
+    priority: language === "es" ? 0.8 : 0.7,
+    source: `src/i18n/messages/${language}/channels.json`,
+    jsonLd: () => [
+      webPage(page.path, page.title, page.description, lang),
+      breadcrumbs([{ name: home, path: localizedPath("/", language) }, { name: page.label, path: page.path }]),
+      faqPage(page.faqs),
+    ],
+  }));
+}
 
 function legalPage(path: string, title: string, description: string, lang: PageLanguage): () => JsonLd[] {
-  const home = lang === "en" ? "Home" : "Inicio";
-  return () => [webPage(path, title, description, lang), breadcrumbs([{ name: home, path: "/" }, { name: title, path }])];
+  const language = languageOfHtmlLang(lang);
+  const home = i18n.getFixedT(language, "seo")("breadcrumbHome");
+  return () => [webPage(path, title, description, lang), breadcrumbs([{ name: home, path: localizedPath("/", language) }, { name: title, path }])];
 }
 
 function page(definition: Omit<PublicPage, "jsonLd">): PublicPage {
@@ -64,19 +92,10 @@ function page(definition: Omit<PublicPage, "jsonLd">): PublicPage {
 }
 
 export const PUBLIC_PAGES: PublicPage[] = [
-  {
-    jsonLd: () => [organization(), webSite(), softwareApplication(), demoVideo(), faqPage(LANDING_FAQS)],
-    path: "/",
-    title: LANDING_TITLE,
-    description:
-      "Escalá tu negocio con un agente de IA que responde, califica y ordena en automático los leads de WhatsApp, Instagram, Messenger y MercadoLibre. Las 24 horas, por una suscripción mensual.",
-    lang: "es-AR",
-    index: true,
-    changefreq: "weekly",
-    priority: 1,
-    source: "src/landing",
-  },
-  ...editorialPages,
+  homePage("es"),
+  homePage("en"),
+  ...channelPages("es"),
+  ...channelPages("en"),
   page({
     path: "/terminos",
     title: "Términos y condiciones",

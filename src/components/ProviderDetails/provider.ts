@@ -16,8 +16,10 @@ export type Provider = {
   hours: string;
 };
 
+export type ProviderLabel = "legalName" | "taxId" | "address" | "email" | "hours";
+
 export type ProviderEntry = {
-  label: string;
+  label: ProviderLabel;
   value: string;
   href?: string;
 };
@@ -41,11 +43,11 @@ function filled(value: string): boolean {
 
 export function providerEntries(provider: Provider): ProviderEntry[] {
   const entries: ProviderEntry[] = [
-    { label: "Razón social", value: provider.legalName },
-    { label: "CUIT", value: provider.taxId },
-    { label: "Domicilio", value: provider.address },
-    { label: "Email de atención", value: provider.email, href: `mailto:${provider.email.trim()}` },
-    { label: "Horario de atención", value: provider.hours },
+    { label: "legalName", value: provider.legalName },
+    { label: "taxId", value: provider.taxId },
+    { label: "address", value: provider.address },
+    { label: "email", value: provider.email, href: `mailto:${provider.email.trim()}` },
+    { label: "hours", value: provider.hours },
   ];
   return entries
     .filter((entry) => filled(entry.value))

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HandoffIcon,
   MessageIcon,
@@ -8,44 +9,17 @@ import {
 } from "../../components/icons/UiIcons";
 import "./AgentFlow.css";
 
-type Stage = {
-  icon: ReactNode;
-  title: string;
-  description: string;
-};
-
-const stages: Stage[] = [
-  {
-    icon: <MessageIcon />,
-    title: "Lee",
-    description: "Entiende cada mensaje, en cualquier canal.",
-  },
-  {
-    icon: <SparkIcon />,
-    title: "Responde",
-    description: "Contesta al instante, con la información de tu negocio.",
-  },
-  {
-    icon: <TargetIcon />,
-    title: "Califica",
-    description: "Detecta quién está listo para comprar.",
-  },
-  {
-    icon: <PipelineIcon />,
-    title: "Ordena",
-    description: "Suma el lead a tu pipeline, con su historial completo.",
-  },
-];
+const ICONS: ReactNode[] = [<MessageIcon key="read" />, <SparkIcon key="reply" />, <TargetIcon key="qualify" />, <PipelineIcon key="organize" />];
 
 export function AgentFlow() {
+  const { t } = useTranslation("landing");
+  const stages = t("agentFlow.stages", { returnObjects: true }).map((stage, index) => ({ ...stage, icon: ICONS[index] }));
   return (
     <section id="agente" className="landing-section">
       <div className="landing-container">
         <div className="landing-section-head" data-reveal>
-          <span className="landing-section-label">El agente</span>
-          <h2 className="landing-section-title">
-            Lo que hace solo, con cada mensaje
-          </h2>
+          <span className="landing-section-label">{t("agentFlow.label")}</span>
+          <h2 className="landing-section-title">{t("agentFlow.title")}</h2>
         </div>
 
         <div className="agent-flow-wrap">
@@ -74,7 +48,7 @@ export function AgentFlow() {
 
         <p className="agent-flow-handoff" data-reveal>
           <HandoffIcon width={18} height={18} />
-          ¿Hace falta una persona? Te avisa y te deja el borrador listo.
+          {t("agentFlow.handoff")}
         </p>
       </div>
     </section>

@@ -1,9 +1,13 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { EmptyIllustration } from "../components/EmptyState/EmptyIllustration";
+import { useLocalizedPath } from "../i18n/useLanguage";
 import "./NotFound.css";
 
 export function NotFound({ inApp = false }: { inApp?: boolean }) {
+  const { t } = useTranslation();
+  const localized = useLocalizedPath();
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -19,30 +23,28 @@ export function NotFound({ inApp = false }: { inApp?: boolean }) {
         <EmptyIllustration kind="missing" />
       </span>
       <h1 className="not-found-title" tabIndex={-1} ref={heading}>
-        No encontramos esta página
+        {t("notFound.title")}
       </h1>
       <p className="not-found-hint">
-        {inApp
-          ? "El enlace puede estar mal escrito o la sección ya no existe."
-          : "El enlace puede estar mal escrito o la página ya no existe."}
+        {inApp ? t("notFound.hintSection") : t("notFound.hintPage")}
       </p>
       <div className="not-found-actions">
         {inApp ? (
           <>
             <Link to="/app/inbox" className="btn btn-primary">
-              Ir a la bandeja
+              {t("notFound.inbox")}
             </Link>
             <Link to="/app/leads" className="btn btn-secondary">
-              Ver leads
+              {t("notFound.leads")}
             </Link>
           </>
         ) : (
           <>
-            <Link to="/" className="btn btn-primary">
-              Ir al inicio
+            <Link to={localized("/")} className="btn btn-primary">
+              {t("notFound.home")}
             </Link>
-            <Link to="/login" className="btn btn-secondary">
-              Iniciar sesión
+            <Link to={localized("/login")} className="btn btn-secondary">
+              {t("notFound.signIn")}
             </Link>
           </>
         )}

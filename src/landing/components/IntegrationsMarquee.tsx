@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   WhatsAppIcon,
@@ -9,6 +10,7 @@ import {
   LinkedInIcon,
   GoogleAdsIcon,
 } from "../../components/icons/PlatformIcons";
+import { useLocalizedPath } from "../../i18n/useLanguage";
 import "./IntegrationsMarquee.css";
 
 type Platform = {
@@ -52,12 +54,13 @@ const platforms: Platform[] = [
 ];
 
 function MarqueeGroup({ hidden = false }: { hidden?: boolean }) {
+  const localized = useLocalizedPath();
   return (
     <ul className="marquee-group" aria-hidden={hidden || undefined}>
       {platforms.map((platform) => (
         <li className="marquee-item" key={platform.name}>
           {platform.to && !hidden ? (
-            <Link to={platform.to} className="marquee-link">
+            <Link to={localized(platform.to)} className="marquee-link">
               {platform.icon}
               <span>{platform.name}</span>
             </Link>
@@ -74,10 +77,11 @@ function MarqueeGroup({ hidden = false }: { hidden?: boolean }) {
 }
 
 export function IntegrationsMarquee() {
+  const { t } = useTranslation("landing");
   return (
     <section className="marquee-section" aria-labelledby="marquee-label">
       <p className="marquee-label" id="marquee-label">
-        Conectado con las plataformas donde están tus clientes
+        {t("marquee.label")}
       </p>
       <div className="marquee-viewport">
         <div className="marquee-track">

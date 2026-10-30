@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { titleWithBadge, useAppTitle, useTitleBadge } from "../hooks/useDocumentTitle";
+import { languageOfHtmlLang } from "../i18n/languages";
 import { PRODUCT_NAME } from "../util/company";
 import { serializeJsonLd } from "./jsonLd";
 import { pageFor, pageTitle, type PublicPage } from "./pages";
@@ -12,6 +14,7 @@ export function RouteMeta() {
   const appTitle = useAppTitle();
   const badge = useTitleBadge();
   const page = pageFor(pathname);
+  const { t } = useTranslation("seo", { lng: languageOfHtmlLang(page?.lang ?? "es-AR") });
   if (!page) {
     return (
       <>
@@ -24,7 +27,7 @@ export function RouteMeta() {
   const title = appTitle ? `${appTitle} · ${PRODUCT_NAME}` : pageTitle(page);
   const url = absoluteUrl(page.path);
   const image = absoluteUrl(page.image ?? DEFAULT_OG_IMAGE);
-  const imageAlt = page.imageAlt ?? `${PRODUCT_NAME}, agentes de IA para ventas`;
+  const imageAlt = page.imageAlt ?? t("imageAlt");
   const alternates = page.alternates ?? [];
   const graph = page.jsonLd?.() ?? [];
 

@@ -13,20 +13,14 @@ const complete = {
 
 describe("provider details", () => {
   it("shows every field that has a value", () => {
-    expect(providerEntries(complete).map((entry) => entry.label)).toEqual([
-      "Razón social",
-      "CUIT",
-      "Domicilio",
-      "Email de atención",
-      "Horario de atención",
-    ]);
+    expect(providerEntries(complete).map((entry) => entry.label)).toEqual(["legalName", "taxId", "address", "email", "hours"]);
   });
 
   it("leaves out the fields that are still empty", () => {
     const entries = providerEntries({ ...complete, taxId: "", address: "  ", hours: "" });
     expect(entries).toEqual([
-      { label: "Razón social", value: "Catvin SRL" },
-      { label: "Email de atención", value: "support@boxlead.app", href: "mailto:support@boxlead.app" },
+      { label: "legalName", value: "Catvin SRL" },
+      { label: "email", value: "support@boxlead.app", href: "mailto:support@boxlead.app" },
     ]);
   });
 

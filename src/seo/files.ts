@@ -2,7 +2,7 @@ import { CONNECTABLE_PLATFORMS } from "../platforms";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../util/company";
 import { pageTitle, PUBLIC_PAGES, type PublicPage } from "./pages";
 import { absoluteUrl, SITE_ORIGIN } from "./site";
-import { PRODUCT_DESCRIPTION } from "./structuredData";
+import { productDescription } from "./structuredData";
 
 export type SitemapEntry = { page: PublicPage; lastmod: string };
 
@@ -49,7 +49,7 @@ export function buildLlms(): string {
   return [
     `# ${PRODUCT_NAME}`,
     "",
-    `> ${PRODUCT_DESCRIPTION}`,
+    `> ${productDescription("es")}`,
     "",
     `${PRODUCT_NAME} es una marca de ${LEGAL_ENTITY_NAME}, una empresa argentina. El producto se ofrece en castellano rioplatense para pymes, community managers y agencias de Argentina y Latinoamérica. Se contrata por suscripción mensual y no publica precios en el sitio.`,
     "",
