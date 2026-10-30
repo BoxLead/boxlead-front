@@ -1,11 +1,11 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { revokeAllSessions } from "../../data/account";
 import { clearQueryCache } from "../../data/queryCache";
 import { loginPathFor } from "../../util/redirect";
+import { AccountRow } from "./AccountRow";
 
 export function SessionsSection() {
-  const id = useId();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,23 +25,20 @@ export function SessionsSection() {
   }
 
   return (
-    <section className="panel account-section" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="panel-title">
-        Sesiones
-      </h2>
-      <p className="account-note">
-        Cerrá la sesión en todos los dispositivos donde entraste, este incluido. Vas a tener que volver a entrar.
-      </p>
+    <AccountRow
+      title="Sesiones"
+      description="Cerrá la sesión en todos los dispositivos donde entraste, este incluido. Vas a tener que volver a entrar."
+      action={
+        <button type="button" className="btn btn-secondary" onClick={() => setConfirming(true)}>
+          Cerrar sesión en todos los dispositivos
+        </button>
+      }
+    >
       {error ? (
         <p className="form-error" role="alert">
           {error}
         </p>
       ) : null}
-      <div className="account-actions">
-        <button type="button" className="btn btn-secondary" onClick={() => setConfirming(true)}>
-          Cerrar sesión en todos los dispositivos
-        </button>
-      </div>
       <ConfirmDialog
         open={confirming}
         title="¿Cerrar sesión en todos los dispositivos?"
@@ -52,6 +49,6 @@ export function SessionsSection() {
       >
         Vas a salir de BoxLead en todos lados, también acá.
       </ConfirmDialog>
-    </section>
+    </AccountRow>
   );
 }

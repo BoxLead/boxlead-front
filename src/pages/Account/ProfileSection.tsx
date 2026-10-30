@@ -3,6 +3,7 @@ import type { AccountView } from "../../api/types";
 import { useToast } from "../../components/ui/toast";
 import { useAuth } from "../../context/auth";
 import { renameAccount } from "../../data/account";
+import { AccountRow } from "./AccountRow";
 
 const MAX_NAME_LENGTH = 100;
 
@@ -31,13 +32,10 @@ export function ProfileSection({ account }: { account: AccountView }) {
   }
 
   return (
-    <section className="panel account-section" aria-labelledby={`${inputId}-title`}>
-      <h2 id={`${inputId}-title`} className="panel-title">
-        Tus datos
-      </h2>
+    <AccountRow title="Nombre" description="Así te mostramos en BoxLead y en los mails que te mandamos.">
       <form className="account-form" onSubmit={save}>
-        <div className="field">
-          <label className="field-label" htmlFor={inputId}>
+        <div className="account-inline">
+          <label className="visually-hidden" htmlFor={inputId}>
             Nombre
           </label>
           <input
@@ -49,18 +47,16 @@ export function ProfileSection({ account }: { account: AccountView }) {
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
+          <button type="submit" className="btn btn-primary" disabled={saving || unchanged}>
+            {saving ? "Guardando…" : "Guardar"}
+          </button>
         </div>
         {error ? (
           <p className="form-error" role="alert">
             {error}
           </p>
         ) : null}
-        <div className="account-actions">
-          <button type="submit" className="btn btn-primary" disabled={saving || unchanged}>
-            {saving ? "Guardando…" : "Guardar"}
-          </button>
-        </div>
       </form>
-    </section>
+    </AccountRow>
   );
 }

@@ -12,15 +12,17 @@ export function DeleteAccountSection({ account }: { account: AccountView }) {
   const [open, setOpen] = useState(() => searchParams.get(DELETE_PARAM) === "1" && peekReauthToken() !== null);
 
   return (
-    <section className="panel account-section account-danger" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="panel-title">
-        Borrar la cuenta
-      </h2>
-      <p className="account-note">
-        Borramos tus conexiones, leads, conversaciones y agentes, y no se pueden recuperar. Guardamos solo lo que la ley
-        nos pide conservar, como facturas y pagos.
-      </p>
-      <div className="account-actions">
+    <section className="panel account-group account-danger" aria-labelledby={id}>
+      <div className="account-group-head">
+        <div className="account-group-text">
+          <h2 id={id} className="panel-title">
+            Borrar la cuenta
+          </h2>
+          <p className="account-group-desc">
+            Borramos tus conexiones, leads, conversaciones y agentes, y no se pueden recuperar. Guardamos solo lo que
+            la ley nos pide conservar, como facturas y pagos.
+          </p>
+        </div>
         <button type="button" className="btn btn-danger" onClick={() => setOpen(true)}>
           Borrar la cuenta
         </button>

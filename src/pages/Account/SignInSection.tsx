@@ -1,17 +1,12 @@
 import { type FormEvent, useId, useState } from "react";
 import { ApiError } from "../../api/client";
 import { apiErrorCode } from "../../api/errors";
-import type { AccountView, SignInProvider } from "../../api/types";
+import type { AccountView } from "../../api/types";
 import { useToast } from "../../components/ui/toast";
 import { changePassword } from "../../data/account";
+import { AccountRow } from "./AccountRow";
 
 const MIN_PASSWORD_LENGTH = 8;
-
-const PROVIDER_LABELS: Record<SignInProvider, string> = {
-  GOOGLE: "Google",
-  FACEBOOK: "Facebook",
-  OTHER: "Otro proveedor",
-};
 
 function passwordError(error: unknown): string {
   if (apiErrorCode(error) === "WRONG_PASSWORD") return "La contraseña actual no es correcta.";
@@ -30,10 +25,6 @@ export function SignInSection({ account }: { account: AccountView }) {
   const [next, setNext] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const methods = [
-    ...(account.hasPassword ? ["Email y contraseña"] : []),
-    ...account.providers.map((provider) => PROVIDER_LABELS[provider]),
-  ];
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,56 +43,65 @@ export function SignInSection({ account }: { account: AccountView }) {
     }
   }
 
+  if (!account.hasPassword) {
+    return (
+      <AccountRow
+        title="Contraseña"
+        description="Tu cuenta no tiene contraseña. Entrás con el mismo botón con el que la creaste."
+      />
+    );
+  }
+
   return (
-    <section className="panel account-section" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="panel-title">
-        Cómo entrás
-      </h2>
-      <ul className="account-methods" aria-label="Formas de entrar">
-        {methods.map((method) => (
-          <li key={method} className="account-method">
-            {method}
-          </li>
-        ))}
-      </ul>
-      {!account.hasPassword ? (
-        <p className="account-note">Tu cuenta no tiene contraseña. Entrás con el mismo botón con el que la creaste.</p>
-      ) : editing ? (
+    <AccountRow
+      title="Contraseña"
+      description="Al cambiarla cerramos las sesiones de los otros dispositivos."
+      action={
+        editing ? null : (
+          <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
+            Cambiar la contraseña
+          </button>
+        )
+      }
+    >
+      {editing ? (
         <form className="account-form" onSubmit={submit}>
-          <div className="field">
-            <label className="field-label" htmlFor={`${id}-current`}>
-              Contraseña actual
-            </label>
-            <input
-              id={`${id}-current`}
-              className="input"
-              type="password"
-              name="currentPassword"
-              autoComplete="current-password"
-              required
-              value={current}
-              onChange={(event) => setCurrent(event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label className="field-label" htmlFor={`${id}-next`}>
-              Contraseña nueva
-            </label>
-            <input
-              id={`${id}-next`}
-              className="input"
-              type="password"
-              name="newPassword"
-              autoComplete="new-password"
-              required
-              minLength={MIN_PASSWORD_LENGTH}
-              aria-describedby={`${id}-hint`}
-              value={next}
-              onChange={(event) => setNext(event.target.value)}
-            />
-            <span id={`${id}-hint`} className="field-help">
-              Al menos {MIN_PASSWORD_LENGTH} caracteres. Al guardarla cerramos las sesiones de los otros dispositivos.
-            </span>
+          <div className="account-fields">
+            <div className="field">
+              <label className="field-label" htmlFor={`${id}-current`}>
+                Contraseña actual
+              </label>
+              <input
+                id={`${id}-current`}
+                className="input"
+                type="password"
+                name="currentPassword"
+                autoComplete="current-password"
+                required
+                value={current}
+                onChange={(event) => setCurrent(event.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label className="field-label" htmlFor={`${id}-next`}>
+                Contraseña nueva
+              </label>
+              <input
+                id={`${id}-next`}
+                className="input"
+                type="password"
+                name="newPassword"
+                autoComplete="new-password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                aria-describedby={`${id}-hint`}
+                value={next}
+                onChange={(event) => setNext(event.target.value)}
+              />
+              <span id={`${id}-hint`} className="field-help">
+                Al menos {MIN_PASSWORD_LENGTH} caracteres.
+              </span>
+            </div>
           </div>
           {error ? (
             <p className="form-error" role="alert">
@@ -117,13 +117,7 @@ export function SignInSection({ account }: { account: AccountView }) {
             </button>
           </div>
         </form>
-      ) : (
-        <div className="account-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
-            Cambiar la contraseña
-          </button>
-        </div>
-      )}
-    </section>
+      ) : null}
+    </AccountRow>
   );
 }

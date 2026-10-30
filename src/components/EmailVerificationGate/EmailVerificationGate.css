@@ -1,6 +1,15 @@
 .email-gate {
   display: flex;
+  align-items: center;
   justify-content: center;
+  min-height: calc(100vh - var(--signal-space-20));
+}
+
+@media (max-width: 760px) {
+  .email-gate {
+    align-items: flex-start;
+    min-height: 0;
+  }
 }
 
 .email-gate-panel {
