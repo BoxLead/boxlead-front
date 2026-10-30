@@ -1,8 +1,10 @@
+import i18next from "i18next";
 import { ApiError } from "../api/client";
 import { apiErrorCode } from "../api/errors";
 
-export const INVITATION_INVALID_MESSAGE =
-  "Este link de invitación no sirve. Puede que haya vencido, que ya se haya usado o que lo hayan revocado. Pedile uno nuevo a quien te invitó.";
+export function invitationInvalidMessage(): string {
+  return i18next.t("invitationErrors.invalid");
+}
 
 export function readInvitationToken(hash: string): string | null {
   const token = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -13,15 +15,13 @@ export function acceptInvitationError(error: unknown, invitedEmail: string | nul
   const code = apiErrorCode(error);
   if (code === "INVITATION_EMAIL_MISMATCH") {
     return invitedEmail
-      ? `Esta invitación es para ${invitedEmail}. Salí y entrá con ese email para activar la Beta.`
-      : "Esta invitación es para otro email. Salí y entrá con el email invitado para activar la Beta.";
+      ? i18next.t("invitationErrors.emailMismatch", { email: invitedEmail })
+      : i18next.t("invitationErrors.otherEmail");
   }
-  if (code === "DEMO_ALREADY_USED") return "Ya usaste la Beta con esta cuenta. Elegí un plan para seguir.";
-  if (code === "DEMO_SUBSCRIPTION_ACTIVE") return "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.";
-  if (code === "DEMO_TEAM_MEMBER") {
-    return "Tu cuenta es del equipo de BoxLead y ya tenés acceso, así que no necesitás la Beta. La invitación sigue abierta.";
-  }
-  if (code === "INVITATION_INVALID") return INVITATION_INVALID_MESSAGE;
+  if (code === "DEMO_ALREADY_USED") return i18next.t("invitationErrors.demoUsed");
+  if (code === "DEMO_SUBSCRIPTION_ACTIVE") return i18next.t("invitationErrors.subscriptionActive");
+  if (code === "DEMO_TEAM_MEMBER") return i18next.t("invitationErrors.teamMember");
+  if (code === "INVITATION_INVALID") return invitationInvalidMessage();
   if (error instanceof ApiError && error.status === 429) return error.message;
-  return "No pudimos activar la Beta. Probá de nuevo en un rato.";
+  return i18next.t("invitationErrors.acceptFailed");
 }

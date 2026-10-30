@@ -1,4 +1,5 @@
 import { type FormEvent, useId, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { trackEvent } from "../../analytics/gtag";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
@@ -6,6 +7,7 @@ import { PasswordField } from "../../components/AuthLayout/PasswordField";
 import { SocialButtons } from "../../components/AuthLayout/SocialButtons";
 import { PlanPicker } from "../../components/PlanPicker/PlanPicker";
 import { useAuth } from "../../context/auth";
+import { RichText } from "../../i18n/RichText";
 import {
   choiceFromQuery,
   hasChoices,
@@ -16,8 +18,6 @@ import {
 } from "../../data/plans";
 
 const MIN_PASSWORD_LENGTH = 8;
-const PLAN_REQUIRED = "Elegí un plan para seguir.";
-const LEGAL_REQUIRED = "Aceptá los términos y la política de privacidad para seguir.";
 
 type RegisterFormProps = {
   options: SignupOptions;
@@ -26,6 +26,7 @@ type RegisterFormProps = {
 };
 
 export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
+  const { t } = useTranslation("auth");
   const { plans, invitation, legal } = options;
   const { register, isLoading, error, clearError } = useAuth();
   const invitedEmail = plans?.beta && invitation.status === "valid" ? invitation.invitation.email : null;
@@ -96,8 +97,8 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
 
   return (
     <AuthLayout>
-      <h1 className="auth-title">Crear cuenta</h1>
-      <p className="auth-subtitle">Empezá a usar BoxLead en minutos.</p>
+      <h1 className="auth-title">{t("register.title")}</h1>
+      <p className="auth-subtitle">{t("register.subtitle")}</p>
       {plans ? (
         <PlanPicker
           ref={pickerRef}
@@ -105,13 +106,11 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
           invitation={invitation}
           value={choice}
           onChange={choose}
-          error={planError ? PLAN_REQUIRED : null}
+          error={planError ? t("register.planRequired") : null}
         />
       ) : null}
       {isPaidPlan(choice) ? (
-        <p className="auth-hint auth-plan-hint">
-          Después de crear la cuenta te pedimos los datos de facturación y pagás con Mercado Pago.
-        </p>
+        <p className="auth-hint auth-plan-hint">{t("register.paidHint")}</p>
       ) : null}
       {mustAccept ? (
         <div className="auth-consent">
@@ -126,20 +125,19 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
               onChange={(e) => toggleLegal(e.target.checked)}
             />
             <span>
-              Leí y acepto los{" "}
-              <a href={legal.termsUrl} target="_blank" rel="noopener noreferrer">
-                Términos y condiciones
-              </a>{" "}
-              y la{" "}
-              <a href={legal.privacyUrl} target="_blank" rel="noopener noreferrer">
-                Política de privacidad
-              </a>
-              .
+              <Trans
+                t={t}
+                i18nKey="register.accept"
+                components={{
+                  terms: <a href={legal.termsUrl} target="_blank" rel="noopener noreferrer" />,
+                  privacy: <a href={legal.privacyUrl} target="_blank" rel="noopener noreferrer" />,
+                }}
+              />
             </span>
           </label>
           {legalError ? (
             <p className="form-error" id={legalErrorId} role="alert">
-              {LEGAL_REQUIRED}
+              {t("register.legalRequired")}
             </p>
           ) : null}
         </div>
@@ -153,7 +151,7 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
         ) : null}
         <label className="auth-label">
           <span>
-            Nombre <span className="auth-optional">(opcional)</span>
+            {t("fields.name")} <span className="auth-optional">{t("fields.optional")}</span>
           </span>
           <input
             className="auth-input"
@@ -165,13 +163,13 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
           />
         </label>
         <label className="auth-label">
-          Email
+          {t("fields.email")}
           <input
             className="auth-input"
             type="email"
             name="email"
             autoComplete="email"
-            placeholder="vos@tuempresa.com"
+            placeholder={t("fields.emailPlaceholder")}
             required
             readOnly={invitedEmail !== null}
             aria-describedby={invitedEmail ? emailHintId : undefined}
@@ -180,30 +178,28 @@ export function RegisterForm({ options, next, planParam }: RegisterFormProps) {
           />
           {invitedEmail ? (
             <span className="auth-hint" id={emailHintId}>
-              Es el email de tu invitación y no se puede cambiar.
+              {t("register.invitedEmail")}
             </span>
           ) : null}
         </label>
         <PasswordField
           autoComplete="new-password"
           minLength={MIN_PASSWORD_LENGTH}
-          hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`}
+          hint={t("password.minimum", { count: MIN_PASSWORD_LENGTH })}
           value={password}
           onChange={setPassword}
         />
         <button className="auth-submit" type="submit" disabled={isLoading}>
-          {isLoading ? "Creando cuenta…" : "Crear cuenta"}
+          {isLoading ? t("register.submitting") : t("register.submit")}
         </button>
       </form>
       {mustAccept ? null : (
         <p className="auth-terms">
-          Al crear tu cuenta aceptás los{" "}
-          <Link to="/terms-of-service">Términos de servicio</Link> y la{" "}
-          <Link to="/privacy-policy">Política de privacidad</Link>.
+          <RichText text={t("register.terms")} />
         </p>
       )}
       <p className="auth-footer">
-        ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
+        {t("register.haveAccount")} <Link to="/login">{t("register.signIn")}</Link>
       </p>
     </AuthLayout>
   );

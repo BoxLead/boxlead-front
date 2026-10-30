@@ -5,10 +5,10 @@ import { setCurrentLanguage } from "./locale";
 
 type MessageModule = { default: ResourceKey };
 
-export const BUNDLED_NAMESPACES = ["common", "landing", "channels", "seo"] as const;
+export const BUNDLED_NAMESPACES = ["common", "landing", "channels", "seo", "auth"] as const;
 
-const bundled = import.meta.glob<MessageModule>("./messages/*/{common,landing,channels,seo}.json", { eager: true });
-const lazy = import.meta.glob<MessageModule>(["./messages/*/*.json", "!./messages/*/{common,landing,channels,seo}.json"]);
+const bundled = import.meta.glob<MessageModule>("./messages/*/{common,landing,channels,seo,auth}.json", { eager: true });
+const lazy = import.meta.glob<MessageModule>(["./messages/*/*.json", "!./messages/*/{common,landing,channels,seo,auth}.json"]);
 
 function messageFile(language: string, namespace: string): string {
   return `./messages/${language}/${namespace}.json`;

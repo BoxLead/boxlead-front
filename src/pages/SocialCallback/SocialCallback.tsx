@@ -1,3 +1,5 @@
+import i18next from "i18next";
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -8,15 +10,14 @@ import { readAcceptedLegal } from "../../util/legalAcceptance";
 import { safeAppPath } from "../../util/redirect";
 import "./SocialCallback.css";
 
-const FAILURE_MESSAGE = "No pudimos iniciar sesión con tu cuenta. Probá de nuevo.";
-const CANCELLED_MESSAGE = "Cancelaste el inicio de sesión. Podés intentarlo de nuevo cuando quieras.";
 
 function failureMessage(error: unknown): string {
   const code = error instanceof Error && "error" in error ? error.error : null;
-  return code === "access_denied" ? CANCELLED_MESSAGE : FAILURE_MESSAGE;
+  return code === "access_denied" ? i18next.t("socialCallback.cancelled", { ns: "auth" }) : i18next.t("socialCallback.failed", { ns: "auth" });
 }
 
 export function SocialCallback() {
+  const { t } = useTranslation("auth");
   const { handleRedirectCallback, getIdTokenClaims, logout: clearProviderSession } = useAuth0();
   const { socialLogin, error: sessionError } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export function SocialCallback() {
         const claims = await getIdTokenClaims();
         void clearProviderSession({ openUrl: false });
         if (!claims?.__raw) {
-          setFailure(FAILURE_MESSAGE);
+          setFailure(i18next.t("socialCallback.failed", { ns: "auth" }));
           return;
         }
         if (appState?.intent === REAUTH_INTENT) {
@@ -59,12 +60,12 @@ export function SocialCallback() {
   if (message) {
     return (
       <AuthLayout>
-        <h1 className="auth-title">No pudimos iniciar sesión</h1>
+        <h1 className="auth-title">{t("socialCallback.failedTitle")}</h1>
         <p className="auth-error social-callback-msg" role="alert">
           {message}
         </p>
         <Link to="/login" className="btn btn-primary social-callback-btn">
-          Volver a iniciar sesión
+          {t("socialCallback.backToLogin")}
         </Link>
       </AuthLayout>
     );
@@ -72,11 +73,11 @@ export function SocialCallback() {
 
   return (
     <AuthLayout>
-      <h1 className="auth-title">Iniciando sesión</h1>
-      <p className="auth-subtitle">Estamos verificando tu cuenta. Tarda unos segundos.</p>
+      <h1 className="auth-title">{t("socialCallback.title")}</h1>
+      <p className="auth-subtitle">{t("socialCallback.subtitle")}</p>
       <div className="social-callback-spinner" role="status">
         <span className="spinner" />
-        <span className="visually-hidden">Iniciando sesión…</span>
+        <span className="visually-hidden">{t("socialCallback.loading")}</span>
       </div>
     </AuthLayout>
   );

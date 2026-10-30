@@ -1,10 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { LegalVersion } from "../../api/types";
 import { useSocialLogin } from "../../hooks/useSocialLogin";
 import type { SocialProvider } from "../../util/social";
 import { SocialIcon } from "../icons/SocialIcons";
-
-const START_ERROR = "No pudimos abrir el inicio de sesión. Probá de nuevo.";
 
 type SocialButtonsProps = {
   next: string;
@@ -13,6 +12,7 @@ type SocialButtonsProps = {
 };
 
 export function SocialButtons({ next, acceptedLegal, canStart }: SocialButtonsProps) {
+  const { t } = useTranslation("auth");
   const { enabled, providers, start } = useSocialLogin();
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function SocialButtons({ next, acceptedLegal, canStart }: SocialButtonsPr
       await start(provider, next, acceptedLegal);
     } catch {
       setStarting(null);
-      setError(START_ERROR);
+      setError(t("social.startError"));
     }
   }
 
@@ -48,12 +48,12 @@ export function SocialButtons({ next, acceptedLegal, canStart }: SocialButtonsPr
             onClick={() => void handleClick(provider)}
           >
             <SocialIcon provider={provider.id} />
-            Continuar con {provider.name}
+            {t("social.continue", { provider: provider.name })}
           </button>
         ))}
       </div>
       <div className="auth-divider" role="separator">
-        <span>o con tu email</span>
+        <span>{t("social.divider")}</span>
       </div>
     </>
   );

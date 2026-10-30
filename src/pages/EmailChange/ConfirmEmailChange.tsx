@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { isInvalidLink, isRateLimited, takeFragmentToken } from "../../util/fragmentToken";
@@ -8,6 +9,7 @@ import { confirmEmailChange } from "../../data/account";
 type Step = "checking" | "done" | "invalid" | "limited" | "error";
 
 export function ConfirmEmailChange() {
+  const { t } = useTranslation("auth");
   const [step, setStep] = useState<Step>("checking");
   const taken = useRef<string | null | undefined>(undefined);
   const [attempt, setAttempt] = useState(0);
@@ -32,43 +34,42 @@ export function ConfirmEmailChange() {
 
   return (
     <AuthLayout>
-      <h1 className="auth-title">Confirmar el email nuevo</h1>
+      <h1 className="auth-title">{t("emailChange.title")}</h1>
       {step === "checking" ? <Loading inline /> : null}
       {step === "done" ? (
         <div className="auth-stack">
           <p className="auth-notice" role="status">
-            Listo, tu cuenta ahora usa el email nuevo. Desde ahora entrás con ese email.
+            {t("emailChange.done")}
           </p>
           <Link className="auth-submit auth-action" to="/app/inbox">
-            Ir a BoxLead
+            {t("confirm.goToApp")}
           </Link>
         </div>
       ) : null}
       {step === "invalid" ? (
         <div className="auth-stack">
           <p className="auth-notice" role="alert">
-            Este link no sirve. Puede que haya vencido, que ya lo hayas usado, que hayas pedido otro después o que ese
-            email ya esté en otra cuenta. Podés pedir el cambio de nuevo desde tu cuenta.
+            {t("emailChange.invalid")}
           </p>
           <Link className="auth-submit auth-action" to="/app/inbox">
-            Entrar a BoxLead
+            {t("confirm.enterApp")}
           </Link>
         </div>
       ) : null}
       {step === "limited" ? (
         <div className="auth-stack">
           <p className="auth-notice" role="alert">
-            Hiciste demasiados intentos seguidos. Esperá unos minutos y probá de nuevo, el link sigue sirviendo.
+            {t("confirm.limited")}
           </p>
           <button type="button" className="auth-submit" onClick={retry}>
-            Probar de nuevo
+            {t("confirm.retry")}
           </button>
         </div>
       ) : null}
       {step === "error" ? (
         <div className="auth-stack">
           <p className="auth-notice" role="alert">
-            No pudimos confirmar tu email. Revisá tu conexión y abrí el link de nuevo.
+            {t("confirm.failed")}
           </p>
         </div>
       ) : null}

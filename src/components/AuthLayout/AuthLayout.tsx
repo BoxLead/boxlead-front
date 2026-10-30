@@ -1,25 +1,19 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useLocalizedPath } from "../../i18n/useLanguage";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
-import { Logo } from "../Logo/Logo";
-import "./AuthLayout.css";
+import { AuthFrame } from "./AuthFrame";
 
 export function AuthLayout({ children }: { children: ReactNode }) {
+  const { t } = useTranslation("auth");
+  const localized = useLocalizedPath();
   return (
-    <div className="auth-layout">
-      <Link
-        to="/"
-        className="auth-brand"
-        aria-label={`${PRODUCT_NAME} — inicio`}
-      >
-        <Logo />
-      </Link>
-
-      <main className="auth-shell">{children}</main>
-
-      <p className="auth-legal">
-        {PRODUCT_NAME} es una marca de {LEGAL_ENTITY_NAME}.
-      </p>
-    </div>
+    <AuthFrame
+      homeLabel={t("layout.home", { product: PRODUCT_NAME })}
+      homePath={localized("/")}
+      legal={t("layout.legal", { product: PRODUCT_NAME, entity: LEGAL_ENTITY_NAME })}
+    >
+      {children}
+    </AuthFrame>
   );
 }

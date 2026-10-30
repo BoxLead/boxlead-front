@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../api/client";
-import { acceptInvitationError, INVITATION_INVALID_MESSAGE, readInvitationToken } from "./invitation";
+import { acceptInvitationError, invitationInvalidMessage, readInvitationToken } from "./invitation";
 
 describe("readInvitationToken", () => {
   it("reads the token from the fragment", () => {
@@ -20,7 +20,7 @@ describe("acceptInvitationError", () => {
     expect(acceptInvitationError(coded(409, "DEMO_ALREADY_USED"), null)).toBe(
       "Ya usaste la Beta con esta cuenta. Elegí un plan para seguir.",
     );
-    expect(acceptInvitationError(coded(410, "INVITATION_INVALID"), null)).toBe(INVITATION_INVALID_MESSAGE);
+    expect(acceptInvitationError(coded(410, "INVITATION_INVALID"), null)).toBe(invitationInvalidMessage());
     expect(acceptInvitationError(coded(409, "DEMO_SUBSCRIPTION_ACTIVE"), null)).toBe(
       "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.",
     );
