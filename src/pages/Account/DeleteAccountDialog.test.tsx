@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AccountView } from "../../api/types";
 import { clearReauthToken, keepReauthToken } from "../../data/reauth";
+import { i18n } from "../../i18n";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -93,5 +94,19 @@ describe("delete account dialog", () => {
     await userEvent.type(screen.getByLabelText("Escribí BORRAR para confirmar"), "BORRAR");
     await userEvent.click(screen.getByRole("button", { name: "Borrar mi cuenta", hidden: true }));
     expect(sentBody()).toEqual({ idToken: "id-token", confirmation: "BORRAR" });
+  });
+
+  it("reads in English and keeps the confirmation word", async () => {
+    await i18n.changeLanguage("en");
+    fetchMock.mockResolvedValueOnce(json({ error: "Conflict", message: "x", code: "SUBSCRIPTION_OPEN" }, 409));
+    renderDialog(PASSWORD_ACCOUNT);
+    expect(screen.getByRole("heading", { name: "Delete your account?", hidden: true })).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Your password"), "clave");
+    await userEvent.type(screen.getByLabelText("Type BORRAR to confirm"), "BORRAR");
+    await userEvent.click(screen.getByRole("button", { name: "Delete my account", hidden: true }));
+    expect(await screen.findByRole("alert", { hidden: true })).toHaveTextContent(
+      "Cancel your subscription first. Then you'll be able to delete your account. Request cancellation",
+    );
+    expect(sentBody()).toEqual({ password: "clave", confirmation: "BORRAR" });
   });
 });

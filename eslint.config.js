@@ -9,11 +9,7 @@ import { noLiteralText } from './eslint/noLiteralText.js'
 const I18N_PENDING = [
   'src/components/EmptyState/**',
   'src/components/Logo/**',
-  'src/components/NotificationSettings/**',
-  'src/components/Notifications/**',
   'src/components/icons/**',
-  'src/pages/Account/**',
-  'src/pages/Notifications/**',
 ]
 
 const UNTRANSLATED_NAMES = ['BoxLead', 'WhatsApp', 'WhatsApp Business', 'Instagram', 'Messenger', 'MercadoLibre', 'Facebook', 'Google', 'TikTok', 'LinkedIn', 'Google Ads', 'Meta', '24/7']

@@ -1,4 +1,6 @@
+import type { TFunction } from "i18next";
 import { type FormEvent, useId, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import { apiErrorCode } from "../../api/errors";
 import type { AccountView } from "../../api/types";
@@ -8,16 +10,17 @@ import { ACCOUNT_KEY, changeEmail } from "../../data/account";
 import { invalidateQueries } from "../../data/queryCache";
 import { AccountRow } from "./AccountRow";
 
-function emailError(error: unknown): string {
+function emailError(t: TFunction<"account">, error: unknown): string {
   const code = apiErrorCode(error);
-  if (code === "WRONG_PASSWORD") return "La contraseña no es correcta.";
-  if (code === "SAME_EMAIL") return "Ese ya es el email de tu cuenta.";
+  if (code === "WRONG_PASSWORD") return t("wrongPassword");
+  if (code === "SAME_EMAIL") return t("email.sameEmail");
   if (error instanceof ApiError && error.status === 429) return error.message;
-  if (error instanceof ApiError && error.status === 400) return "Revisá el email nuevo.";
-  return "No pudimos pedir el cambio. Probá de nuevo.";
+  if (error instanceof ApiError && error.status === 400) return t("email.invalid");
+  return t("email.failed");
 }
 
 export function EmailSection({ account }: { account: AccountView }) {
+  const { t } = useTranslation("account");
   const id = useId();
   const { user } = useAuth();
   const canChange = account.hasPassword && user?.account?.emailChange === true;
@@ -41,24 +44,22 @@ export function EmailSection({ account }: { account: AccountView }) {
       setNewEmail("");
       void invalidateQueries(ACCOUNT_KEY);
     } catch (failure) {
-      setError(emailError(failure));
+      setError(emailError(t, failure));
     } finally {
       setSaving(false);
     }
   }
 
-  const description = !account.hasPassword
-    ? "Viene de la cuenta con la que entrás, así que se cambia desde ahí."
-    : "Es con el que entrás y donde te escribimos.";
+  const description = !account.hasPassword ? t("email.fromProvider") : t("email.description");
 
   return (
     <AccountRow
-      title="Email"
+      title={t("email.title")}
       description={description}
       action={
         canChange && !editing ? (
           <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
-            Cambiar el email
+            {t("email.change")}
           </button>
         ) : null
       }
@@ -68,7 +69,7 @@ export function EmailSection({ account }: { account: AccountView }) {
           <div className="account-fields">
             <div className="field">
               <label className="field-label" htmlFor={`${id}-email`}>
-                Email nuevo
+                {t("email.newEmail")}
               </label>
               <input
                 id={`${id}-email`}
@@ -83,7 +84,7 @@ export function EmailSection({ account }: { account: AccountView }) {
             </div>
             <div className="field">
               <label className="field-label" htmlFor={`${id}-password`}>
-                Tu contraseña
+                {t("yourPassword")}
               </label>
               <input
                 id={`${id}-password`}
@@ -97,7 +98,7 @@ export function EmailSection({ account }: { account: AccountView }) {
               />
             </div>
           </div>
-          <p className="field-help">Te mandamos un link al email nuevo. Hasta que lo abras seguís entrando con {account.email}.</p>
+          <p className="field-help">{t("email.help", { email: account.email })}</p>
           {error ? (
             <p className="form-error" role="alert">
               {error}
@@ -105,10 +106,10 @@ export function EmailSection({ account }: { account: AccountView }) {
           ) : null}
           <div className="account-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)} disabled={saving}>
-              Cancelar
+              {t("cancel")}
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Enviando…" : "Mandar el link"}
+              {saving ? t("email.sending") : t("email.send")}
             </button>
           </div>
         </form>
@@ -116,14 +117,18 @@ export function EmailSection({ account }: { account: AccountView }) {
         <p className="account-value">
           <span className="account-email">{account.email}</span>
           <Tag tone={account.emailVerified ? "success" : "warning"}>
-            {account.emailVerified ? "Confirmado" : "Sin confirmar"}
+            {account.emailVerified ? t("email.verified") : t("email.unverified")}
           </Tag>
         </p>
       )}
       {pending ? (
         <p className="account-note" role="status">
-          Te mandamos un link a <strong className="account-email">{pending}</strong> para confirmar el cambio. Hasta
-          que lo abras seguís entrando con {account.email}.
+          <Trans
+            t={t}
+            i18nKey="email.pending"
+            values={{ pending, email: account.email }}
+            components={{ strong: <strong className="account-email" /> }}
+          />
         </p>
       ) : null}
     </AccountRow>

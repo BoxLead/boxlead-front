@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { AppNotification, NotificationKind } from "../api/types";
 import { platformLabel } from "./labels";
 
@@ -9,12 +10,13 @@ export type NoticeMessage = {
 function newLeadText(notices: AppNotification[]): string {
   const platforms = new Set(notices.map((notice) => notice.platform));
   const [platform] = platforms;
-  const channel = platforms.size === 1 ? ` por ${platformLabel(platform)}` : "";
-  return notices.length === 1 ? `Entró un lead nuevo${channel}` : `Entraron ${notices.length} leads nuevos${channel}`;
+  const count = notices.length;
+  if (platforms.size === 1) return i18next.t("notifications.notice.newLeadOn", { ns: "account", count, channel: platformLabel(platform) });
+  return i18next.t("notifications.notice.newLead", { ns: "account", count });
 }
 
 function handoffText(count: number): string {
-  return count === 1 ? "Una conversación necesita tu respuesta" : `${count} conversaciones necesitan tu respuesta`;
+  return i18next.t("notifications.notice.handoff", { ns: "account", count });
 }
 
 export function noticeMessages(notices: AppNotification[]): NoticeMessage[] {

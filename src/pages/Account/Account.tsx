@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { useTranslation } from "react-i18next";
 import type { AccountView } from "../../api/types";
 import { NotificationSettings } from "../../components/NotificationSettings/NotificationSettings";
 import { Banner } from "../../components/ui/Banner";
@@ -15,7 +16,8 @@ import { SignInSection } from "./SignInSection";
 import "./Account.css";
 
 export function Account() {
-  useDocumentTitle("Tu cuenta");
+  const { t } = useTranslation("account");
+  useDocumentTitle(t("title"));
   const id = useId();
   const { user } = useAuth();
   const account = useApiQuery<AccountView>(ACCOUNT_KEY);
@@ -24,18 +26,18 @@ export function Account() {
     <div className="page account-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Tu cuenta</h1>
-          <p className="page-header-desc">Tus datos, cómo entrás a BoxLead y tus sesiones abiertas.</p>
+          <h1 className="page-title">{t("title")}</h1>
+          <p className="page-header-desc">{t("description")}</p>
         </div>
       </header>
 
       {account.error && !account.data ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar tu cuenta"
+          title={t("loadFailed")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void account.reload()}>
-              Reintentar
+              {t("retry")}
             </button>
           }
         >
@@ -53,7 +55,7 @@ export function Account() {
           <section className="panel account-group" aria-labelledby={`${id}-data`}>
             <div className="account-group-head">
               <h2 id={`${id}-data`} className="panel-title">
-                Tus datos
+                {t("yourData")}
               </h2>
             </div>
             <ProfileSection account={account.data} />
@@ -62,7 +64,7 @@ export function Account() {
           <section className="panel account-group" aria-labelledby={`${id}-access`}>
             <div className="account-group-head">
               <h2 id={`${id}-access`} className="panel-title">
-                Acceso
+                {t("access")}
               </h2>
             </div>
             <SignInSection account={account.data} />
