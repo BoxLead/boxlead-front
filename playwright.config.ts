@@ -36,6 +36,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['dot'], ['blob']] : 'list',
   use: {
     baseURL: `http://localhost:${APP_PORT}`,
+    locale: 'es-AR',
     trace: 'retain-on-failure',
   },
   projects: [

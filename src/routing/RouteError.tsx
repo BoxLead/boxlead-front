@@ -13,7 +13,7 @@ type RouteErrorProps = {
 };
 
 export function RouteError({ error, inline = false, onRetry }: RouteErrorProps) {
-  const { t } = useTranslation("shell", { useSuspense: false });
+  const { t } = useTranslation();
   const chunk = isChunkLoadError(error);
   const title = chunk ? t("routeError.chunkTitle") : t("routeError.title");
   const heading = useRef<HTMLHeadingElement>(null);

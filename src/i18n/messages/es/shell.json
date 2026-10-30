@@ -1,6 +1,5 @@
 {
   "logout": "Cerrar sesión",
-  "closeNotice": "Cerrar aviso",
   "ui": {
     "cancel": "Cancelar",
     "unread": ", {{count}} sin leer",
@@ -183,16 +182,5 @@
       "max": "Llegaste al máximo de categorías. Eliminá una para crear otra.",
       "notFound": "Esta categoría ya no existe. Actualizá la página."
     }
-  },
-  "routeError": {
-    "chunkTitle": "Hay una versión nueva de BoxLead",
-    "title": "Esta pantalla no se pudo mostrar",
-    "chunkHint": "Recargá la página para seguir con la versión actual.",
-    "hint": "Probá de nuevo. Si vuelve a pasar, escribinos a soporte y contanos qué estabas haciendo.",
-    "reload": "Recargar",
-    "retry": "Reintentar"
-  },
-  "announcer": {
-    "loaded": "{{page}}, página cargada"
   }
 }

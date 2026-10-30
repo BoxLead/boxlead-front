@@ -12,7 +12,7 @@
     "uncategorized": "Uncategorized",
     "temperatureFilter": "Filter by temperature",
     "allTemperatures": "All temperatures",
-    "unevaluated": "Not rated",
+    "unevaluated": "Unrated",
     "includeBuyers": "Include buyers with no prior question ({{value}})",
     "loadError": "We couldn't load the leads",
     "retry": "Try again",

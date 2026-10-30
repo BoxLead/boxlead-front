@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
-import { Loading } from "../../src/components/Loading";
+import { LoadingIndicator } from "../../src/components/LoadingIndicator";
 import { ToastProvider } from "../../src/components/ui/ToastProvider";
 import { CodeScreen } from "./entry/CodeScreen";
 import { ConnectionLost } from "./entry/ConnectionLost";
@@ -20,7 +20,7 @@ const GalleryScreen = import.meta.env.DEV ? lazy(() => import("./dev/Gallery").t
 function Gate({ access, children }: { access: Access; children: ReactNode }) {
   const me = useAdmin();
   if (!canAccess(me.roles, access)) return <ForbiddenScreen />;
-  return <Suspense fallback={<Loading inline />}>{children}</Suspense>;
+  return <Suspense fallback={<LoadingIndicator inline label="Cargando…" />}>{children}</Suspense>;
 }
 
 function AdminRoutes() {
@@ -42,7 +42,7 @@ function AdminRoutes() {
           <Route
             path="/__ui"
             element={
-              <Suspense fallback={<Loading inline />}>
+              <Suspense fallback={<LoadingIndicator inline label="Cargando…" />}>
                 <GalleryScreen />
               </Suspense>
             }
@@ -58,7 +58,7 @@ function Stage() {
   const { stage } = useSession();
   switch (stage.kind) {
     case "checking":
-      return <Loading />;
+      return <LoadingIndicator label="Cargando…" />;
     case "failed":
       return <FailedScreen />;
     case "signed-out":

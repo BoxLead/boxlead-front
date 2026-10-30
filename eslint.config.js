@@ -6,13 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import { noLiteralText } from './eslint/noLiteralText.js'
 
-const I18N_PENDING = [
-  'src/components/EmptyState/**',
-  'src/components/Logo/**',
-  'src/components/icons/**',
-]
-
-const UNTRANSLATED_NAMES = ['BoxLead', 'WhatsApp', 'WhatsApp Business', 'Instagram', 'Messenger', 'MercadoLibre', 'Facebook', 'Google', 'TikTok', 'LinkedIn', 'Google Ads', 'Meta', '24/7']
+const UNTRANSLATED_NAMES = ['BoxLead', 'WhatsApp', 'WhatsApp Business', 'Instagram', 'Messenger', 'MercadoLibre', 'Facebook', 'Google', 'TikTok', 'LinkedIn', 'Google Ads', 'Meta', '24/7', 'BOX', 'LEAD']
 
 export default defineConfig([
   globalIgnores(['dist', 'dist-admin', 'dist-admin-e2e', 'coverage', 'playwright-report', 'test-results']),
@@ -63,7 +57,7 @@ export default defineConfig([
   },
   {
     files: ['src/**/*.tsx'],
-    ignores: ['src/**/*.test.tsx', 'src/pages/Legal/**', 'src/pages/ConsumerRequest/**', 'src/pages/DesignSystem/**', ...I18N_PENDING],
+    ignores: ['src/**/*.test.tsx', 'src/pages/Legal/**', 'src/pages/ConsumerRequest/**', 'src/pages/DesignSystem/**'],
     plugins: { i18n: { rules: { 'no-literal-text': noLiteralText } } },
     rules: {
       'i18n/no-literal-text': ['error', { allow: UNTRANSLATED_NAMES }],

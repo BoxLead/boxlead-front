@@ -64,7 +64,7 @@ export function PlanBanner() {
           action={
             <div className="plan-banner-actions">
               <PlanLink action={errorNotice.action} />
-              <button type="button" className="btn btn-icon btn-sm" aria-label={t("closeNotice")} onClick={dismissPlanError}>
+              <button type="button" className="btn btn-icon btn-sm" aria-label={t("closeNotice", { ns: "common" })} onClick={dismissPlanError}>
                 <CloseIcon width={16} height={16} />
               </button>
             </div>

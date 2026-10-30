@@ -9,8 +9,8 @@ import { RouteMeta } from "./seo/RouteMeta";
 import App from "./App.tsx";
 
 function Toasts({ children }: { children: ReactNode }) {
-  const { i18n } = useTranslation("common", { bindI18n: "languageChanged loaded" });
-  return <ToastProvider closeLabel={i18n.t("closeNotice", { ns: "shell" })}>{children}</ToastProvider>;
+  const { t } = useTranslation();
+  return <ToastProvider closeLabel={t("closeNotice")}>{children}</ToastProvider>;
 }
 
 export function AppProviders() {

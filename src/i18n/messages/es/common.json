@@ -66,5 +66,17 @@
     "subscriptionActive": "Tu suscripción ya te da un plan, así que no hace falta la Beta. La invitación sigue abierta.",
     "teamMember": "Tu cuenta es del equipo de BoxLead y ya tenés acceso, así que no necesitás la Beta. La invitación sigue abierta.",
     "acceptFailed": "No pudimos activar la Beta. Probá de nuevo en un rato."
-  }
+  },
+  "routeError": {
+    "chunkTitle": "Hay una versión nueva de BoxLead",
+    "title": "Esta pantalla no se pudo mostrar",
+    "chunkHint": "Recargá la página para seguir con la versión actual.",
+    "hint": "Probá de nuevo. Si vuelve a pasar, escribinos a soporte y contanos qué estabas haciendo.",
+    "reload": "Recargar",
+    "retry": "Reintentar"
+  },
+  "announcer": {
+    "loaded": "{{page}}, página cargada"
+  },
+  "closeNotice": "Cerrar aviso"
 }

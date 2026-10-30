@@ -1,6 +1,4 @@
-import { browserLanguage, DEFAULT_LANGUAGE, isLanguage, type Language } from "./languages";
-
-export const APP_FOLLOWS_PREFERENCE = false;
+import { browserLanguage, isLanguage, type Language } from "./languages";
 
 export const LANGUAGE_KEY = "boxlead.language";
 
@@ -29,8 +27,4 @@ export function storeLanguage(language: Language): void {
 
 export function preferredLanguage(): Language {
   return storedLanguage() ?? browserLanguage(navigator.languages ?? [navigator.language]);
-}
-
-export function appLanguage(): Language {
-  return APP_FOLLOWS_PREFERENCE ? preferredLanguage() : DEFAULT_LANGUAGE;
 }
