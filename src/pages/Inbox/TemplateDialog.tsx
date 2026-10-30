@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import type { MessageTemplate } from "../../api/types";
 import { Banner } from "../../components/ui/Banner";
 import { Dialog } from "../../components/ui/Dialog";
@@ -28,6 +29,7 @@ function readableName(template: MessageTemplate): string {
 }
 
 function TemplateForm({ template, contactName, error, onBack, onSend }: TemplateFormProps) {
+  const { t } = useTranslation("inbox");
   const [values, setValues] = useState(() => emptyValues(template));
   const [sending, setSending] = useState(false);
   const complete = hasAllValues(template, values);
@@ -53,7 +55,7 @@ function TemplateForm({ template, contactName, error, onBack, onSend }: Template
       ) : null}
       {values.map((value, index) => (
         <label className="field" key={index}>
-          <span className="field-label">Valor {index + 1}</span>
+          <span className="field-label">{t("templates.value", { number: index + 1 })}</span>
           <input
             className="input"
             name={`value-${index + 1}`}
@@ -66,15 +68,15 @@ function TemplateForm({ template, contactName, error, onBack, onSend }: Template
         </label>
       ))}
       <div className="template-preview" aria-live="polite">
-        <span className="template-preview-label">Así lo va a ver {contactName}</span>
+        <span className="template-preview-label">{t("templates.preview", { name: contactName })}</span>
         <p className="template-preview-text">{fillTemplate(template.body, values)}</p>
       </div>
       <div className="dialog-actions">
         <button type="button" className="btn btn-secondary" onClick={onBack} disabled={sending}>
-          Volver
+          {t("actions.back")}
         </button>
         <button type="submit" className="btn btn-primary" disabled={!complete || sending}>
-          {sending ? "Enviando…" : "Enviar plantilla"}
+          {sending ? t("actions.sending") : t("templates.send")}
         </button>
       </div>
     </form>
@@ -84,6 +86,7 @@ function TemplateForm({ template, contactName, error, onBack, onSend }: Template
 type TemplatePickerProps = Omit<TemplateDialogProps, "open">;
 
 function TemplatePicker({ conversationId, contactName, error, onClose, onSend }: TemplatePickerProps) {
+  const { t } = useTranslation("inbox");
   const templates = useApiQuery<MessageTemplate[]>(templatesKey(conversationId));
   const [selected, setSelected] = useState<MessageTemplate | null>(null);
 
@@ -118,10 +121,10 @@ function TemplatePicker({ conversationId, contactName, error, onClose, onSend }:
     return (
       <Banner
         tone="danger"
-        title="No pudimos cargar las plantillas"
+        title={t("templates.loadError")}
         action={
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => void templates.reload()}>
-            Reintentar
+            {t("actions.retry")}
           </button>
         }
       >
@@ -133,8 +136,7 @@ function TemplatePicker({ conversationId, contactName, error, onClose, onSend }:
   if (!templates.data || templates.data.length === 0) {
     return (
       <p className="template-empty">
-        Todavía no hay plantillas aprobadas que se puedan usar. Creálas y aprobalas en el administrador de WhatsApp de
-        Meta y van a aparecer acá.
+        {t("templates.empty")}
       </p>
     );
   }
@@ -154,11 +156,12 @@ function TemplatePicker({ conversationId, contactName, error, onClose, onSend }:
 }
 
 export function TemplateDialog({ open, conversationId, contactName, error, onClose, onSend }: TemplateDialogProps) {
+  const { t } = useTranslation("inbox");
   return (
     <Dialog
       open={open}
-      title="Responder con una plantilla"
-      description="WhatsApp solo deja escribir texto libre durante las 24 horas siguientes al último mensaje de la persona."
+      title={t("templates.title")}
+      description={t("templates.description")}
       size="md"
       onClose={onClose}
     >

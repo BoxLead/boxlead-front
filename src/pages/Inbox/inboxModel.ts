@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type {
   ConversationResponse,
   LeadResponse,
@@ -37,7 +38,7 @@ export function toRows(
       const lead = leads.get(conversation.leadId);
       const displayName =
         conversation.leadName?.trim() ||
-        (lead ? leadDisplayName(lead) : `Contacto de ${getPlatform(conversation.platform).name}`);
+        (lead ? leadDisplayName(lead) : i18next.t("model.contactOf", { ns: "inbox", channel: getPlatform(conversation.platform).name }));
       return {
         ...conversation,
         displayName,
@@ -148,8 +149,8 @@ export function dayLabel(iso: string, now = Date.now()): string {
   const date = new Date(iso);
   const today = new Date(now);
   const yesterday = new Date(now - 86_400_000);
-  if (date.toDateString() === today.toDateString()) return "Hoy";
-  if (date.toDateString() === yesterday.toDateString()) return "Ayer";
+  if (date.toDateString() === today.toDateString()) return i18next.t("model.today", { ns: "inbox" });
+  if (date.toDateString() === yesterday.toDateString()) return i18next.t("model.yesterday", { ns: "inbox" });
   return date.toLocaleDateString(intlLocale(), {
     weekday: "long",
     day: "numeric",

@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { SendIcon, TemplateIcon } from "../../components/icons/UiIcons";
 import { CharCounter } from "../../components/ui/CharCounter";
 import type { ReplyPolicy } from "../../platforms/types";
@@ -13,6 +14,7 @@ type ComposerProps = {
 };
 
 export function Composer({ policy, label, initialValue = "", onSend, onTemplates }: ComposerProps) {
+  const { t } = useTranslation("inbox");
   const [draft, setDraft] = useState(initialValue);
   const [sending, setSending] = useState(false);
   const hintId = useId();
@@ -20,6 +22,7 @@ export function Composer({ policy, label, initialValue = "", onSend, onTemplates
   const content = draft.trim();
   const tooLong = policy.maxLength !== null && draft.length > policy.maxLength;
   const canSend = content.length > 0 && !tooLong && !sending;
+  const sendLabel = policy.kind === "questions" ? t("composer.reply") : t("actions.send");
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
@@ -56,12 +59,12 @@ export function Composer({ policy, label, initialValue = "", onSend, onTemplates
       />
       <div className="composer-bar">
         <p className={`composer-hint${policy.hint ? "" : " composer-hint-default"}`} id={hintId}>
-          {policy.hint ?? "Enter para enviar, Shift + Enter para un salto de línea."}
+          {policy.hint ?? t("composer.hint")}
         </p>
         {onTemplates ? (
           <button type="button" className="btn btn-secondary btn-sm composer-templates" onClick={onTemplates}>
             <TemplateIcon width={16} height={16} />
-            <span>Plantilla</span>
+            <span>{t("composer.template")}</span>
           </button>
         ) : null}
         {policy.maxLength ? <CharCounter id={counterId} length={draft.length} max={policy.maxLength} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} /> : null}
@@ -69,11 +72,11 @@ export function Composer({ policy, label, initialValue = "", onSend, onTemplates
           type="submit"
           className="btn btn-primary btn-sm composer-send"
           disabled={!canSend}
-          aria-label={policy.kind === "questions" ? "Responder" : "Enviar"}
+          aria-label={sendLabel}
         >
           <SendIcon width={16} height={16} />
           <span className="composer-send-label" aria-hidden="true">
-            {policy.kind === "questions" ? "Responder" : "Enviar"}
+            {sendLabel}
           </span>
         </button>
       </div>

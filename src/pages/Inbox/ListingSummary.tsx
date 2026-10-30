@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ContextItem } from "../../api/types";
 import { ExternalLinkIcon } from "../../components/icons/UiIcons";
 import { Tag } from "../../components/ui/Tag";
@@ -12,7 +13,8 @@ type ListingSummaryProps = {
 };
 
 export function ListingSummary({ item, status, compact = false }: ListingSummaryProps) {
-  const title = item.title ?? `Publicación ${item.externalId}`;
+  const { t } = useTranslation("inbox");
+  const title = item.title ?? t("listing.fallbackTitle", { id: item.externalId });
   const itemUrl = safeExternalUrl(item.url);
   return (
     <div className={`listing${compact ? " listing-compact" : ""}`}>
@@ -40,7 +42,7 @@ export function ListingSummary({ item, status, compact = false }: ListingSummary
       {itemUrl ? (
         <a className="listing-link" href={itemUrl} target="_blank" rel="noopener noreferrer">
           <ExternalLinkIcon width={16} height={16} />
-          <span className="visually-hidden">Ver {title} en una pestaña nueva</span>
+          <span className="visually-hidden">{t("listing.open", { title })}</span>
         </a>
       ) : null}
     </div>

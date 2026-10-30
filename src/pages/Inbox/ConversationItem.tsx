@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Avatar } from "../../components/ui/Avatar";
 import { Tag } from "../../components/ui/Tag";
@@ -13,6 +14,7 @@ type ConversationItemProps = {
 };
 
 export function ConversationItem({ row, to, selected }: ConversationItemProps) {
+  const { t } = useTranslation("inbox");
   const preview = row.lastMessagePreview?.trim();
   const platformName = getPlatform(row.platform).name;
 
@@ -34,11 +36,11 @@ export function ConversationItem({ row, to, selected }: ConversationItemProps) {
           <span className="conversation-item-preview">
             {preview ? (
               <>
-                {row.lastMessageDirection === "OUTBOUND" ? <span className="conversation-item-you">Vos: </span> : null}
+                {row.lastMessageDirection === "OUTBOUND" ? <span className="conversation-item-you">{t("item.you")}</span> : null}
                 {preview}
               </>
             ) : (
-              <span className="conversation-item-muted">Sin mensajes todavía</span>
+              <span className="conversation-item-muted">{t("item.noMessages")}</span>
             )}
           </span>
           <span className="conversation-item-meta">
@@ -51,12 +53,12 @@ export function ConversationItem({ row, to, selected }: ConversationItemProps) {
             {row.workingAgentName ? (
               <span className="conversation-item-working">{workingAgentLabel(row.workingAgentName)}</span>
             ) : row.awaitingReply ? (
-              <span className="conversation-item-awaiting">Esperando respuesta</span>
+              <span className="conversation-item-awaiting">{t("item.awaiting")}</span>
             ) : null}
             {row.unread > 0 ? (
               <span className="conversation-item-unread-count">
                 <span aria-hidden="true">{row.unread > 99 ? "99+" : row.unread}</span>
-                <span className="visually-hidden">{row.unread} sin leer</span>
+                <span className="visually-hidden">{t("item.unread", { unread: row.unread })}</span>
               </span>
             ) : null}
           </span>

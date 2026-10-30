@@ -1,1 +1,150 @@
-{}
+{
+  "title": "Bandeja",
+  "listLabel": "Lista de conversaciones",
+  "loadError": "No pudimos cargar la bandeja",
+  "empty": {
+    "title": "Tu bandeja está vacía",
+    "hint": "Cuando alguien te escriba o comente en un canal conectado, la conversación aparece acá.",
+    "connect": "Conectar un canal"
+  },
+  "missing": {
+    "title": "No encontramos esta conversación",
+    "hint": "Puede que se haya eliminado o que el enlace sea de otra cuenta.",
+    "back": "Volver a la bandeja"
+  },
+  "pick": {
+    "title": "Elegí una conversación",
+    "hint": "Respondé desde acá y el mensaje sale por el canal de origen."
+  },
+  "actions": {
+    "retry": "Reintentar",
+    "discard": "Descartar",
+    "cancel": "Cancelar",
+    "back": "Volver",
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "edit": "Editar",
+    "delete": "Eliminar"
+  },
+  "you": "Vos",
+  "list": {
+    "searchLabel": "Buscar conversaciones",
+    "searchPlaceholder": "Buscar por nombre o mensaje",
+    "channel": "Canal",
+    "allChannels": "Todos",
+    "stage": "Etapa",
+    "allStages": "Todo",
+    "unreadOnly": "Solo sin leer",
+    "noMatch": "No hay conversaciones que coincidan con “{{query}}”.",
+    "noResults": "No hay conversaciones con estos filtros.",
+    "items": "Conversaciones",
+    "showMore": "Mostrar más ({{remaining}})"
+  },
+  "item": {
+    "you": "Vos: ",
+    "noMessages": "Sin mensajes todavía",
+    "awaiting": "Esperando respuesta",
+    "unread": "{{unread}} sin leer"
+  },
+  "model": {
+    "contactOf": "Contacto de {{channel}}",
+    "today": "Hoy",
+    "yesterday": "Ayer"
+  },
+  "header": {
+    "back": "Volver a la lista",
+    "deleteLabel": "Eliminar conversación con {{name}}",
+    "leadLabel": "Ver el lead {{name}}",
+    "lead": "Ver lead",
+    "attentionTitle": "Un agente pidió tu atención",
+    "attentionText": "Esta conversación necesita que la atienda una persona."
+  },
+  "view": {
+    "label": "Conversación con {{name}}",
+    "reconnect": "Reconectar",
+    "reconnectChannel": "Reconectar {{channel}}",
+    "messages": "Mensajes",
+    "loadError": "No pudimos cargar los mensajes",
+    "empty": "Todavía no hay mensajes en esta conversación.",
+    "useTemplate": "Usar una plantilla",
+    "gotIt": "Entendido",
+    "planTitle": "Necesitás un plan para responder",
+    "planText": "Podés leer la conversación, pero los mensajes se envían solo con un plan activo.",
+    "noQuestionsTitle": "No hay preguntas pendientes",
+    "noQuestionsText": "{{channel}} solo permite responder preguntas abiertas. Cuando este comprador pregunte de nuevo vas a poder responder desde acá.",
+    "replyTo": "Responder a {{name}}",
+    "draftMissing": "No encontramos el mensaje de este borrador. Recargá la conversación antes de enviarlo.",
+    "draftDiscarded": "Descartaste el borrador.",
+    "discardError": "No pudimos descartar el borrador. Probá de nuevo.",
+    "deleted": "Eliminaste la conversación con {{name}}.",
+    "deleteError": "No pudimos eliminar la conversación.",
+    "deleteTitle": "¿Eliminar la conversación con {{name}}?",
+    "deleting": "Eliminando…",
+    "deleteText": "Se eliminan sus mensajes. El lead se conserva. Esto no se puede deshacer."
+  },
+  "draft": {
+    "byAgent": "Borrador de {{name}}",
+    "agent": "Borrador del agente",
+    "tooLong": "El borrador es más largo que el máximo de este canal. Editalo antes de enviarlo.",
+    "sendLabel": "Enviar borrador",
+    "editLabel": "Editar borrador",
+    "discardLabel": "Descartar borrador"
+  },
+  "composer": {
+    "hint": "Enter para enviar, Shift + Enter para un salto de línea.",
+    "template": "Plantilla",
+    "reply": "Responder"
+  },
+  "listing": {
+    "fallbackTitle": "Publicación {{id}}",
+    "open": "Ver {{title}} en una pestaña nueva"
+  },
+  "questions": {
+    "group": "Preguntas",
+    "question": "Pregunta",
+    "next": "Se responde ahora",
+    "pending": "Pendiente",
+    "noText": "Pregunta sin texto",
+    "yourAnswer": "Tu respuesta",
+    "publishing": "Publicando respuesta…",
+    "failed": "No se publicó la respuesta"
+  },
+  "order": {
+    "label": "Venta {{id}}",
+    "title": "Venta #{{id}}",
+    "product": "Producto",
+    "total": "Total"
+  },
+  "pending": {
+    "failed": "No se envió."
+  },
+  "message": {
+    "empty": "Mensaje sin texto (adjunto o tipo no soportado)"
+  },
+  "comment": {
+    "defaultPost": "una publicación",
+    "replyHint": "Tu respuesta se publica como respuesta a este comentario.",
+    "viewPost": "Ver publicación",
+    "agentPublic": "{{answered}} en público en {{post}}",
+    "youPublic": "Respondiste en público en {{post}}",
+    "commented": "Comentó en {{post}}",
+    "newTab": "(pestaña nueva)",
+    "noText": "Comentario sin texto",
+    "answered": "Respondido en público",
+    "reply": "Responder en público",
+    "replyTo": "Responder en público a {{name}}"
+  },
+  "templates": {
+    "title": "Responder con una plantilla",
+    "description": "WhatsApp solo deja escribir texto libre durante las 24 horas siguientes al último mensaje de la persona.",
+    "value": "Valor {{number}}",
+    "preview": "Así lo va a ver {{name}}",
+    "send": "Enviar plantilla",
+    "loadError": "No pudimos cargar las plantillas",
+    "empty": "Todavía no hay plantillas aprobadas que se puedan usar. Creálas y aprobalas en el administrador de WhatsApp de Meta y van a aparecer acá."
+  },
+  "sendError": {
+    "title": "No se pudo enviar",
+    "offline": "Revisá tu conexión a internet y probá de nuevo."
+  }
+}

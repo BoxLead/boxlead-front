@@ -1,6 +1,7 @@
 import { MemoryRouter } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { i18n } from "../../i18n";
 import type { ConversationResponse } from "../../api/types";
 import { ConversationItem } from "./ConversationItem";
 import { toRows } from "./inboxModel";
@@ -42,5 +43,20 @@ describe("ConversationItem", () => {
   it("says the chat is waiting when nobody is composing", () => {
     renderItem();
     expect(screen.getByText("Esperando respuesta")).toBeInTheDocument();
+  });
+});
+
+describe("ConversationItem in English", () => {
+  it("shows the preview prefix, the wait and the unread count", async () => {
+    await i18n.changeLanguage("en");
+    renderItem({ unreadCount: 3 });
+    expect(screen.getByText("Awaiting reply")).toBeInTheDocument();
+    expect(screen.getByText("3 unread")).toBeInTheDocument();
+  });
+
+  it("marks your own last message", async () => {
+    await i18n.changeLanguage("en");
+    renderItem({ lastMessagePreview: "Gracias", lastMessageDirection: "OUTBOUND" });
+    expect(screen.getByRole("link", { name: /CAROLINA_PZ/ })).toHaveTextContent("You: Gracias");
   });
 });

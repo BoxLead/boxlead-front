@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MessageTemplate } from "../../api/types";
 import { clearQueryCache, setQueryFetcher } from "../../data/queryCache";
+import { i18n } from "../../i18n";
 import { TemplateDialog } from "./TemplateDialog";
 import { templatesKey } from "./templates";
 
@@ -117,5 +118,30 @@ describe("TemplateDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Reintentar", ...hidden }));
 
     expect(await screen.findByRole("button", { name: /order update/i, ...hidden })).toBeInTheDocument();
+  });
+});
+
+describe("TemplateDialog in English", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  it("asks for the values and previews the template", async () => {
+    fetcher.mockResolvedValue(templates);
+    renderDialog();
+
+    expect(screen.getByRole("heading", { name: "Reply with a template", ...hidden })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: /order update/i, ...hidden }));
+    expect(screen.getByRole("textbox", { name: "Value 1", ...hidden })).toBeInTheDocument();
+    expect(screen.getByText("This is how Martín will see it")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back", ...hidden })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send template", ...hidden })).toBeDisabled();
+  });
+
+  it("explains when there are no approved templates", async () => {
+    fetcher.mockResolvedValue([]);
+    renderDialog();
+
+    expect(await screen.findByText(/There are no approved templates you can use yet/)).toBeInTheDocument();
   });
 });

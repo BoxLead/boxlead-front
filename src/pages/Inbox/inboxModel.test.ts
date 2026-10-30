@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { i18n } from "../../i18n";
 import type { ConversationResponse, LeadResponse, MessageResponse, ReplyDraft } from "../../api/types";
 import { answeredCommentIds, draftDelivery, filterRows, groupByDay, pairQuestions, toRows, unreadBy } from "./inboxModel";
 
@@ -158,5 +159,19 @@ describe("answeredCommentIds", () => {
     ]);
 
     expect([...answered]).toEqual(["c-1"]);
+  });
+});
+
+describe("inbox model in English", () => {
+  it("names unknown contacts and days in English", async () => {
+    await i18n.changeLanguage("en");
+    const rows = toRows([conversation({ leadId: "missing" })], new Map());
+    expect(rows[0].displayName).toBe("MercadoLibre contact");
+    const now = new Date("2026-10-04T12:00:00").getTime();
+    const groups = groupByDay(
+      [{ createdAt: new Date("2026-10-03T09:00:00").toISOString() }, { createdAt: new Date("2026-10-04T08:00:00").toISOString() }],
+      now,
+    );
+    expect(groups.map((g) => g.label)).toEqual(["Yesterday", "Today"]);
   });
 });

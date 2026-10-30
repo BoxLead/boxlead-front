@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useCallback, useState } from "react";
 import { api, ApiError } from "../../api/client";
 import type {
@@ -29,11 +30,11 @@ function explain(platform: PlatformType, error: unknown): PlatformErrorView {
   if (error instanceof ApiError) {
     const view = getPlatform(platform).explainError(error.status, error.message);
     if (view) return view;
-    return { title: "No se pudo enviar", detail: error.message, action: "retry" };
+    return { title: i18next.t("sendError.title", { ns: "inbox" }), detail: error.message, action: "retry" };
   }
   return {
-    title: "No se pudo enviar",
-    detail: "Revisá tu conexión a internet y probá de nuevo.",
+    title: i18next.t("sendError.title", { ns: "inbox" }),
+    detail: i18next.t("sendError.offline", { ns: "inbox" }),
     action: "retry",
   };
 }

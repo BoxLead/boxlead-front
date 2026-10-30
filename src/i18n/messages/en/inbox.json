@@ -1,1 +1,150 @@
-{}
+{
+  "title": "Inbox",
+  "listLabel": "Conversation list",
+  "loadError": "We couldn't load your inbox",
+  "empty": {
+    "title": "Your inbox is empty",
+    "hint": "When someone messages you or comments on a connected channel, the conversation shows up here.",
+    "connect": "Connect a channel"
+  },
+  "missing": {
+    "title": "We couldn't find this conversation",
+    "hint": "It may have been deleted, or the link belongs to another account.",
+    "back": "Back to inbox"
+  },
+  "pick": {
+    "title": "Pick a conversation",
+    "hint": "Reply from here and the message goes out through the channel it came from."
+  },
+  "actions": {
+    "retry": "Retry",
+    "discard": "Discard",
+    "cancel": "Cancel",
+    "back": "Back",
+    "send": "Send",
+    "sending": "Sending…",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "you": "You",
+  "list": {
+    "searchLabel": "Search conversations",
+    "searchPlaceholder": "Search by name or message",
+    "channel": "Channel",
+    "allChannels": "All",
+    "stage": "Stage",
+    "allStages": "All",
+    "unreadOnly": "Unread only",
+    "noMatch": "No conversations match “{{query}}”.",
+    "noResults": "No conversations match these filters.",
+    "items": "Conversations",
+    "showMore": "Show more ({{remaining}})"
+  },
+  "item": {
+    "you": "You: ",
+    "noMessages": "No messages yet",
+    "awaiting": "Awaiting reply",
+    "unread": "{{unread}} unread"
+  },
+  "model": {
+    "contactOf": "{{channel}} contact",
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "header": {
+    "back": "Back to list",
+    "deleteLabel": "Delete conversation with {{name}}",
+    "leadLabel": "View lead {{name}}",
+    "lead": "View lead",
+    "attentionTitle": "An agent asked for your attention",
+    "attentionText": "This conversation needs a person to handle it."
+  },
+  "view": {
+    "label": "Conversation with {{name}}",
+    "reconnect": "Reconnect",
+    "reconnectChannel": "Reconnect {{channel}}",
+    "messages": "Messages",
+    "loadError": "We couldn't load the messages",
+    "empty": "No messages in this conversation yet.",
+    "useTemplate": "Use a template",
+    "gotIt": "Got it",
+    "planTitle": "You need a plan to reply",
+    "planText": "You can read the conversation, but messages only go out with an active plan.",
+    "noQuestionsTitle": "No pending questions",
+    "noQuestionsText": "{{channel}} only lets you answer open questions. When this buyer asks again, you can reply from here.",
+    "replyTo": "Reply to {{name}}",
+    "draftMissing": "We couldn't find the message for this draft. Reload the conversation before sending it.",
+    "draftDiscarded": "Draft discarded.",
+    "discardError": "We couldn't discard the draft. Try again.",
+    "deleted": "You deleted the conversation with {{name}}.",
+    "deleteError": "We couldn't delete the conversation.",
+    "deleteTitle": "Delete the conversation with {{name}}?",
+    "deleting": "Deleting…",
+    "deleteText": "Its messages are deleted. The lead is kept. This can't be undone."
+  },
+  "draft": {
+    "byAgent": "Draft by {{name}}",
+    "agent": "Agent draft",
+    "tooLong": "The draft is longer than this channel allows. Edit it before sending.",
+    "sendLabel": "Send draft",
+    "editLabel": "Edit draft",
+    "discardLabel": "Discard draft"
+  },
+  "composer": {
+    "hint": "Enter to send, Shift + Enter for a new line.",
+    "template": "Template",
+    "reply": "Reply"
+  },
+  "listing": {
+    "fallbackTitle": "Listing {{id}}",
+    "open": "Open {{title}} in a new tab"
+  },
+  "questions": {
+    "group": "Questions",
+    "question": "Question",
+    "next": "Next to answer",
+    "pending": "Pending",
+    "noText": "Question with no text",
+    "yourAnswer": "Your answer",
+    "publishing": "Posting answer…",
+    "failed": "The answer wasn't posted"
+  },
+  "order": {
+    "label": "Order {{id}}",
+    "title": "Order #{{id}}",
+    "product": "Product",
+    "total": "Total"
+  },
+  "pending": {
+    "failed": "Not sent."
+  },
+  "message": {
+    "empty": "Message with no text (attachment or unsupported type)"
+  },
+  "comment": {
+    "defaultPost": "a post",
+    "replyHint": "Your reply is posted as a reply to this comment.",
+    "viewPost": "View post",
+    "agentPublic": "{{answered}} publicly on {{post}}",
+    "youPublic": "You replied publicly on {{post}}",
+    "commented": "Commented on {{post}}",
+    "newTab": "(new tab)",
+    "noText": "Comment with no text",
+    "answered": "Answered publicly",
+    "reply": "Reply publicly",
+    "replyTo": "Reply publicly to {{name}}"
+  },
+  "templates": {
+    "title": "Reply with a template",
+    "description": "WhatsApp only allows free-form text for 24 hours after the person's last message.",
+    "value": "Value {{number}}",
+    "preview": "This is how {{name}} will see it",
+    "send": "Send template",
+    "loadError": "We couldn't load the templates",
+    "empty": "There are no approved templates you can use yet. Create and approve them in Meta's WhatsApp Manager and they'll show up here."
+  },
+  "sendError": {
+    "title": "Couldn't send",
+    "offline": "Check your internet connection and try again."
+  }
+}

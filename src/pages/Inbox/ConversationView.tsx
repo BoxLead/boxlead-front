@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import type {
@@ -40,6 +41,7 @@ type ConversationViewProps = {
 };
 
 export function ConversationView({ row, backTo }: ConversationViewProps) {
+  const { t } = useTranslation("inbox");
   const navigate = useNavigate();
   const platform = getPlatform(row.platform);
   const policy = platform.reply(row.salesStage);
@@ -118,7 +120,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
     if (plan.kind === "unavailable") {
       toast({
         tone: "danger",
-        message: "No encontramos el mensaje de este borrador. Recargá la conversación antes de enviarlo.",
+        message: t("view.draftMissing"),
       });
       return;
     }
@@ -142,9 +144,9 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
     try {
       await discardDraft(row.id);
       stopEditing();
-      toast({ tone: "info", message: "Descartaste el borrador." });
+      toast({ tone: "info", message: t("view.draftDiscarded") });
     } catch {
-      toast({ tone: "danger", message: "No pudimos descartar el borrador. Probá de nuevo." });
+      toast({ tone: "danger", message: t("view.discardError") });
     } finally {
       setBusyConversationId((currentId) => (currentId === row.id ? null : currentId));
     }
@@ -154,17 +156,17 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
     setDeleting(true);
     try {
       await deleteConversation(row.id);
-      toast({ tone: "info", message: `Eliminaste la conversación con ${row.displayName}.` });
+      toast({ tone: "info", message: t("view.deleted", { name: row.displayName }) });
       navigate(backTo);
     } catch {
-      toast({ tone: "danger", message: "No pudimos eliminar la conversación." });
+      toast({ tone: "danger", message: t("view.deleteError") });
     } finally {
       setDeleting(false);
     }
   }
 
   return (
-    <section className="conversation-view" aria-label={`Conversación con ${row.displayName}`}>
+    <section className="conversation-view" aria-label={t("view.label", { name: row.displayName })}>
       <ConversationHeader row={row} backTo={backTo} onDelete={() => setConfirmingDelete(true)} />
 
       {contextIssue?.action === "reconnect" && !sender.failure ? (
@@ -179,7 +181,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
                 disabled={connecting !== null}
                 onClick={() => void connect(row.platform)}
               >
-                Reconectar
+                {t("view.reconnect")}
               </button>
             }
           >
@@ -196,7 +198,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
         </div>
       ) : null}
 
-      <div className="conversation-scroll" ref={scrollRef} tabIndex={0} role="region" aria-label="Mensajes">
+      <div className="conversation-scroll" ref={scrollRef} tabIndex={0} role="region" aria-label={t("view.messages")}>
         {messages.loading ? (
           <div className="conversation-skeleton" aria-hidden="true">
             <div className="skeleton" />
@@ -206,17 +208,17 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
         ) : messages.error && !messages.data ? (
           <Banner
             tone="danger"
-            title="No pudimos cargar los mensajes"
+            title={t("view.loadError")}
             action={
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => void messages.reload()}>
-                Reintentar
+                {t("actions.retry")}
               </button>
             }
           >
             {messages.error}
           </Banner>
         ) : list.length === 0 && sender.pending.length === 0 ? (
-          <p className="conversation-empty">Todavía no hay mensajes en esta conversación.</p>
+          <p className="conversation-empty">{t("view.empty")}</p>
         ) : questions ? (
           <QuestionThread
             thread={questions}
@@ -249,7 +251,7 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
             action={
               sender.failure.action === "template" ? (
                 <button type="button" className="btn btn-primary btn-sm" onClick={openTemplates}>
-                  Usar una plantilla
+                  {t("view.useTemplate")}
                 </button>
               ) : sender.failure.action === "reconnect" ? (
                 <button
@@ -258,11 +260,11 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
                   disabled={connecting !== null}
                   onClick={() => void connect(row.platform)}
                 >
-                  Reconectar {platform.name}
+                  {t("view.reconnectChannel", { channel: platform.name })}
                 </button>
               ) : (
                 <button type="button" className="btn btn-secondary btn-sm" onClick={sender.dismissFailure}>
-                  Entendido
+                  {t("view.gotIt")}
                 </button>
               )
             }
@@ -273,15 +275,14 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
         {plan.restricted ? (
           <Banner
             tone="warning"
-            title="Necesitás un plan para responder"
+            title={t("view.planTitle")}
             action={<PlanLink action={CHOOSE_PLAN} />}
           >
-            Podés leer la conversación, pero los mensajes se envían solo con un plan activo.
+            {t("view.planText")}
           </Banner>
         ) : nothingToAnswer ? (
-          <Banner tone="info" title="No hay preguntas pendientes">
-            {platform.name} solo permite responder preguntas abiertas. Cuando este comprador pregunte de nuevo vas a
-            poder responder desde acá.
+          <Banner tone="info" title={t("view.noQuestionsTitle")}>
+            {t("view.noQuestionsText", { channel: platform.name })}
           </Banner>
         ) : (
           <>
@@ -302,16 +303,16 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
                   className="btn btn-secondary btn-sm"
                   onClick={() => void dropDraft()}
                   disabled={draftBusy}
-                  aria-label="Descartar borrador"
+                  aria-label={t("draft.discardLabel")}
                 >
-                  Descartar
+                  {t("actions.discard")}
                 </button>
               </div>
             ) : null}
             <Composer
               key={`${row.id}:${editingDraftId ?? ""}`}
               policy={policy}
-              label={`Responder a ${row.displayName}`}
+              label={t("view.replyTo", { name: row.displayName })}
               initialValue={draft && draft.id === editingDraftId ? draft.content : ""}
               onSend={sendFromComposer}
               onTemplates={platform.supportsTemplates ? openTemplates : undefined}
@@ -332,14 +333,14 @@ export function ConversationView({ row, backTo }: ConversationViewProps) {
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirmingDelete}
-        title={`¿Eliminar la conversación con ${row.displayName}?`}
-        confirmLabel={deleting ? "Eliminando…" : "Eliminar"}
+        title={t("view.deleteTitle", { name: row.displayName })}
+        confirmLabel={deleting ? t("view.deleting") : t("actions.delete")}
         tone="danger"
         busy={deleting}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setConfirmingDelete(false)}
       >
-        <p>Se eliminan sus mensajes. El lead se conserva. Esto no se puede deshacer.</p>
+        <p>{t("view.deleteText")}</p>
       </ConfirmDialog>
     </section>
   );
