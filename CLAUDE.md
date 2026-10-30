@@ -32,7 +32,8 @@ docker compose up --build   # Production image at localhost:3000
 - `src/App.tsx` — All route definitions
 - `src/main.tsx` — Hydrates the prerendered markup or creates the root (BrowserRouter > AppProviders)
 - `src/seo/pages.ts` — Table of public pages: title, description, index, social card, hreflang, JSON-LD. `RouteMeta.tsx` renders it
-- `src/landing/editorial.ts` — Content of the channel and agency pages rendered by `landing/pages/EditorialPage.tsx`
+- `src/landing/editorial.ts` — Channel and agency pages rendered by `landing/pages/EditorialPage.tsx`, their copy lives in `src/i18n/messages/*/channels.json`
+- `src/i18n/` — i18next setup. Messages per language and area in `messages/<lang>/<area>.json`, `common`, `landing`, `channels` and `seo` are bundled and the rest load on demand. `paths.ts` maps a path to its English version under `/en`, `LanguageSync` sets the language from the route or, in the app, from the preference. `messages.test.ts` fails when a language misses a key and the `i18n/no-literal-text` lint rule flags visible text written in JSX outside `I18N_PENDING`
 - `scripts/prerender.ts` — Build step that writes one HTML per public page, `404.html`, `app.html`, `sitemap.xml`, `robots.txt` and `llms.txt`
 - `src/analytics/` — Consent banner and GA4 loader, only with `VITE_GA_MEASUREMENT_ID` and only outside `/app`
 - `src/context/AuthContext.tsx` — `AuthProvider` (session state from `/auth/me`); `src/context/auth.ts` — `useAuth`
@@ -56,6 +57,7 @@ docker compose up --build   # Production image at localhost:3000
 ```
 /                 → Public landing page
 /whatsapp, /instagram, /messenger, /mercadolibre, /agencias → Editorial pages, prerendered
+/en, /en/whatsapp, /en/instagram, /en/messenger, /en/mercadolibre, /en/agencias → English versions, prerendered with hreflang both ways
 /login, /register → Auth
 /terminos, /privacidad, /contratos → Legal texts in Spanish, the version that prevails
 /terms-of-service, /privacy-policy, /data-deletion → English translations and data deletion
@@ -73,7 +75,8 @@ docker compose up --build   # Production image at localhost:3000
 - `type` keyword for TypeScript type aliases
 - Type-only imports: `import type { X } from '...'`
 - Public pages take their title from `src/seo/pages.ts`, app pages use `useDocumentTitle`
-- No comments in code; UI copy in Spanish, legal texts in Spanish with English translations that say Spanish prevails
+- No comments in code; UI copy comes from `src/i18n/messages` in Spanish and English, read with `useTranslation`, legal texts stay in Spanish with English translations that say Spanish prevails
+- Dates, numbers and money use `intlLocale()` from `src/i18n/locale.ts`, never a fixed locale
 
 ### Auth Flow
 1. The session is an `httpOnly` cookie set by the API; the frontend never sees the token
