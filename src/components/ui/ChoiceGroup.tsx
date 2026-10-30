@@ -16,6 +16,7 @@ type ChoiceGroupProps<T extends string> = {
   onChange: (value: T) => void;
   variant?: "segmented" | "chips";
   className?: string;
+  unreadLabel?: (count: number) => string;
 };
 
 export function ChoiceGroup<T extends string>({
@@ -25,6 +26,7 @@ export function ChoiceGroup<T extends string>({
   onChange,
   variant = "chips",
   className,
+  unreadLabel,
 }: ChoiceGroupProps<T>) {
   const ref = useRef<HTMLDivElement>(null);
   const segmented = variant === "segmented";
@@ -71,7 +73,7 @@ export function ChoiceGroup<T extends string>({
             {choice.count ? (
               <span className="choice-count">
                 <span aria-hidden="true">{choice.count > 99 ? "99+" : choice.count}</span>
-                <span className="visually-hidden">, {choice.count} sin leer</span>
+                {unreadLabel ? <span className="visually-hidden">{unreadLabel(choice.count)}</span> : null}
               </span>
             ) : null}
           </button>

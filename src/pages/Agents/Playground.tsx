@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { CategoryResponse, PlatformType, PlaygroundResult, SalesStage } from "../../api/types";
 import { SendIcon } from "../../components/icons/UiIcons";
@@ -247,7 +248,7 @@ export function Playground({ agentName, target, categories, restricted = false }
             onKeyDown={onKeyDown}
           />
           <div className="playground-form-bar">
-            <CharCounter id={counterId} length={draft.length} max={PLAYGROUND_MESSAGE_MAX} />
+            <CharCounter id={counterId} length={draft.length} max={PLAYGROUND_MESSAGE_MAX} overLimitLabel={i18next.t("ui.overLimit", { ns: "shell" })} />
             <button
               type="button"
               className="btn btn-secondary btn-sm"

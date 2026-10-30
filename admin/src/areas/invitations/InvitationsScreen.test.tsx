@@ -86,7 +86,7 @@ function renderScreen(handler: Handler, path = "/invitaciones", roles: AdminRole
   render(
     <MemoryRouter initialEntries={[path]}>
       <SessionContext.Provider value={session(roles)}>
-        <ToastProvider>
+        <ToastProvider closeLabel="Cerrar aviso">
           <ResellerDirectoryProvider>
             <InvitationsScreen />
           </ResellerDirectoryProvider>

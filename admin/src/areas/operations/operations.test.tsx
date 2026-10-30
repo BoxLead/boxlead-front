@@ -49,7 +49,7 @@ function renderScreen(element: ReactNode, roles: AdminRole[], path: string, hand
   render(
     <MemoryRouter initialEntries={[path]}>
       <SessionContext.Provider value={session(roles)}>
-        <ToastProvider>{element}</ToastProvider>
+        <ToastProvider closeLabel="Cerrar aviso">{element}</ToastProvider>
       </SessionContext.Provider>
     </MemoryRouter>,
   );

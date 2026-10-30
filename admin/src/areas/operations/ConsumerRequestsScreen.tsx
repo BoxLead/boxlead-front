@@ -155,7 +155,7 @@ function ResolveDialog({ request, onClose, onDone, onStale }: ResolveDialogProps
           <span id={helpId} className={touched && problem ? "field-error" : "field-help"}>
             {touched && problem ? problem : "Va en el email del comprobante."}
           </span>
-          <CharCounter id={counterId} length={resolution.length} max={MAX_RESOLUTION} />
+          <CharCounter id={counterId} length={resolution.length} max={MAX_RESOLUTION} overLimitLabel="caracteres, supera el máximo" />
         </div>
       </div>
     </ReasonDialog>

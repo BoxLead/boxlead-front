@@ -83,7 +83,7 @@ function Stage() {
 
 export default function App() {
   return (
-    <ToastProvider>
+    <ToastProvider closeLabel="Cerrar aviso">
       <Stage />
       <ConnectionLost />
     </ToastProvider>

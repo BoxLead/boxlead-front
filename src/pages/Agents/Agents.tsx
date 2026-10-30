@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
@@ -332,6 +333,7 @@ export function Agents() {
       )}
 
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pending !== null}
         title="¿Descartar los cambios?"
         confirmLabel="Descartar"
@@ -344,6 +346,7 @@ export function Agents() {
       </ConfirmDialog>
 
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pendingDelete !== null}
         title={`¿Eliminar ${pendingDelete?.name ?? "el agente"}?`}
         confirmLabel={deleting ? "Eliminando…" : "Eliminar"}

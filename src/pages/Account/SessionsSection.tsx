@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState } from "react";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { revokeAllSessions } from "../../data/account";
@@ -40,6 +41,7 @@ export function SessionsSection() {
         </p>
       ) : null}
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirming}
         title="¿Cerrar sesión en todos los dispositivos?"
         confirmLabel="Cerrar todas"

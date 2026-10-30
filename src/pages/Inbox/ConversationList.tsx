@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { RefObject } from "react";
 import type { PlatformType, SalesStage } from "../../api/types";
 import { SearchIcon } from "../../components/icons/UiIcons";
@@ -74,6 +75,7 @@ export function ConversationList({
             label="Canal"
             className="conversation-channels"
             choices={channelChoices}
+            unreadLabel={(count) => i18next.t("ui.unread", { ns: "shell", count })}
             value={filters.channel}
             onChange={(channel) => onFiltersChange({ channel, stage: null })}
           />
@@ -83,6 +85,7 @@ export function ConversationList({
             label="Etapa"
             variant="segmented"
             className="conversation-stages"
+            unreadLabel={(count) => i18next.t("ui.unread", { ns: "shell", count })}
             value={filters.stage ?? "ALL"}
             onChange={(stage) => onFiltersChange({ stage: stage === "ALL" ? null : stage })}
             choices={[

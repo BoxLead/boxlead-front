@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState } from "react";
 import { ApiError } from "../../api/client";
 import type { CategoryResponse } from "../../api/types";
@@ -131,6 +132,7 @@ export function Categories() {
       ) : null}
 
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pendingDelete !== null}
         title={`¿Eliminar ${pendingDelete?.name ?? "la categoría"}?`}
         confirmLabel={deleting ? "Eliminando…" : "Eliminar"}

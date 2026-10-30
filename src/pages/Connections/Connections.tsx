@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
@@ -153,6 +154,7 @@ export function Connections() {
       )}
 
       <ConfirmDialog
+        cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pendingRemoval !== null}
         title={`¿Desconectar ${pendingRemoval?.displayName ?? "esta cuenta"}?`}
         confirmLabel={removing ? "Desconectando…" : "Desconectar"}

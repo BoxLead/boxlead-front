@@ -38,7 +38,7 @@ describe("CharCounter", () => {
     expect(counterTone(100, 350)).toBe("ok");
     expect(counterTone(320, 350)).toBe("near");
     expect(counterTone(351, 350)).toBe("over");
-    render(<CharCounter length={351} max={350} />);
+    render(<CharCounter length={351} max={350} overLimitLabel="caracteres, supera el máximo" />);
     expect(screen.getByText(/supera el máximo/)).toBeInTheDocument();
   });
 });
@@ -63,6 +63,7 @@ describe("ChoiceGroup", () => {
       <ChoiceGroup
         label="Canal"
         value="all"
+        unreadLabel={(count) => `, ${count} sin leer`}
         onChange={onChange}
         choices={[
           { value: "all", label: "Todos" },
@@ -82,7 +83,7 @@ describe("ConfirmDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
     render(
-      <ConfirmDialog open title="¿Desconectar?" confirmLabel="Desconectar" tone="danger" onConfirm={onConfirm} onCancel={onCancel} />,
+      <ConfirmDialog open title="¿Desconectar?" confirmLabel="Desconectar" cancelLabel="Cancelar" tone="danger" onConfirm={onConfirm} onCancel={onCancel} />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Desconectar", hidden: true }));
     await userEvent.click(screen.getByRole("button", { name: "Cancelar", hidden: true }));
@@ -100,7 +101,7 @@ describe("Toasts", () => {
   it("shows a message and hides it after a while", () => {
     vi.useFakeTimers();
     render(
-      <ToastProvider>
+      <ToastProvider closeLabel="Cerrar aviso">
         <Trigger />
       </ToastProvider>,
     );
@@ -111,5 +112,40 @@ describe("Toasts", () => {
     });
     expect(screen.queryByRole("status")).toBeNull();
     vi.useRealTimers();
+  });
+});
+
+describe("texts from the app", () => {
+  it("speaks the labels it gets from the caller", () => {
+    render(
+      <>
+        <CharCounter length={12} max={10} overLimitLabel="characters, over the limit" />
+        <ChoiceGroup
+          label="Channel"
+          value="all"
+          onChange={() => undefined}
+          unreadLabel={(count) => `, ${count} unread`}
+          choices={[{ value: "all", label: "All", count: 2 }]}
+        />
+        <ConfirmDialog open title="Disconnect?" confirmLabel="Disconnect" cancelLabel="Cancel" onConfirm={() => undefined} onCancel={() => undefined} />
+      </>,
+    );
+    expect(screen.getByText("12 / 10", { exact: false })).toHaveTextContent("12 / 10 characters, over the limit");
+    expect(screen.getByRole("button", { name: /^All\s*,\s*2 unread$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel", hidden: true })).toBeInTheDocument();
+  });
+
+  it("labels the toast close button with the text it gets", () => {
+    function Trigger() {
+      const toast = useToast();
+      return <button onClick={() => toast({ message: "Saved" })}>Notify</button>;
+    }
+    render(
+      <ToastProvider closeLabel="Dismiss">
+        <Trigger />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Notify" }));
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
   });
 });

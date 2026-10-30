@@ -76,7 +76,7 @@ function ReasonForm({ children, confirmLabel, tone = "primary", amount, busy, er
           <span id={helpId} className={touched && problem ? "field-error" : "field-help"}>
             {touched && problem ? problem : `Queda en la auditoría. Al menos ${MIN_REASON} caracteres.`}
           </span>
-          <CharCounter id={counterId} length={reason.length} max={MAX_REASON} />
+          <CharCounter id={counterId} length={reason.length} max={MAX_REASON} overLimitLabel="caracteres, supera el máximo" />
         </div>
       </div>
       <div className="dialog-actions">
