@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { LegalDocument } from "../../api/types";
 import { useAuth } from "../../context/auth";
 import { acceptLegal, LEGAL_DOCUMENTS_KEY } from "../../data/billing";
@@ -8,6 +9,7 @@ import { pendingDocuments } from "./legalDocuments";
 import "./LegalAcceptanceDialog.css";
 
 export function LegalAcceptanceDialog() {
+  const { t } = useTranslation("shell");
   const { pendingLegal, refreshUser, logout } = useAuth();
   const open = pendingLegal.length > 0;
   const documents = useApiQuery<LegalDocument[]>(open ? LEGAL_DOCUMENTS_KEY : null);
@@ -28,7 +30,7 @@ export function LegalAcceptanceDialog() {
       await refreshUser();
       setChecked(false);
     } catch {
-      setError("No pudimos guardar tu aceptación. Probá de nuevo.");
+      setError(t("legal.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -37,8 +39,8 @@ export function LegalAcceptanceDialog() {
   return (
     <Dialog
       open
-      title="Actualizamos nuestros documentos"
-      description="Para seguir usando BoxLead necesitamos que leas y aceptes estas versiones."
+      title={t("legal.title")}
+      description={t("legal.description")}
       busy
       onClose={() => undefined}
     >
@@ -52,7 +54,7 @@ export function LegalAcceptanceDialog() {
             ) : (
               <span>{item.label}</span>
             )}
-            <span className="legal-accept-version">Versión {item.version}</span>
+            <span className="legal-accept-version">{t("legal.version", { version: item.version })}</span>
           </li>
         ))}
       </ul>
@@ -64,7 +66,7 @@ export function LegalAcceptanceDialog() {
           disabled={saving}
           onChange={(event) => setChecked(event.target.checked)}
         />
-        <span>Leí y acepto estos documentos.</span>
+        <span>{t("legal.check")}</span>
       </label>
       {error ? (
         <p className="form-error" role="alert">
@@ -73,10 +75,10 @@ export function LegalAcceptanceDialog() {
       ) : null}
       <div className="dialog-actions">
         <button type="button" className="btn btn-secondary" disabled={saving} onClick={logout}>
-          Cerrar sesión
+          {t("logout")}
         </button>
         <button type="button" className="btn btn-primary" disabled={!checked || saving} onClick={() => void accept()}>
-          {saving ? "Guardando…" : "Aceptar"}
+          {saving ? t("legal.saving") : t("legal.accept")}
         </button>
       </div>
     </Dialog>

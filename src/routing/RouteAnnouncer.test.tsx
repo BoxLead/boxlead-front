@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { i18n } from "../i18n";
 import { RouteMeta } from "../seo/RouteMeta";
 import { pageNameFrom } from "./pageName";
 import { RouteAnnouncer } from "./RouteAnnouncer";
@@ -53,6 +54,27 @@ describe("RouteAnnouncer", () => {
     });
     expect(screen.getByRole("status", { hidden: true })).toHaveTextContent("Leads, página cargada");
     expect(screen.getByRole("heading", { level: 1, name: "Leads" })).toHaveFocus();
+    vi.useRealTimers();
+  });
+
+  it("announces the new page in English", async () => {
+    await i18n.changeLanguage("en");
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(
+      <MemoryRouter initialEntries={["/a"]}>
+        <RouteMeta />
+        <RouteAnnouncer />
+        <Routes>
+          <Route path="/a" element={<PageA />} />
+          <Route path="/b" element={<PageB />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole("link", { name: "ir a leads" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(screen.getByRole("status", { hidden: true })).toHaveTextContent("Leads, page loaded");
     vi.useRealTimers();
   });
 });

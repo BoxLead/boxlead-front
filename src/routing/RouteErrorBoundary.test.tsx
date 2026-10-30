@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientErrors from "../monitoring/clientErrors";
+import { i18n } from "../i18n";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
 function Explodes({ message }: { message: string }) {
@@ -113,5 +114,43 @@ describe("RouteErrorBoundary reports", () => {
       </MemoryRouter>,
     );
     expect(report).toHaveBeenCalledWith("boundary", expect.objectContaining({ message: "boundary kaboom" }));
+  });
+});
+
+describe("RouteErrorBoundary in English", () => {
+  beforeEach(() => {
+    window.addEventListener("error", swallowRecoverableErrors);
+    return () => window.removeEventListener("error", swallowRecoverableErrors);
+  });
+
+  it("explains the error in English", async () => {
+    await i18n.changeLanguage("en");
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    render(
+      <MemoryRouter initialEntries={["/app/leads"]}>
+        <RouteErrorBoundary inline>
+          <Explodes message="kaboom" />
+        </RouteErrorBoundary>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("This screen couldn't load");
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to the inbox" })).toHaveAttribute("href", "/app/inbox");
+  });
+
+  it("offers to reload after a deploy in English", async () => {
+    await i18n.changeLanguage("en");
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    sessionStorage.setItem("boxlead.chunk-reload", "1");
+    render(
+      <MemoryRouter>
+        <RouteErrorBoundary>
+          <Explodes message="Failed to fetch dynamically imported module: /assets/Leads.js" />
+        </RouteErrorBoundary>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("There's a new version of BoxLead");
+    expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to the home page" })).toHaveAttribute("href", "/");
   });
 });

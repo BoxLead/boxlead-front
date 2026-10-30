@@ -1,12 +1,9 @@
+import i18next from "i18next";
 import type { LegalDocument, LegalDocumentKind, LegalVersion } from "../../api/types";
 
-export const LEGAL_LABELS: Record<LegalDocumentKind, string> = {
-  TERMS: "Términos y condiciones",
-  PRIVACY: "Política de privacidad",
-  ADHESION_CONTRACT: "Contrato de adhesión",
-  RESELLER_AGREEMENT: "Acuerdo de revendedores",
-  DATA_PROCESSING: "Acuerdo de tratamiento de datos",
-};
+function legalLabel(kind: LegalDocumentKind): string {
+  return i18next.t(`legal.documents.${kind}`, { ns: "shell" });
+}
 
 const LEGAL_PATHS: Partial<Record<LegalDocumentKind, string>> = {
   TERMS: "/terminos",
@@ -29,7 +26,7 @@ export function pendingDocuments(pending: LegalVersion[], documents: LegalDocume
     return {
       kind,
       version,
-      label: LEGAL_LABELS[kind],
+      label: legalLabel(kind),
       path: url && isAppPath(url) ? url : (LEGAL_PATHS[kind] ?? null),
     };
   });

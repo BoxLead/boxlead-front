@@ -8,6 +8,7 @@ import { AGENTS_KEY } from "../../data/agents";
 import { ONBOARDING_KEY, refreshOnboarding } from "../../data/onboarding";
 import { clearQueryCache, setQueryFetcher } from "../../data/queryCache";
 import { CONNECTIONS_KEY } from "../../hooks/useConnectPlatform";
+import { i18n } from "../../i18n";
 import { OnboardingChecklist } from "./OnboardingChecklist";
 
 const CONNECTION: AccountConnectionResponse = {
@@ -166,5 +167,18 @@ describe("OnboardingChecklist", () => {
       refreshOnboarding();
     });
     await waitFor(() => expect(screen.queryByRole("region", { name: "Primeros pasos" })).not.toBeInTheDocument());
+  });
+
+  it("lists the steps in English", async () => {
+    await i18n.changeLanguage("en");
+    serve({ connections: [CONNECTION] });
+    renderChecklist();
+    const panel = await screen.findByRole("region", { name: "Getting started" });
+    expect(within(panel).getByText("1 of 3")).toBeInTheDocument();
+    expect(within(panel).getByRole("progressbar", { name: "Getting started steps done" })).toHaveAttribute("aria-valuetext", "1 of 3");
+    expect(within(panel).getByText("Connect a channel")).toHaveTextContent("(done)");
+    expect(within(panel).getByText("Tell it what you sell and how you want it to reply.")).toBeInTheDocument();
+    expect(within(panel).getByRole("link", { name: "Create" })).toHaveAttribute("href", "/app/agents?id=new");
+    expect(within(panel).getByRole("link", { name: "Test" })).toBeInTheDocument();
   });
 });

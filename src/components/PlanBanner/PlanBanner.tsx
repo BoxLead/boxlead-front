@@ -1,4 +1,5 @@
 import { useState, useSyncExternalStore } from "react";
+import { useTranslation } from "react-i18next";
 import type { Invitation } from "../../api/types";
 import { useAuth } from "../../context/auth";
 import { acceptInvitation, CURRENT_INVITATION_KEY } from "../../data/billing";
@@ -15,6 +16,7 @@ import { planErrorNotice, planNotice } from "./planNotice";
 import "./PlanBanner.css";
 
 export function PlanBanner() {
+  const { t } = useTranslation("shell");
   const { user, refreshUser } = useAuth();
   const plan = usePlan();
   const toast = useToast();
@@ -36,7 +38,7 @@ export function PlanBanner() {
     setInviteError(null);
     try {
       await acceptInvitation();
-      toast({ message: "Activaste la Beta." });
+      toast({ message: t("plan.invitation.accepted") });
       void invalidateQueries(CURRENT_INVITATION_KEY);
       void refreshUser().catch(() => undefined);
     } catch (error) {
@@ -62,7 +64,7 @@ export function PlanBanner() {
           action={
             <div className="plan-banner-actions">
               <PlanLink action={errorNotice.action} />
-              <button type="button" className="btn btn-icon btn-sm" aria-label="Cerrar aviso" onClick={dismissPlanError}>
+              <button type="button" className="btn btn-icon btn-sm" aria-label={t("closeNotice")} onClick={dismissPlanError}>
                 <CloseIcon width={16} height={16} />
               </button>
             </div>
@@ -74,17 +76,17 @@ export function PlanBanner() {
       {invited ? (
         <Banner
           tone={inviteError ? "danger" : "info"}
-          title="Tenés una invitación a la Beta"
+          title={t("plan.invitation.title")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" disabled={accepting} onClick={() => void accept()}>
-              {accepting ? "Activando…" : "Activar la Beta"}
+              {accepting ? t("plan.invitation.accepting") : t("plan.invitation.accept")}
             </button>
           }
         >
           {inviteError ??
             (otherEmail
-              ? `La invitación es para ${invited.email} y entraste con ${user.email}.`
-              : `La invitación es para ${invited.email}.`)}
+              ? t("plan.invitation.otherEmail", { email: invited.email, current: user.email })
+              : t("plan.invitation.forEmail", { email: invited.email }))}
         </Banner>
       ) : null}
     </div>

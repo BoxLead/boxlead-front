@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "../../i18n";
 import type { AuthUser, SessionFlags } from "../../api/types";
 import { AuthContext, SESSION_FLAGS_OFF, sessionFlags, type AuthContextValue } from "../../context/auth";
 import { THEME_KEY } from "../../theme/theme";
@@ -119,5 +120,21 @@ describe("UserMenu", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cuenta" }));
     await userEvent.click(document.body);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("UserMenu in English", () => {
+  it("shows the account menu and its links in English", async () => {
+    await i18n.changeLanguage("en");
+    const flags: SessionFlags = { ...SESSION_FLAGS_OFF, features: { billing: true, referrals: true, legal: true, clientErrors: false, onboarding: false, notifications: true }, isReseller: true };
+    renderMenu({ ...named, ...flags });
+    await userEvent.click(screen.getByRole("button", { name: "Account" }));
+    const dialog = screen.getByRole("dialog", { name: "Account" });
+    expect(within(dialog).getByRole("switch", { name: "Light mode" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: "Billing" })).toHaveAttribute("href", "/app/billing");
+    expect(within(dialog).getByRole("link", { name: "Notifications" })).toHaveAttribute("href", "/app/notificaciones");
+    const consumer = within(dialog).getByRole("navigation", { name: "Consumer protection" });
+    expect(within(consumer).getByRole("link", { name: "Withdrawal button" })).toHaveAttribute("href", "/arrepentimiento");
   });
 });

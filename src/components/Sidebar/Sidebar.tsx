@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router-dom";
 import { AGENTS_KEY } from "../../data/agents";
 import { CATEGORIES_KEY } from "../../data/categories";
@@ -22,20 +23,22 @@ import { Logo } from "../Logo/Logo";
 import { UserMenu } from "./UserMenu";
 import "./Sidebar.css";
 
+type NavId = "inbox" | "leads" | "metrics" | "categories" | "agents" | "connections";
+
 type NavItem = {
   to: string;
-  label: string;
+  id: NavId;
   icon: ReactNode;
   data?: string;
 };
 
 const links: NavItem[] = [
-  { to: "/app/inbox", label: "Bandeja", icon: <InboxIcon />, data: CONVERSATIONS_KEY },
-  { to: "/app/leads", label: "Leads", icon: <UsersIcon />, data: ALL_LEADS_KEY },
-  { to: "/app/metrics", label: "Métricas", icon: <ChartIcon />, data: CATEGORIES_KEY },
-  { to: "/app/categories", label: "Categorías", icon: <TagIcon />, data: CATEGORIES_KEY },
-  { to: "/app/agents", label: "Agentes", icon: <BotIcon />, data: AGENTS_KEY },
-  { to: "/app/connections", label: "Conexiones", icon: <PlugIcon />, data: CONNECTIONS_KEY },
+  { to: "/app/inbox", id: "inbox", icon: <InboxIcon />, data: CONVERSATIONS_KEY },
+  { to: "/app/leads", id: "leads", icon: <UsersIcon />, data: ALL_LEADS_KEY },
+  { to: "/app/metrics", id: "metrics", icon: <ChartIcon />, data: CATEGORIES_KEY },
+  { to: "/app/categories", id: "categories", icon: <TagIcon />, data: CATEGORIES_KEY },
+  { to: "/app/agents", id: "agents", icon: <BotIcon />, data: AGENTS_KEY },
+  { to: "/app/connections", id: "connections", icon: <PlugIcon />, data: CONNECTIONS_KEY },
 ];
 
 function warmNavItem(item: NavItem): void {
@@ -44,32 +47,36 @@ function warmNavItem(item: NavItem): void {
 }
 
 export function Sidebar() {
+  const { t } = useTranslation("shell");
   const collapsed = useSidebar() === "collapsed";
-  const sidebarLabel = collapsed ? "Expandir menú" : "Contraer menú";
+  const sidebarLabel = collapsed ? t("nav.expand") : t("nav.collapse");
 
   return (
-    <aside className="sidebar" aria-label="Navegación principal">
+    <aside className="sidebar" aria-label={t("nav.label")}>
       <Link to="/app/inbox" className="sidebar-brand" aria-label="BoxLead">
         <Logo />
       </Link>
       <nav className="sidebar-nav">
-        {links.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            viewTransition
-            title={collapsed ? item.label : undefined}
-            className={({ isActive }) =>
-              `sidebar-link${isActive ? " sidebar-link-active" : ""}`
-            }
-            onPointerEnter={() => warmNavItem(item)}
-            onFocus={() => warmNavItem(item)}
-            onTouchStart={() => warmNavItem(item)}
-          >
-            {item.icon}
-            <span className="sidebar-link-label">{item.label}</span>
-          </NavLink>
-        ))}
+        {links.map((item) => {
+          const label = t(`nav.${item.id}`);
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              viewTransition
+              title={collapsed ? label : undefined}
+              className={({ isActive }) =>
+                `sidebar-link${isActive ? " sidebar-link-active" : ""}`
+              }
+              onPointerEnter={() => warmNavItem(item)}
+              onFocus={() => warmNavItem(item)}
+              onTouchStart={() => warmNavItem(item)}
+            >
+              {item.icon}
+              <span className="sidebar-link-label">{label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
       <button
         type="button"

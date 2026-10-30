@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { useAuth } from "../../context/auth";
@@ -9,10 +10,11 @@ import "./EmailVerificationGate.css";
 type Resend = { status: "idle" | "sending" | "sent" } | { status: "error"; message: string };
 
 export function EmailVerificationGate() {
+  const { t } = useTranslation("shell");
   const { user, logout, refreshUser } = useAuth();
   const [resend, setResend] = useState<Resend>({ status: "idle" });
   const [checking, setChecking] = useState(false);
-  useDocumentTitle("Confirmá tu email");
+  useDocumentTitle(t("emailGate.title"));
 
   async function sendAgain() {
     setResend({ status: "sending" });
@@ -25,7 +27,7 @@ export function EmailVerificationGate() {
         message:
           error instanceof ApiError && error.status === 429
             ? error.message
-            : "No pudimos mandar el link. Probá de nuevo en un rato.",
+            : t("emailGate.resendFailed"),
       });
     }
   }
@@ -40,15 +42,19 @@ export function EmailVerificationGate() {
     <section className="page email-gate" aria-labelledby="email-gate-title">
       <div className="panel email-gate-panel">
         <h1 id="email-gate-title" className="page-title">
-          Confirmá tu email
+          {t("emailGate.title")}
         </h1>
         <p className="email-gate-text">
-          Te mandamos un link a <strong className="email-gate-email">{user?.email}</strong>. Abrilo para empezar a usar
-          BoxLead. El link vence en 2 horas.
+          <Trans
+            t={t}
+            i18nKey="emailGate.text"
+            values={{ email: user?.email ?? "" }}
+            components={{ strong: <strong className="email-gate-email" /> }}
+          />
         </p>
         {resend.status === "sent" ? (
           <p className="email-gate-text" role="status">
-            Te mandamos un link nuevo. Si no llega en unos minutos, revisá la carpeta de spam.
+            {t("emailGate.resent")}
           </p>
         ) : null}
         {resend.status === "error" ? (
@@ -58,7 +64,7 @@ export function EmailVerificationGate() {
         ) : null}
         <div className="email-gate-actions">
           <button type="button" className="btn btn-primary" onClick={checkAgain} disabled={checking}>
-            {checking ? "Revisando…" : "Ya lo confirmé"}
+            {checking ? t("emailGate.checking") : t("emailGate.confirmed")}
           </button>
           <button
             type="button"
@@ -66,17 +72,17 @@ export function EmailVerificationGate() {
             onClick={sendAgain}
             disabled={resend.status === "sending"}
           >
-            {resend.status === "sending" ? "Enviando…" : "Mandar el link de nuevo"}
+            {resend.status === "sending" ? t("emailGate.sending") : t("emailGate.resend")}
           </button>
         </div>
         <p className="email-gate-footer">
           {user?.account?.settings ? (
             <>
-              ¿Escribiste mal el email? <Link to="/app/cuenta">Corregilo desde tu cuenta</Link>.{" "}
+              <Trans t={t} i18nKey="emailGate.wrongEmail" components={{ account: <Link to="/app/cuenta" /> }} />{" "}
             </>
           ) : null}
           <button type="button" className="email-gate-logout" onClick={logout}>
-            Cerrar sesión
+            {t("logout")}
           </button>
         </p>
       </div>

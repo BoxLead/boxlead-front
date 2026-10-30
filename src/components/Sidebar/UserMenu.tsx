@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/auth";
 import { setTheme, useTheme } from "../../theme/theme";
@@ -7,14 +8,14 @@ import { LogoutIcon, MoonIcon, SunIcon } from "../icons/UiIcons";
 import { accountLinks, consumerLinks } from "./accountLinks";
 import "./UserMenu.css";
 
-function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+function ThemeSwitch({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return (
     <span className="theme-switch">
       <input
         type="checkbox"
         role="switch"
         className="theme-switch-input"
-        aria-label="Modo claro"
+        aria-label={label}
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
       />
@@ -27,6 +28,7 @@ function ThemeSwitch({ checked, onChange }: { checked: boolean; onChange: (check
 }
 
 export function UserMenu() {
+  const { t } = useTranslation("shell");
   const { user, logout, features, isReseller } = useAuth();
   const links = accountLinks({ features, isReseller, account: user?.account });
   const legalLinks = consumerLinks({ features });
@@ -74,7 +76,7 @@ export function UserMenu() {
         ref={buttonRef}
         type="button"
         className="account-menu-trigger"
-        aria-label="Cuenta"
+        aria-label={t("userMenu.account")}
         aria-expanded={open}
         aria-controls={panelId}
         aria-haspopup="dialog"
@@ -89,7 +91,7 @@ export function UserMenu() {
           id={panelId}
           className="account-menu-panel"
           role="dialog"
-          aria-label="Cuenta"
+          aria-label={t("userMenu.account")}
           aria-modal="false"
           tabIndex={-1}
         >
@@ -108,15 +110,15 @@ export function UserMenu() {
           ))}
           <label className="account-menu-row account-menu-theme">
             {theme === "light" ? <SunIcon /> : <MoonIcon />}
-            <span aria-hidden="true">Tema</span>
-            <ThemeSwitch checked={theme === "light"} onChange={(light) => setTheme(light ? "light" : "dark")} />
+            <span aria-hidden="true">{t("userMenu.theme")}</span>
+            <ThemeSwitch label={t("userMenu.lightMode")} checked={theme === "light"} onChange={(light) => setTheme(light ? "light" : "dark")} />
           </label>
           <button type="button" className="account-menu-action" onClick={closeAndLogout}>
             <LogoutIcon />
-            <span>Cerrar sesión</span>
+            <span>{t("logout")}</span>
           </button>
           {legalLinks.length > 0 ? (
-            <nav className="account-menu-legal" aria-label="Defensa del consumidor">
+            <nav className="account-menu-legal" aria-label={t("userMenu.consumer")}>
               {legalLinks.map(({ to, label }) => (
                 <Link key={to} to={to} className="account-menu-legal-link" onClick={() => setOpen(false)}>
                   {label}

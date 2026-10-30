@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import type { AccountConnectionResponse, AgentResponse, OnboardingResponse } from "../../api/types";
 import { useAuth } from "../../context/auth";
@@ -10,6 +11,7 @@ import { ArrowRightIcon, CheckIcon } from "../icons/UiIcons";
 import "./OnboardingChecklist.css";
 
 export function OnboardingChecklist() {
+  const { t } = useTranslation("shell");
   const { features } = useAuth();
   const enabled = features.onboarding;
   const connections = useApiQuery<AccountConnectionResponse[]>(enabled ? CONNECTIONS_KEY : null);
@@ -22,24 +24,23 @@ export function OnboardingChecklist() {
   const done = steps.filter((step) => step.done).length;
   if (done === steps.length) return null;
   const next = steps.find((step) => !step.done);
+  const count = t("onboarding.count", { done, total: steps.length });
 
   return (
     <section className="onboarding" aria-labelledby="onboarding-title">
       <div className="onboarding-head">
         <h2 id="onboarding-title" className="onboarding-title">
-          Primeros pasos
+          {t("onboarding.title")}
         </h2>
-        <p className="onboarding-count">
-          {done} de {steps.length}
-        </p>
+        <p className="onboarding-count">{count}</p>
         <div
           className="onboarding-bar"
           role="progressbar"
-          aria-label="Primeros pasos hechos"
+          aria-label={t("onboarding.progress")}
           aria-valuemin={0}
           aria-valuemax={steps.length}
           aria-valuenow={done}
-          aria-valuetext={`${done} de ${steps.length}`}
+          aria-valuetext={count}
           data-done={done}
         >
           <span className="onboarding-bar-fill" />
@@ -54,7 +55,7 @@ export function OnboardingChecklist() {
             <div className="onboarding-step-body">
               <p className="onboarding-step-title" id={`onboarding-${step.id}`}>
                 {step.title}
-                {step.done ? <span className="visually-hidden"> (hecho)</span> : null}
+                {step.done ? <span className="visually-hidden">{` ${t("onboarding.done")}`}</span> : null}
               </p>
               {step === next ? <p className="onboarding-step-text">{step.text}</p> : null}
             </div>

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
+import { i18n } from "../../i18n";
 import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
 import { SIDEBAR_KEY } from "../../theme/theme";
 import { Sidebar } from "./Sidebar";
@@ -45,5 +46,18 @@ describe("Sidebar", () => {
     await userEvent.click(screen.getByRole("button", { name: "Expandir menú" }));
     expect(document.documentElement.dataset.sidebar).toBe("expanded");
     expect(screen.getByRole("link", { name: "Bandeja" })).not.toHaveAttribute("title");
+  });
+});
+
+describe("Sidebar in English", () => {
+  it("names the sections and the toggle in English", async () => {
+    await i18n.changeLanguage("en");
+    renderSidebar();
+    expect(screen.getByRole("complementary", { name: "Main navigation" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Inbox" })).toHaveAttribute("href", "/app/inbox");
+    expect(screen.getByRole("link", { name: "Connections" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Collapse menu" }));
+    expect(screen.getByRole("link", { name: "Metrics" })).toHaveAttribute("title", "Metrics");
+    expect(screen.getByRole("button", { name: "Expand menu" })).toBeInTheDocument();
   });
 });
