@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CategoryResponse } from "../api/types";
+import { i18n } from "../i18n";
 import {
   CATEGORY_COLORS,
   categoryById,
@@ -54,5 +55,15 @@ describe("categories", () => {
     ["Algo raro", "Algo raro"],
   ])("explains %s", (message, explained) => {
     expect(categoryErrorMessage(message)).toBe(explained);
+  });
+});
+
+describe("categories in English", () => {
+  it("names colors, counts leads and explains errors in English", async () => {
+    await i18n.changeLanguage("en");
+    expect(colorLabel("PURPLE")).toBe("Purple");
+    expect(leadCountLabel(1)).toBe("1 lead");
+    expect(leadCountLabel(1500)).toBe("1,500 leads");
+    expect(categoryErrorMessage("Category name already in use")).toBe("You already have a category with that name.");
   });
 });

@@ -1,1 +1,198 @@
-{}
+{
+  "logout": "Cerrar sesión",
+  "closeNotice": "Cerrar aviso",
+  "ui": {
+    "cancel": "Cancelar",
+    "unread": ", {{count}} sin leer",
+    "overLimit": "caracteres, supera el máximo"
+  },
+  "nav": {
+    "label": "Navegación principal",
+    "inbox": "Bandeja",
+    "leads": "Leads",
+    "metrics": "Métricas",
+    "categories": "Categorías",
+    "agents": "Agentes",
+    "connections": "Conexiones",
+    "expand": "Expandir menú",
+    "collapse": "Contraer menú"
+  },
+  "userMenu": {
+    "account": "Cuenta",
+    "theme": "Tema",
+    "lightMode": "Modo claro",
+    "consumer": "Defensa del consumidor",
+    "yourAccount": "Tu cuenta",
+    "billing": "Facturación",
+    "reseller": "Revendedor",
+    "notifications": "Notificaciones"
+  },
+  "plan": {
+    "actions": {
+      "choosePlan": "Elegir un plan",
+      "seePlans": "Ver planes",
+      "goToBilling": "Ir a facturación",
+      "updatePayment": "Cambiar medio de pago"
+    },
+    "repliesLimit": {
+      "teamTitle": "Tus agentes usaron todas las respuestas del período",
+      "teamUntil": "Usaron {{limit}} de {{limit}}. Vuelven a responder el {{date}}.",
+      "teamNextPeriod": "Usaron {{limit}} de {{limit}}. Vuelven a responder cuando empiece el próximo período.",
+      "title": "Tus agentes usaron todas las respuestas del plan",
+      "until": "Usaron {{limit}} de {{limit}}. Vuelven a responder el {{date}} o antes si cambiás de plan.",
+      "changePlan": "Usaron {{limit}} de {{limit}}. Cambiá de plan para que sigan respondiendo."
+    },
+    "suspended": {
+      "title": "Tu plan está suspendido",
+      "restricted": "No pudimos cobrarlo. Tus agentes no responden y no podés enviar mensajes hasta que actualices el medio de pago.",
+      "open": "No pudimos cobrarlo. Actualizá el medio de pago para regularizarlo."
+    },
+    "paused": {
+      "title": "Tu plan está en pausa",
+      "restricted": "Tus agentes no responden y no podés enviar mensajes hasta que lo reactives.",
+      "open": "Reactivalo para seguir con tu plan."
+    },
+    "noPlan": {
+      "title": "No tenés un plan activo",
+      "text": "Podés ver tus conversaciones, leads y métricas, pero tus agentes no responden y no podés enviar mensajes."
+    },
+    "pastDue": {
+      "title": "No pudimos cobrar tu plan",
+      "until": "Actualizá el medio de pago antes del {{date}} para no perder el acceso.",
+      "text": "Actualizá el medio de pago para no perder el acceso."
+    },
+    "demoEnding": {
+      "title": "Tu Beta termina pronto",
+      "text": "Termina el {{date}}. Elegí un plan para que tus agentes sigan respondiendo."
+    },
+    "required": {
+      "title": "Necesitás un plan activo",
+      "text": "Sin un plan tus agentes no responden y no podés enviar mensajes."
+    },
+    "limitReached": {
+      "title": "Llegaste al límite de tu plan",
+      "text": "Para seguir, pasate a un plan con más capacidad."
+    },
+    "invitation": {
+      "title": "Tenés una invitación a la Beta",
+      "accept": "Activar la Beta",
+      "accepting": "Activando…",
+      "accepted": "Activaste la Beta.",
+      "forEmail": "La invitación es para {{email}}.",
+      "otherEmail": "La invitación es para {{email}} y entraste con {{current}}."
+    }
+  },
+  "onboarding": {
+    "title": "Primeros pasos",
+    "count": "{{done}} de {{total}}",
+    "progress": "Primeros pasos hechos",
+    "done": "(hecho)",
+    "channel": {
+      "title": "Conectá un canal",
+      "text": "Así los mensajes de tus clientes llegan a la bandeja.",
+      "action": "Conectar"
+    },
+    "agent": {
+      "title": "Creá tu agente",
+      "text": "Contale qué vendés y cómo querés que responda.",
+      "action": "Crear"
+    },
+    "test": {
+      "title": "Probá tu agente",
+      "text": "Mandale una consulta de prueba y mirá cómo contesta.",
+      "action": "Probar"
+    }
+  },
+  "emailGate": {
+    "title": "Confirmá tu email",
+    "text": "Te mandamos un link a <strong>{{email}}</strong>. Abrilo para empezar a usar BoxLead. El link vence en 2 horas.",
+    "resent": "Te mandamos un link nuevo. Si no llega en unos minutos, revisá la carpeta de spam.",
+    "resendFailed": "No pudimos mandar el link. Probá de nuevo en un rato.",
+    "confirmed": "Ya lo confirmé",
+    "checking": "Revisando…",
+    "resend": "Mandar el link de nuevo",
+    "sending": "Enviando…",
+    "wrongEmail": "¿Escribiste mal el email? <account>Corregilo desde tu cuenta</account>."
+  },
+  "legal": {
+    "title": "Actualizamos nuestros documentos",
+    "description": "Para seguir usando BoxLead necesitamos que leas y aceptes estas versiones.",
+    "version": "Versión {{version}}",
+    "check": "Leí y acepto estos documentos.",
+    "accept": "Aceptar",
+    "saving": "Guardando…",
+    "saveFailed": "No pudimos guardar tu aceptación. Probá de nuevo.",
+    "documents": {
+      "TERMS": "Términos y condiciones",
+      "PRIVACY": "Política de privacidad",
+      "ADHESION_CONTRACT": "Contrato de adhesión",
+      "RESELLER_AGREEMENT": "Acuerdo de revendedores",
+      "DATA_PROCESSING": "Acuerdo de tratamiento de datos"
+    }
+  },
+  "lead": {
+    "unidentified": "Lead sin identificar",
+    "platformContact": "Contacto de {{platform}}",
+    "status": {
+      "NEW": "Nuevo",
+      "CONTACTED": "Contactado",
+      "QUALIFIED": "Calificado",
+      "LOST": "Perdido",
+      "CLOSED": "Cerrado"
+    },
+    "temperature": {
+      "COLD": "Frío",
+      "WARM": "Tibio",
+      "HOT": "Caliente"
+    }
+  },
+  "statusSelect": {
+    "label": "Estado de {{name}}",
+    "changed": "{{name}} pasó a {{status}}.",
+    "failed": "No pudimos cambiar el estado. Probá de nuevo."
+  },
+  "temperatureSelect": {
+    "label": "Temperatura de {{name}}",
+    "none": "Sin evaluar",
+    "changed": "{{name}} quedó {{temperature}}.",
+    "cleared": "{{name}} quedó sin evaluar.",
+    "failed": "No pudimos cambiar la temperatura. Probá de nuevo."
+  },
+  "categorySelect": {
+    "label": "Categoría de {{name}}",
+    "none": "Sin categoría",
+    "changed": "{{name}} pasó a {{category}}.",
+    "cleared": "{{name}} quedó sin categoría.",
+    "failed": "No pudimos cambiar la categoría. Probá de nuevo."
+  },
+  "category": {
+    "leadCount_one": "{{formatted}} lead",
+    "leadCount_other": "{{formatted}} leads",
+    "colors": {
+      "BLUE": "Azul",
+      "GREEN": "Verde",
+      "YELLOW": "Amarillo",
+      "ORANGE": "Naranja",
+      "RED": "Rojo",
+      "PURPLE": "Violeta",
+      "PINK": "Rosa",
+      "GRAY": "Gris"
+    },
+    "errors": {
+      "duplicate": "Ya tenés una categoría con ese nombre.",
+      "max": "Llegaste al máximo de categorías. Eliminá una para crear otra.",
+      "notFound": "Esta categoría ya no existe. Actualizá la página."
+    }
+  },
+  "routeError": {
+    "chunkTitle": "Hay una versión nueva de BoxLead",
+    "title": "Esta pantalla no se pudo mostrar",
+    "chunkHint": "Recargá la página para seguir con la versión actual.",
+    "hint": "Probá de nuevo. Si vuelve a pasar, escribinos a soporte y contanos qué estabas haciendo.",
+    "reload": "Recargar",
+    "retry": "Reintentar"
+  },
+  "announcer": {
+    "loaded": "{{page}}, página cargada"
+  }
+}

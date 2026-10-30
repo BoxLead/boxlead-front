@@ -1,1 +1,198 @@
-{}
+{
+  "logout": "Log out",
+  "closeNotice": "Dismiss",
+  "ui": {
+    "cancel": "Cancel",
+    "unread": ", {{count}} unread",
+    "overLimit": "characters, over the limit"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "inbox": "Inbox",
+    "leads": "Leads",
+    "metrics": "Metrics",
+    "categories": "Categories",
+    "agents": "Agents",
+    "connections": "Connections",
+    "expand": "Expand menu",
+    "collapse": "Collapse menu"
+  },
+  "userMenu": {
+    "account": "Account",
+    "theme": "Theme",
+    "lightMode": "Light mode",
+    "consumer": "Consumer protection",
+    "yourAccount": "Your account",
+    "billing": "Billing",
+    "reseller": "Reseller",
+    "notifications": "Notifications"
+  },
+  "plan": {
+    "actions": {
+      "choosePlan": "Choose a plan",
+      "seePlans": "See plans",
+      "goToBilling": "Go to billing",
+      "updatePayment": "Change payment method"
+    },
+    "repliesLimit": {
+      "teamTitle": "Your agents used every reply for this period",
+      "teamUntil": "They used {{limit}} of {{limit}}. They'll reply again on {{date}}.",
+      "teamNextPeriod": "They used {{limit}} of {{limit}}. They'll reply again when the next period starts.",
+      "title": "Your agents used every reply in your plan",
+      "until": "They used {{limit}} of {{limit}}. They'll reply again on {{date}}, or sooner if you change plans.",
+      "changePlan": "They used {{limit}} of {{limit}}. Change plans to keep them replying."
+    },
+    "suspended": {
+      "title": "Your plan is suspended",
+      "restricted": "We couldn't charge it. Your agents won't reply and you can't send messages until you update your payment method.",
+      "open": "We couldn't charge it. Update your payment method to sort it out."
+    },
+    "paused": {
+      "title": "Your plan is paused",
+      "restricted": "Your agents won't reply and you can't send messages until you reactivate it.",
+      "open": "Reactivate it to keep your plan going."
+    },
+    "noPlan": {
+      "title": "You don't have an active plan",
+      "text": "You can see your conversations, leads and metrics, but your agents won't reply and you can't send messages."
+    },
+    "pastDue": {
+      "title": "We couldn't charge your plan",
+      "until": "Update your payment method before {{date}} to keep your access.",
+      "text": "Update your payment method to keep your access."
+    },
+    "demoEnding": {
+      "title": "Your Beta ends soon",
+      "text": "It ends on {{date}}. Choose a plan to keep your agents replying."
+    },
+    "required": {
+      "title": "You need an active plan",
+      "text": "Without a plan your agents won't reply and you can't send messages."
+    },
+    "limitReached": {
+      "title": "You've reached your plan's limit",
+      "text": "To keep going, move to a plan with more room."
+    },
+    "invitation": {
+      "title": "You're invited to the Beta",
+      "accept": "Activate the Beta",
+      "accepting": "Activating…",
+      "accepted": "Beta activated.",
+      "forEmail": "The invitation is for {{email}}.",
+      "otherEmail": "The invitation is for {{email}}, but you signed in as {{current}}."
+    }
+  },
+  "onboarding": {
+    "title": "Getting started",
+    "count": "{{done}} of {{total}}",
+    "progress": "Getting started steps done",
+    "done": "(done)",
+    "channel": {
+      "title": "Connect a channel",
+      "text": "That's how your customers' messages reach the inbox.",
+      "action": "Connect"
+    },
+    "agent": {
+      "title": "Create your agent",
+      "text": "Tell it what you sell and how you want it to reply.",
+      "action": "Create"
+    },
+    "test": {
+      "title": "Test your agent",
+      "text": "Send it a test question and see how it answers.",
+      "action": "Test"
+    }
+  },
+  "emailGate": {
+    "title": "Confirm your email",
+    "text": "We sent a link to <strong>{{email}}</strong>. Open it to start using BoxLead. The link expires in 2 hours.",
+    "resent": "We sent you a new link. If it doesn't arrive in a few minutes, check your spam folder.",
+    "resendFailed": "We couldn't send the link. Try again in a bit.",
+    "confirmed": "I've confirmed it",
+    "checking": "Checking…",
+    "resend": "Send the link again",
+    "sending": "Sending…",
+    "wrongEmail": "Typed the wrong email? <account>Fix it from your account</account>."
+  },
+  "legal": {
+    "title": "We updated our documents",
+    "description": "To keep using BoxLead, please read and accept these versions.",
+    "version": "Version {{version}}",
+    "check": "I've read and accept these documents.",
+    "accept": "Accept",
+    "saving": "Saving…",
+    "saveFailed": "We couldn't save your acceptance. Try again.",
+    "documents": {
+      "TERMS": "Terms and conditions",
+      "PRIVACY": "Privacy policy",
+      "ADHESION_CONTRACT": "Adhesion contract",
+      "RESELLER_AGREEMENT": "Reseller agreement",
+      "DATA_PROCESSING": "Data processing agreement"
+    }
+  },
+  "lead": {
+    "unidentified": "Unidentified lead",
+    "platformContact": "{{platform}} contact",
+    "status": {
+      "NEW": "New",
+      "CONTACTED": "Contacted",
+      "QUALIFIED": "Qualified",
+      "LOST": "Lost",
+      "CLOSED": "Closed"
+    },
+    "temperature": {
+      "COLD": "Cold",
+      "WARM": "Warm",
+      "HOT": "Hot"
+    }
+  },
+  "statusSelect": {
+    "label": "Status for {{name}}",
+    "changed": "{{name}} moved to {{status}}.",
+    "failed": "We couldn't change the status. Try again."
+  },
+  "temperatureSelect": {
+    "label": "Temperature for {{name}}",
+    "none": "Unrated",
+    "changed": "{{name}} is now {{temperature}}.",
+    "cleared": "{{name}} is now unrated.",
+    "failed": "We couldn't change the temperature. Try again."
+  },
+  "categorySelect": {
+    "label": "Category for {{name}}",
+    "none": "No category",
+    "changed": "{{name}} moved to {{category}}.",
+    "cleared": "{{name}} no longer has a category.",
+    "failed": "We couldn't change the category. Try again."
+  },
+  "category": {
+    "leadCount_one": "{{formatted}} lead",
+    "leadCount_other": "{{formatted}} leads",
+    "colors": {
+      "BLUE": "Blue",
+      "GREEN": "Green",
+      "YELLOW": "Yellow",
+      "ORANGE": "Orange",
+      "RED": "Red",
+      "PURPLE": "Purple",
+      "PINK": "Pink",
+      "GRAY": "Gray"
+    },
+    "errors": {
+      "duplicate": "You already have a category with that name.",
+      "max": "You've reached the category limit. Delete one to create another.",
+      "notFound": "This category no longer exists. Refresh the page."
+    }
+  },
+  "routeError": {
+    "chunkTitle": "There's a new version of BoxLead",
+    "title": "This screen couldn't load",
+    "chunkHint": "Reload the page to keep going with the latest version.",
+    "hint": "Try again. If it happens again, write to support and tell us what you were doing.",
+    "reload": "Reload",
+    "retry": "Try again"
+  },
+  "announcer": {
+    "loaded": "{{page}}, page loaded"
+  }
+}

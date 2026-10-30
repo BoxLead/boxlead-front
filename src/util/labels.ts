@@ -1,26 +1,13 @@
+import i18next from "i18next";
 import type { LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../api/types";
 import { getPlatform } from "../platforms";
 
-const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
-  NEW: "Nuevo",
-  CONTACTED: "Contactado",
-  QUALIFIED: "Calificado",
-  LOST: "Perdido",
-  CLOSED: "Cerrado",
-};
+export const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "LOST", "CLOSED"];
 
-export const LEAD_STATUSES = Object.keys(LEAD_STATUS_LABELS) as LeadStatus[];
-
-const LEAD_TEMPERATURE_LABELS: Record<LeadTemperature, string> = {
-  COLD: "Frío",
-  WARM: "Tibio",
-  HOT: "Caliente",
-};
-
-export const LEAD_TEMPERATURES = Object.keys(LEAD_TEMPERATURE_LABELS) as LeadTemperature[];
+export const LEAD_TEMPERATURES: LeadTemperature[] = ["COLD", "WARM", "HOT"];
 
 export function leadTemperatureLabel(temperature: LeadTemperature): string {
-  return LEAD_TEMPERATURE_LABELS[temperature];
+  return i18next.t(`lead.temperature.${temperature}`, { ns: "shell" });
 }
 
 export function platformLabel(platform: PlatformType): string {
@@ -28,16 +15,16 @@ export function platformLabel(platform: PlatformType): string {
 }
 
 export function leadStatusLabel(status: LeadStatus): string {
-  return LEAD_STATUS_LABELS[status];
+  return i18next.t(`lead.status.${status}`, { ns: "shell" });
 }
 
 export function leadDisplayName(lead: LeadResponse | undefined): string {
-  if (!lead) return "Lead sin identificar";
+  if (!lead) return i18next.t("lead.unidentified", { ns: "shell" });
   return (
     lead.name?.trim() ||
     lead.email?.trim() ||
     lead.phone?.trim() ||
     (getPlatform(lead.platform).externalIdIsContact ? lead.externalLeadId : null) ||
-    `Contacto de ${getPlatform(lead.platform).name}`
+    i18next.t("lead.platformContact", { ns: "shell", platform: getPlatform(lead.platform).name })
   );
 }

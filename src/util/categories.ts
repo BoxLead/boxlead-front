@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { CategoryColor, CategoryResponse } from "../api/types";
 import { intlLocale } from "../i18n/locale";
 
@@ -5,21 +6,10 @@ export const CATEGORY_NAME_MAX = 40;
 export const CATEGORY_DESCRIPTION_MAX = 280;
 export const UNCATEGORIZED = "none";
 
-const COLOR_LABELS: Record<CategoryColor, string> = {
-  BLUE: "Azul",
-  GREEN: "Verde",
-  YELLOW: "Amarillo",
-  ORANGE: "Naranja",
-  RED: "Rojo",
-  PURPLE: "Violeta",
-  PINK: "Rosa",
-  GRAY: "Gris",
-};
-
-export const CATEGORY_COLORS = Object.keys(COLOR_LABELS) as CategoryColor[];
+export const CATEGORY_COLORS: CategoryColor[] = ["BLUE", "GREEN", "YELLOW", "ORANGE", "RED", "PURPLE", "PINK", "GRAY"];
 
 export function colorLabel(color: CategoryColor): string {
-  return COLOR_LABELS[color];
+  return i18next.t(`category.colors.${color}`, { ns: "shell" });
 }
 
 export function colorClass(color: CategoryColor): string {
@@ -27,7 +17,7 @@ export function colorClass(color: CategoryColor): string {
 }
 
 export function leadCountLabel(count: number): string {
-  return count === 1 ? "1 lead" : `${count.toLocaleString(intlLocale())} leads`;
+  return i18next.t("category.leadCount", { ns: "shell", count, formatted: count.toLocaleString(intlLocale()) });
 }
 
 export function categoryById(categories: CategoryResponse[] | undefined, id: string | null | undefined) {
@@ -40,8 +30,8 @@ export function nextColor(categories: CategoryResponse[]): CategoryColor {
 }
 
 export function categoryErrorMessage(message: string): string {
-  if (/already in use/i.test(message)) return "Ya tenés una categoría con ese nombre.";
-  if (/up to \d+ categories/i.test(message)) return "Llegaste al máximo de categorías. Eliminá una para crear otra.";
-  if (/not found/i.test(message)) return "Esta categoría ya no existe. Actualizá la página.";
+  if (/already in use/i.test(message)) return i18next.t("category.errors.duplicate", { ns: "shell" });
+  if (/up to \d+ categories/i.test(message)) return i18next.t("category.errors.max", { ns: "shell" });
+  if (/not found/i.test(message)) return i18next.t("category.errors.notFound", { ns: "shell" });
   return message;
 }

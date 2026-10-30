@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { LeadResponse, LeadStatus } from "../../api/types";
 import { updateLeadStatus } from "../../data/leads";
@@ -14,6 +15,7 @@ type StatusSelectProps = {
 };
 
 export function StatusSelect({ lead, size = "sm" }: StatusSelectProps) {
+  const { t } = useTranslation("shell");
   const toast = useToast();
   const [saving, setSaving] = useState(false);
 
@@ -22,11 +24,16 @@ export function StatusSelect({ lead, size = "sm" }: StatusSelectProps) {
     setSaving(true);
     try {
       await updateLeadStatus(lead, status);
-      toast({ message: `${leadDisplayName(lead)} pasó a ${leadStatusLabel(status).toLocaleLowerCase(intlLocale())}.` });
+      toast({
+        message: t("statusSelect.changed", {
+          name: leadDisplayName(lead),
+          status: leadStatusLabel(status).toLocaleLowerCase(intlLocale()),
+        }),
+      });
     } catch (error) {
       toast({
         tone: "danger",
-        message: error instanceof ApiError ? error.message : "No pudimos cambiar el estado. Probá de nuevo.",
+        message: error instanceof ApiError ? error.message : t("statusSelect.failed"),
       });
     } finally {
       setSaving(false);
@@ -35,7 +42,7 @@ export function StatusSelect({ lead, size = "sm" }: StatusSelectProps) {
 
   return (
     <label className={`status-select status-select-${size} status-select-${lead.status.toLowerCase()}`}>
-      <span className="visually-hidden">Estado de {leadDisplayName(lead)}</span>
+      <span className="visually-hidden">{t("statusSelect.label", { name: leadDisplayName(lead) })}</span>
       <select
         value={lead.status}
         disabled={saving}
