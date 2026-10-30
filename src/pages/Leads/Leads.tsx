@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import type { CategoryResponse, LeadResponse, LeadStatus, LeadTemperature, PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -43,7 +44,8 @@ function parseChannel(value: string | null): PlatformType | "ALL" {
 }
 
 export function Leads() {
-  useDocumentTitle("Leads");
+  const { t } = useTranslation("leads");
+  useDocumentTitle(t("title"));
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useUrlQuery(searchParams, setSearchParams);
@@ -80,7 +82,7 @@ export function Leads() {
   }
 
   const channelChoices: Choice<PlatformType | "ALL">[] = [
-    { value: "ALL", label: "Todos los canales" },
+    { value: "ALL", label: t("list.allChannels") },
     ...channels.map((p) => ({ value: p.id, label: p.name, icon: p.logo(16) })),
   ];
 
@@ -88,12 +90,12 @@ export function Leads() {
     <div className="page leads-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Leads</h1>
-          <p className="page-header-desc">Todas las personas que te consultaron, en un solo lugar y con su estado.</p>
+          <h1 className="page-title">{t("title")}</h1>
+          <p className="page-header-desc">{t("list.description")}</p>
         </div>
       </header>
 
-      <div className="leads-funnel" role="group" aria-label="Filtrar por estado">
+      <div className="leads-funnel" role="group" aria-label={t("list.statusFilter")}>
         {LEAD_STATUSES.map((status) => {
           const active = filters.status === status;
           return (
@@ -114,10 +116,10 @@ export function Leads() {
       <div className="leads-toolbar">
         <label className="leads-search">
           <SearchIcon width={18} height={18} />
-          <span className="visually-hidden">Buscar leads</span>
+          <span className="visually-hidden">{t("list.search")}</span>
           <input
             type="search"
-            placeholder="Buscar por nombre, email o teléfono"
+            placeholder={t("list.searchPlaceholder")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -130,43 +132,43 @@ export function Leads() {
           </div>
         ) : channels.length > 1 ? (
           <ChoiceGroup
-            label="Canal"
+            label={t("list.channel")}
             choices={channelChoices}
             value={filters.channel}
             onChange={(channel) => setParam("channel", channel === "ALL" ? null : channel)}
           />
         ) : null}
         <label className="leads-category-filter">
-          <span className="visually-hidden">Filtrar por categoría</span>
+          <span className="visually-hidden">{t("list.categoryFilter")}</span>
           <select
             className="select"
             value={filters.category ?? ""}
             disabled={!categories.data}
             onChange={(event) => setParam("category", event.target.value || null)}
           >
-            <option value="">Todas las categorías</option>
+            <option value="">{t("list.allCategories")}</option>
             {categoryList.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
             ))}
-            <option value={UNCATEGORIZED}>Sin categoría</option>
+            <option value={UNCATEGORIZED}>{t("list.uncategorized")}</option>
           </select>
         </label>
         <label className="leads-temperature-filter">
-          <span className="visually-hidden">Filtrar por temperatura</span>
+          <span className="visually-hidden">{t("list.temperatureFilter")}</span>
           <select
             className="select"
             value={filters.temperature ?? ""}
             onChange={(event) => setParam("temperature", event.target.value || null)}
           >
-            <option value="">Todas las temperaturas</option>
+            <option value="">{t("list.allTemperatures")}</option>
             {LEAD_TEMPERATURES.map((temperature) => (
               <option key={temperature} value={temperature}>
                 {leadTemperatureLabel(temperature)}
               </option>
             ))}
-            <option value={UNEVALUATED}>Sin evaluar</option>
+            <option value={UNEVALUATED}>{t("list.unevaluated")}</option>
           </select>
         </label>
         {leads.loading ? (
@@ -178,7 +180,7 @@ export function Leads() {
               checked={filters.includeBuyers}
               onChange={(event) => setParam("buyers", event.target.checked ? "1" : null)}
             />
-            Incluir compradores sin consulta previa ({buyers})
+            {t("list.includeBuyers", { value: buyers })}
           </label>
         ) : null}
       </div>
@@ -186,10 +188,10 @@ export function Leads() {
       {leads.error && !leads.data ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar los leads"
+          title={t("list.loadError")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void leads.reload()}>
-              Reintentar
+              {t("list.retry")}
             </button>
           }
         >
@@ -215,11 +217,11 @@ export function Leads() {
         <div className="panel leads-empty">
           <EmptyState
             illustration="leads"
-            title="Todavía no hay leads"
-            hint="Se crean solos cuando alguien te escribe por un canal conectado."
+            title={t("list.emptyTitle")}
+            hint={t("list.emptyHint")}
             action={
               <Link to="/app/connections" className="btn btn-secondary btn-sm">
-                Conectar un canal
+                {t("list.connect")}
               </Link>
             }
           />
@@ -228,7 +230,7 @@ export function Leads() {
         <div className="panel leads-empty">
           <EmptyState
             illustration="search"
-            title="No hay leads con estos filtros"
+            title={t("list.noMatches")}
             action={
               <button
                 type="button"
@@ -238,7 +240,7 @@ export function Leads() {
                   setSearchParams({}, { replace: true });
                 }}
               >
-                Limpiar filtros
+                {t("list.clearFilters")}
               </button>
             }
           />
@@ -247,16 +249,16 @@ export function Leads() {
         <div className="panel leads-table-wrap rise">
           <table className="leads-table">
             <caption className="visually-hidden">
-              {visible.length === 1 ? "1 lead" : `${visible.length} leads`}
+              {t("list.caption", { count: visible.length })}
             </caption>
             <thead>
               <tr>
-                <th scope="col">Contacto</th>
-                <th scope="col">Estado</th>
-                <th scope="col">Temperatura</th>
-                <th scope="col">Categoría</th>
-                <th scope="col">Datos</th>
-                <th scope="col">Primer contacto</th>
+                <th scope="col">{t("list.contact")}</th>
+                <th scope="col">{t("list.status")}</th>
+                <th scope="col">{t("list.temperature")}</th>
+                <th scope="col">{t("list.category")}</th>
+                <th scope="col">{t("list.details")}</th>
+                <th scope="col">{t("list.firstContact")}</th>
               </tr>
             </thead>
             <tbody>
@@ -274,7 +276,7 @@ export function Leads() {
                           </Link>
                           <span className="leads-person-meta">
                             {platform.name}
-                            {lead.postSaleOnly ? <Tag tone="success">Comprador</Tag> : null}
+                            {lead.postSaleOnly ? <Tag tone="success">{t("buyer")}</Tag> : null}
                           </span>
                         </div>
                       </div>
@@ -295,7 +297,7 @@ export function Leads() {
                           {lead.phone ? <span>{lead.phone}</span> : null}
                         </>
                       ) : (
-                        <span className="leads-cell-muted">Sin datos</span>
+                        <span className="leads-cell-muted">{t("list.noDetails")}</span>
                       )}
                     </td>
                     <td className="leads-cell-muted">
@@ -309,7 +311,7 @@ export function Leads() {
           {remaining > 0 ? (
             <div className="leads-table-more">
               <button type="button" className="btn btn-secondary btn-sm" ref={sentinelRef} onClick={showMore}>
-                Mostrar más ({remaining})
+                {t("list.showMore", { value: remaining })}
               </button>
             </div>
           ) : null}

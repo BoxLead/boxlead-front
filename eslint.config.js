@@ -17,8 +17,6 @@ const I18N_PENDING = [
   'src/pages/Billing/**',
   'src/pages/Categories/**',
   'src/pages/Connections/**',
-  'src/pages/LeadDetail/**',
-  'src/pages/Leads/**',
   'src/pages/Notifications/**',
   'src/pages/OAuthCallback/**',
   'src/pages/Reseller/**',
