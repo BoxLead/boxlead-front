@@ -1,3 +1,4 @@
+import spanishConnections from "../i18n/messages/es/connections.json";
 import { CONNECTABLE_PLATFORMS } from "../platforms";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../util/company";
 import { pageTitle, PUBLIC_PAGES, type PublicPage } from "./pages";
@@ -44,7 +45,7 @@ export function buildRobots(): string {
 }
 
 export function buildLlms(): string {
-  const channels = CONNECTABLE_PLATFORMS.map((platform) => `- ${platform.name}. ${platform.summary}`);
+  const channels = CONNECTABLE_PLATFORMS.map((platform) => `- ${platform.name}. ${spanishConnections.platforms[platform.id].summary}`);
   const pages = indexablePages().map((page) => `- [${pageTitle(page)}](${absoluteUrl(page.path)}). ${page.description}`);
   return [
     `# ${PRODUCT_NAME}`,

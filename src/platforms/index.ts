@@ -1,4 +1,5 @@
 import type { PlatformType, SalesStage } from "../api/types";
+import { channelT } from "./shared";
 import { instagram } from "./instagram";
 import { meli } from "./meli";
 import { messenger } from "./messenger";
@@ -22,22 +23,26 @@ export function getPlatform(id: PlatformType): PlatformDefinition {
 }
 
 export function stageLabel(id: PlatformType, stage: SalesStage): string {
-  return PLATFORMS[id].stageLabels[stage] ?? (stage === "POST_SALE" ? "Postventa" : "Mensajes");
+  return PLATFORMS[id].stageLabels[stage] ?? channelT()(stage === "POST_SALE" ? "channel.postSale" : "channel.messages");
 }
 
 export function hasStages(id: PlatformType): boolean {
   return Object.keys(PLATFORMS[id].stageLabels).length > 1;
 }
 
-const GENERIC_STAGE_LABELS: Record<SalesStage, string> = { PRE_SALE: "Preventa", POST_SALE: "Postventa" };
+const STAGES: SalesStage[] = ["PRE_SALE", "POST_SALE"];
+
+function genericStageLabels(): Record<SalesStage, string> {
+  const t = channelT();
+  return { PRE_SALE: t("channel.preSale"), POST_SALE: t("channel.postSale") };
+}
 
 export type StageChoice = { value: SalesStage; label: string };
 
 export function stageChoices(id: PlatformType | null): StageChoice[] {
-  const labels: Partial<Record<SalesStage, string>> = id ? PLATFORMS[id].stageLabels : GENERIC_STAGE_LABELS;
-  return (Object.keys(GENERIC_STAGE_LABELS) as SalesStage[])
-    .filter((stage) => labels[stage] !== undefined)
-    .map((stage) => ({ value: stage, label: labels[stage] ?? GENERIC_STAGE_LABELS[stage] }));
+  const generic = genericStageLabels();
+  const labels: Partial<Record<SalesStage, string>> = id ? PLATFORMS[id].stageLabels : generic;
+  return STAGES.filter((stage) => labels[stage] !== undefined).map((stage) => ({ value: stage, label: labels[stage] ?? generic[stage] }));
 }
 
 export type { PlatformDefinition } from "./types";

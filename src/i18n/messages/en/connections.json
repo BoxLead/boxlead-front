@@ -1,1 +1,183 @@
-{}
+{
+  "page": {
+    "title": "Connections",
+    "description": "Connect your channels and every inquiry lands in your inbox, ready to answer.",
+    "count": "<strong>{{connected}}</strong> of {{total}} channels connected",
+    "connected": "You connected {{name}}.",
+    "disconnected": "You disconnected {{name}}.",
+    "disconnectFailed": "We couldn't disconnect the account.",
+    "reconnectTitle": "Reconnect {{name}}",
+    "reconnect": "Reconnect",
+    "reconnectBody": "{{name}} revoked the authorization or it expired. Until then no new messages come in and replies can't be sent.",
+    "errorTitle": "Something went wrong",
+    "retry": "Retry",
+    "channels": "Channels",
+    "disconnectTitle": "Disconnect {{name}}?",
+    "disconnectFallbackName": "this account",
+    "disconnecting": "Disconnecting…",
+    "disconnect": "Disconnect",
+    "disconnectBody": "New messages from this {{name}} account stop coming in.",
+    "disconnectKeeps": "The conversations and leads already in BoxLead are kept."
+  },
+  "card": {
+    "attention": "Attention",
+    "connected": "Connected",
+    "accounts": "{{name}} accounts",
+    "syncs": "What comes into BoxLead",
+    "howItWorks": "How it works",
+    "connecting": "Connecting…",
+    "connect": "Connect {{name}}"
+  },
+  "account": {
+    "connectedOn": "Connected on {{date}}",
+    "connectedOnWithActivity": "Connected on {{date}} · Last activity {{time}}",
+    "needsReconnection": "Needs reconnecting",
+    "failures_one": "{{count}} failed notification this week",
+    "failures_other": "{{count}} failed notifications this week",
+    "reconnect": "Reconnect",
+    "disconnectLabel": "Disconnect {{name}}",
+    "disconnect": "Disconnect"
+  },
+  "callback": {
+    "title": "Connecting {{name}}",
+    "titleFallback": "Connecting account",
+    "cancelled": "You canceled the authorization on {{name}}. You can try again whenever you want.",
+    "denied": "{{name}} didn't authorize the connection ({{code}}).",
+    "invalidLink": "The connection link isn't valid.",
+    "missingCode": "The authorization code is missing. Try connecting again.",
+    "unverified": "We couldn't verify that this connection was started from your account. Try connecting again.",
+    "connected": "You connected {{name}}: {{accounts}}.",
+    "failed": "We couldn't complete the connection.",
+    "errorTitle": "We couldn't connect {{name}}",
+    "errorFallbackName": "the account",
+    "back": "Back to connections",
+    "emptyTitle": "We didn't find any accounts",
+    "emptyBody": "The authorization went through but {{name}} didn't share any {{accountNoun}}. Check the permissions and try again.",
+    "saving": "We're saving the authorization. It takes a few seconds.",
+    "connecting": "Connecting…"
+  },
+  "connect": {
+    "insecureUrl": "The authorization address isn't secure.",
+    "whatsappDisabled": "WhatsApp isn't enabled in BoxLead yet.",
+    "whatsappClosed": "You closed the WhatsApp sign up before finishing.",
+    "whatsappNoNumber": "The sign up finished but we didn't get the number you picked. Try again.",
+    "failed": "We couldn't connect {{name}}."
+  },
+  "channel": {
+    "email": "Email",
+    "phone": "Phone",
+    "profile": "Profile",
+    "reconnectTitle": "{{name}} needs to be reconnected",
+    "reconnectDetail": "The authorization expired or was revoked. Reconnect the account to reply again.",
+    "tooLongTitle": "The message is too long",
+    "tooLongDetail": "The limit for this channel is {{max}} characters.",
+    "preSale": "Pre-sale",
+    "postSale": "Post-sale",
+    "messages": "Messages",
+    "messagePlaceholder": "Write a message",
+    "accountNoun": "account",
+    "addAccount": "Add another account"
+  },
+  "platforms": {
+    "MELI": {
+      "accountNoun": "seller account",
+      "summary": "Answer questions on your listings and messages about your sales from BoxLead.",
+      "syncs": ["Questions on your listings", "Post-sale messages", "Contact details for each purchase"],
+      "howItWorks": [
+        "You authorize BoxLead from your MercadoLibre seller account.",
+        "New questions and messages about your sales land in the inbox.",
+        "You reply from BoxLead and the answer is posted on MercadoLibre."
+      ],
+      "preSale": "Questions",
+      "postSale": "Post-sale",
+      "postSalePlaceholder": "Write a message to the buyer",
+      "postSaleHint": "MercadoLibre limits post-sale messages to 350 characters.",
+      "questionPlaceholder": "Write your answer",
+      "questionHint": "It's posted as the answer to the oldest pending question.",
+      "noQuestionsTitle": "No pending questions",
+      "noQuestionsDetail": "MercadoLibre only lets you answer open questions and this buyer has all of them answered.",
+      "noBuyerTitle": "We couldn't identify the buyer",
+      "noBuyerDetail": "This contact has no linked MercadoLibre user, so you can't reply to them from BoxLead.",
+      "noOrderTitle": "There's no linked sale yet",
+      "noOrderDetail": "You'll be able to reply when the buyer's next message about their purchase arrives.",
+      "emptyTitle": "Write a message before sending",
+      "blockedTitle": "MercadoLibre blocked the message",
+      "blockedDetail": "The conversation may be closed or have an open claim.",
+      "rejectedTitle": "MercadoLibre rejected the message",
+      "rejectedDetail": "Try again in a few minutes.",
+      "listing": {
+        "active": "Active",
+        "paused": "Paused",
+        "closed": "Ended",
+        "under_review": "Under review",
+        "inactive": "Inactive"
+      },
+      "order": {
+        "paid": "Paid",
+        "confirmed": "Confirmed",
+        "payment_required": "Payment pending",
+        "payment_in_process": "Payment in process",
+        "partially_paid": "Partially paid",
+        "partially_refunded": "Partially refunded",
+        "pending_cancel": "Canceling",
+        "cancelled": "Canceled",
+        "invalid": "Invalid"
+      }
+    },
+    "WHATSAPP": {
+      "accountNoun": "WhatsApp Business number",
+      "addAnother": "Add another number",
+      "summary": "Handle the chats on your WhatsApp Business number in the same inbox.",
+      "syncs": ["Messages your number receives", "Name and phone of each contact"],
+      "howItWorks": [
+        "You sign in with Facebook and pick your WhatsApp Business number.",
+        "The messages that number receives land in the inbox.",
+        "You reply from BoxLead with the same number."
+      ],
+      "preSale": "Chats",
+      "windowTitle": "More than 24 hours have passed",
+      "windowDetail": "WhatsApp only allows free text within 24 hours of the person's last message. You can reply now with an approved template."
+    },
+    "INSTAGRAM": {
+      "accountNoun": "professional account",
+      "summary": "Reply to direct messages and comments on your posts and reels from the same conversation.",
+      "syncs": ["Direct messages", "Comments on posts and reels"],
+      "howItWorks": [
+        "You authorize BoxLead from your Instagram professional account.",
+        "Direct messages and comments land in each person's conversation.",
+        "You reply by direct message or, on each comment, in public."
+      ],
+      "placeholder": "Write a direct message",
+      "hint": "If Instagram no longer accepts direct messages, it's sent as a private reply to their last comment (only once).",
+      "commentPlaceholder": "Write your public reply",
+      "posts": {
+        "FEED": "a post",
+        "REELS": "a reel",
+        "STORY": "a story",
+        "AD": "an ad",
+        "IGTV": "a video"
+      },
+      "windowTitle": "You can't message them privately anymore",
+      "windowDetail": "Instagram no longer accepts direct messages to this person and there's no recent comment left to reply to privately. You can reply to the comment in public."
+    },
+    "META": {
+      "accountNoun": "Facebook page",
+      "addAnother": "Add another page",
+      "summary": "Reply to the messages your Facebook page receives.",
+      "syncs": ["Messages to your page"],
+      "howItWorks": [
+        "You sign in with Facebook and pick your page.",
+        "The messages the page receives land in the inbox.",
+        "You reply from BoxLead on behalf of the page."
+      ],
+      "windowTitle": "More than 24 hours have passed",
+      "windowDetail": "Messenger only allows replies within 24 hours of the person's last message. You can write to them when they message your page again."
+    },
+    "TIKTOK": {
+      "summary": "Coming soon."
+    },
+    "GOOGLE_ADS": {
+      "summary": "Coming soon."
+    }
+  }
+}

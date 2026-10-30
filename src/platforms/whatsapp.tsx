@@ -1,5 +1,5 @@
 import { WhatsAppIcon } from "../components/icons/PlatformIcons";
-import { lengthError, reconnectError } from "./shared";
+import { channelT, lengthError, reconnectError } from "./shared";
 import type { ContactField, PlatformDefinition } from "./types";
 
 export const WHATSAPP_TEXT_LIMIT = 4096;
@@ -7,22 +7,30 @@ export const WHATSAPP_TEXT_LIMIT = 4096;
 export const whatsapp: PlatformDefinition = {
   id: "WHATSAPP",
   name: "WhatsApp",
-  accountNoun: "número de WhatsApp Business",
-  addAnother: "Agregar otro número",
-  summary: "Atendé los chats de tu número de WhatsApp Business en la misma bandeja.",
-  syncs: ["Mensajes que recibe tu número", "Nombre y teléfono de cada contacto"],
-  howItWorks: [
-    "Iniciás sesión con Facebook y elegís tu número de WhatsApp Business.",
-    "Los mensajes que recibe ese número llegan a la bandeja.",
-    "Respondés desde BoxLead con el mismo número.",
-  ],
+  get accountNoun() {
+    return channelT()("platforms.WHATSAPP.accountNoun");
+  },
+  get addAnother() {
+    return channelT()("platforms.WHATSAPP.addAnother");
+  },
+  get summary() {
+    return channelT()("platforms.WHATSAPP.summary");
+  },
+  get syncs() {
+    return channelT()("platforms.WHATSAPP.syncs", { returnObjects: true });
+  },
+  get howItWorks() {
+    return channelT()("platforms.WHATSAPP.howItWorks", { returnObjects: true });
+  },
   connect: "whatsapp-embedded",
-  stageLabels: { PRE_SALE: "Chats" },
+  get stageLabels() {
+    return { PRE_SALE: channelT()("platforms.WHATSAPP.preSale") };
+  },
   supportsTemplates: true,
   reply: () => ({
     kind: "chat",
     maxLength: WHATSAPP_TEXT_LIMIT,
-    placeholder: "Escribí un mensaje",
+    placeholder: channelT()("channel.messagePlaceholder"),
     hint: null,
   }),
   explainError: (status, message) => {
@@ -31,9 +39,8 @@ export const whatsapp: PlatformDefinition = {
     if (status === 400 && /limited to/i.test(message)) return lengthError(WHATSAPP_TEXT_LIMIT);
     if (status === 409 && /reply window/i.test(message)) {
       return {
-        title: "Pasaron más de 24 horas",
-        detail:
-          "WhatsApp solo deja escribir texto libre dentro de las 24 horas del último mensaje de la persona. Podés responderle ahora con una plantilla aprobada.",
+        title: channelT()("platforms.WHATSAPP.windowTitle"),
+        detail: channelT()("platforms.WHATSAPP.windowDetail"),
         action: "template",
       };
     }
@@ -46,7 +53,7 @@ export const whatsapp: PlatformDefinition = {
       const digits = phone.replace(/\D/g, "");
       fields.push({ label: "WhatsApp", value: phone, href: `https://wa.me/${digits}` });
     }
-    if (lead.email) fields.push({ label: "Email", value: lead.email, href: `mailto:${lead.email}` });
+    if (lead.email) fields.push({ label: channelT()("channel.email"), value: lead.email, href: `mailto:${lead.email}` });
     return fields;
   },
   hasContext: false,

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../api/client";
 import type {
@@ -49,7 +50,7 @@ export function useConnectPlatform({ onConnected }: Options = {}) {
   const connectWhatsApp = useCallback(async () => {
     const config = await api.get<Partial<WhatsAppConfig>>("/oauth/whatsapp/config");
     if (!config.appId || !config.configId) {
-      throw new ConnectError("WhatsApp todavía no está habilitado en BoxLead.");
+      throw new ConnectError(i18next.t("connect.whatsappDisabled", { ns: "connections" }));
     }
     signup.current = null;
     await loadFacebookSdk(config.appId);
@@ -57,13 +58,13 @@ export function useConnectPlatform({ onConnected }: Options = {}) {
     try {
       code = await launchWhatsAppSignup(config.configId);
     } catch {
-      throw new ConnectError("Cerraste el alta de WhatsApp antes de terminar.");
+      throw new ConnectError(i18next.t("connect.whatsappClosed", { ns: "connections" }));
     }
     const received = signup.current as SignupData | null;
     const phoneNumberId = received?.phoneNumberId;
     const wabaId = received?.wabaId;
     if (!phoneNumberId || !wabaId) {
-      throw new ConnectError("El alta terminó pero no recibimos el número elegido. Probá de nuevo.");
+      throw new ConnectError(i18next.t("connect.whatsappNoNumber", { ns: "connections" }));
     }
     await api.post<AccountConnectionResponse[]>("/oauth/WHATSAPP/callback", {
       code,
@@ -94,7 +95,7 @@ export function useConnectPlatform({ onConnected }: Options = {}) {
         setError(
           e instanceof ApiError || e instanceof ConnectError
             ? e.message
-            : `No pudimos conectar ${definition.name}.`,
+            : i18next.t("connect.failed", { ns: "connections", name: definition.name }),
         );
         setConnecting(null);
       }

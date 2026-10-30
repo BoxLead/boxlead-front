@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { PlatformType } from "../api/types";
 
 const STATE_KEY = "oauth_state";
@@ -26,7 +27,7 @@ export function beginOAuthRedirect(
 ): void {
   const url = new URL(authUrl);
   if (url.protocol !== "https:") {
-    throw new Error("La dirección de autorización no es segura.");
+    throw new Error(i18next.t("connect.insecureUrl", { ns: "connections" }));
   }
 
   let state = url.searchParams.get("state");

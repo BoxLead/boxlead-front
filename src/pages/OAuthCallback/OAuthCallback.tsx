@@ -1,4 +1,6 @@
+import i18next from "i18next";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type {
@@ -24,16 +26,17 @@ function asPlatform(value: string | undefined): PlatformType | null {
 
 function providerError(code: string, description: string | null, platformName: string): string {
   if (code === "access_denied") {
-    return `Cancelaste la autorización en ${platformName}. Podés intentarlo de nuevo cuando quieras.`;
+    return i18next.t("callback.cancelled", { ns: "connections", name: platformName });
   }
-  return description?.replace(/\+/g, " ") || `${platformName} no autorizó la conexión (${code}).`;
+  return description?.replace(/\+/g, " ") || i18next.t("callback.denied", { ns: "connections", name: platformName, code });
 }
 
 export function OAuthCallback() {
   const { platform: platformParam } = useParams<{ platform: string }>();
   const platform = asPlatform(platformParam);
   const definition = platform ? getPlatform(platform) : null;
-  useDocumentTitle(definition ? `Conectando ${definition.name}` : "Conectando cuenta");
+  const { t } = useTranslation("connections");
+  useDocumentTitle(definition ? t("callback.title", { name: definition.name }) : t("callback.titleFallback"));
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -47,14 +50,12 @@ export function OAuthCallback() {
   const oauthDesc = searchParams.get("error_description");
 
   const blockingError = useMemo(() => {
-    if (!definition) return "El enlace de conexión no es válido.";
+    if (!definition) return t("callback.invalidLink");
     if (oauthError) return providerError(oauthError, oauthDesc, definition.name);
-    if (!code) return "Falta el código de autorización. Probá conectar de nuevo.";
-    if (!session.valid) {
-      return "No pudimos verificar que esta conexión se inició desde tu cuenta. Probá conectar de nuevo.";
-    }
+    if (!code) return t("callback.missingCode");
+    if (!session.valid) return t("callback.unverified");
     return null;
-  }, [definition, oauthError, oauthDesc, code, session.valid]);
+  }, [definition, oauthError, oauthDesc, code, session.valid, t]);
 
   useEffect(() => {
     if (blockingError || !code || !platform) return;
@@ -73,12 +74,12 @@ export function OAuthCallback() {
         }
         await invalidateQueries(CONNECTIONS_KEY);
         const names = accounts.map((a) => a.displayName ?? a.externalAccountId).join(", ");
-        toast({ message: `Conectaste ${getPlatform(platform).name}: ${names}.` });
+        toast({ message: i18next.t("callback.connected", { ns: "connections", name: getPlatform(platform).name, accounts: names }) });
         navigate(CONNECTIONS_PATH, { replace: true, state: { connected: platform } });
       },
       (e: unknown) => {
         if (cancelled) return;
-        setFailure(e instanceof ApiError ? e.message : "No pudimos completar la conexión.");
+        setFailure(e instanceof ApiError ? e.message : i18next.t("callback.failed", { ns: "connections" }));
       },
     );
     return () => {
@@ -93,12 +94,12 @@ export function OAuthCallback() {
     return (
       <AuthLayout>
         {logo}
-        <h1 className="auth-title">No pudimos conectar {definition?.name ?? "la cuenta"}</h1>
+        <h1 className="auth-title">{t("callback.errorTitle", { name: definition?.name ?? t("callback.errorFallbackName") })}</h1>
         <p className="auth-error oauth-callback-msg" role="alert">
           {errorMessage}
         </p>
         <Link to={CONNECTIONS_PATH} className="btn btn-primary oauth-callback-btn">
-          Volver a conexiones
+          {t("callback.back")}
         </Link>
       </AuthLayout>
     );
@@ -108,13 +109,12 @@ export function OAuthCallback() {
     return (
       <AuthLayout>
         {logo}
-        <h1 className="auth-title">No encontramos cuentas</h1>
+        <h1 className="auth-title">{t("callback.emptyTitle")}</h1>
         <p className="auth-subtitle">
-          La autorización se completó pero {definition?.name} no compartió ninguna {definition?.accountNoun}. Revisá
-          los permisos y probá de nuevo.
+          {t("callback.emptyBody", { name: definition?.name ?? "", accountNoun: definition?.accountNoun ?? "" })}
         </p>
         <Link to={CONNECTIONS_PATH} className="btn btn-primary oauth-callback-btn">
-          Volver a conexiones
+          {t("callback.back")}
         </Link>
       </AuthLayout>
     );
@@ -123,11 +123,11 @@ export function OAuthCallback() {
   return (
     <AuthLayout>
       {logo}
-      <h1 className="auth-title">Conectando {definition?.name}</h1>
-      <p className="auth-subtitle">Estamos guardando la autorización. Tarda unos segundos.</p>
+      <h1 className="auth-title">{t("callback.title", { name: definition?.name ?? "" })}</h1>
+      <p className="auth-subtitle">{t("callback.saving")}</p>
       <div className="oauth-callback-spinner" role="status">
         <span className="spinner" />
-        <span className="visually-hidden">Conectando…</span>
+        <span className="visually-hidden">{t("callback.connecting")}</span>
       </div>
     </AuthLayout>
   );
