@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { MetricsSettings } from "../../api/types";
 import { Dialog } from "../../components/ui/Dialog";
 import { saveMetricsSettings } from "../../data/metrics";
-import { WEEKDAYS, WEEKDAYS_SHORT } from "../../util/metrics";
+import { WEEKDAYS, weekdayName, weekdayShort } from "../../util/metrics";
 import { draftFrom, toSettings, validate, type SettingsDraft } from "./settingsForm";
 import "./SettingsDialog.css";
 
@@ -18,6 +19,7 @@ const OPENING_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const CLOSING_HOURS = Array.from({ length: 24 }, (_, hour) => hour + 1);
 
 export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDialogProps) {
+  const { t } = useTranslation("metrics");
   const [draft, setDraft] = useState<SettingsDraft>(() => draftFrom(settings));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDia
       await saveMetricsSettings(toSettings(draft));
       onSaved();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "No pudimos guardar los supuestos. Probá de nuevo.");
+      setError(e instanceof ApiError ? e.message : t("settings.saveFailed"));
       setSaving(false);
     }
   }
@@ -50,8 +52,8 @@ export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDia
   return (
     <Dialog
       open={open}
-      title="Supuestos"
-      description="Se usan para calcular las horas ahorradas y las consultas fuera de horario."
+      title={t("settings.title")}
+      description={t("settings.description")}
       busy={saving}
       onClose={onClose}
     >
@@ -62,7 +64,7 @@ export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDia
           </p>
         ) : null}
         <label className="field">
-          <span className="field-label">Minutos por respuesta manual</span>
+          <span className="field-label">{t("settings.minutes")}</span>
           <input
             className="input"
             name="manualReplyMinutes"
@@ -73,22 +75,22 @@ export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDia
             aria-invalid={errors.minutes || undefined}
             onChange={(event) => update({ minutes: event.target.value })}
           />
-          <span className="field-help">Cuánto tarda una persona del equipo en leer y contestar un mensaje.</span>
+          <span className="field-help">{t("settings.minutesHelp")}</span>
         </label>
         <fieldset className="field">
-          <legend className="field-label">Horario de atención</legend>
+          <legend className="field-label">{t("settings.businessHours")}</legend>
           <div className="settings-days">
-            {WEEKDAYS_SHORT.map((day, index) => (
+            {WEEKDAYS.map((day, index) => (
               <label key={day} className="settings-day">
                 <input type="checkbox" checked={draft.weekdays.includes(index)} onChange={() => toggleDay(index)} />
-                <span aria-hidden="true">{day}</span>
-                <span className="visually-hidden">{WEEKDAYS[index]}</span>
+                <span aria-hidden="true">{weekdayShort(index)}</span>
+                <span className="visually-hidden">{weekdayName(index)}</span>
               </label>
             ))}
           </div>
           <div className="settings-range">
             <label className="field">
-              <span className="field-help">Desde</span>
+              <span className="field-help">{t("settings.from")}</span>
               <select
                 className="select"
                 value={draft.from}
@@ -97,13 +99,13 @@ export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDia
               >
                 {OPENING_HOURS.map((hour) => (
                   <option key={hour} value={hour}>
-                    {hour} h
+                    {t("settings.hour", { hour })}
                   </option>
                 ))}
               </select>
             </label>
             <label className="field">
-              <span className="field-help">Hasta</span>
+              <span className="field-help">{t("settings.to")}</span>
               <select
                 className="select"
                 value={draft.to}
@@ -113,20 +115,20 @@ export function SettingsDialog({ open, settings, onClose, onSaved }: SettingsDia
               >
                 {CLOSING_HOURS.map((hour) => (
                   <option key={hour} value={hour}>
-                    {hour} h
+                    {t("settings.hour", { hour })}
                   </option>
                 ))}
               </select>
             </label>
           </div>
-          {errors.hours ? <p className="field-error">El cierre tiene que ser después de la apertura.</p> : null}
+          {errors.hours ? <p className="field-error">{t("settings.hoursError")}</p> : null}
         </fieldset>
         <div className="dialog-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
-            Cancelar
+            {t("settings.cancel")}
           </button>
           <button type="submit" className="btn btn-primary" disabled={invalid || saving}>
-            {saving ? "Guardando…" : "Guardar"}
+            {saving ? t("settings.saving") : t("settings.save")}
           </button>
         </div>
       </form>

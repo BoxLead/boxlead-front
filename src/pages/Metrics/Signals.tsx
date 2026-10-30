@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRightIcon } from "../../components/icons/UiIcons";
 import type { Insight } from "./insights";
@@ -8,11 +9,12 @@ type SignalsProps = {
 };
 
 export function Signals({ insights }: SignalsProps) {
+  const { t } = useTranslation("metrics");
   if (insights.length === 0) return null;
   return (
     <section className="signals" aria-labelledby="metrics-signals">
       <h2 id="metrics-signals" className="visually-hidden">
-        Señales
+        {t("signals.title")}
       </h2>
       <ul className="signals-list">
         {insights.map((insight) => (

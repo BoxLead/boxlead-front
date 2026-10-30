@@ -7,7 +7,10 @@ import { ToastContext } from "../../components/ui/toast";
 import { AuthContext, type AuthContextValue } from "../../context/auth";
 import { BILLING_SUMMARY_KEY } from "../../data/billing";
 import { clearQueryCache, setQueryFetcher } from "../../data/queryCache";
+import { i18n } from "../../i18n";
+import { dateRange } from "../../util/dates";
 import { Metrics } from "./Metrics";
+import { testDay, testSegment } from "./testSegments";
 
 const PLAN_LIMIT = { error: "Payment Required", message: "Limit", code: "PLAN_LIMIT_REACHED" };
 
@@ -40,6 +43,14 @@ function session(billing: boolean): AuthContextValue {
     error: null,
     clearError: () => undefined,
   };
+}
+
+function report(key: string) {
+  const params = new URLSearchParams(key.split("?")[1]);
+  const from = params.get("from") ?? "";
+  const to = params.get("to") ?? "";
+  const days = dateRange(from, to).map((date) => testDay(date, 3, { qualified: 1 }));
+  return { from, to, timezone: "UTC", segments: [testSegment("WHATSAPP", null, days)] };
 }
 
 function renderMetrics(billing: boolean) {
@@ -85,5 +96,33 @@ describe("Metrics and the plan", () => {
     expect(screen.getByRole("link", { name: "Ver planes" })).toHaveAttribute("href", "/app/billing");
     expect(screen.queryByRole("group", { name: "Período" })).not.toBeInTheDocument();
     expect(fetcher.mock.calls.map(([key]) => key).filter((key) => key.startsWith("/metrics?"))).toEqual([]);
+  });
+
+  it("shows the metrics in English", async () => {
+    setQueryFetcher(async (key) => {
+      if (key.startsWith("/metrics?")) return report(key);
+      if (key === "/metrics/settings") return { manualReplyMinutes: 4, businessHours: { weekdays: [0, 1, 2, 3, 4], from: 9, to: 18 } };
+      return [];
+    });
+    await i18n.changeLanguage("en");
+    renderMetrics(false);
+    expect(await screen.findByRole("heading", { level: 1, name: "Metrics" })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /Replied in 5 min/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Breakdown" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Funnel" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "When people message you" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Period" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "All channels" })).toBeInTheDocument();
+  });
+
+  it("explains the plan limit in English", async () => {
+    setQueryFetcher(async (key) => {
+      if (key.startsWith("/metrics?")) throw new ApiError("Limit", 402, PLAN_LIMIT);
+      if (key === "/metrics/settings") return { manualReplyMinutes: 4, businessHours: null };
+      return [];
+    });
+    await i18n.changeLanguage("en");
+    renderMetrics(false);
+    expect(await screen.findByText("Your plan doesn't cover this period")).toBeInTheDocument();
   });
 });

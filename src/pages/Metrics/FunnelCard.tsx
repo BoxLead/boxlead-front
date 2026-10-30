@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { formatNumber } from "../../util/format";
 import { funnelSteps } from "./funnel";
@@ -11,20 +12,21 @@ type FunnelCardProps = {
 };
 
 export function FunnelCard({ view }: FunnelCardProps) {
+  const { t } = useTranslation("metrics");
   const { statuses } = view.totals;
   return (
     <MetricsCard
-      title="Embudo"
+      title={t("funnel.title")}
       meta={
         <dl className="funnel-meta">
           <div>
-            <dt>Perdidos</dt>
+            <dt>{t("funnel.lost")}</dt>
             <dd>
               <AnimatedNumber value={statuses.LOST} format={formatNumber} />
             </dd>
           </div>
           <div>
-            <dt>Sin contactar</dt>
+            <dt>{t("funnel.notContacted")}</dt>
             <dd>
               <AnimatedNumber value={statuses.NEW} format={formatNumber} />
             </dd>

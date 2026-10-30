@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import type { PlatformType } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -41,7 +42,8 @@ function parseMetric(value: string | null): MetricKey {
 }
 
 export function Metrics() {
-  useDocumentTitle("Métricas");
+  const { t } = useTranslation("metrics");
+  useDocumentTitle(t("title"));
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -100,20 +102,18 @@ export function Metrics() {
       {!covered || planLimited ? (
         <Banner
           tone="warning"
-          title={covered ? "Tu plan no cubre este período" : "Tu plan no incluye historial de métricas"}
+          title={covered ? t("plan.notCovered") : t("plan.noHistory")}
           action={plan.billing && !isTeamPlan(plan.summary) ? <PlanLink action={SEE_PLANS} /> : undefined}
         >
-          {covered
-            ? "Elegí un período más corto o pasate a un plan con más días de historial."
-            : "Para ver un período y compararlo con el anterior hace falta un plan con más días de historial."}
+          {covered ? t("plan.notCoveredHint") : t("plan.noHistoryHint")}
         </Banner>
       ) : error ? (
         <Banner
           tone="danger"
-          title="No pudimos cargar las métricas"
+          title={t("load.error")}
           action={
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void reload()}>
-              Reintentar
+              {t("load.retry")}
             </button>
           }
         >
@@ -132,21 +132,21 @@ export function Metrics() {
           {filtered ? (
             <EmptyState
               illustration="search"
-              title="No hay datos con estos filtros"
+              title={t("empty.filtered")}
               action={
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => changeFilters({ platform: "ALL", category: null })}>
-                  Limpiar filtros
+                  {t("empty.clearFilters")}
                 </button>
               }
             />
           ) : (
             <EmptyState
               illustration="metrics"
-              title="Todavía no hay datos en este período"
-              hint="Se completan solas con los leads que llegan por tus canales."
+              title={t("empty.title")}
+              hint={t("empty.hint")}
               action={
                 <Link to="/app/connections" className="btn btn-secondary btn-sm">
-                  Conectar un canal
+                  {t("empty.connect")}
                 </Link>
               }
             />
@@ -177,7 +177,7 @@ export function Metrics() {
           onClose={() => setSettingsOpen(false)}
           onSaved={() => {
             setSettingsOpen(false);
-            toast({ message: "Guardamos los supuestos." });
+            toast({ message: t("settings.saved") });
           }}
         />
       ) : null}

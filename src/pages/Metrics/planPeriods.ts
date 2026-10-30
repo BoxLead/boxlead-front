@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type { PlanLimits } from "../../api/types";
 import { PERIODS, type MetricsPeriod } from "../../util/metrics";
 
@@ -29,5 +30,5 @@ export function historyNote(limits: PlanLimits): string | null {
   const days = historyDays(limits);
   const allowed = allowedPeriods(limits).length;
   if (days === null || allowed === 0 || allowed === PERIODS.length) return null;
-  return `Tu plan incluye ${days === 1 ? "1 día" : `${days} días`} de historial.`;
+  return i18next.t("plan.historyNote", { ns: "metrics", count: days });
 }

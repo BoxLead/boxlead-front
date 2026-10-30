@@ -1,4 +1,6 @@
+import i18next from "i18next";
 import { useId } from "react";
+import { useTranslation } from "react-i18next";
 import { formatShortDate } from "../../util/format";
 import { buildChartData } from "./chartData";
 import { MetricChart } from "./charts/MetricChart";
@@ -16,16 +18,18 @@ type PerformanceProps = {
 function readout(definition: MetricDefinition, value: number): string {
   const text = formatMetric(definition, value);
   if (definition.kind !== "count") return text;
-  return `${text} ${Math.round(value) === 1 ? "lead" : "leads"}`;
+  return i18next.t("performance.leadCount", { ns: "metrics", count: Math.round(value), value: text });
 }
 
 export function Performance({ view, metric, onMetricChange }: PerformanceProps) {
+  const { t } = useTranslation("metrics");
   const panelId = useId();
   const chart = buildChartData(view, metric);
   const { definition } = chart;
+  const label = t(`indicators.${definition.key}`);
 
   return (
-    <section className="panel performance" aria-label="Rendimiento del período">
+    <section className="panel performance" aria-label={t("performance.label")}>
       <MetricTabs
         panelId={panelId}
         selected={metric}
@@ -33,7 +37,7 @@ export function Performance({ view, metric, onMetricChange }: PerformanceProps) 
         previous={view.previous}
         onSelect={onMetricChange}
       />
-      <div className="performance-panel" role="tabpanel" id={panelId} aria-label={definition.label}>
+      <div className="performance-panel" role="tabpanel" id={panelId} aria-label={label}>
         <MetricChart
           drawKey={chart.drawKey}
           points={chart.points}
@@ -41,21 +45,25 @@ export function Performance({ view, metric, onMetricChange }: PerformanceProps) 
           partialLast={chart.partialLast}
           format={(value) => readout(definition, value)}
           formatAxis={(value) => formatMetric(definition, value)}
-          summary={`${definition.label} por ${chart.weekly ? "semana" : "día"} del ${formatShortDate(view.from)} al ${formatShortDate(view.to)}, comparado con el período anterior.`}
+          summary={t(chart.weekly ? "performance.summaryWeek" : "performance.summaryDay", {
+            metric: label,
+            from: formatShortDate(view.from),
+            to: formatShortDate(view.to),
+          })}
         />
-        <ul className="performance-legend" aria-label="Referencias">
+        <ul className="performance-legend" aria-label={t("performance.legend")}>
           <li>
             <span className="performance-swatch" aria-hidden="true" />
-            Este período
+            {t("legend.current")}
           </li>
           <li>
             <span className="performance-swatch performance-swatch-previous" aria-hidden="true" />
-            Anterior
+            {t("legend.previous")}
           </li>
           {chart.forecastTotal !== null ? (
             <li>
               <span className="performance-swatch performance-swatch-estimate" aria-hidden="true" />
-              Próximos {FORECAST_DAYS} días
+              {t("performance.forecast", { days: FORECAST_DAYS })}
               <strong>≈ {readout(definition, chart.forecastTotal)}</strong>
             </li>
           ) : null}

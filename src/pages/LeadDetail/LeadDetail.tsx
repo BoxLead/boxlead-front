@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type {
@@ -27,6 +28,7 @@ import { leadDisplayName } from "../../util/labels";
 import "./LeadDetail.css";
 
 export function LeadDetail() {
+  const { t } = useTranslation("leads");
   const { leadId = "" } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
   const lead = useApiQuery<LeadResponse>(leadId ? leadKey(leadId) : null);
@@ -40,12 +42,12 @@ export function LeadDetail() {
   const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
-  useDocumentTitle(lead.data ? leadDisplayName(lead.data) : "Lead");
+  useDocumentTitle(lead.data ? leadDisplayName(lead.data) : t("detail.fallbackTitle"));
 
   const backLink = (
     <Link to="/app/leads" className="lead-detail-back">
       <ArrowLeftIcon width={16} height={16} />
-      Leads
+      {t("detail.back")}
     </Link>
   );
 
@@ -66,8 +68,8 @@ export function LeadDetail() {
     return (
       <div className="page">
         {backLink}
-        <Banner tone="danger" title="No encontramos este lead">
-          {lead.error ?? "Puede que se haya eliminado o que el enlace sea de otra cuenta."}
+        <Banner tone="danger" title={t("detail.notFound")}>
+          {lead.error ?? t("detail.notFoundHint")}
         </Banner>
       </div>
     );
@@ -92,7 +94,7 @@ export function LeadDetail() {
       await invalidateQueries("/conversations");
       navigate(`/app/inbox?id=${created.id}`);
     } catch (e) {
-      setActionError(e instanceof ApiError ? e.message : "No pudimos iniciar la conversación.");
+      setActionError(e instanceof ApiError ? e.message : t("detail.startFailed"));
       setStarting(false);
     }
   }
@@ -101,10 +103,10 @@ export function LeadDetail() {
     setDeleting(true);
     try {
       await deleteLead(current.id);
-      toast({ tone: "info", message: `Eliminaste ${name}.` });
+      toast({ tone: "info", message: t("detail.deleted", { name }) });
       navigate("/app/leads");
     } catch {
-      toast({ tone: "danger", message: "No pudimos eliminar el lead." });
+      toast({ tone: "danger", message: t("detail.deleteFailed") });
     } finally {
       setDeleting(false);
     }
@@ -121,12 +123,12 @@ export function LeadDetail() {
             <span>{platform.name}</span>
             {hasStages(current.platform) ? (
               current.postSaleOnly ? (
-                <Tag tone="success">Comprador</Tag>
+                <Tag tone="success">{t("buyer")}</Tag>
               ) : (
-                <Tag tone="meli">Hizo preguntas</Tag>
+                <Tag tone="meli">{t("detail.askedQuestions")}</Tag>
               )
             ) : null}
-            <span>Desde {formatDate(current.createdAt)}</span>
+            <span>{t("detail.since", { date: formatDate(current.createdAt) })}</span>
           </p>
         </div>
         <div className="lead-detail-controls">
@@ -137,15 +139,15 @@ export function LeadDetail() {
             type="button"
             className="btn btn-danger btn-sm"
             onClick={() => setConfirmingDelete(true)}
-            aria-label={`Eliminar ${name}`}
+            aria-label={t("detail.deleteLabel", { name })}
           >
-            Eliminar
+            {t("detail.delete")}
           </button>
         </div>
       </header>
 
       {actionError ? (
-        <Banner tone="danger" title="No pudimos iniciar la conversación" className="lead-detail-banner">
+        <Banner tone="danger" title={t("detail.startFailedTitle")} className="lead-detail-banner">
           {actionError}
         </Banner>
       ) : null}
@@ -153,11 +155,11 @@ export function LeadDetail() {
       <div className="lead-detail-grid rise-list">
         <section className="panel lead-detail-card" aria-labelledby="lead-contact">
           <h2 className="panel-title" id="lead-contact">
-            Contacto
+            {t("detail.contact")}
           </h2>
           {contactFields.length === 0 ? (
             <p className="lead-detail-muted">
-              {platform.name} todavía no compartió datos de contacto de esta persona.
+              {t("detail.noContact", { platform: platform.name })}
             </p>
           ) : (
             <dl className="lead-detail-dl">
@@ -186,7 +188,7 @@ export function LeadDetail() {
         <section className="panel lead-detail-card" aria-labelledby="lead-conversations">
           <div className="lead-detail-card-head">
             <h2 className="panel-title" id="lead-conversations">
-              Conversaciones
+              {t("detail.conversations")}
             </h2>
             {platform.canStartConversation && ownConversations.length === 0 && conversations.data ? (
               <button
@@ -195,14 +197,14 @@ export function LeadDetail() {
                 disabled={starting}
                 onClick={() => void startConversation()}
               >
-                {starting ? "Abriendo…" : "Nueva conversación"}
+                {starting ? t("detail.opening") : t("detail.newConversation")}
               </button>
             ) : null}
           </div>
           {conversations.loading ? (
             <div className="skeleton lead-detail-skeleton-row" aria-hidden="true" />
           ) : ownConversations.length === 0 ? (
-            <p className="lead-detail-muted">Todavía no hay conversaciones con esta persona.</p>
+            <p className="lead-detail-muted">{t("detail.noConversations")}</p>
           ) : (
             <ul className="lead-detail-list">
               {ownConversations.map((conversation) => (
@@ -224,13 +226,13 @@ export function LeadDetail() {
                       </span>
                       {conversation.lastMessagePreview ? (
                         <span className="lead-detail-conversation-preview">
-                          {conversation.lastMessageDirection === "OUTBOUND" ? "Vos: " : ""}
+                          {conversation.lastMessageDirection === "OUTBOUND" ? t("detail.you") : ""}
                           {conversation.lastMessagePreview}
                         </span>
                       ) : null}
                     </span>
                     {conversation.unreadCount ? (
-                      <span className="lead-detail-unread">{conversation.unreadCount} sin leer</span>
+                      <span className="lead-detail-unread">{t("detail.unread", { value: conversation.unreadCount })}</span>
                     ) : null}
                   </Link>
                 </li>
@@ -242,14 +244,14 @@ export function LeadDetail() {
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={confirmingDelete}
-        title={`¿Eliminar ${name}?`}
-        confirmLabel={deleting ? "Eliminando…" : "Eliminar"}
+        title={t("detail.confirmTitle", { name })}
+        confirmLabel={deleting ? t("detail.deleting") : t("detail.delete")}
         tone="danger"
         busy={deleting}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setConfirmingDelete(false)}
       >
-        <p>Se eliminan también sus conversaciones y mensajes. Esto no se puede deshacer.</p>
+        <p>{t("detail.confirmBody")}</p>
       </ConfirmDialog>
     </div>
   );

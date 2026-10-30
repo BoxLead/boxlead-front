@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { PlatformType } from "../../api/types";
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
@@ -33,6 +34,7 @@ const FOCUS: Record<MetricKey, Column> = {
 };
 
 export function Breakdown({ view, metric, filters, onFiltersChange }: BreakdownProps) {
+  const { t } = useTranslation("metrics");
   const [dimension, setDimension] = useState<Dimension>("channel");
   const byChannel = dimension === "channel";
   const rows = byChannel ? view.channels : view.categoryRows;
@@ -66,38 +68,38 @@ export function Breakdown({ view, metric, filters, onFiltersChange }: BreakdownP
 
   return (
     <MetricsCard
-      title="Desglose"
+      title={t("breakdown.title")}
       meta={
         <ChoiceGroup<Dimension>
-          label="Agrupar por"
+          label={t("breakdown.groupBy")}
           variant="segmented"
           value={dimension}
           onChange={setDimension}
           choices={[
-            { value: "channel", label: "Canal" },
-            { value: "category", label: "Categoría" },
+            { value: "channel", label: t("breakdown.channel") },
+            { value: "category", label: t("breakdown.category") },
           ]}
         />
       }
     >
       <table className="breakdown-table">
         <caption className="visually-hidden">
-          Leads, calificación y primera respuesta por {byChannel ? "canal" : "categoría"}. Elegí una fila para filtrar.
+          {byChannel ? t("breakdown.captionChannel") : t("breakdown.captionCategory")}
         </caption>
         <thead>
           <tr>
-            <th scope="col">{byChannel ? "Canal" : "Categoría"}</th>
+            <th scope="col">{byChannel ? t("breakdown.channel") : t("breakdown.category")}</th>
             <th scope="col" className={focus("leads")}>
-              Leads
+              {t("breakdown.leads")}
             </th>
             <th scope="col" className="breakdown-optional">
-              Variación
+              {t("breakdown.change")}
             </th>
             <th scope="col" className={focus("qualification")}>
-              Calificación
+              {t("breakdown.qualification")}
             </th>
             <th scope="col" className={cx("breakdown-optional", focus("response"))}>
-              Respuesta
+              {t("breakdown.response")}
             </th>
           </tr>
         </thead>

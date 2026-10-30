@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { cx } from "../../util/classNames";
 import { Change } from "./Change";
@@ -21,6 +22,7 @@ const KEY_MOVES: Record<string, (index: number) => number> = {
 };
 
 export function MetricTabs({ panelId, selected, current, previous, onSelect }: MetricTabsProps) {
+  const { t } = useTranslation("metrics");
   const ref = useRef<HTMLDivElement>(null);
   const selectedIndex = Math.max(0, METRICS.findIndex((metric) => metric.key === selected));
 
@@ -39,7 +41,7 @@ export function MetricTabs({ panelId, selected, current, previous, onSelect }: M
   }
 
   return (
-    <div className="metric-tabs" role="tablist" aria-label="Indicadores" ref={ref} onKeyDown={onKeyDown}>
+    <div className="metric-tabs" role="tablist" aria-label={t("indicators.label")} ref={ref} onKeyDown={onKeyDown}>
       <span className="metric-tabs-indicator" aria-hidden="true" />
       {METRICS.map((metric) => {
         const active = metric.key === selected;
@@ -55,7 +57,7 @@ export function MetricTabs({ panelId, selected, current, previous, onSelect }: M
             className={cx("metric-tab", active && "metric-tab-selected")}
             onClick={() => onSelect(metric.key)}
           >
-            <span className="metric-tab-label">{metric.label}</span>
+            <span className="metric-tab-label">{t(`indicators.${metric.key}`)}</span>
             <AnimatedNumber
               className="metric-tab-value"
               value={current[metric.key]}

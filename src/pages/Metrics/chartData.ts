@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { formatLongDate, formatShortDate } from "../../util/format";
 import type { ChartEstimate, ChartPoint } from "./charts/chartLayout";
 import type { ForecastPoint } from "./forecast";
@@ -31,7 +32,10 @@ function weekEstimate(days: ForecastPoint[]): ChartEstimate {
   return {
     key: `estimate-${first}`,
     axisLabel: formatShortDate(first),
-    title: `${formatShortDate(first)} al ${formatShortDate(last)}, estimado`,
+    title: i18next.t("chart.estimated", {
+      ns: "metrics",
+      when: i18next.t("range", { ns: "metrics", from: formatShortDate(first), to: formatShortDate(last) }),
+    }),
     value,
     low: Math.max(0, value - spread),
     high: value + spread,
@@ -42,11 +46,18 @@ function dayEstimate(day: ForecastPoint): ChartEstimate {
   return {
     key: `estimate-${day.date}`,
     axisLabel: formatShortDate(day.date),
-    title: `${formatLongDate(day.date)}, estimado`,
+    title: i18next.t("chart.estimated", { ns: "metrics", when: formatLongDate(day.date) }),
     value: day.value,
     low: day.low,
     high: day.high,
   };
+}
+
+function pointTitle(date: string, end: string, weekly: boolean, current: boolean): string {
+  const when = weekly
+    ? i18next.t("range", { ns: "metrics", from: formatShortDate(date), to: formatShortDate(end) })
+    : formatLongDate(date);
+  return current ? i18next.t("chart.untilNow", { ns: "metrics", when }) : when;
 }
 
 export function buildChartData(view: MetricsView, metric: MetricKey): ChartData {
@@ -65,9 +76,7 @@ export function buildChartData(view: MetricsView, metric: MetricKey): ChartData 
     points: current.map((point, index) => ({
       key: point.date,
       axisLabel: formatShortDate(point.date),
-      title: `${weekly ? `${formatShortDate(point.date)} al ${formatShortDate(point.end)}` : formatLongDate(point.date)}${
-        point.end === view.to ? ", hasta ahora" : ""
-      }`,
+      title: pointTitle(point.date, point.end, weekly, point.end === view.to),
       value: point.value,
       previous: previous[index]?.value ?? null,
     })),

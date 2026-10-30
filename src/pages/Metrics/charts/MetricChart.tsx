@@ -1,4 +1,5 @@
 import { useId, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { layoutChart, MARGIN, type ChartEstimate, type ChartPoint } from "./chartLayout";
 import { useElementWidth } from "./useElementWidth";
 import "./MetricChart.css";
@@ -16,6 +17,7 @@ type MetricChartProps = {
 };
 
 export function MetricChart({ drawKey, points, estimates, format, formatAxis, summary, partialLast }: MetricChartProps) {
+  const { t } = useTranslation("metrics");
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const gradientId = `metric-fill-${useId().replace(/:/g, "")}`;
   const readoutId = useId();
@@ -37,8 +39,9 @@ export function MetricChart({ drawKey, points, estimates, format, formatAxis, su
     const item = index < points.length ? points[index] : null;
     const guess = item ? null : estimates[index - points.length];
     const amount = item ? item.value : (guess?.value ?? null);
-    const text = amount === null ? "sin datos" : `${guess ? "aproximadamente " : ""}${format(amount)}`;
-    const previous = item?.previous != null ? `, anterior ${format(item.previous)}` : "";
+    const text =
+      amount === null ? t("chart.noData") : guess ? t("chart.approximately", { value: format(amount) }) : format(amount);
+    const previous = item?.previous != null ? t("chart.previousInline", { value: format(item.previous) }) : "";
     return `${item?.title ?? guess?.title}: ${text}${previous}`;
   }
 
@@ -62,11 +65,11 @@ export function MetricChart({ drawKey, points, estimates, format, formatAxis, su
           {value === null ? "—" : `${estimate ? "≈ " : ""}${format(value)}`}
         </span>
         {point && point.previous !== null ? (
-          <span className="metric-chart-aside">Anterior {format(point.previous)}</span>
+          <span className="metric-chart-aside">{t("chart.previous", { value: format(point.previous) })}</span>
         ) : null}
         {estimate ? (
           <span className="metric-chart-aside">
-            Entre {format(estimate.low)} y {format(estimate.high)}
+            {t("chart.between", { low: format(estimate.low), high: format(estimate.high) })}
           </span>
         ) : null}
       </div>
@@ -75,8 +78,8 @@ export function MetricChart({ drawKey, points, estimates, format, formatAxis, su
           width={width}
           height={height}
           role="group"
-          aria-roledescription="gráfico"
-          aria-label={`${summary} Usá las flechas para recorrerlo.`}
+          aria-roledescription={t("chart.roleDescription")}
+          aria-label={t("chart.label", { summary })}
           aria-describedby={readoutId}
           tabIndex={0}
           className={`metric-chart-svg${active === null ? "" : " metric-chart-svg-active"}`}

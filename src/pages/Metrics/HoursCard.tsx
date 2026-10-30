@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cx } from "../../util/classNames";
 import { formatNumber } from "../../util/format";
-import { isWithinBusinessHours, WEEKDAYS, WEEKDAYS_SHORT } from "../../util/metrics";
+import { isWithinBusinessHours, WEEKDAYS, weekdayInSentence, weekdayName, weekdayShort } from "../../util/metrics";
 import { heatLevels, peakWindow } from "./hours";
 import { MetricsCard } from "./MetricsCard";
 import type { MetricsView } from "./metricsView";
@@ -14,6 +15,7 @@ type HoursCardProps = {
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
 export function HoursCard({ view }: HoursCardProps) {
+  const { t } = useTranslation("metrics");
   const hourly = view.totals.inboundByHour;
   const levels = heatLevels(hourly, 5);
   const peak = peakWindow(hourly);
@@ -23,14 +25,18 @@ export function HoursCard({ view }: HoursCardProps) {
 
   const readout =
     hovered !== null
-      ? `${WEEKDAYS[Math.floor(hovered / 24)]} ${hovered % 24} h · ${formatNumber(hourly[hovered])} mensajes`
+      ? t("hours.hovered", {
+          day: weekdayName(Math.floor(hovered / 24)),
+          hour: hovered % 24,
+          value: formatNumber(hourly[hovered]),
+        })
       : peak
-        ? `Pico ${WEEKDAYS[peak.weekday].toLowerCase()} de ${peak.from} a ${peak.to} h`
+        ? t("hours.peak", { day: weekdayInSentence(peak.weekday), from: peak.from, to: peak.to })
         : "";
 
   return (
     <MetricsCard
-      title="Cuándo te escriben"
+      title={t("hours.title")}
       meta={
         <span className="hours-readout" aria-hidden="true">
           {readout}
@@ -40,12 +46,16 @@ export function HoursCard({ view }: HoursCardProps) {
       <div
         className="hours-grid"
         role="img"
-        aria-label={`Mensajes por día y hora.${peak && total > 0 ? ` Pico el ${WEEKDAYS[peak.weekday].toLowerCase()} de ${peak.from} a ${peak.to} h.` : ""}`}
+        aria-label={
+          peak && total > 0
+            ? t("hours.gridLabelPeak", { day: weekdayInSentence(peak.weekday), from: peak.from, to: peak.to })
+            : t("hours.gridLabel")
+        }
         onPointerLeave={() => setHovered(null)}
       >
-        {WEEKDAYS_SHORT.map((day, weekday) => (
+        {WEEKDAYS.map((day, weekday) => (
           <div key={day} className="hours-row" aria-hidden="true">
-            <span className="hours-day">{day}</span>
+            <span className="hours-day">{weekdayShort(weekday)}</span>
             {HOURS.map((hour) => {
               const index = weekday * 24 + hour;
               const open = hours ? isWithinBusinessHours(hours, weekday, hour) : false;
@@ -69,16 +79,16 @@ export function HoursCard({ view }: HoursCardProps) {
       </div>
       <div className="hours-legend" aria-hidden="true">
         <span className="hours-scale">
-          Menos
+          {t("hours.less")}
           {[1, 2, 3, 4, 5].map((level) => (
             <span key={level} className={`hours-swatch hours-${level}`} />
           ))}
-          Más
+          {t("hours.more")}
         </span>
         {hours ? (
           <span className="hours-scale">
             <span className="hours-swatch hours-open" />
-            Horario de atención
+            {t("hours.businessHours")}
           </span>
         ) : null}
       </div>
