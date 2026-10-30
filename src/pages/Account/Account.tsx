@@ -10,6 +10,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { AccountIdentity } from "./AccountIdentity";
 import { DeleteAccountSection } from "./DeleteAccountSection";
 import { EmailSection } from "./EmailSection";
+import { LanguageSection } from "./LanguageSection";
 import { ProfileSection } from "./ProfileSection";
 import { SessionsSection } from "./SessionsSection";
 import { SignInSection } from "./SignInSection";
@@ -69,6 +70,14 @@ export function Account() {
             </div>
             <SignInSection account={account.data} />
             {user?.account?.sessionRevocation ? <SessionsSection /> : null}
+          </section>
+          <section className="panel account-group" aria-labelledby={`${id}-preferences`}>
+            <div className="account-group-head">
+              <h2 id={`${id}-preferences`} className="panel-title">
+                {t("preferences")}
+              </h2>
+            </div>
+            <LanguageSection />
           </section>
           <NotificationSettings />
           {user?.account?.deletion ? <DeleteAccountSection account={account.data} /> : null}

@@ -10,6 +10,10 @@
   "access": "Acceso",
   "yourPassword": "Tu contraseña",
   "wrongPassword": "La contraseña no es correcta.",
+  "preferences": "Preferencias",
+  "language": {
+    "description": "Elegí en qué idioma ves BoxLead."
+  },
   "identity": {
     "label": "Quién sos",
     "signInWith": "Entrás con",

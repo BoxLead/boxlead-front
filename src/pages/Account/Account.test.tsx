@@ -157,4 +157,13 @@ describe("account page", () => {
     expect(screen.getByRole("button", { name: "Change password" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out of all devices" })).toBeInTheDocument();
   });
+
+  it("offers the language setting", async () => {
+    fetchMock.mockResolvedValueOnce(json(PASSWORD_ACCOUNT));
+    renderAccount();
+    expect(await screen.findByRole("heading", { name: "Preferencias" })).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Idioma" }), "en");
+    expect(await screen.findByRole("heading", { level: 1, name: "Your account" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Language" })).toHaveValue("en");
+  });
 });

@@ -10,6 +10,10 @@
   "access": "Access",
   "yourPassword": "Your password",
   "wrongPassword": "The password is incorrect.",
+  "preferences": "Preferences",
+  "language": {
+    "description": "Choose the language you see BoxLead in."
+  },
   "identity": {
     "label": "Who you are",
     "signInWith": "You sign in with",
