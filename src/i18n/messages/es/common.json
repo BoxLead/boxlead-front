@@ -1,0 +1,46 @@
+{
+  "languageLabel": "Idioma",
+  "languages": {
+    "es": "Español",
+    "en": "English"
+  },
+  "notFound": {
+    "title": "No encontramos esta página",
+    "hintPage": "El enlace puede estar mal escrito o la página ya no existe.",
+    "hintSection": "El enlace puede estar mal escrito o la sección ya no existe.",
+    "home": "Ir al inicio",
+    "signIn": "Iniciar sesión",
+    "inbox": "Ir a la bandeja",
+    "leads": "Ver leads"
+  },
+  "provider": {
+    "legalName": "Razón social",
+    "taxId": "CUIT",
+    "address": "Domicilio",
+    "email": "Email de atención",
+    "hours": "Horario de atención"
+  },
+  "consumer": {
+    "withdrawal": "Botón de arrepentimiento",
+    "cancellation": "Botón de baja de servicio"
+  },
+  "consent": {
+    "title": "¿Nos dejás medir las visitas?",
+    "text": "Usamos Google Analytics solo si aceptás, para entender qué páginas sirven y mejorar el sitio. No vendemos tus datos. Podés cambiar de idea desde el pie de página. Más en la [Política de privacidad](/privacidad#cookies).",
+    "reject": "Rechazar",
+    "accept": "Aceptar",
+    "preferences": "Preferencias de cookies"
+  },
+  "time": {
+    "empty": "—",
+    "justNow": "recién",
+    "minutesAgo": "hace {{count}} min",
+    "hoursAgo": "hace {{count}} h",
+    "yesterday": "ayer",
+    "daysAgo": "hace {{count}} días",
+    "seconds": "{{value}} s",
+    "minutes": "{{value}} min",
+    "hours": "{{value}} h",
+    "points": "{{value}} pp"
+  }
+}

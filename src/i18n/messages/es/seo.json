@@ -1,0 +1,22 @@
+{
+  "home": {
+    "title": "Agente de IA que vende por WhatsApp, Instagram y MercadoLibre",
+    "description": "Escalá tu negocio con un agente de IA que responde, califica y ordena en automático los leads de WhatsApp, Instagram, Messenger y MercadoLibre. Las 24 horas, por una suscripción mensual."
+  },
+  "breadcrumbHome": "Inicio",
+  "imageAlt": "BoxLead, agentes de IA para ventas",
+  "product": {
+    "description": "Agente de ventas con IA que centraliza y responde en automático los leads de WhatsApp, Instagram, Messenger y MercadoLibre, los califica y los ordena en una sola bandeja.",
+    "features": [
+      "Bandeja única para WhatsApp, Instagram, Messenger y MercadoLibre",
+      "Agentes de IA que responden con la información del negocio las 24 horas",
+      "Calificación automática de leads y pipeline ordenado",
+      "Borradores para aprobar cuando hace falta una persona",
+      "Métricas de respuesta y de calificación por canal"
+    ]
+  },
+  "video": {
+    "title": "Mirá a BoxLead en acción",
+    "description": "Tus agentes respondiendo, ordenando cada lead y mostrándote qué rinde. Grabada con datos de ejemplo."
+  }
+}
