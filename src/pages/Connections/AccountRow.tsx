@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { AccountConnectionResponse } from "../../api/types";
 import { Tag } from "../../components/ui/Tag";
 import { AlertIcon } from "../../components/icons/UiIcons";
@@ -12,6 +13,7 @@ type AccountRowProps = {
 };
 
 export function AccountRow({ account, busy, onReconnect, onDisconnect }: AccountRowProps) {
+  const { t } = useTranslation("connections");
   const failures = account.failedEventCount ?? 0;
   const name = account.displayName ?? account.externalAccountId;
 
@@ -20,21 +22,20 @@ export function AccountRow({ account, busy, onReconnect, onDisconnect }: Account
       <div className="account-row-main">
         <span className="account-row-name">{name}</span>
         <span className="account-row-meta">
-          Conectada el {formatDate(account.connectedAt)}
-          {account.lastEventAt ? ` · Última actividad ${formatRelative(account.lastEventAt)}` : null}
+          {account.lastEventAt
+            ? t("account.connectedOnWithActivity", { date: formatDate(account.connectedAt), time: formatRelative(account.lastEventAt) })
+            : t("account.connectedOn", { date: formatDate(account.connectedAt) })}
         </span>
         {account.needsReconnection || failures > 0 ? (
           <span className="account-row-tags">
             {account.needsReconnection ? (
               <Tag tone="danger" icon={<AlertIcon />}>
-                Requiere reconexión
+                {t("account.needsReconnection")}
               </Tag>
             ) : null}
             {failures > 0 ? (
               <Tag tone="warning">
-                {failures === 1
-                  ? "1 notificación con error esta semana"
-                  : `${failures} notificaciones con error esta semana`}
+                {t("account.failures", { count: failures })}
               </Tag>
             ) : null}
           </span>
@@ -43,7 +44,7 @@ export function AccountRow({ account, busy, onReconnect, onDisconnect }: Account
       <div className="account-row-actions">
         {account.needsReconnection ? (
           <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={onReconnect}>
-            Reconectar
+            {t("account.reconnect")}
           </button>
         ) : null}
         <button
@@ -51,9 +52,9 @@ export function AccountRow({ account, busy, onReconnect, onDisconnect }: Account
           className="btn btn-secondary btn-sm"
           disabled={busy}
           onClick={onDisconnect}
-          aria-label={`Desconectar ${name}`}
+          aria-label={t("account.disconnectLabel", { name })}
         >
-          Desconectar
+          {t("account.disconnect")}
         </button>
       </div>
     </li>

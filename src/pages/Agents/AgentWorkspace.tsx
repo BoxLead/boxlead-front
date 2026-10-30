@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { AgentResponse, CategoryResponse } from "../../api/types";
 import type { Choice } from "../../components/ui/ChoiceGroup";
 import { ChoiceGroup } from "../../components/ui/ChoiceGroup";
@@ -46,6 +47,7 @@ export function AgentWorkspace({
   onSaved,
   onDiscardNew,
 }: AgentWorkspaceProps) {
+  const { t } = useTranslation("agents");
   const [snapshot, setSnapshot] = useState<AgentDraftSnapshot>({
     name: agent?.name ?? "",
     instructions: agent?.instructions ?? "",
@@ -53,7 +55,7 @@ export function AgentWorkspace({
   const trimmed = snapshot.name.trim();
   const canTest = trimmed.length > 0 && snapshot.name.length <= AGENT_NAME_MAX;
   const shownTab = tab === "activity" && !agent ? "config" : tab === "test" && !canTest ? "config" : tab;
-  const title = trimmed || agent?.name || "Nuevo agente";
+  const title = trimmed || agent?.name || t("workspace.newAgent");
   const target: PlaygroundTarget =
     agent && !dirty
       ? { agentId: agent.id }
@@ -69,16 +71,16 @@ export function AgentWorkspace({
   }, [tab, canTest, agent]);
 
   const tabs: Choice<AgentTab>[] = [
-    { value: "config", label: "Configuración" },
-    { value: "test", label: "Probar", disabled: !canTest },
+    { value: "config", label: t("workspace.tabConfig") },
+    { value: "test", label: t("workspace.tabTest"), disabled: !canTest },
   ];
-  if (agent) tabs.push({ value: "activity", label: "Actividad" });
+  if (agent) tabs.push({ value: "activity", label: t("workspace.tabActivity") });
 
   return (
-    <section className="agent-workspace" aria-label="Detalle del agente">
+    <section className="agent-workspace" aria-label={t("workspace.label")}>
       <header className="agent-workspace-head">
         <button type="button" className="btn btn-secondary btn-sm agent-back" onClick={onBack}>
-          Volver
+          {t("workspace.back")}
         </button>
         <div className="agent-workspace-identity">
           <div className="agent-workspace-title">
@@ -93,18 +95,18 @@ export function AgentWorkspace({
           {agent ? (
             <div className="agent-workspace-tools">
               <Switch
-                label={`Activar ${agent.name}`}
+                label={t("workspace.enable", { name: agent.name })}
                 checked={agent.enabled}
                 disabled={toggling || (restricted && !agent.enabled)}
                 onChange={onToggle}
               />
-              <button type="button" className="btn btn-secondary btn-sm" aria-label={`Eliminar ${agent.name}`} onClick={onDelete}>
-                Eliminar
+              <button type="button" className="btn btn-secondary btn-sm" aria-label={t("workspace.deleteLabel", { name: agent.name })} onClick={onDelete}>
+                {t("workspace.delete")}
               </button>
             </div>
           ) : null}
         </div>
-        <ChoiceGroup label="Secciones del agente" variant="segmented" choices={tabs} value={shownTab} onChange={onTabChange} />
+        <ChoiceGroup label={t("workspace.tabsLabel")} variant="segmented" choices={tabs} value={shownTab} onChange={onTabChange} />
       </header>
       <div className="agent-workspace-body">
         <div className="agent-pane" hidden={shownTab !== "config"}>

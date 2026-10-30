@@ -1,5 +1,5 @@
 import { MessengerIcon } from "../components/icons/PlatformIcons";
-import { emailAndPhone, lengthError, reconnectError } from "./shared";
+import { channelT, emailAndPhone, lengthError, reconnectError } from "./shared";
 import type { PlatformDefinition } from "./types";
 
 export const MESSENGER_TEXT_LIMIT = 2000;
@@ -7,21 +7,29 @@ export const MESSENGER_TEXT_LIMIT = 2000;
 export const messenger: PlatformDefinition = {
   id: "META",
   name: "Messenger",
-  accountNoun: "página de Facebook",
-  addAnother: "Agregar otra página",
-  summary: "Respondé los mensajes que llegan a tu página de Facebook.",
-  syncs: ["Mensajes de tu página"],
-  howItWorks: [
-    "Iniciás sesión con Facebook y elegís tu página.",
-    "Los mensajes que recibe la página llegan a la bandeja.",
-    "Respondés desde BoxLead en nombre de la página.",
-  ],
+  get accountNoun() {
+    return channelT()("platforms.META.accountNoun");
+  },
+  get addAnother() {
+    return channelT()("platforms.META.addAnother");
+  },
+  get summary() {
+    return channelT()("platforms.META.summary");
+  },
+  get syncs() {
+    return channelT()("platforms.META.syncs", { returnObjects: true });
+  },
+  get howItWorks() {
+    return channelT()("platforms.META.howItWorks", { returnObjects: true });
+  },
   connect: "redirect",
-  stageLabels: { PRE_SALE: "Mensajes" },
+  get stageLabels() {
+    return { PRE_SALE: channelT()("channel.messages") };
+  },
   reply: () => ({
     kind: "chat",
     maxLength: MESSENGER_TEXT_LIMIT,
-    placeholder: "Escribí un mensaje",
+    placeholder: channelT()("channel.messagePlaceholder"),
     hint: null,
   }),
   explainError: (status, message) => {
@@ -30,9 +38,8 @@ export const messenger: PlatformDefinition = {
     if (status === 400 && /limited to/i.test(message)) return lengthError(MESSENGER_TEXT_LIMIT);
     if (status === 409 && /reply window/i.test(message)) {
       return {
-        title: "Pasaron más de 24 horas",
-        detail:
-          "Messenger solo deja responder dentro de las 24 horas del último mensaje de la persona. Podés escribirle cuando vuelva a escribir a tu página.",
+        title: channelT()("platforms.META.windowTitle"),
+        detail: channelT()("platforms.META.windowDetail"),
         action: null,
       };
     }

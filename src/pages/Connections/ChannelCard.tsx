@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { AccountConnectionResponse, PlatformType } from "../../api/types";
 import { CheckIcon } from "../../components/icons/UiIcons";
 import { Tag } from "../../components/ui/Tag";
@@ -25,6 +26,7 @@ export function ChannelCard({
   onConnect,
   onDisconnect,
 }: ChannelCardProps) {
+  const { t } = useTranslation("connections");
   const connected = accounts.length > 0;
   const needsAttention = accounts.some((a) => a.needsReconnection);
   const isConnecting = connecting === platform.id;
@@ -59,10 +61,10 @@ export function ChannelCard({
         {needsAttention || connected ? (
           <span className="channel-card-status">
             {needsAttention ? (
-              <Tag tone="danger">Atención</Tag>
+              <Tag tone="danger">{t("card.attention")}</Tag>
             ) : (
               <Tag tone="success" icon={<CheckIcon />}>
-                Conectado
+                {t("card.connected")}
               </Tag>
             )}
           </span>
@@ -70,7 +72,7 @@ export function ChannelCard({
       </div>
 
       {connected ? (
-        <ul className="channel-card-accounts" aria-label={`Cuentas de ${platform.name}`}>
+        <ul className="channel-card-accounts" aria-label={t("card.accounts", { name: platform.name })}>
           {accounts.map((account) => (
             <AccountRow
               key={account.id}
@@ -84,7 +86,7 @@ export function ChannelCard({
       ) : (
         <div className="channel-card-intro">
           <div>
-            <h3 className="channel-card-subtitle">Qué llega a BoxLead</h3>
+            <h3 className="channel-card-subtitle">{t("card.syncs")}</h3>
             <ul className="channel-card-syncs">
               {platform.syncs.map((item) => (
                 <li key={item}>
@@ -96,7 +98,7 @@ export function ChannelCard({
           </div>
           {featured ? (
             <div>
-              <h3 className="channel-card-subtitle">Cómo funciona</h3>
+              <h3 className="channel-card-subtitle">{t("card.howItWorks")}</h3>
               <ol className="channel-card-steps">
                 {platform.howItWorks.map((step) => (
                   <li key={step}>{step}</li>
@@ -115,10 +117,10 @@ export function ChannelCard({
           onClick={() => onConnect(platform.id)}
         >
           {isConnecting
-            ? "Conectando…"
+            ? t("card.connecting")
             : connected
               ? platform.addAnother
-              : `Conectar ${platform.name}`}
+              : t("card.connect", { name: platform.name })}
         </button>
       </div>
     </li>

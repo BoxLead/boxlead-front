@@ -1,5 +1,6 @@
 import { MercadoLibreMark } from "../components/icons/PlatformIcons";
-import { emailAndPhone, lengthError, reconnectError } from "./shared";
+import { channelT, emailAndPhone, lengthError, reconnectError } from "./shared";
+import type { ContextItemKind } from "../api/types";
 import type { ContextStatus, PlatformDefinition, PlatformErrorView } from "./types";
 
 export const MELI_ANSWER_LIMIT = 2000;
@@ -22,109 +23,133 @@ function upstreamDetail(message: string): string | null {
 function explainError(status: number, message: string): PlatformErrorView | null {
   const reconnect = reconnectError("MercadoLibre", message);
   if (reconnect) return reconnect;
+  const t = channelT();
   if (status === 409 && /none unanswered/i.test(message)) {
     return {
-      title: "No hay preguntas pendientes",
-      detail: "MercadoLibre solo permite responder preguntas abiertas y este comprador ya tiene todas respondidas.",
+      title: t("platforms.MELI.noQuestionsTitle"),
+      detail: t("platforms.MELI.noQuestionsDetail"),
       action: null,
     };
   }
   if (status === 409 && /has no MELI user id/i.test(message)) {
     return {
-      title: "No pudimos identificar al comprador",
-      detail: "Este contacto no tiene un usuario de MercadoLibre asociado, así que no se le puede responder desde BoxLead.",
+      title: t("platforms.MELI.noBuyerTitle"),
+      detail: t("platforms.MELI.noBuyerDetail"),
       action: null,
     };
   }
   if (status === 409 && /no order\/pack/i.test(message)) {
     return {
-      title: "Todavía no hay una venta asociada",
-      detail: "Vas a poder responder cuando llegue el próximo mensaje del comprador sobre su compra.",
+      title: t("platforms.MELI.noOrderTitle"),
+      detail: t("platforms.MELI.noOrderDetail"),
       action: null,
     };
   }
   if (status === 400 && /limited to 2000/i.test(message)) return lengthError(MELI_ANSWER_LIMIT);
   if (status === 400 && /limited to 350/i.test(message)) return lengthError(MELI_MESSAGE_LIMIT);
   if (status === 400 && /cannot be empty/i.test(message)) {
-    return { title: "Escribí un mensaje antes de enviar", detail: null, action: null };
+    return { title: t("platforms.MELI.emptyTitle"), detail: null, action: null };
   }
   if (status === 502 && /HTTP 403/i.test(message)) {
     return {
-      title: "MercadoLibre bloqueó el envío",
-      detail: upstreamDetail(message) ?? "La conversación puede estar cerrada o con un reclamo abierto.",
+      title: t("platforms.MELI.blockedTitle"),
+      detail: upstreamDetail(message) ?? t("platforms.MELI.blockedDetail"),
       action: null,
     };
   }
   if (status === 502) {
     return {
-      title: "MercadoLibre rechazó el mensaje",
-      detail: upstreamDetail(message) ?? "Probá de nuevo en unos minutos.",
+      title: t("platforms.MELI.rejectedTitle"),
+      detail: upstreamDetail(message) ?? t("platforms.MELI.rejectedDetail"),
       action: "retry",
     };
   }
   return null;
 }
 
-const LISTING_STATUS: Record<string, ContextStatus> = {
-  active: { label: "Activa", tone: "success" },
-  paused: { label: "Pausada", tone: "warning" },
-  closed: { label: "Finalizada", tone: "neutral" },
-  under_review: { label: "En revisión", tone: "warning" },
-  inactive: { label: "Inactiva", tone: "neutral" },
-};
+type Tone = ContextStatus["tone"];
 
-const ORDER_STATUS: Record<string, ContextStatus> = {
-  paid: { label: "Pagada", tone: "success" },
-  confirmed: { label: "Confirmada", tone: "neutral" },
-  payment_required: { label: "Pago pendiente", tone: "warning" },
-  payment_in_process: { label: "Pago en proceso", tone: "warning" },
-  partially_paid: { label: "Pago parcial", tone: "warning" },
-  partially_refunded: { label: "Devolución parcial", tone: "warning" },
-  pending_cancel: { label: "Cancelándose", tone: "danger" },
-  cancelled: { label: "Cancelada", tone: "danger" },
-  invalid: { label: "Inválida", tone: "danger" },
-};
+const LISTING_TONES = {
+  active: "success",
+  paused: "warning",
+  closed: "neutral",
+  under_review: "warning",
+  inactive: "neutral",
+} as const satisfies Record<string, Tone>;
+
+const ORDER_TONES = {
+  paid: "success",
+  confirmed: "neutral",
+  payment_required: "warning",
+  payment_in_process: "warning",
+  partially_paid: "warning",
+  partially_refunded: "warning",
+  pending_cancel: "danger",
+  cancelled: "danger",
+  invalid: "danger",
+} as const satisfies Record<string, Tone>;
+
+function isKey<T extends object>(table: T, key: string): key is Extract<keyof T, string> {
+  return Object.hasOwn(table, key);
+}
+
+function contextStatus(kind: ContextItemKind, status: string | null): ContextStatus | null {
+  if (!status) return null;
+  const key = status.toLowerCase();
+  const t = channelT();
+  if (kind === "ORDER") {
+    return isKey(ORDER_TONES, key)
+      ? { label: t(`platforms.MELI.order.${key}`), tone: ORDER_TONES[key] }
+      : { label: status, tone: "neutral" };
+  }
+  return isKey(LISTING_TONES, key)
+    ? { label: t(`platforms.MELI.listing.${key}`), tone: LISTING_TONES[key] }
+    : { label: status, tone: "neutral" };
+}
 
 export const meli: PlatformDefinition = {
   id: "MELI",
   name: "MercadoLibre",
-  accountNoun: "cuenta de vendedor",
-  addAnother: "Agregar otra cuenta",
-  summary: "Respondé las preguntas de tus publicaciones y los mensajes de tus ventas desde BoxLead.",
-  syncs: [
-    "Preguntas de tus publicaciones",
-    "Mensajes de postventa",
-    "Datos de contacto de cada compra",
-  ],
-  howItWorks: [
-    "Autorizás a BoxLead desde tu cuenta de vendedor de MercadoLibre.",
-    "Las preguntas nuevas y los mensajes de tus ventas llegan a la bandeja.",
-    "Respondés desde BoxLead y la respuesta se publica en MercadoLibre.",
-  ],
+  get accountNoun() {
+    return channelT()("platforms.MELI.accountNoun");
+  },
+  get addAnother() {
+    return channelT()("channel.addAccount");
+  },
+  get summary() {
+    return channelT()("platforms.MELI.summary");
+  },
+  get syncs() {
+    return channelT()("platforms.MELI.syncs", { returnObjects: true });
+  },
+  get howItWorks() {
+    return channelT()("platforms.MELI.howItWorks", { returnObjects: true });
+  },
   connect: "redirect",
-  stageLabels: { PRE_SALE: "Preguntas", POST_SALE: "Postventa" },
-  reply: (stage) =>
-    stage === "POST_SALE"
+  get stageLabels() {
+    const t = channelT();
+    return { PRE_SALE: t("platforms.MELI.preSale"), POST_SALE: t("platforms.MELI.postSale") };
+  },
+  reply: (stage) => {
+    const t = channelT();
+    return stage === "POST_SALE"
       ? {
           kind: "chat",
           maxLength: MELI_MESSAGE_LIMIT,
-          placeholder: "Escribí un mensaje al comprador",
-          hint: "MercadoLibre limita los mensajes de postventa a 350 caracteres.",
+          placeholder: t("platforms.MELI.postSalePlaceholder"),
+          hint: t("platforms.MELI.postSaleHint"),
         }
       : {
           kind: "questions",
           maxLength: MELI_ANSWER_LIMIT,
-          placeholder: "Escribí tu respuesta",
-          hint: "Se publica como respuesta a la pregunta pendiente más antigua.",
-        },
+          placeholder: t("platforms.MELI.questionPlaceholder"),
+          hint: t("platforms.MELI.questionHint"),
+        };
+  },
   explainError,
   contactFields: emailAndPhone,
   hasContext: true,
-  contextStatus: (kind, status) => {
-    if (!status) return null;
-    const table = kind === "ORDER" ? ORDER_STATUS : LISTING_STATUS;
-    return table[status.toLowerCase()] ?? { label: status, tone: "neutral" };
-  },
+  contextStatus,
   externalIdIsContact: false,
   canStartConversation: false,
   logo: (size) => <MercadoLibreMark width={size} height={size} aria-hidden="true" />,

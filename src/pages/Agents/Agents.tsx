@@ -1,6 +1,7 @@
 import i18next from "i18next";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import type { AgentActivitySummary, AgentResponse, CategoryResponse } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
@@ -50,7 +51,8 @@ function tabFrom(params: URLSearchParams): AgentTab {
 }
 
 export function Agents() {
-  useDocumentTitle("Agentes");
+  const { t } = useTranslation("agents");
+  useDocumentTitle(t("page.title"));
 
   const toast = useToast();
   const plan = usePlan();
@@ -142,9 +144,9 @@ export function Agents() {
     setToggling(agent.id);
     try {
       await setAgentEnabled(agent, enabled);
-      toast({ tone: "info", message: enabled ? `${agent.name} está activo.` : `${agent.name} quedó en pausa.` });
+      toast({ tone: "info", message: enabled ? t("page.enabled", { name: agent.name }) : t("page.paused", { name: agent.name }) });
     } catch (error) {
-      toast({ tone: "danger", message: agentErrorMessage(error, "No pudimos cambiar el estado del agente.") });
+      toast({ tone: "danger", message: agentErrorMessage(error, t("page.toggleFailed")) });
     } finally {
       setToggling(null);
     }
@@ -157,14 +159,14 @@ export function Agents() {
     setDeletedId(removedId);
     try {
       await deleteAgent(removedId);
-      toast({ tone: "info", message: `Eliminaste ${pendingDelete.name}.` });
+      toast({ tone: "info", message: t("page.deleted", { name: pendingDelete.name }) });
       setPendingDelete(null);
       if (requestedId === removedId) write({ kind: "close" });
     } catch (error) {
       setDeletedId(null);
       toast({
         tone: "danger",
-        message: error instanceof ApiError ? agentErrorMessage(error, "No pudimos eliminar el agente.") : "No pudimos eliminar el agente.",
+        message: error instanceof ApiError ? agentErrorMessage(error, t("page.deleteFailed")) : t("page.deleteFailed"),
       });
     } finally {
       setDeleting(false);
@@ -173,13 +175,13 @@ export function Agents() {
 
   const failures = [
     categories.error && !categories.data
-      ? { key: "categories", title: "No pudimos cargar las categorías", message: categories.error, reload: categories.reload }
+      ? { key: "categories", title: t("page.loadCategoriesFailed"), message: categories.error, reload: categories.reload }
       : null,
     activity.error && !activity.data
-      ? { key: "activity", title: "No pudimos cargar la actividad", message: activity.error, reload: activity.reload }
+      ? { key: "activity", title: t("page.loadActivityFailed"), message: activity.error, reload: activity.reload }
       : null,
     agents.error && !agents.data
-      ? { key: "agents", title: "No pudimos cargar los agentes", message: agents.error, reload: agents.reload }
+      ? { key: "agents", title: t("page.loadAgentsFailed"), message: agents.error, reload: agents.reload }
       : null,
   ].filter((failure) => failure !== null);
 
@@ -190,7 +192,7 @@ export function Agents() {
       onClick={() => request({ kind: "open", id: NEW_AGENT })}
       disabled={!agents.data || plan.restricted}
     >
-      Nuevo agente
+      {t("page.newAgent")}
     </button>
   );
 
@@ -200,20 +202,18 @@ export function Agents() {
     <div className={cx("agents", open && "agents-open")}>
       <header className="agents-header">
         <div className="agents-heading">
-          <h1 className="page-title">Agentes</h1>
-          <p className="page-header-desc">
-            Configurá quién responde a tus clientes, dónde trabaja cada agente y si responde solo o deja un borrador.
-          </p>
+          <h1 className="page-title">{t("page.title")}</h1>
+          <p className="page-header-desc">{t("page.description")}</p>
           {unassigned ? <p className="agents-unassigned">{unassigned}</p> : null}
         </div>
         <div className="agents-header-actions">
           <ChoiceGroup
-            label="Sección"
+            label={t("page.sectionLabel")}
             variant="segmented"
             value={section}
             choices={[
-              { value: "agents", label: "Agentes" },
-              { value: "profile", label: "Contexto del negocio" },
+              { value: "agents", label: t("page.sectionAgents") },
+              { value: "profile", label: t("page.sectionProfile") },
             ]}
             onChange={(value) => request(value === "profile" ? { kind: "profile" } : { kind: "agents" })}
           />
@@ -223,7 +223,7 @@ export function Agents() {
 
       {overLimit ? (
         <div className="agents-alerts">
-          <Banner tone="warning" title="Algunos agentes quedaron fuera de tu plan" action={<PlanLink action={SEE_PLANS} />}>
+          <Banner tone="warning" title={t("page.overLimitTitle")} action={<PlanLink action={SEE_PLANS} />}>
             {overLimit}
           </Banner>
         </div>
@@ -238,7 +238,7 @@ export function Agents() {
               title={failure.title}
               action={
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => void failure.reload()}>
-                  Reintentar
+                  {t("page.retry")}
                 </button>
               }
             >
@@ -266,8 +266,8 @@ export function Agents() {
         <div className="agents-empty">
           <EmptyState
             illustration="agents"
-            title="Todavía no configuraste agentes"
-            hint="Un agente responde por vos según las instrucciones y las reglas que definas."
+            title={t("page.emptyTitle")}
+            hint={t("page.emptyHint")}
             action={createButton}
           />
         </div>
@@ -286,11 +286,11 @@ export function Agents() {
             {missing ? (
               <EmptyState
                 illustration="missing"
-                title="No encontramos este agente"
-                hint="Puede que se haya eliminado."
+                title={t("page.missingTitle")}
+                hint={t("page.missingHint")}
                 action={
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => request({ kind: "close" })}>
-                    Volver
+                    {t("page.back")}
                   </button>
                 }
               />
@@ -316,7 +316,7 @@ export function Agents() {
                 onDirtyChange={setDirty}
                 onSaved={(saved, created) => {
                   setDirty(false);
-                  toast({ message: created ? `Creaste ${saved.name}.` : `Guardaste ${saved.name}.` });
+                  toast({ message: created ? t("page.created", { name: saved.name }) : t("page.saved", { name: saved.name }) });
                   write({ kind: "open", id: saved.id });
                 }}
                 onDiscardNew={() => commit({ kind: "close" })}
@@ -324,8 +324,8 @@ export function Agents() {
             ) : (
               <EmptyState
                 illustration="agents"
-                title="Elegí un agente"
-                hint="Configurá sus instrucciones, probalo o revisá qué hizo."
+                title={t("page.pickTitle")}
+                hint={t("page.pickHint")}
               />
             )}
           </div>
@@ -335,27 +335,27 @@ export function Agents() {
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pending !== null}
-        title="¿Descartar los cambios?"
-        confirmLabel="Descartar"
+        title={t("page.discardTitle")}
+        confirmLabel={t("page.discardConfirm")}
         onConfirm={() => {
           if (pending) commit(pending);
         }}
         onCancel={() => setPending(null)}
       >
-        <p>Los cambios de este agente no se guardaron.</p>
+        <p>{t("page.discardBody")}</p>
       </ConfirmDialog>
 
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pendingDelete !== null}
-        title={`¿Eliminar ${pendingDelete?.name ?? "el agente"}?`}
-        confirmLabel={deleting ? "Eliminando…" : "Eliminar"}
+        title={t("page.deleteTitle", { name: pendingDelete?.name ?? t("page.deleteFallbackName") })}
+        confirmLabel={deleting ? t("page.deleting") : t("page.delete")}
         tone="danger"
         busy={deleting}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setPendingDelete(null)}
       >
-        <p>Deja de responder en las conversaciones donde trabajaba. Esto no se puede deshacer.</p>
+        <p>{t("page.deleteBody")}</p>
       </ConfirmDialog>
     </div>
   );

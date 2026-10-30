@@ -6,6 +6,7 @@ import type { AgentActivityDetail, AgentActivitySummary, AgentResponse, Business
 import { ToastContext } from "../../components/ui/toast";
 import { ACTIVITY_KEY, AGENTS_KEY, BUSINESS_PROFILE_KEY, agentActivityKey } from "../../data/agents";
 import { CATEGORIES_KEY } from "../../data/categories";
+import { i18n } from "../../i18n";
 import { Agents } from "./Agents";
 
 type Query = {
@@ -228,5 +229,45 @@ describe("Agents", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: "Ventas extra" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 2, name: "Postventa" })).not.toBeInTheDocument();
+  });
+  it("shows the agents and their activity in English", async () => {
+    await i18n.changeLanguage("en");
+    const postventa: AgentResponse = { ...agent, id: "a-2", name: "Postventa", instructions: "", enabled: false };
+    queries.set(AGENTS_KEY, query([agent, postventa]));
+    queries.set(BUSINESS_PROFILE_KEY, query(profile));
+    queries.set(CATEGORIES_KEY, query([presupuesto]));
+    queries.set(
+      ACTIVITY_KEY,
+      query({
+        days: 30,
+        unassigned: { skipped: 1, labeled: 2 },
+        agents: [{ agentId: "a-1", labeled: 2, sent: 8, drafted: 1, skipped: 1, handedOff: 3 }],
+      } satisfies AgentActivitySummary),
+    );
+    queries.set(agentActivityKey(agent.id), query({ days: 30, labeled: 0, sent: 0, drafted: 0, skipped: 0, handedOff: 0, events: [] }));
+
+    renderAgents();
+
+    expect(screen.getByRole("heading", { level: 1, name: "Agents" })).toBeInTheDocument();
+    expect(screen.getByText("1 message didn't reach any agent and 2 leads were labeled without an agent.")).toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "Agents" });
+    expect(within(list).getByRole("button", { name: /Ventas/ })).toHaveTextContent("8 replied");
+    expect(within(list).getByRole("button", { name: /Ventas/ })).toHaveTextContent("All channels · Presupuesto · Automatic");
+    expect(within(list).getByRole("button", { name: /Postventa/ })).toHaveTextContent("Paused");
+    expect(within(list).getByRole("button", { name: /Postventa/ })).toHaveTextContent("No instructions");
+
+    await userEvent.click(within(list).getByRole("button", { name: /Ventas/ }));
+    expect(screen.getByRole("textbox", { name: /Name/ })).toHaveValue("Ventas");
+    expect(screen.getByRole("heading", { name: "Where it works" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add rule" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Activity" }));
+    expect(screen.getByRole("region", { name: "Ventas activity, last 30 days" })).toHaveTextContent("Handed off");
+    expect(screen.getByText("No activity in the last 30 days yet.")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Business context" }));
+    expect(screen.getByRole("textbox", { name: /What your business does/ })).toHaveValue("Vendemos audio");
+    expect(screen.getByRole("switch", { name: "Qualify leads automatically" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save context" })).toBeDisabled();
   });
 });

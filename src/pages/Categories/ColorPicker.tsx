@@ -1,4 +1,5 @@
 import type { CategoryColor } from "../../api/types";
+import { useTranslation } from "react-i18next";
 import { CATEGORY_COLORS, colorClass, colorLabel } from "../../util/categories";
 
 type ColorPickerProps = {
@@ -7,9 +8,10 @@ type ColorPickerProps = {
 };
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
+  const { t } = useTranslation("agents");
   return (
     <fieldset className="color-picker">
-      <legend className="field-label">Color</legend>
+      <legend className="field-label">{t("categories.color")}</legend>
       <div className="color-picker-options">
         {CATEGORY_COLORS.map((color) => (
           <label key={color} className={`color-picker-option ${colorClass(color)}`} title={colorLabel(color)}>

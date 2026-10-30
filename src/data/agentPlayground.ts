@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { agentApiUrl, ApiError, errorFromResponse, handleUnauthorized, REQUEST_HEADERS } from "../api/client";
 import type { PlatformType, PlaygroundResult, SalesStage } from "../api/types";
 import { readAgUiStream, type AgUiMessage, type AgUiRunInput } from "./agui";
@@ -30,7 +31,10 @@ export type PlaygroundOutcome = {
 };
 
 const PLAYGROUND_PATH = "/agents/playground";
-const FALLBACK_ERROR = "No pudimos completar la prueba. Probá de nuevo.";
+
+function fallbackError(): string {
+  return i18next.t("errors.playgroundFailed", { ns: "agents" });
+}
 
 async function fetchWithSession(url: string, init: RequestInit): Promise<Response> {
   const response = await fetch(url, { ...init, credentials: "include" });
@@ -94,11 +98,11 @@ export async function runPlayground(run: PlaygroundRun): Promise<PlaygroundOutco
     );
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(FALLBACK_ERROR, 0);
+    throw new ApiError(fallbackError(), 0);
   } finally {
     refreshOnboarding();
   }
 
-  if (run.signal?.aborted || outcome.failed) throw new ApiError(FALLBACK_ERROR, 0);
+  if (run.signal?.aborted || outcome.failed) throw new ApiError(fallbackError(), 0);
   return { reply: outcome.reply, result: outcome.result };
 }

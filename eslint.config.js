@@ -13,14 +13,9 @@ const I18N_PENDING = [
   'src/components/Notifications/**',
   'src/components/icons/**',
   'src/pages/Account/**',
-  'src/pages/Agents/**',
   'src/pages/Billing/**',
-  'src/pages/Categories/**',
-  'src/pages/Connections/**',
   'src/pages/Notifications/**',
-  'src/pages/OAuthCallback/**',
   'src/pages/Reseller/**',
-  'src/platforms/**',
 ]
 
 const UNTRANSLATED_NAMES = ['BoxLead', 'WhatsApp', 'WhatsApp Business', 'Instagram', 'Messenger', 'MercadoLibre', 'Facebook', 'Google', 'TikTok', 'LinkedIn', 'Google Ads', 'Meta', '24/7']

@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type { AccountConnectionResponse, PlatformType } from "../../api/types";
@@ -24,14 +25,15 @@ function connectedFrom(state: unknown): PlatformType | null {
 }
 
 export function Connections() {
-  useDocumentTitle("Conexiones");
+  const { t } = useTranslation("connections");
+  useDocumentTitle(t("page.title"));
 
   const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   const connections = useApiQuery<AccountConnectionResponse[]>(CONNECTIONS_KEY);
   const { connect, connecting, error: connectError, clearError } = useConnectPlatform({
-    onConnected: (platform) => toast({ message: `Conectaste ${getPlatform(platform).name}.` }),
+    onConnected: (platform) => toast({ message: t("page.connected", { name: getPlatform(platform).name }) }),
   });
   const [highlighted, setHighlighted] = useState(() => connectedFrom(location.state));
   const [pendingRemoval, setPendingRemoval] = useState<AccountConnectionResponse | null>(null);
@@ -52,10 +54,10 @@ export function Connections() {
     try {
       await api.delete(`/oauth/connections/${pendingRemoval.id}`);
       await invalidateQueries(CONNECTIONS_KEY);
-      toast({ tone: "info", message: `Desconectaste ${pendingRemoval.displayName ?? getPlatform(pendingRemoval.platform).name}.` });
+      toast({ tone: "info", message: t("page.disconnected", { name: pendingRemoval.displayName ?? getPlatform(pendingRemoval.platform).name }) });
       setPendingRemoval(null);
     } catch (e) {
-      setRemoveError(e instanceof ApiError ? e.message : "No pudimos desconectar la cuenta.");
+      setRemoveError(e instanceof ApiError ? e.message : t("page.disconnectFailed"));
     } finally {
       setRemoving(false);
     }
@@ -70,14 +72,17 @@ export function Connections() {
     <div className="page connections-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Conexiones</h1>
-          <p className="page-header-desc">
-            Conectá tus canales y cada consulta llega a tu bandeja, lista para responder.
-          </p>
+          <h1 className="page-title">{t("page.title")}</h1>
+          <p className="page-header-desc">{t("page.description")}</p>
         </div>
         {connections.data ? (
           <p className="connections-count">
-            <strong>{connectedCount}</strong> de {CONNECTABLE_PLATFORMS.length} canales conectados
+            <Trans
+              t={t}
+              i18nKey="page.count"
+              values={{ connected: connectedCount, total: CONNECTABLE_PLATFORMS.length }}
+              components={{ strong: <strong /> }}
+            />
           </p>
         ) : null}
       </header>
@@ -87,7 +92,7 @@ export function Connections() {
           <Banner
             key={account.id}
             tone="warning"
-            title={`Reconectá ${account.displayName ?? getPlatform(account.platform).name}`}
+            title={t("page.reconnectTitle", { name: account.displayName ?? getPlatform(account.platform).name })}
             action={
               <button
                 type="button"
@@ -95,18 +100,17 @@ export function Connections() {
                 disabled={connecting !== null}
                 onClick={() => void connect(account.platform)}
               >
-                Reconectar
+                {t("page.reconnect")}
               </button>
             }
           >
-            {getPlatform(account.platform).name} revocó o venció la autorización. Mientras tanto no llegan
-            mensajes nuevos ni se pueden enviar respuestas.
+            {t("page.reconnectBody", { name: getPlatform(account.platform).name })}
           </Banner>
         ))}
         {error ? (
           <Banner
             tone="danger"
-            title="Algo salió mal"
+            title={t("page.errorTitle")}
             action={
               <button
                 type="button"
@@ -117,7 +121,7 @@ export function Connections() {
                   void connections.reload();
                 }}
               >
-                Reintentar
+                {t("page.retry")}
               </button>
             }
           >
@@ -134,7 +138,7 @@ export function Connections() {
           <div className="skeleton channel-skeleton" />
         </div>
       ) : (
-        <ul className="channel-grid rise-list" aria-label="Canales">
+        <ul className="channel-grid rise-list" aria-label={t("page.channels")}>
           {CONNECTABLE_PLATFORMS.map((platform) => (
             <ChannelCard
               key={platform.id}
@@ -156,18 +160,15 @@ export function Connections() {
       <ConfirmDialog
         cancelLabel={i18next.t("ui.cancel", { ns: "shell" })}
         open={pendingRemoval !== null}
-        title={`¿Desconectar ${pendingRemoval?.displayName ?? "esta cuenta"}?`}
-        confirmLabel={removing ? "Desconectando…" : "Desconectar"}
+        title={t("page.disconnectTitle", { name: pendingRemoval?.displayName ?? t("page.disconnectFallbackName") })}
+        confirmLabel={removing ? t("page.disconnecting") : t("page.disconnect")}
         tone="danger"
         busy={removing}
         onConfirm={() => void confirmRemoval()}
         onCancel={() => setPendingRemoval(null)}
       >
-        <p>
-          Dejan de llegar los mensajes nuevos de esta cuenta de{" "}
-          {pendingRemoval ? getPlatform(pendingRemoval.platform).name : ""}.
-        </p>
-        <p>Las conversaciones y los leads que ya están en BoxLead se conservan.</p>
+        <p>{t("page.disconnectBody", { name: pendingRemoval ? getPlatform(pendingRemoval.platform).name : "" })}</p>
+        <p>{t("page.disconnectKeeps")}</p>
       </ConfirmDialog>
     </div>
   );

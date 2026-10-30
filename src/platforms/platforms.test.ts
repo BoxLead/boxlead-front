@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LeadResponse } from "../api/types";
+import { i18n } from "../i18n";
+import { buildLlms } from "../seo/files";
 import { CONNECTABLE_PLATFORMS, getPlatform, hasStages, stageChoices, stageLabel } from ".";
 
 const lead = (patch: Partial<LeadResponse>): LeadResponse => ({
@@ -154,5 +156,31 @@ describe("stageChoices", () => {
 
   it("uses generic names when no channel is chosen", () => {
     expect(stageChoices(null).map((choice) => choice.label)).toEqual(["Preventa", "Postventa"]);
+  });
+});
+
+describe("English", () => {
+  it("describes the channels, stages and errors in English", async () => {
+    await i18n.changeLanguage("en");
+    const meli = getPlatform("MELI");
+    expect(meli.summary).toBe("Answer questions on your listings and messages about your sales from BoxLead.");
+    expect(meli.syncs).toEqual(["Questions on your listings", "Post-sale messages", "Contact details for each purchase"]);
+    expect(stageChoices("MELI").map((choice) => choice.label)).toEqual(["Questions", "Post-sale"]);
+    expect(stageChoices(null).map((choice) => choice.label)).toEqual(["Pre-sale", "Post-sale"]);
+    expect(stageLabel("INSTAGRAM", "POST_SALE")).toBe("Post-sale");
+    expect(meli.reply("POST_SALE").placeholder).toBe("Write a message to the buyer");
+    expect(meli.contextStatus("ORDER", "PAID")).toEqual({ label: "Paid", tone: "success" });
+    expect(meli.contextStatus("LISTING", "something_new")).toEqual({ label: "something_new", tone: "neutral" });
+    expect(getPlatform("INSTAGRAM").commentReply?.postLabel("REELS")).toBe("a reel");
+    expect(getPlatform("WHATSAPP").explainError(400, "WhatsApp messages are limited to 4096 characters")?.detail).toBe(
+      "The limit for this channel is 4,096 characters.",
+    );
+    expect(getPlatform("META").explainError(409, "Messenger account 3 must be reconnected")?.title).toBe("Messenger needs to be reconnected");
+    expect(getPlatform("TIKTOK").summary).toBe("Coming soon.");
+  });
+
+  it("keeps the channel summaries of llms.txt in Spanish", async () => {
+    await i18n.changeLanguage("en");
+    expect(buildLlms()).toContain("- MercadoLibre. Respondé las preguntas de tus publicaciones y los mensajes de tus ventas desde BoxLead.");
   });
 });

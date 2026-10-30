@@ -1,36 +1,38 @@
+import type { ReactNode } from "react";
 import { GoogleAdsIcon, TikTokIcon } from "../components/icons/PlatformIcons";
-import { emailAndPhone } from "./shared";
+import { channelT, emailAndPhone } from "./shared";
 import type { PlatformDefinition } from "./types";
 
-const readOnly = {
-  connect: null,
-  addAnother: "Agregar otra cuenta",
-  syncs: [],
-  howItWorks: [],
-  stageLabels: { PRE_SALE: "Mensajes" },
-  reply: () => ({ kind: "chat" as const, maxLength: null, placeholder: "Escribí un mensaje", hint: null }),
-  explainError: () => null,
-  contactFields: emailAndPhone,
-  hasContext: false,
-  contextStatus: () => null,
-  canStartConversation: false,
-  externalIdIsContact: false,
-};
+function upcoming(id: "TIKTOK" | "GOOGLE_ADS", name: string, logo: (size: number) => ReactNode): PlatformDefinition {
+  return {
+    id,
+    name,
+    get accountNoun() {
+      return channelT()("channel.accountNoun");
+    },
+    get addAnother() {
+      return channelT()("channel.addAccount");
+    },
+    get summary() {
+      return channelT()(`platforms.${id}.summary`);
+    },
+    connect: null,
+    syncs: [],
+    howItWorks: [],
+    get stageLabels() {
+      return { PRE_SALE: channelT()("channel.messages") };
+    },
+    reply: () => ({ kind: "chat", maxLength: null, placeholder: channelT()("channel.messagePlaceholder"), hint: null }),
+    explainError: () => null,
+    contactFields: emailAndPhone,
+    hasContext: false,
+    contextStatus: () => null,
+    canStartConversation: false,
+    externalIdIsContact: false,
+    logo,
+  };
+}
 
-export const tiktok: PlatformDefinition = {
-  ...readOnly,
-  id: "TIKTOK",
-  name: "TikTok",
-  accountNoun: "cuenta",
-  summary: "Próximamente.",
-  logo: (size) => <TikTokIcon width={size} height={size} aria-hidden="true" />,
-};
+export const tiktok = upcoming("TIKTOK", "TikTok", (size) => <TikTokIcon width={size} height={size} aria-hidden="true" />);
 
-export const googleAds: PlatformDefinition = {
-  ...readOnly,
-  id: "GOOGLE_ADS",
-  name: "Google Ads",
-  accountNoun: "cuenta",
-  summary: "Próximamente.",
-  logo: (size) => <GoogleAdsIcon width={size} height={size} aria-hidden="true" />,
-};
+export const googleAds = upcoming("GOOGLE_ADS", "Google Ads", (size) => <GoogleAdsIcon width={size} height={size} aria-hidden="true" />);
