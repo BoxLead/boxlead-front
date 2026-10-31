@@ -80,3 +80,60 @@ test("a Spanish browser keeps the app in Spanish", async ({ page }) => {
   await expect(page.getByRole("complementary", { name: "Navegación principal" }).getByRole("link", { name: "Métricas" })).toBeVisible();
   await screenshot(page, "app-inbox-es");
 });
+
+const ENGLISH_SCREENS = [
+  { path: "/login", title: "Sign in · BoxLead", heading: "Sign in" },
+  { path: "/register", title: "Create account · BoxLead", heading: "Create account" },
+  { path: "/recuperar-clave", title: "Reset your password · BoxLead", heading: "Reset your password" },
+  { path: "/nueva-clave", title: "Choose a new password · BoxLead", heading: "Choose a new password" },
+  { path: "/confirmar-email", title: "Confirm your email · BoxLead", heading: "Confirm your email" },
+  { path: "/nuevo-email", title: "Confirm the new email · BoxLead", heading: "Confirm the new email" },
+  { path: "/reingresar", title: "Confirm it's you · BoxLead", heading: "Confirm it's you" },
+  { path: "/avisos/baja", title: "Stop receiving notices · BoxLead", heading: "Stop receiving notices" },
+  { path: "/arrepentimiento", title: "Withdrawal button · BoxLead", heading: "Withdrawal button" },
+  { path: "/baja", title: "Cancellation button · BoxLead", heading: "Cancellation button" },
+  { path: "/esto-no-existe", title: "Page not found · BoxLead", heading: "We couldn't find this page" },
+];
+
+test.describe("screens without an /en address with an English browser", () => {
+  test.use({ locale: "en-US" });
+
+  for (const { path, title, heading } of ENGLISH_SCREENS) {
+    test(`${path} is in English with its title`, async ({ page }) => {
+      await resetApi();
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+      await expect(page).toHaveTitle(title);
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    });
+  }
+
+  test("the cancellation form works in English", async ({ page }) => {
+    await resetApi("billing-none");
+    await page.goto("/baja");
+    await page.getByLabel("Your account email").fill("ana@negocio.com");
+    await page.getByRole("button", { name: "Send cancellation request" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "We got your request" })).toContainText("ana@negocio.com");
+    await expect(page.getByRole("contentinfo").getByRole("link", { name: "Withdrawal button" })).toHaveAttribute("href", "/arrepentimiento");
+    await expectAccessible(page);
+  });
+});
+
+test("reading the English site keeps the login in English for the session", async ({ page }) => {
+  await resetApi();
+  await page.goto("/en");
+  await page.getByRole("contentinfo").getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sign in");
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sign in");
+});
+
+test("the Spanish browser keeps the screens without an /en address in Spanish", async ({ page }) => {
+  await resetApi();
+  await page.goto("/arrepentimiento");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Botón de arrepentimiento");
+  await expect(page).toHaveTitle("Botón de arrepentimiento · BoxLead");
+  await page.goto("/login");
+  await expect(page).toHaveTitle("Iniciar sesión · BoxLead");
+});
