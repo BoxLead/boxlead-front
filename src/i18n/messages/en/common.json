@@ -50,7 +50,9 @@
     "PLAN_REQUIRED": "You need an active plan to do this.",
     "PLAN_LIMIT_REACHED": "You reached your plan's limit.",
     "ENTITLEMENTS_UNAVAILABLE": "We couldn't check your plan. Try again in a few minutes.",
-    "LEGAL_ACCEPTANCE_REQUIRED": "To continue you need to accept the current terms and privacy policy."
+    "LEGAL_ACCEPTANCE_REQUIRED": "To continue you need to accept the current terms and privacy policy.",
+    "loadFailed": "We couldn't load the data. Try again.",
+    "invalidSession": "Invalid session response."
   },
   "price": {
     "withoutNationalTaxes": "PRICE WITHOUT NATIONAL TAXES",

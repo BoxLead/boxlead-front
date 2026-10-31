@@ -298,7 +298,7 @@ async function requestUser(
   const data = await request<unknown>(method, path, { body, skipAuth: true });
   const user = toAuthUser(data);
   if (!user) {
-    throw new ApiError("Respuesta de sesión inválida.", 500, data);
+    throw new ApiError(i18next.t("apiErrors.invalidSession"), 500, data);
   }
   return user;
 }

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { agentApi, api, ApiError } from "../api/client";
 
 export type QueryState<T> = {
@@ -17,7 +18,6 @@ type Entry = {
   generation: number;
 };
 
-export const FALLBACK_ERROR = "No pudimos cargar los datos. Probá de nuevo.";
 export const STALE_MS = 10_000;
 const GC_MS = 5 * 60_000;
 
@@ -84,7 +84,7 @@ function keepStable(previous: unknown, next: unknown): unknown {
 }
 
 function messageOf(error: unknown): string {
-  return error instanceof ApiError ? error.message : FALLBACK_ERROR;
+  return error instanceof ApiError ? error.message : i18next.t("apiErrors.loadFailed");
 }
 
 export function getQueryState<T>(key: string): QueryState<T> {
