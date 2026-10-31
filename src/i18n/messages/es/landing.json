@@ -255,7 +255,7 @@
       },
       {
         "question": "¿Qué pasa con mis datos?",
-        "answer": "Los usamos solo para prestarte el servicio y no los vendemos. Mirá la [Política de privacidad](/privacidad) o pedí la [eliminación de tus datos](/data-deletion) cuando quieras."
+        "answer": "Los usamos solo para prestarte el servicio y no los vendemos. Mirá la [Política de privacidad](/privacidad) o pedí la [eliminación de tus datos](/privacidad#derechos) cuando quieras."
       },
       {
         "question": "¿Con qué canales funciona?",
@@ -310,8 +310,6 @@
     "legal": "Legal",
     "terms": "Términos y condiciones",
     "privacy": "Política de privacidad",
-    "termsEn": "Terms of Service",
-    "privacyEn": "Privacy Policy",
     "contracts": "Contratos de adhesión Ley N° 24.240 de Defensa del Consumidor",
     "dataDeletion": "Eliminación de datos",
     "support": "Atención al cliente",

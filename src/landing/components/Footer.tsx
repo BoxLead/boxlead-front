@@ -17,16 +17,14 @@ import { DataFiscal } from "./DataFiscal";
 import { LanguageSwitch } from "./LanguageSwitch";
 import "./Footer.css";
 
-type LegalLink = { to: string; label: "terms" | "privacy" | "contracts" | "dataDeletion" | "termsEn" | "privacyEn"; lang?: string };
+type LegalLink = { to: string; label: "terms" | "privacy" | "contracts" | "dataDeletion" };
 
 const LEGAL_LINKS: Record<"es" | "en", LegalLink[]> = {
   es: [
     { to: "/terminos", label: "terms" },
     { to: "/privacidad", label: "privacy" },
     { to: "/contratos", label: "contracts" },
-    { to: "/data-deletion", label: "dataDeletion" },
-    { to: "/terms-of-service", label: "termsEn", lang: "en" },
-    { to: "/privacy-policy", label: "privacyEn", lang: "en" },
+    { to: "/privacidad#derechos", label: "dataDeletion" },
   ],
   en: [
     { to: "/terms-of-service", label: "terms" },
@@ -89,7 +87,7 @@ export function Footer() {
         <nav className="footer-column" aria-label={t("footer.legal")}>
           <h2 className="footer-heading">{t("footer.legal")}</h2>
           {LEGAL_LINKS[language].map((link) => (
-            <Link to={link.to} className="footer-link" lang={link.lang} key={link.to}>
+            <Link to={link.to} className="footer-link" key={link.to}>
               {t(`footer.${link.label}`)}
             </Link>
           ))}
