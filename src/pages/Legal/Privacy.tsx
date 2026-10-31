@@ -141,7 +141,7 @@ export function Privacy() {
         los borramos cuando termina la relación. Sos responsable de informarles a tus clientes que usás BoxLead.
       </p>
 
-      <h2>9. Tus derechos</h2>
+      <h2 id="derechos">9. Tus derechos</h2>
       <ul>
         <li>
           Podés pedir acceso a tus datos en forma gratuita cada seis meses, o antes si acreditás un interés legítimo. Te

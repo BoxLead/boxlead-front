@@ -137,3 +137,22 @@ test("the Spanish browser keeps the screens without an /en address in Spanish", 
   await page.goto("/login");
   await expect(page).toHaveTitle("Iniciar sesión · BoxLead");
 });
+
+for (const path of ["/", "/whatsapp", "/register"]) {
+  test(`${path} in Spanish only links to Spanish documents`, async ({ page }) => {
+    await resetApi();
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await page.locator("footer, .auth-terms").last().scrollIntoViewIfNeeded();
+    const hrefs = await page.locator("a[href]").evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+    expect(hrefs.filter((href) => ["/terms-of-service", "/privacy-policy", "/data-deletion"].some((english) => href.startsWith(english)))).toEqual([]);
+    await expect(page.getByText(/Terms of Service|Privacy Policy|Data Deletion/)).toHaveCount(0);
+  });
+}
+
+test("the Spanish data deletion link lands on the rights section of the privacy policy", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "Eliminación de datos" }).click();
+  await expect(page).toHaveURL(/\/privacidad#derechos$/);
+  await expect(page.getByRole("heading", { name: "9. Tus derechos" })).toBeVisible();
+});
