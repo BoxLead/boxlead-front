@@ -1,27 +1,19 @@
-import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { RichText } from "../../i18n/RichText";
+import { useLanguage } from "../../i18n/useLanguage";
 import { LegalLayout } from "../Legal/LegalLayout";
 import { ConsumerRequestForm } from "./ConsumerRequestForm";
-import { REQUEST_TITLES } from "./consumerRequest";
 
 export function Withdrawal() {
+  const { t } = useTranslation("consumer");
   return (
-    <LegalLayout title={REQUEST_TITLES.WITHDRAWAL} language="es">
+    <LegalLayout title={t("titles.WITHDRAWAL")} language={useLanguage()}>
+      <p>{t("withdrawal.intro")}</p>
+      <p>{t("withdrawal.how")}</p>
       <p>
-        Si contrataste un plan pago de BoxLead podés arrepentirte dentro de los 10 días corridos desde el primer cobro. Te
-        devolvemos el total aunque ya hayas usado BoxLead y arrepentirte no te cuesta nada.
+        <RichText text={t("withdrawal.other")} />
       </p>
-      <p>
-        No hace falta iniciar sesión. Dejanos el email de tu cuenta y te damos un código de pedido en el acto. La
-        devolución se hace por Mercado Pago, que es quien procesó el cobro.
-      </p>
-      <p>
-        Si solo querés dejar de pagar, usá el <Link to="/baja">Botón de baja de servicio</Link>.
-      </p>
-      <ConsumerRequestForm
-        kind="WITHDRAWAL"
-        submitLabel="Enviar pedido de arrepentimiento"
-        sentText="Dentro de las 24 horas te escribimos para confirmar el pedido y la devolución"
-      />
+      <ConsumerRequestForm kind="WITHDRAWAL" submitLabel={t("withdrawal.submit")} sentText={t("withdrawal.sent")} />
     </LegalLayout>
   );
 }

@@ -18,5 +18,59 @@
   "video": {
     "title": "See BoxLead in action",
     "description": "Your agents answering, organizing every lead and showing you what works. Recorded in Spanish with sample data."
+  },
+  "pages": {
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to your BoxLead account."
+    },
+    "register": {
+      "title": "Create account",
+      "description": "Create your BoxLead account and connect your channels in minutes."
+    },
+    "invitation": {
+      "title": "Invitation",
+      "description": "Activate your invitation to the BoxLead Beta."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "description": "Ask for a link to choose a new password for your BoxLead account."
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "description": "Choose a new password for your BoxLead account."
+    },
+    "confirmEmail": {
+      "title": "Confirm your email",
+      "description": "Confirm the email of your BoxLead account."
+    },
+    "newEmail": {
+      "title": "Confirm the new email",
+      "description": "Confirm the new email of your BoxLead account."
+    },
+    "reauth": {
+      "title": "Confirm it's you",
+      "description": "Sign in again with your provider to confirm a change to your BoxLead account."
+    },
+    "socialCallback": {
+      "title": "Signing in",
+      "description": "We're checking your account."
+    },
+    "unsubscribe": {
+      "title": "Stop receiving notices",
+      "description": "Stop receiving BoxLead notice emails from the link in the last email."
+    },
+    "withdrawal": {
+      "title": "Withdrawal button",
+      "description": "Withdraw from a paid BoxLead plan within 10 calendar days of the first charge and get a full refund, without signing in."
+    },
+    "cancellation": {
+      "title": "Cancellation button",
+      "description": "Cancel your BoxLead subscription without signing in, at no cost and without notice."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The link may be mistyped or the page no longer exists."
+    }
   }
 }

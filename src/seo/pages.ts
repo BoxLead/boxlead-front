@@ -1,4 +1,5 @@
 import { i18n } from "../i18n";
+import type { pages as seoPages } from "../i18n/messages/es/seo.json";
 import { HTML_LANG, languageOfHtmlLang, LANGUAGES, type HtmlLang, type Language } from "../i18n/languages";
 import { localizedPath } from "../i18n/paths";
 import { editorialPages } from "../landing/editorial";
@@ -24,6 +25,7 @@ export type PublicPage = {
   priority?: number;
   source: string;
   followsPreference?: boolean;
+  messageKey?: PreferencePageKey;
   jsonLd?: () => Record<string, unknown>[];
 };
 
@@ -90,6 +92,13 @@ function legalPage(path: string, title: string, description: string, lang: PageL
 
 function page(definition: Omit<PublicPage, "jsonLd">): PublicPage {
   return definition.index ? { ...definition, jsonLd: legalPage(definition.path, definition.title, definition.description, definition.lang) } : definition;
+}
+
+type PreferencePageKey = keyof typeof seoPages;
+
+function preferenceCopy(key: PreferencePageKey): Pick<PublicPage, "title" | "description" | "messageKey"> {
+  const t = i18n.getFixedT("es", "seo");
+  return { title: t(`pages.${key}.title`), description: t(`pages.${key}.description`), messageKey: key };
 }
 
 export const PUBLIC_PAGES: PublicPage[] = [
@@ -163,16 +172,16 @@ export const PUBLIC_PAGES: PublicPage[] = [
   }),
   page({
     path: "/arrepentimiento",
-    title: "Botón de arrepentimiento",
-    description: "Arrepentite de un plan pago de BoxLead dentro de los 10 días corridos del primer cobro y recibí la devolución total, sin iniciar sesión.",
+    followsPreference: true,
+    ...preferenceCopy("withdrawal"),
     lang: "es-AR",
     index: false,
     source: "src/pages/ConsumerRequest/Withdrawal.tsx",
   }),
   page({
     path: "/baja",
-    title: "Botón de baja de servicio",
-    description: "Pedí la baja de tu suscripción a BoxLead sin iniciar sesión, sin costo y sin preaviso.",
+    followsPreference: true,
+    ...preferenceCopy("cancellation"),
     lang: "es-AR",
     index: false,
     source: "src/pages/ConsumerRequest/Cancellation.tsx",
@@ -180,8 +189,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/login",
     followsPreference: true,
-    title: "Iniciar sesión",
-    description: "Ingresá a tu cuenta de BoxLead.",
+    ...preferenceCopy("login"),
     lang: "es-AR",
     index: false,
     source: "src/pages/Login/Login.tsx",
@@ -189,8 +197,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/register",
     followsPreference: true,
-    title: "Crear cuenta",
-    description: "Creá tu cuenta de BoxLead y conectá tus canales en minutos.",
+    ...preferenceCopy("register"),
     lang: "es-AR",
     index: false,
     source: "src/pages/Register/Register.tsx",
@@ -198,8 +205,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/invitacion",
     followsPreference: true,
-    title: "Invitación",
-    description: "Activá tu invitación a la Beta de BoxLead.",
+    ...preferenceCopy("invitation"),
     lang: "es-AR",
     index: false,
     source: "src/pages/Invitation/Invitation.tsx",
@@ -207,8 +213,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/recuperar-clave",
     followsPreference: true,
-    title: "Recuperar la contraseña",
-    description: "Pedí un link para elegir una contraseña nueva para tu cuenta de BoxLead.",
+    ...preferenceCopy("forgot"),
     lang: "es-AR",
     index: false,
     source: "src/pages/PasswordRecovery/ForgotPassword.tsx",
@@ -216,8 +221,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/nueva-clave",
     followsPreference: true,
-    title: "Elegir una contraseña nueva",
-    description: "Elegí una contraseña nueva para tu cuenta de BoxLead.",
+    ...preferenceCopy("reset"),
     lang: "es-AR",
     index: false,
     source: "src/pages/PasswordRecovery/ResetPassword.tsx",
@@ -225,8 +229,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/confirmar-email",
     followsPreference: true,
-    title: "Confirmar tu email",
-    description: "Confirmá el email de tu cuenta de BoxLead.",
+    ...preferenceCopy("confirmEmail"),
     lang: "es-AR",
     index: false,
     source: "src/pages/EmailVerification/ConfirmEmail.tsx",
@@ -234,8 +237,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/nuevo-email",
     followsPreference: true,
-    title: "Confirmar el email nuevo",
-    description: "Confirmá el email nuevo de tu cuenta de BoxLead.",
+    ...preferenceCopy("newEmail"),
     lang: "es-AR",
     index: false,
     source: "src/pages/EmailChange/ConfirmEmailChange.tsx",
@@ -243,8 +245,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/reingresar",
     followsPreference: true,
-    title: "Confirmá que sos vos",
-    description: "Volvé a entrar con tu proveedor para confirmar un cambio en tu cuenta de BoxLead.",
+    ...preferenceCopy("reauth"),
     lang: "es-AR",
     index: false,
     source: "src/pages/Reauthenticate/Reauthenticate.tsx",
@@ -252,8 +253,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/social/callback",
     followsPreference: true,
-    title: "Iniciando sesión",
-    description: "Estamos verificando tu cuenta.",
+    ...preferenceCopy("socialCallback"),
     lang: "es-AR",
     index: false,
     source: "src/pages/SocialCallback/SocialCallback.tsx",
@@ -261,8 +261,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/avisos/baja",
     followsPreference: true,
-    title: "Dejar de recibir avisos",
-    description: "Dejá de recibir los mails de avisos de BoxLead desde el enlace del último mail.",
+    ...preferenceCopy("unsubscribe"),
     lang: "es-AR",
     index: false,
     source: "src/pages/NotificationUnsubscribe/NotificationUnsubscribe.tsx",
@@ -272,8 +271,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
 export const NOT_FOUND_PAGE: PublicPage = {
   path: "/404",
   followsPreference: true,
-  title: "Página no encontrada",
-  description: "El enlace puede estar mal escrito o la página ya no existe.",
+  ...preferenceCopy("notFound"),
   lang: "es-AR",
   index: false,
   source: "src/routing/NotFound.tsx",
