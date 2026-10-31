@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { api } from "../../api/client";
 import { apiFieldErrors } from "../../api/errors";
 import type { ConsumerRequestKind, ConsumerRequestReceipt } from "../../api/types";
@@ -21,6 +22,7 @@ type ConsumerRequestFormProps = {
 };
 
 export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerRequestFormProps) {
+  const { t } = useTranslation("consumer");
   const [email, setEmail] = useState("");
   const [details, setDetails] = useState("");
   const [status, setStatus] = useState<Status>({ state: "idle" });
@@ -58,12 +60,16 @@ export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerReq
   if (status.state === "sent") {
     return (
       <section className="consumer-receipt" role="status" aria-labelledby={`${emailId}-receipt`}>
-        <h2 id={`${emailId}-receipt`}>Recibimos tu pedido</h2>
-        <p>Tu código de pedido es</p>
+        <h2 id={`${emailId}-receipt`}>{t("form.receiptTitle")}</h2>
+        <p>{t("form.receiptCode")}</p>
         <p className="consumer-receipt-code">{status.receipt.code}</p>
         <p>
-          Guardalo. {sentText} a <strong>{status.email}</strong>. Si no te llega, escribinos a{" "}
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> con ese código.
+          <Trans
+            t={t}
+            i18nKey="form.receiptText"
+            values={{ sent: sentText, email: status.email, support: SUPPORT_EMAIL }}
+            components={{ email: <strong />, support: <a href={`mailto:${SUPPORT_EMAIL}`} /> }}
+          />
         </p>
       </section>
     );
@@ -75,18 +81,21 @@ export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerReq
   return (
     <form className="consumer-form" onSubmit={handleSubmit}>
       {status.state === "failed" ? (
-        <Banner tone="danger" title="No pudimos registrar tu pedido">
+        <Banner tone="danger" title={t("form.failedTitle")}>
           <p>
-            {status.rateLimited ? "Hiciste demasiados intentos seguidos. " : ""}
-            Mandalo por email a{" "}
-            <a href={fallbackMailto(kind, email)}>{SUPPORT_EMAIL}</a> con el asunto «{REQUEST_TITLES[kind]}» y el email de tu
-            cuenta. Te respondemos con el código del pedido dentro de las 24 horas.
+            {status.rateLimited ? t("form.rateLimited") : ""}
+            <Trans
+              t={t}
+              i18nKey="form.failedText"
+              values={{ support: SUPPORT_EMAIL, subject: REQUEST_TITLES[kind] }}
+              components={{ support: <a href={fallbackMailto(kind, email)} /> }}
+            />
           </p>
         </Banner>
       ) : null}
       <div className="field">
         <label className="field-label" htmlFor={emailId}>
-          Email de tu cuenta
+          {t("form.email")}
         </label>
         <input
           id={emailId}
@@ -102,13 +111,13 @@ export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerReq
         />
         {emailError ? (
           <p className="field-error" id={`${emailId}-error`}>
-            Revisá el email.
+            {t("form.emailError")}
           </p>
         ) : null}
       </div>
       <div className="field">
         <label className="field-label" htmlFor={detailsId}>
-          Detalle (opcional)
+          {t("form.details")}
         </label>
         <textarea
           id={detailsId}
@@ -121,13 +130,13 @@ export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerReq
           aria-describedby={counterId}
         />
         <div className="consumer-form-hint">
-          <span className="field-help">Si querés, contanos algo más en pocas palabras.</span>
-          <CharCounter id={counterId} length={details.length} max={DETAILS_MAX} overLimitLabel="caracteres, supera el máximo" />
+          <span className="field-help">{t("form.detailsHint")}</span>
+          <CharCounter id={counterId} length={details.length} max={DETAILS_MAX} overLimitLabel={t("form.overLimit")} />
         </div>
-        {detailsError ? <p className="field-error">Revisá el detalle.</p> : null}
+        {detailsError ? <p className="field-error">{t("form.detailsError")}</p> : null}
       </div>
       <button className="btn btn-primary consumer-form-submit" type="submit" disabled={sending || details.length > DETAILS_MAX}>
-        {sending ? "Enviando…" : submitLabel}
+        {sending ? t("form.sending") : submitLabel}
       </button>
     </form>
   );

@@ -1,0 +1,35 @@
+{
+  "titles": {
+    "WITHDRAWAL": "Withdrawal button",
+    "CANCELLATION": "Cancellation button"
+  },
+  "withdrawal": {
+    "intro": "If you signed up for a paid BoxLead plan you can withdraw within 10 calendar days of the first charge. We refund the full amount even if you already used BoxLead, and withdrawing costs you nothing.",
+    "how": "You don't need to sign in. Leave us your account email and we give you a request code right away. The refund goes through Mercado Pago, which processed the charge.",
+    "other": "If you only want to stop paying, use the [Cancellation button](/baja).",
+    "submit": "Send withdrawal request",
+    "sent": "Within 24 hours we'll write to you to confirm the request and the refund"
+  },
+  "cancellation": {
+    "intro": "Cancel your BoxLead subscription without signing in. Cancelling is free and we don't charge notice periods or months in advance.",
+    "how": "Leave us your account email and we give you a request code right away. You keep using BoxLead until the end of the period you already paid for.",
+    "other": "If it has been less than 10 days since the first charge and you want a full refund, use the [Withdrawal button](/arrepentimiento).",
+    "submit": "Send cancellation request",
+    "sent": "Within 24 hours we'll send you the cancellation receipt"
+  },
+  "form": {
+    "receiptTitle": "We got your request",
+    "receiptCode": "Your request code is",
+    "receiptText": "Keep it. {{sent}} at <email>{{email}}</email>. If it doesn't arrive, write to us at <support>{{support}}</support> with that code.",
+    "failedTitle": "We couldn't register your request",
+    "rateLimited": "Too many attempts in a row. ",
+    "failedText": "Send it by email to <support>{{support}}</support> with the subject «{{subject}}» and your account email. We'll reply with the request code within 24 hours.",
+    "email": "Your account email",
+    "emailError": "Check the email.",
+    "details": "Details (optional)",
+    "detailsHint": "If you want, tell us a bit more in a few words.",
+    "overLimit": "characters, over the limit",
+    "detailsError": "Check the details.",
+    "sending": "Sending…"
+  }
+}

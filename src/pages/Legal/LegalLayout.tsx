@@ -3,6 +3,8 @@ import { Link, NavLink } from "react-router-dom";
 import { CookiePreferences } from "../../analytics/CookiePreferences";
 import { Logo } from "../../components/Logo/Logo";
 import { ProviderDetails } from "../../components/ProviderDetails/ProviderDetails";
+import { i18n } from "../../i18n";
+import { localizedPath } from "../../i18n/paths";
 import { cx } from "../../util/classNames";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME } from "../../util/company";
 import { CONSUMER_PAGES, type ConsumerPage } from "../../util/consumerPages";
@@ -37,6 +39,7 @@ const COPY: Record<LegalLanguage, LegalCopy> = {
       { to: "/privacy-policy", label: "Privacy Policy" },
       { to: "/terms-of-service", label: "Terms of Service" },
       { to: "/data-deletion", label: "Data Deletion" },
+      ...CONSUMER_PAGES.map((page) => ({ to: page.to, label: i18n.getFixedT("en")(`consumer.${page.key}`) })),
     ],
   },
 };
@@ -51,15 +54,16 @@ type LegalLayoutProps = {
 
 export function LegalLayout({ title, language, meta, notice, children }: LegalLayoutProps) {
   const copy = COPY[language];
+  const home = localizedPath("/", language);
 
   return (
     <div className="legal" lang={language}>
       <header className="legal-header">
         <div className="legal-header-inner">
-          <Link to="/" className="legal-brand" aria-label={copy.home}>
+          <Link to={home} className="legal-brand" aria-label={copy.home}>
             <Logo />
           </Link>
-          <Link to="/" className="legal-back">
+          <Link to={home} className="legal-back">
             &larr; {copy.back}
           </Link>
         </div>

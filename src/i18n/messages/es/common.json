@@ -50,7 +50,9 @@
     "PLAN_REQUIRED": "Necesitás un plan activo para hacer esto.",
     "PLAN_LIMIT_REACHED": "Llegaste al límite de tu plan.",
     "ENTITLEMENTS_UNAVAILABLE": "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
-    "LEGAL_ACCEPTANCE_REQUIRED": "Para seguir tenés que aceptar los términos y la política de privacidad vigentes."
+    "LEGAL_ACCEPTANCE_REQUIRED": "Para seguir tenés que aceptar los términos y la política de privacidad vigentes.",
+    "loadFailed": "No pudimos cargar los datos. Probá de nuevo.",
+    "invalidSession": "Respuesta de sesión inválida."
   },
   "price": {
     "withoutNationalTaxes": "PRECIO SIN IMPUESTOS NACIONALES",
@@ -78,5 +80,6 @@
   "announcer": {
     "loaded": "{{page}}, página cargada"
   },
-  "closeNotice": "Cerrar aviso"
+  "closeNotice": "Cerrar aviso",
+  "noscript": "BoxLead necesita JavaScript para funcionar."
 }

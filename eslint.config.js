@@ -57,7 +57,7 @@ export default defineConfig([
   },
   {
     files: ['src/**/*.tsx'],
-    ignores: ['src/**/*.test.tsx', 'src/pages/Legal/**', 'src/pages/ConsumerRequest/**', 'src/pages/DesignSystem/**'],
+    ignores: ['src/**/*.test.tsx', 'src/pages/Legal/**', 'src/pages/DesignSystem/**'],
     plugins: { i18n: { rules: { 'no-literal-text': noLiteralText } } },
     rules: {
       'i18n/no-literal-text': ['error', { allow: UNTRANSLATED_NAMES }],

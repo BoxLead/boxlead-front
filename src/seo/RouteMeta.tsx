@@ -13,8 +13,13 @@ export function RouteMeta() {
   const { pathname } = useLocation();
   const appTitle = useAppTitle();
   const badge = useTitleBadge();
-  const page = pageFor(pathname);
-  const { t } = useTranslation("seo", { lng: languageOfHtmlLang(page?.lang ?? "es-AR") });
+  const found = pageFor(pathname);
+  const { t } = useTranslation("seo", { lng: languageOfHtmlLang(found?.lang ?? "es-AR") });
+  const { t: current } = useTranslation("seo");
+  const page =
+    found?.followsPreference && found.messageKey
+      ? { ...found, title: current(`pages.${found.messageKey}.title`), description: current(`pages.${found.messageKey}.description`) }
+      : found;
   if (!page) {
     return (
       <>

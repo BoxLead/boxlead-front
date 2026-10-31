@@ -7,6 +7,7 @@ import type billing from "./messages/es/billing.json";
 import type agents from "./messages/es/agents.json";
 import type account from "./messages/es/account.json";
 import type connections from "./messages/es/connections.json";
+import type consumer from "./messages/es/consumer.json";
 import type auth from "./messages/es/auth.json";
 import type channels from "./messages/es/channels.json";
 import type common from "./messages/es/common.json";
@@ -30,6 +31,7 @@ declare module "i18next" {
       agents: typeof agents;
       account: typeof account;
       connections: typeof connections;
+      consumer: typeof consumer;
     };
   }
 }

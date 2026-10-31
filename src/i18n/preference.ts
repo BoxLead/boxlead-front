@@ -1,14 +1,15 @@
 import { browserLanguage, isLanguage, type Language } from "./languages";
 
 export const LANGUAGE_KEY = "boxlead.language";
+export const VISIT_KEY = "boxlead.language.visit";
 
 function storageError(error: unknown): boolean {
   return error instanceof DOMException;
 }
 
-export function storedLanguage(): Language | null {
+function read(storage: () => Storage, key: string): Language | null {
   try {
-    const stored = localStorage.getItem(LANGUAGE_KEY);
+    const stored = storage().getItem(key);
     return isLanguage(stored) ? stored : null;
   } catch (error) {
     if (storageError(error)) return null;
@@ -16,15 +17,31 @@ export function storedLanguage(): Language | null {
   }
 }
 
-export function storeLanguage(language: Language): void {
+function write(storage: () => Storage, key: string, language: Language): void {
   try {
-    localStorage.setItem(LANGUAGE_KEY, language);
+    storage().setItem(key, language);
   } catch (error) {
     if (storageError(error)) return;
     throw error;
   }
 }
 
+export function storedLanguage(): Language | null {
+  return read(() => localStorage, LANGUAGE_KEY);
+}
+
+export function storeLanguage(language: Language): void {
+  write(() => localStorage, LANGUAGE_KEY, language);
+}
+
+export function visitedLanguage(): Language | null {
+  return read(() => sessionStorage, VISIT_KEY);
+}
+
+export function rememberVisit(language: Language): void {
+  write(() => sessionStorage, VISIT_KEY, language);
+}
+
 export function preferredLanguage(): Language {
-  return storedLanguage() ?? browserLanguage(navigator.languages ?? [navigator.language]);
+  return storedLanguage() ?? visitedLanguage() ?? browserLanguage(navigator.languages ?? [navigator.language]);
 }

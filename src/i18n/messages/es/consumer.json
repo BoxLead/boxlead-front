@@ -1,0 +1,35 @@
+{
+  "titles": {
+    "WITHDRAWAL": "Botón de arrepentimiento",
+    "CANCELLATION": "Botón de baja de servicio"
+  },
+  "withdrawal": {
+    "intro": "Si contrataste un plan pago de BoxLead podés arrepentirte dentro de los 10 días corridos desde el primer cobro. Te devolvemos el total aunque ya hayas usado BoxLead y arrepentirte no te cuesta nada.",
+    "how": "No hace falta iniciar sesión. Dejanos el email de tu cuenta y te damos un código de pedido en el acto. La devolución se hace por Mercado Pago, que es quien procesó el cobro.",
+    "other": "Si solo querés dejar de pagar, usá el [Botón de baja de servicio](/baja).",
+    "submit": "Enviar pedido de arrepentimiento",
+    "sent": "Dentro de las 24 horas te escribimos para confirmar el pedido y la devolución"
+  },
+  "cancellation": {
+    "intro": "Pedí la baja de tu suscripción a BoxLead sin iniciar sesión. La baja no tiene costo y no te cobramos preaviso ni meses por adelantado.",
+    "how": "Dejanos el email de tu cuenta y te damos un código de pedido en el acto. Seguís usando BoxLead hasta el final del período que ya pagaste.",
+    "other": "Si contrataste hace menos de 10 días desde el primer cobro y querés que te devolvamos el total, usá el [Botón de arrepentimiento](/arrepentimiento).",
+    "submit": "Enviar pedido de baja",
+    "sent": "Dentro de las 24 horas te mandamos la constancia de baja"
+  },
+  "form": {
+    "receiptTitle": "Recibimos tu pedido",
+    "receiptCode": "Tu código de pedido es",
+    "receiptText": "Guardalo. {{sent}} a <email>{{email}}</email>. Si no te llega, escribinos a <support>{{support}}</support> con ese código.",
+    "failedTitle": "No pudimos registrar tu pedido",
+    "rateLimited": "Hiciste demasiados intentos seguidos. ",
+    "failedText": "Mandalo por email a <support>{{support}}</support> con el asunto «{{subject}}» y el email de tu cuenta. Te respondemos con el código del pedido dentro de las 24 horas.",
+    "email": "Email de tu cuenta",
+    "emailError": "Revisá el email.",
+    "details": "Detalle (opcional)",
+    "detailsHint": "Si querés, contanos algo más en pocas palabras.",
+    "overLimit": "caracteres, supera el máximo",
+    "detailsError": "Revisá el detalle.",
+    "sending": "Enviando…"
+  }
+}

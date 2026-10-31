@@ -78,6 +78,8 @@ registerRoutePreload("/app/billing", [Layout, Billing, ...appMessages]);
 registerRoutePreload("/app/reseller", [Layout, Reseller, ...appMessages]);
 registerRoutePreload("/app/notificaciones", [Layout, Notifications, ...appMessages]);
 registerRoutePreload("/avisos/baja", [NotificationUnsubscribe]);
+registerRoutePreload("/arrepentimiento", [Withdrawal, messages("consumer")]);
+registerRoutePreload("/baja", [Cancellation, messages("consumer")]);
 
 function Page({ children }: { children: ReactNode }) {
   return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;

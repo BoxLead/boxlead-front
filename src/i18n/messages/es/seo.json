@@ -18,5 +18,59 @@
   "video": {
     "title": "Mirá a BoxLead en acción",
     "description": "Tus agentes respondiendo, ordenando cada lead y mostrándote qué rinde. Grabada con datos de ejemplo."
+  },
+  "pages": {
+    "login": {
+      "title": "Iniciar sesión",
+      "description": "Ingresá a tu cuenta de BoxLead."
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "description": "Creá tu cuenta de BoxLead y conectá tus canales en minutos."
+    },
+    "invitation": {
+      "title": "Invitación",
+      "description": "Activá tu invitación a la Beta de BoxLead."
+    },
+    "forgot": {
+      "title": "Recuperar la contraseña",
+      "description": "Pedí un link para elegir una contraseña nueva para tu cuenta de BoxLead."
+    },
+    "reset": {
+      "title": "Elegir una contraseña nueva",
+      "description": "Elegí una contraseña nueva para tu cuenta de BoxLead."
+    },
+    "confirmEmail": {
+      "title": "Confirmar tu email",
+      "description": "Confirmá el email de tu cuenta de BoxLead."
+    },
+    "newEmail": {
+      "title": "Confirmar el email nuevo",
+      "description": "Confirmá el email nuevo de tu cuenta de BoxLead."
+    },
+    "reauth": {
+      "title": "Confirmá que sos vos",
+      "description": "Volvé a entrar con tu proveedor para confirmar un cambio en tu cuenta de BoxLead."
+    },
+    "socialCallback": {
+      "title": "Iniciando sesión",
+      "description": "Estamos verificando tu cuenta."
+    },
+    "unsubscribe": {
+      "title": "Dejar de recibir avisos",
+      "description": "Dejá de recibir los mails de avisos de BoxLead desde el enlace del último mail."
+    },
+    "withdrawal": {
+      "title": "Botón de arrepentimiento",
+      "description": "Arrepentite de un plan pago de BoxLead dentro de los 10 días corridos del primer cobro y recibí la devolución total, sin iniciar sesión."
+    },
+    "cancellation": {
+      "title": "Botón de baja de servicio",
+      "description": "Pedí la baja de tu suscripción a BoxLead sin iniciar sesión, sin costo y sin preaviso."
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "El enlace puede estar mal escrito o la página ya no existe."
+    }
   }
 }
