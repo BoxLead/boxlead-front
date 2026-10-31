@@ -80,5 +80,6 @@
   "announcer": {
     "loaded": "{{page}}, página cargada"
   },
-  "closeNotice": "Cerrar aviso"
+  "closeNotice": "Cerrar aviso",
+  "noscript": "BoxLead necesita JavaScript para funcionar."
 }

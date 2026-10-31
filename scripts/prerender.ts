@@ -20,6 +20,7 @@ type SitemapEntry = { page: PublicPage; lastmod: string }
 
 type ServerEntry = {
   render: (url: string) => Promise<string>
+  noscriptText: (lang: string) => string
   PUBLIC_PAGES: PublicPage[]
   NOT_FOUND_PAGE: PublicPage
   APP_SHELL_PATH: string
@@ -68,10 +69,15 @@ function fileFor(path: string): string {
 }
 
 const HTML_LANG = /<html lang="[^"]*">/
+const NOSCRIPT = /<noscript>[^<]*<\/noscript>/
 
-function assemble(template: string, head: string, body: string, lang: string): string {
+function assemble(template: string, head: string, body: string, lang: string, noscript: string): string {
   if (!HTML_LANG.test(template)) throw new Error('The template has no html lang attribute')
-  const cleaned = template.replace(TEMPLATE_HEAD, '').replace(HTML_LANG, `<html lang="${lang}">`)
+  if (!NOSCRIPT.test(template)) throw new Error('The template has no noscript notice')
+  const cleaned = template
+    .replace(TEMPLATE_HEAD, '')
+    .replace(HTML_LANG, `<html lang="${lang}">`)
+    .replace(NOSCRIPT, `<noscript>${noscript}</noscript>`)
   const withHead = cleaned.replace('</head>', `    ${head}\n  </head>`)
   if (!withHead.includes(ROOT_OPEN)) throw new Error('The template has no empty root element')
   return withHead.replace(ROOT_OPEN, `<div id="root">${body}</div>`)
@@ -122,14 +128,14 @@ export async function prerenderSite({ root, outDir, serverDir, base, routes }: P
     const { head, body } = splitRendered(rendered)
     if (!head.includes('<title>')) throw new Error(`No title rendered for ${page.path}`)
     if (!body.startsWith('<')) throw new Error(`Unexpected markup for ${page.path}`)
-    write(fileFor(page.path), assemble(template, `${head}\n    ${routeLinks(base, routes[page.path])}`, body, page.lang))
+    write(fileFor(page.path), assemble(template, `${head}\n    ${routeLinks(base, routes[page.path])}`, body, page.lang, entry.noscriptText(page.lang)))
   }
 
   const notFound = splitRendered(await entry.render('/__not_found__'))
-  write(NOT_FOUND_FILE, assemble(template, notFound.head, notFound.body, entry.NOT_FOUND_PAGE.lang))
+  write(NOT_FOUND_FILE, assemble(template, notFound.head, notFound.body, entry.NOT_FOUND_PAGE.lang, entry.noscriptText(entry.NOT_FOUND_PAGE.lang)))
 
   const shell = splitRendered(await entry.render(entry.APP_SHELL_PATH))
-  write(APP_SHELL_FILE, assemble(template, shell.head, shell.body, entry.NOT_FOUND_PAGE.lang))
+  write(APP_SHELL_FILE, assemble(template, shell.head, shell.body, entry.NOT_FOUND_PAGE.lang, entry.noscriptText(entry.NOT_FOUND_PAGE.lang)))
 
   const recorded = recordedDates(root)
   const entries = entry.indexablePages().map((page) => ({ page, lastmod: lastModified(root, page.source, recorded) }))

@@ -77,6 +77,7 @@ async function main() {
     check(`${path} has valid JSON-LD`, graphOk)
     check(`${path} is not noindex`, !/name="robots" content="noindex"/.test(html))
     check(`${path} declares its language`, lang === (english ? 'en' : 'es-AR'), lang ?? 'missing')
+    check(`${path} says it needs JavaScript in its language`, html.includes(english ? '<noscript>BoxLead needs JavaScript to work.</noscript>' : '<noscript>BoxLead necesita JavaScript para funcionar.</noscript>'))
     seen.set(`title:${title}`, path)
     seen.set(`description:${description}`, path)
   }

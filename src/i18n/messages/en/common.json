@@ -80,5 +80,6 @@
   "announcer": {
     "loaded": "{{page}}, page loaded"
   },
-  "closeNotice": "Dismiss"
+  "closeNotice": "Dismiss",
+  "noscript": "BoxLead needs JavaScript to work."
 }
