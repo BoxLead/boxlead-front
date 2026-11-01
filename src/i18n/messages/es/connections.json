@@ -139,7 +139,22 @@
       "preSale": "Chats",
       "windowTitle": "Pasaron más de 24 horas",
 
-      "windowDetail": "WhatsApp solo deja escribir texto libre dentro de las 24 horas del último mensaje de la persona. Podés responderle ahora con una plantilla aprobada."
+      "windowDetail": "WhatsApp solo deja escribir texto libre dentro de las 24 horas del último mensaje de la persona. Podés responderle ahora con una plantilla aprobada.",
+      "refusedTitle": "WhatsApp rechazó el mensaje",
+      "rateTitle": "WhatsApp está limitando los envíos",
+      "rateDetail": "Meta frenó los mensajes de este número por un rato. Probá de nuevo en unos minutos.",
+      "undeliverableTitle": "La persona no puede recibir el mensaje",
+      "undeliverableDetail": "WhatsApp no pudo entregarlo. El número puede no tener WhatsApp, no haber aceptado los términos nuevos o ser el mismo número que envía.",
+      "pausedTitle": "WhatsApp frenó este envío",
+      "pausedDetail": "Meta limita por un tiempo las plantillas hacia esta persona. Esperá al menos 24 horas o esperá a que te escriba.",
+      "templateUnavailableTitle": "La plantilla ya no está disponible",
+      "templateUnavailableDetail": "Fue rechazada, pausada o deshabilitada en el administrador de WhatsApp. Elegí otra plantilla.",
+      "templateValuesTitle": "WhatsApp rechazó los valores de la plantilla",
+      "templateValuesDetail": "La cantidad o el formato de los valores no coincide con la plantilla aprobada. Revisalos y probá de nuevo.",
+      "restrictedTitle": "La cuenta de WhatsApp está restringida",
+      "restrictedDetail": "Meta restringió o deshabilitó la cuenta de WhatsApp Business. Revisá su estado en el administrador de WhatsApp.",
+      "paymentTitle": "Falta un método de pago en Meta",
+      "paymentDetail": "WhatsApp no envía hasta que la cuenta de WhatsApp Business tenga un método de pago cargado."
     },
     "INSTAGRAM": {
       "accountNoun": "cuenta profesional",

@@ -1,8 +1,41 @@
 import { WhatsAppIcon } from "../components/icons/PlatformIcons";
 import { channelT, lengthError, reconnectError } from "./shared";
-import type { ContactField, PlatformDefinition } from "./types";
+import type { ContactField, PlatformDefinition, PlatformErrorView } from "./types";
 
 export const WHATSAPP_TEXT_LIMIT = 4096;
+
+const META_CODE = /\((\d+)\)/;
+const META_DETAIL = /\(\d+\): (.+)$/s;
+type RefusalKey = "undeliverable" | "paused" | "templateUnavailable" | "templateValues" | "restricted" | "payment";
+const REFUSAL_KEYS: Record<string, RefusalKey> = {
+  "131026": "undeliverable",
+  "131021": "undeliverable",
+  "131049": "paused",
+  "132001": "templateUnavailable",
+  "132015": "templateUnavailable",
+  "132016": "templateUnavailable",
+  "132000": "templateValues",
+  "132012": "templateValues",
+  "131031": "restricted",
+  "368": "restricted",
+  "131042": "payment",
+};
+
+function metaRefusal(status: number, message: string): PlatformErrorView | null {
+  const code = META_CODE.exec(message)?.[1];
+  if (!code) return null;
+  const t = channelT();
+  const detail = META_DETAIL.exec(message)?.[1] ?? message;
+  if (status === 503) {
+    return { title: t("platforms.WHATSAPP.rateTitle"), detail: t("platforms.WHATSAPP.rateDetail"), action: "retry" as const };
+  }
+  if (status !== 409) return null;
+  const key = REFUSAL_KEYS[code];
+  if (key) {
+    return { title: t(`platforms.WHATSAPP.${key}Title`), detail: t(`platforms.WHATSAPP.${key}Detail`), action: null };
+  }
+  return { title: t("platforms.WHATSAPP.refusedTitle"), detail, action: null };
+}
 
 export const whatsapp: PlatformDefinition = {
   id: "WHATSAPP",
@@ -44,7 +77,7 @@ export const whatsapp: PlatformDefinition = {
         action: "template",
       };
     }
-    return null;
+    return metaRefusal(status, message);
   },
   contactFields: (lead) => {
     const fields: ContactField[] = [];
