@@ -166,6 +166,41 @@ test("a number that already runs on the WhatsApp Business app is reported as reg
   expect((await callback).postDataJSON()).toMatchObject({ phoneNumberId: "pn-2", phoneNumberRegistered: true });
 });
 
+test("a WhatsApp Business app number connects with only its account id", async ({ page }) => {
+  await resetApi("empty");
+  await stubEmbeddedSignup(page, { event: "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING", data: { waba_id: "waba-1" } }, "wa-code");
+  await login(page, "/app/connections");
+
+  const callback = page.waitForRequest((request) => request.url().endsWith("/oauth/WHATSAPP/callback"));
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  expect((await callback).postDataJSON()).toEqual({ code: "wa-code", wabaId: "waba-1", phoneNumberRegistered: true });
+  await expect(page.getByRole("status").filter({ hasText: "Conectaste WhatsApp" })).toBeVisible();
+});
+
+test("the WhatsApp sign up offers to keep the WhatsApp Business app", async ({ page }) => {
+  await resetApi("empty");
+  await page.addInitScript(() => {
+    (window as unknown as { FB: unknown }).FB = {
+      init: () => undefined,
+      login: (_callback: unknown, options: unknown) => {
+        (window as unknown as { loginOptions: unknown }).loginOptions = options;
+      },
+    };
+  });
+  await login(page, "/app/connections");
+  const copy = page.getByText("Lo que escribís desde la app de WhatsApp Business");
+  await copy.scrollIntoViewIfNeeded();
+  await expect(copy).toBeVisible();
+  await screenshot(page, "connections-whatsapp-business-app");
+
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { loginOptions?: { extras?: unknown } }).loginOptions?.extras))
+    .toEqual({ version: "v4", setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" });
+});
+
 test("a WhatsApp sign up that finished without a number says so", async ({ page }) => {
   await resetApi("empty");
   await stubEmbeddedSignup(page, { event: "FINISH_ONLY_WABA", data: { waba_id: "waba-1" } }, "wa-code");

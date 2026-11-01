@@ -16,6 +16,11 @@ describe("whatsAppSignupOutcome", () => {
       .toMatchObject({ kind: "number", phoneNumberRegistered: true });
   });
 
+  it("accepts a WhatsApp Business app account that comes without the number id", () => {
+    expect(whatsAppSignupOutcome(event("FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING", { waba_id: "waba-1" })))
+      .toEqual({ kind: "number", phoneNumberId: undefined, wabaId: "waba-1", phoneNumberRegistered: true });
+  });
+
   it("reports a flow that finished without a number", () => {
     expect(whatsAppSignupOutcome(event("FINISH_ONLY_WABA", { waba_id: "waba-1" }))).toEqual({ kind: "no-number" });
   });

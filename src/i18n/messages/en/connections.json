@@ -130,7 +130,7 @@
       "accountNoun": "WhatsApp Business number",
       "addAnother": "Add another number",
       "summary": "Handle the chats on your WhatsApp Business number in the same inbox.",
-      "syncs": ["Messages your number receives", "Name and phone of each contact"],
+      "syncs": ["Messages your number receives", "Name and phone of each contact", "What you write from the WhatsApp Business app"],
       "howItWorks": [
         "You sign in with Facebook and pick your WhatsApp Business number.",
         "The messages that number receives land in the inbox.",
