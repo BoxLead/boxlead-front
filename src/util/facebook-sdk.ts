@@ -14,7 +14,12 @@ declare global {
           config_id: string;
           response_type: string;
           override_default_response_type: boolean;
-          extras: { version: string; setup: Record<string, unknown> };
+          extras: {
+            version: string;
+            setup: Record<string, unknown>;
+            featureType: string;
+            sessionInfoVersion: string;
+          };
         },
       ) => void;
     };
@@ -53,7 +58,7 @@ export type WhatsAppSignupEvent = {
 };
 
 export type WhatsAppSignupOutcome =
-  | { kind: "number"; phoneNumberId: string; wabaId: string; phoneNumberRegistered: boolean }
+  | { kind: "number"; phoneNumberId?: string; wabaId: string; phoneNumberRegistered: boolean }
   | { kind: "no-number" }
   | { kind: "error"; message: string }
   | { kind: "missing" };
@@ -61,6 +66,8 @@ export type WhatsAppSignupOutcome =
 const GRAPH_API_VERSION = "v22.0";
 const EMBEDDED_SIGNUP_VERSION = "v4";
 const BUSINESS_APP_EVENT: WhatsAppSignupEventName = "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING";
+const BUSINESS_APP_FEATURE = "whatsapp_business_app_onboarding";
+const SESSION_INFO_VERSION = "3";
 
 let sdkLoadPromise: Promise<void> | null = null;
 
@@ -82,8 +89,9 @@ export function whatsAppSignupOutcome(event: WhatsAppSignupEvent | null): WhatsA
   if (event.event === "FINISH_ONLY_WABA") return { kind: "no-number" };
   const phoneNumberId = event.data.phone_number_id;
   const wabaId = event.data.waba_id;
-  if (!event.event.startsWith("FINISH") || !phoneNumberId || !wabaId) return { kind: "missing" };
-  return { kind: "number", phoneNumberId, wabaId, phoneNumberRegistered: event.event === BUSINESS_APP_EVENT };
+  const onBusinessApp = event.event === BUSINESS_APP_EVENT;
+  if (!event.event.startsWith("FINISH") || !wabaId || (!phoneNumberId && !onBusinessApp)) return { kind: "missing" };
+  return { kind: "number", phoneNumberId, wabaId, phoneNumberRegistered: onBusinessApp };
 }
 
 export function loadFacebookSdk(appId: string): Promise<void> {
@@ -141,7 +149,12 @@ export function launchWhatsAppSignup(configId: string): Promise<string> {
         config_id: configId,
         response_type: "code",
         override_default_response_type: true,
-        extras: { version: EMBEDDED_SIGNUP_VERSION, setup: {} },
+        extras: {
+          version: EMBEDDED_SIGNUP_VERSION,
+          setup: {},
+          featureType: BUSINESS_APP_FEATURE,
+          sessionInfoVersion: SESSION_INFO_VERSION,
+        },
       },
     );
   });
