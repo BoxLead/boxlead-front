@@ -61,6 +61,8 @@
     "whatsappDisabled": "WhatsApp isn't enabled in BoxLead yet.",
     "whatsappClosed": "You closed the WhatsApp sign up before finishing.",
     "whatsappNoNumber": "The sign up finished but we didn't get the number you picked. Try again.",
+    "whatsappError": "Meta reported an error during the WhatsApp sign up: {{message}}",
+    "whatsappOnlyWaba": "The sign up finished without a phone number. Go back in and add or pick a WhatsApp Business number.",
     "failed": "We couldn't connect {{name}}."
   },
   "channel": {
@@ -136,6 +138,7 @@
       ],
       "preSale": "Chats",
       "windowTitle": "More than 24 hours have passed",
+
       "windowDetail": "WhatsApp only allows free text within 24 hours of the person's last message. You can reply now with an approved template."
     },
     "INSTAGRAM": {

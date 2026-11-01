@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, expectAccessible, login, mockApiUrl, resetApi, routeOAuthProvider, screenshot, test } from "./support.ts";
 
 const MELI_AUTH = "auth.mercadolibre.test";
@@ -110,4 +111,97 @@ test("disconnecting asks for confirmation and keeps the user informed", async ({
   await expect(page.getByRole("status").filter({ hasText: "Desconectaste @tiendanorte." })).toBeVisible();
   await expect(page.getByText("@tiendanorte")).toHaveCount(0);
   await expect(page.getByText("2 de 4 canales conectados")).toBeVisible();
+});
+
+type SignupSession = { event: string; data: Record<string, unknown> };
+
+async function stubEmbeddedSignup(page: Page, session: SignupSession | null, code: string | null) {
+  await page.addInitScript(
+    ({ session, code }) => {
+      window.FB = {
+        init: () => undefined,
+        login: (callback) => {
+          if (session) {
+            const data = JSON.stringify({ type: "WA_EMBEDDED_SIGNUP", ...session });
+            window.dispatchEvent(new MessageEvent("message", { origin: "https://www.facebook.com", data }));
+          }
+          setTimeout(() => callback(code ? { authResponse: { code } } : { status: "unknown" }), 0);
+        },
+      };
+    },
+    { session, code },
+  );
+}
+
+test("connecting a WhatsApp number sends Meta's session data to the callback", async ({ page }) => {
+  await resetApi("empty");
+  await stubEmbeddedSignup(page, { event: "FINISH", data: { phone_number_id: "pn-1", waba_id: "waba-1", business_id: "b-1" } }, "wa-code");
+  await login(page, "/app/connections");
+
+  const callback = page.waitForRequest((request) => request.url().endsWith("/oauth/WHATSAPP/callback"));
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  expect((await callback).postDataJSON()).toEqual({
+    code: "wa-code",
+    phoneNumberId: "pn-1",
+    wabaId: "waba-1",
+    phoneNumberRegistered: false,
+  });
+  await expect(page.getByRole("status").filter({ hasText: "Conectaste WhatsApp" })).toBeVisible();
+});
+
+test("a number that already runs on the WhatsApp Business app is reported as registered", async ({ page }) => {
+  await resetApi("empty");
+  await stubEmbeddedSignup(
+    page,
+    { event: "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING", data: { phone_number_id: "pn-2", waba_id: "waba-1" } },
+    "wa-code",
+  );
+  await login(page, "/app/connections");
+
+  const callback = page.waitForRequest((request) => request.url().endsWith("/oauth/WHATSAPP/callback"));
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  expect((await callback).postDataJSON()).toMatchObject({ phoneNumberId: "pn-2", phoneNumberRegistered: true });
+});
+
+test("a WhatsApp sign up that finished without a number says so", async ({ page }) => {
+  await resetApi("empty");
+  await stubEmbeddedSignup(page, { event: "FINISH_ONLY_WABA", data: { waba_id: "waba-1" } }, "wa-code");
+  await login(page, "/app/connections");
+
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "El alta terminó sin un número de teléfono" });
+  await expect(banner).toBeVisible();
+  await banner.scrollIntoViewIfNeeded();
+  await expectAccessible(page);
+  await screenshot(page, "connections-whatsapp-no-number");
+});
+
+test("an error Meta reports during the WhatsApp sign up is shown as Meta wrote it", async ({ page }) => {
+  await resetApi("empty");
+  await stubEmbeddedSignup(
+    page,
+    { event: "ERROR", data: { error_message: "Something went wrong", error_code: "524126", session_id: "s-1" } },
+    null,
+  );
+  await login(page, "/app/connections");
+
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "Meta informó un error en el alta de WhatsApp: Something went wrong (524126)" });
+  await expect(banner).toBeVisible();
+  await banner.scrollIntoViewIfNeeded();
+  await screenshot(page, "connections-whatsapp-error");
+});
+
+test("closing the WhatsApp sign up before finishing is not an error of ours", async ({ page }) => {
+  await resetApi("empty");
+  await stubEmbeddedSignup(page, { event: "CANCEL", data: { current_step: "PHONE_NUMBER_SETUP" } }, null);
+  await login(page, "/app/connections");
+
+  await page.getByRole("button", { name: "Conectar WhatsApp" }).click();
+
+  await expect(page.getByRole("alert").filter({ hasText: "Cerraste el alta de WhatsApp antes de terminar." })).toBeVisible();
 });

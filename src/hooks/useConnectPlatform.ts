@@ -10,17 +10,24 @@ import type {
 import { invalidateQueries } from "../data/queryCache";
 import { getPlatform } from "../platforms";
 import {
+  isWhatsAppSignupEvent,
   launchWhatsAppSignup,
   loadFacebookSdk,
+  whatsAppSignupOutcome,
   type WhatsAppSignupEvent,
 } from "../util/facebook-sdk";
 import { beginOAuthRedirect, isFacebookOrigin, redirectUriFor } from "../util/oauth";
 
 export const CONNECTIONS_KEY = "/oauth/connections";
 
-type SignupData = { phoneNumberId?: string; wabaId?: string };
-
 class ConnectError extends Error {}
+
+function throwIfMetaReportedAnError(event: WhatsAppSignupEvent | null) {
+  const outcome = whatsAppSignupOutcome(event);
+  if (outcome.kind === "error") {
+    throw new ConnectError(i18next.t("connect.whatsappError", { ns: "connections", message: outcome.message }));
+  }
+}
 
 type Options = {
   onConnected?: (platform: PlatformType) => void;
@@ -29,16 +36,14 @@ type Options = {
 export function useConnectPlatform({ onConnected }: Options = {}) {
   const [connecting, setConnecting] = useState<PlatformType | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const signup = useRef<SignupData | null>(null);
+  const signup = useRef<WhatsAppSignupEvent | null>(null);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (!isFacebookOrigin(event.origin) || typeof event.data !== "string") return;
       try {
-        const data = JSON.parse(event.data) as WhatsAppSignupEvent;
-        if (data.type === "WA_EMBEDDED_SIGNUP" && data.event !== "CANCEL") {
-          signup.current = { phoneNumberId: data.data.phone_number_id, wabaId: data.data.waba_id };
-        }
+        const data: unknown = JSON.parse(event.data);
+        if (isWhatsAppSignupEvent(data)) signup.current = data;
       } catch {
         return;
       }
@@ -58,18 +63,22 @@ export function useConnectPlatform({ onConnected }: Options = {}) {
     try {
       code = await launchWhatsAppSignup(config.configId);
     } catch {
+      throwIfMetaReportedAnError(signup.current);
       throw new ConnectError(i18next.t("connect.whatsappClosed", { ns: "connections" }));
     }
-    const received = signup.current as SignupData | null;
-    const phoneNumberId = received?.phoneNumberId;
-    const wabaId = received?.wabaId;
-    if (!phoneNumberId || !wabaId) {
+    const outcome = whatsAppSignupOutcome(signup.current);
+    throwIfMetaReportedAnError(signup.current);
+    if (outcome.kind === "no-number") {
+      throw new ConnectError(i18next.t("connect.whatsappOnlyWaba", { ns: "connections" }));
+    }
+    if (outcome.kind === "missing") {
       throw new ConnectError(i18next.t("connect.whatsappNoNumber", { ns: "connections" }));
     }
     await api.post<AccountConnectionResponse[]>("/oauth/WHATSAPP/callback", {
       code,
-      phoneNumberId,
-      wabaId,
+      phoneNumberId: outcome.phoneNumberId,
+      wabaId: outcome.wabaId,
+      phoneNumberRegistered: outcome.phoneNumberRegistered,
     });
   }, []);
 

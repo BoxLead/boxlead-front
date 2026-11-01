@@ -61,6 +61,8 @@
     "whatsappDisabled": "WhatsApp todavía no está habilitado en BoxLead.",
     "whatsappClosed": "Cerraste el alta de WhatsApp antes de terminar.",
     "whatsappNoNumber": "El alta terminó pero no recibimos el número elegido. Probá de nuevo.",
+    "whatsappError": "Meta informó un error en el alta de WhatsApp: {{message}}",
+    "whatsappOnlyWaba": "El alta terminó sin un número de teléfono. Volvé a entrar y agregá o elegí un número de WhatsApp Business.",
     "failed": "No pudimos conectar {{name}}."
   },
   "channel": {
@@ -136,6 +138,7 @@
       ],
       "preSale": "Chats",
       "windowTitle": "Pasaron más de 24 horas",
+
       "windowDetail": "WhatsApp solo deja escribir texto libre dentro de las 24 horas del último mensaje de la persona. Podés responderle ahora con una plantilla aprobada."
     },
     "INSTAGRAM": {
