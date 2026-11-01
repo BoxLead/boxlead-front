@@ -114,13 +114,14 @@ test("disconnecting asks for confirmation and keeps the user informed", async ({
 });
 
 type SignupSession = { event: string; data: Record<string, unknown> };
+type LoginResponse = { authResponse?: { code: string }; status?: string };
 
 async function stubEmbeddedSignup(page: Page, session: SignupSession | null, code: string | null) {
   await page.addInitScript(
     ({ session, code }) => {
-      window.FB = {
+      (window as unknown as { FB: unknown }).FB = {
         init: () => undefined,
-        login: (callback) => {
+        login: (callback: (response: LoginResponse) => void) => {
           if (session) {
             const data = JSON.stringify({ type: "WA_EMBEDDED_SIGNUP", ...session });
             window.dispatchEvent(new MessageEvent("message", { origin: "https://www.facebook.com", data }));
