@@ -22,11 +22,8 @@ export const CONNECTIONS_KEY = "/oauth/connections";
 
 class ConnectError extends Error {}
 
-function throwIfMetaReportedAnError(event: WhatsAppSignupEvent | null) {
-  const outcome = whatsAppSignupOutcome(event);
-  if (outcome.kind === "error") {
-    throw new ConnectError(i18next.t("connect.whatsappError", { ns: "connections", message: outcome.message }));
-  }
+function metaError(message: string): ConnectError {
+  return new ConnectError(i18next.t("connect.whatsappError", { ns: "connections", message }));
 }
 
 type Options = {
@@ -63,11 +60,12 @@ export function useConnectPlatform({ onConnected }: Options = {}) {
     try {
       code = await launchWhatsAppSignup(config.configId);
     } catch {
-      throwIfMetaReportedAnError(signup.current);
+      const failed = whatsAppSignupOutcome(signup.current);
+      if (failed.kind === "error") throw metaError(failed.message);
       throw new ConnectError(i18next.t("connect.whatsappClosed", { ns: "connections" }));
     }
     const outcome = whatsAppSignupOutcome(signup.current);
-    throwIfMetaReportedAnError(signup.current);
+    if (outcome.kind === "error") throw metaError(outcome.message);
     if (outcome.kind === "no-number") {
       throw new ConnectError(i18next.t("connect.whatsappOnlyWaba", { ns: "connections" }));
     }
