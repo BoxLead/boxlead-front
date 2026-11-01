@@ -61,6 +61,8 @@
     "whatsappDisabled": "WhatsApp isn't enabled in BoxLead yet.",
     "whatsappClosed": "You closed the WhatsApp sign up before finishing.",
     "whatsappNoNumber": "The sign up finished but we didn't get the number you picked. Try again.",
+    "whatsappError": "Meta reported an error during the WhatsApp sign up: {{message}}",
+    "whatsappOnlyWaba": "The sign up finished without a phone number. Go back in and add or pick a WhatsApp Business number.",
     "failed": "We couldn't connect {{name}}."
   },
   "channel": {
@@ -136,7 +138,23 @@
       ],
       "preSale": "Chats",
       "windowTitle": "More than 24 hours have passed",
-      "windowDetail": "WhatsApp only allows free text within 24 hours of the person's last message. You can reply now with an approved template."
+
+      "windowDetail": "WhatsApp only allows free text within 24 hours of the person's last message. You can reply now with an approved template.",
+      "refusedTitle": "WhatsApp rejected the message",
+      "rateTitle": "WhatsApp is limiting sends",
+      "rateDetail": "Meta paused messages from this number for a while. Try again in a few minutes.",
+      "undeliverableTitle": "The person can't receive the message",
+      "undeliverableDetail": "WhatsApp couldn't deliver it. The number may not have WhatsApp, may not have accepted the new terms, or may be the sending number itself.",
+      "pausedTitle": "WhatsApp held this send",
+      "pausedDetail": "Meta is limiting templates to this person for a while. Wait at least 24 hours or wait for them to write.",
+      "templateUnavailableTitle": "The template is no longer available",
+      "templateUnavailableDetail": "It was rejected, paused or disabled in WhatsApp Manager. Pick another template.",
+      "templateValuesTitle": "WhatsApp rejected the template values",
+      "templateValuesDetail": "The number or format of the values doesn't match the approved template. Check them and try again.",
+      "restrictedTitle": "The WhatsApp account is restricted",
+      "restrictedDetail": "Meta restricted or disabled the WhatsApp Business account. Check its status in WhatsApp Manager.",
+      "paymentTitle": "A payment method is missing in Meta",
+      "paymentDetail": "WhatsApp won't send until the WhatsApp Business account has a payment method on file."
     },
     "INSTAGRAM": {
       "accountNoun": "professional account",

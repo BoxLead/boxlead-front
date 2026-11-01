@@ -180,6 +180,75 @@ test("a closed WhatsApp window offers a template instead of a dead end", async (
   await expect(page.locator(".bubble-outbound", { hasText: "Seguimos atendiendo de lunes a viernes" })).toBeVisible();
 });
 
+async function refuseWhatsAppSends(page: Page, status: number, message: string) {
+  await page.route("**/conversations/*/messages", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    return route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error: message, message }) });
+  });
+}
+
+test("WhatsApp explains a message Meta could not deliver to the person", async ({ page }) => {
+  await refuseWhatsAppSends(
+    page,
+    409,
+    "WhatsApp rejected the message (131026): Unable to deliver message. Reasons can include: the recipient phone number is not a WhatsApp phone number.",
+  );
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByLabel("Responder a Martín Herrera").fill("¿Seguís interesado?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "La persona no puede recibir el mensaje" });
+  await expect(banner).toContainText("WhatsApp no pudo entregarlo");
+  await expect(banner.getByRole("button", { name: "Usar una plantilla" })).toHaveCount(0);
+  await expect(page.locator(".bubble-failed")).toContainText("No se envió.");
+  await expectAccessible(page);
+  await screenshot(page, "inbox-whatsapp-refused");
+});
+
+test("WhatsApp shows Meta's own words for a refusal it has no explanation for", async ({ page }) => {
+  await refuseWhatsAppSends(page, 409, "WhatsApp rejected the message (131051): Unsupported message type.");
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByLabel("Responder a Martín Herrera").fill("Hola");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "WhatsApp rechazó el mensaje" });
+  await expect(banner).toContainText("Unsupported message type.");
+});
+
+test("WhatsApp asks to try again later when Meta is limiting sends", async ({ page }) => {
+  await refuseWhatsAppSends(
+    page,
+    503,
+    "WhatsApp is limiting messages (130429): Cloud API message throughput has been reached.",
+  );
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByLabel("Responder a Martín Herrera").fill("Hola");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "WhatsApp está limitando los envíos" });
+  await expect(banner).toContainText("Probá de nuevo en unos minutos");
+  await screenshot(page, "inbox-whatsapp-rate-limited");
+});
+
+test("WhatsApp offers to reconnect when Meta no longer accepts the token", async ({ page }) => {
+  await refuseWhatsAppSends(
+    page,
+    409,
+    "The WhatsApp account must be reconnected (190): Error validating access token: Session has expired.",
+  );
+  await login(page);
+  await openConversation(page, "Martín Herrera");
+  await page.getByLabel("Responder a Martín Herrera").fill("Hola");
+  await page.getByRole("button", { name: "Enviar" }).click();
+
+  const banner = page.getByRole("alert").filter({ hasText: "Hay que reconectar WhatsApp" });
+  await expect(banner.getByRole("button", { name: "Reconectar WhatsApp" })).toBeVisible();
+  await screenshot(page, "inbox-whatsapp-reconnect");
+});
+
 test("Messenger explains that the 24 hour window is closed instead of failing silently", async ({ page }) => {
   await login(page);
   await openConversation(page, "Contacto de Messenger");

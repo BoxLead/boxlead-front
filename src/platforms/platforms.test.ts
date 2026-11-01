@@ -90,8 +90,21 @@ describe("whatsapp", () => {
     [409, "Cannot send WhatsApp message: the reply window is closed, the customer has to write first", "template", "Pasaron más de 24 horas"],
     [400, "WhatsApp messages are limited to 4096 characters", null, "El mensaje es demasiado largo"],
     [409, "WhatsApp account 3 must be reconnected: its authorization expired or was revoked", "reconnect", "Hay que reconectar WhatsApp"],
+    [409, "The WhatsApp account must be reconnected (190): Error validating access token", "reconnect", "Hay que reconectar WhatsApp"],
+    [409, "WhatsApp rejected the message (131026): Unable to deliver message.", null, "La persona no puede recibir el mensaje"],
+    [409, "WhatsApp rejected the message (131049): This message was not delivered to maintain healthy ecosystem engagement.", null, "WhatsApp frenó este envío"],
+    [409, "WhatsApp rejected the message (132015): Template is paused due to low quality.", null, "La plantilla ya no está disponible"],
+    [409, "WhatsApp rejected the message (132000): Number of parameters does not match.", null, "WhatsApp rechazó los valores de la plantilla"],
+    [409, "WhatsApp rejected the message (131031): Account has been locked.", null, "La cuenta de WhatsApp está restringida"],
+    [409, "WhatsApp rejected the message (131042): Business eligibility payment issue.", null, "Falta un método de pago en Meta"],
+    [503, "WhatsApp is limiting messages (130429): Cloud API message throughput has been reached.", "retry", "WhatsApp está limitando los envíos"],
   ])("explains %i %s", (status, message, action, title) => {
     expect(whatsapp.explainError(status, message)).toMatchObject({ action, title });
+  });
+
+  it("shows Meta's explanation for a refusal it has no words for", () => {
+    const view = whatsapp.explainError(409, "WhatsApp rejected the message (131051): Unsupported message type.");
+    expect(view).toMatchObject({ title: "WhatsApp rechazó el mensaje", detail: "Unsupported message type.", action: null });
   });
 
   it("is the only channel that offers templates", () => {
@@ -101,6 +114,7 @@ describe("whatsapp", () => {
 
   it("leaves other failures to the generic message", () => {
     expect(whatsapp.explainError(502, "WhatsApp send message failed (HTTP 400 BAD_REQUEST)")).toBeNull();
+    expect(whatsapp.explainError(502, "WhatsApp send message failed (HTTP 400 BAD_REQUEST): {\"error\":{\"code\":131000}}")).toBeNull();
     expect(whatsapp.explainError(409, "Cannot send WhatsApp message: connection 1 has no phone number")).toBeNull();
   });
 });
