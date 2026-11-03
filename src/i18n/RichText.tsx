@@ -1,6 +1,6 @@
 import { Fragment, type MouseEventHandler } from "react";
 import { Link } from "react-router-dom";
-import { parseRich } from "./richText";
+import { parseRich } from "./richTextParts";
 import { useLocalizedPath } from "./useLanguage";
 
 type RichTextProps = {

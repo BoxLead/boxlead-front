@@ -163,7 +163,7 @@ export const PUBLIC_PAGES: PublicPage[] = [
   page({
     path: "/data-deletion",
     title: "Data Deletion Instructions",
-    description: "How to remove the BoxLead integration from Facebook and request the complete erasure of your leads, conversations and messages.",
+    description: "How to disconnect your Facebook, Instagram or WhatsApp accounts from BoxLead, delete your account and its data, or ask us to delete it.",
     lang: "en",
     index: true,
     changefreq: "yearly",

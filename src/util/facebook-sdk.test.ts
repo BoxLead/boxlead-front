@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { isWhatsAppSignupEvent, whatsAppSignupOutcome, type WhatsAppSignupEvent } from "./facebook-sdk";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { isWhatsAppSignupEvent, launchWhatsAppSignup, whatsAppSignupOutcome, type WhatsAppSignupEvent } from "./facebook-sdk";
 
 function event(name: string, data: WhatsAppSignupEvent["data"]): WhatsAppSignupEvent {
   return { type: "WA_EMBEDDED_SIGNUP", event: name, data };
@@ -43,5 +43,31 @@ describe("isWhatsAppSignupEvent", () => {
     expect(isWhatsAppSignupEvent({ type: "OTHER", event: "FINISH" })).toBe(false);
     expect(isWhatsAppSignupEvent("WA_EMBEDDED_SIGNUP")).toBe(false);
     expect(isWhatsAppSignupEvent(null)).toBe(false);
+  });
+});
+
+describe("launchWhatsAppSignup", () => {
+  afterEach(() => {
+    delete window.FB;
+  });
+
+  it("asks Meta to onboard the existing WhatsApp Business app", async () => {
+    const login = vi.fn((callback: (response: { authResponse?: { code: string } }) => void) => {
+      callback({ authResponse: { code: "signup-code" } });
+    });
+    window.FB = { init: vi.fn(), login };
+
+    await expect(launchWhatsAppSignup("config-1")).resolves.toBe("signup-code");
+    expect(login).toHaveBeenCalledWith(expect.any(Function), {
+      config_id: "config-1",
+      response_type: "code",
+      override_default_response_type: true,
+      extras: {
+        version: "v4",
+        setup: {},
+        featureType: "whatsapp_business_app_onboarding",
+        sessionInfoVersion: "3",
+      },
+    });
   });
 });

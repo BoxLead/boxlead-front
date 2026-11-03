@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { browserLanguage, prefixedLanguage, stripLanguage } from "./languages";
 import { alternatePaths, localizedPath } from "./paths";
-import { parseRich, plainText } from "./richText";
+import { parseRich, plainText } from "./richTextParts";
 import { routeLanguage } from "./routeLanguage";
 
 describe("languages and paths", () => {

@@ -1,7 +1,7 @@
 import { i18n } from "../i18n";
 import { HTML_LANG, type Language } from "../i18n/languages";
 import { localizedPath } from "../i18n/paths";
-import { plainText } from "../i18n/richText";
+import { plainText } from "../i18n/richTextParts";
 import { DURATION_LABEL, isoDuration, POSTER_SRC, VIDEO_SRC, VIDEO_UPLOAD_DATE } from "../landing/demoVideo";
 import type { Faq } from "../landing/faq";
 import { LEGAL_ENTITY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../util/company";
