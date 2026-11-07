@@ -63,6 +63,9 @@ test("a new account follows the first steps until the list goes away", async ({ 
   await playground.getByRole("button", { name: "Enviar" }).click();
   await expect(page.getByRole("list", { name: "Conversación de prueba" }).getByRole("listitem")).toHaveCount(2);
   await expect(panel).toHaveCount(0);
+  await expect
+    .poll(async () => ((await (await page.context().request.get(`${mockApiUrl()}/auth/me`)).json()) as { onboardingCompleted?: boolean }).onboardingCompleted)
+    .toBe(true);
 });
 
 test("the list catches up with steps done elsewhere when the tab comes back", async ({ page }) => {
@@ -112,6 +115,18 @@ test("an account with every step done never sees the list", async ({ page }) => 
   await expect.poll(() => asked).toBe(true);
   await expect(checklist(page)).toHaveCount(0);
   await expect(page.locator("html")).not.toHaveAttribute("data-onboarding-seen", "yes");
+});
+
+test("an account that completed the steps before never sees the list again, even without a channel", async ({ page }) => {
+  await resetApi("empty", undefined, { onboarding: true, onboardingCompleted: true });
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().endsWith("/onboarding")) asked.push(request.url());
+  });
+  await login(page, "/app/inbox");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(checklist(page)).toHaveCount(0);
+  expect(asked).toEqual([]);
 });
 
 test("with the flag off nothing shows and nothing is asked", async ({ page }) => {

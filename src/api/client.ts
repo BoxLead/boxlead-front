@@ -146,6 +146,7 @@ function toAuthUser(value: unknown): AuthUser | null {
       pendingLegal: readPendingLegal(value),
       account: readAccountFeatures(value),
       emailVerificationPending: "emailVerificationPending" in value && value.emailVerificationPending === true,
+      onboardingCompleted: "onboardingCompleted" in value && value.onboardingCompleted === true,
     };
   }
   return null;
