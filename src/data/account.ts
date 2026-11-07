@@ -4,15 +4,18 @@ import { setQueryData } from "./queryCache";
 
 export type AuthOptions = {
   passwordReset: boolean;
+  clientErrors: boolean;
 };
 
-export const AUTH_OPTIONS_OFF: AuthOptions = { passwordReset: false };
+export const AUTH_OPTIONS_OFF: AuthOptions = { passwordReset: false, clientErrors: false };
 
 export async function fetchAuthOptions(): Promise<AuthOptions> {
   try {
     const data = await api.get<unknown>("/auth/options");
+    if (typeof data !== "object" || data === null) return AUTH_OPTIONS_OFF;
     return {
-      passwordReset: typeof data === "object" && data !== null && "passwordReset" in data && data.passwordReset === true,
+      passwordReset: "passwordReset" in data && data.passwordReset === true,
+      clientErrors: "clientErrors" in data && data.clientErrors === true,
     };
   } catch {
     return AUTH_OPTIONS_OFF;

@@ -37,6 +37,38 @@ describe("createClientErrorReporter", () => {
     expect(sent).toHaveBeenCalledWith({ kind: "error", message: "during", route: "/app/leads/:id", release: "abc123" });
   });
 
+  it("asks the gate before the first report and stops for good when it says no", async () => {
+    const { reporter, sent } = setup();
+    const gate = vi.fn(() => Promise.resolve(false));
+    reporter.setEnabled(true, gate);
+    reporter.report("error", new Error("first"));
+    await flush();
+    reporter.report("error", new Error("second"));
+    await flush();
+    expect(gate).toHaveBeenCalledTimes(1);
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it("starts again after the login when the gate had said no", async () => {
+    const { reporter, sent } = setup();
+    reporter.setEnabled(true, () => Promise.resolve(false));
+    reporter.report("error", new Error("anonymous"));
+    await flush();
+    reporter.setEnabled(false);
+    reporter.setEnabled(true);
+    reporter.report("error", new Error("signed in"));
+    expect(sent).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends once the gate allows it", async () => {
+    const { reporter, sent } = setup();
+    reporter.setEnabled(true, () => Promise.resolve(true));
+    reporter.report("error", new Error("allowed"));
+    expect(sent).not.toHaveBeenCalled();
+    await flush();
+    expect(sent).toHaveBeenCalledWith({ kind: "error", message: "allowed", route: "/app/leads/:id", release: "abc123" });
+  });
+
   it("sends the sanitized message", () => {
     const { reporter, sent } = setup();
     reporter.setEnabled(true);

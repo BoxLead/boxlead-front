@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError, clearAuth } from "../api/client";
 import type { AuthUser, LegalVersion, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
+import { fetchAuthOptions } from "../data/account";
 import { clearQueryCache, sameData } from "../data/queryCache";
 import { onSessionRefresh } from "../data/session";
 import { startClientErrorReporting } from "../monitoring/clientErrors";
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const needsSession = SESSION_ROUTES.test(pathname);
   const signedIn = user !== null;
   const reportsErrors = user?.features.clientErrors === true;
+  const anonymous = !signedIn && (!needsSession || sessionChecked);
   const syncing = useRef(false);
   const userRef = useRef<AuthUser | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
@@ -97,9 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [signedIn, syncSession]);
 
   useEffect(() => {
-    if (!reportsErrors) return;
-    return startClientErrorReporting();
-  }, [reportsErrors]);
+    if (reportsErrors) return startClientErrorReporting();
+    if (!anonymous) return;
+    let allowed: Promise<boolean> | null = null;
+    return startClientErrorReporting(() => {
+      allowed ??= fetchAuthOptions().then((options) => options.clientErrors);
+      return allowed;
+    });
+  }, [reportsErrors, anonymous]);
 
   const clearError = useCallback(() => setError(null), []);
 

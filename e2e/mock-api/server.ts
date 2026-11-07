@@ -550,6 +550,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/auth/logout" && method === "POST") {
     return send(res, 204, undefined, { "Set-Cookie": sessionCookie("", 0) });
   }
+  if (path === "/auth/options" && method === "GET") {
+    return send(res, 200, { passwordReset: account.options.passwordReset, clientErrors: billing.clientErrors });
+  }
+  if (path === "/client-errors" && method === "POST") {
+    return reply(res, receiveClientError(billing.clientErrors, await readBody(req)));
+  }
   const accountReply = await accountRoute(account, {
     method,
     path,
@@ -586,9 +592,6 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (path === "/account/onboarding/complete" && method === "POST") {
     onboardingCompleted = true;
     return send(res, 204);
-  }
-  if (path === "/client-errors" && method === "POST") {
-    return reply(res, receiveClientError(billing.clientErrors, await readBody(req)));
   }
 
   if (parts[0] === "metrics") {
