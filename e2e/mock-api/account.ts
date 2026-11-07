@@ -5,6 +5,7 @@ export type AccountOptions = {
   passwordReset: boolean;
   emailVerification: boolean;
   emailPending: boolean;
+  legacyUnverified: boolean;
   emailChange: boolean;
   socialOnly: boolean;
   subscriptionOpen: boolean;
@@ -48,6 +49,7 @@ export function buildAccount(): AccountState {
       passwordReset: false,
       emailVerification: false,
       emailPending: false,
+      legacyUnverified: false,
       emailChange: false,
       socialOnly: false,
       subscriptionOpen: false,
@@ -97,6 +99,7 @@ export async function accountRoute(
       passwordReset: body.passwordReset === true,
       emailVerification: body.emailVerification === true,
       emailPending: body.emailPending === true,
+      legacyUnverified: body.legacyUnverified === true,
       emailChange: body.emailChange === true,
       socialOnly: body.socialOnly === true,
       subscriptionOpen: body.subscriptionOpen === true,
@@ -128,12 +131,13 @@ export async function accountRoute(
     const body = await request.readBody();
     if (!spendToken(account, body.token, "EMAIL_VERIFICATION")) return INVALID_TOKEN;
     account.options.emailPending = false;
+    account.options.legacyUnverified = false;
     return { status: 204 };
   }
   if (path === "/account/email/verification" && method === "POST") {
     if (!account.options.emailVerification) return NOT_FOUND;
     if (!request.authed) return { status: 401, body: { error: "Unauthorized", message: "Unauthorized" } };
-    if (account.options.emailPending) {
+    if (account.options.emailPending || account.options.legacyUnverified) {
       account.sent.push({
         template: "EMAIL_VERIFICATION",
         to: request.userEmail,
@@ -196,7 +200,7 @@ function accountView(account: AccountState, sessionUser: SessionUser) {
     name: account.profile.name ?? (typeof user.name === "string" ? user.name : null),
     email: account.profile.email ?? String(user.email),
     pendingEmail: account.profile.pendingEmail,
-    emailVerified: social || !account.options.emailPending,
+    emailVerified: social || (!account.options.emailPending && !account.options.legacyUnverified),
     hasPassword: !social,
     providers: social ? ["GOOGLE"] : [],
   };
