@@ -29,7 +29,7 @@ export const test = base.extend({
   },
 });
 
-export type ResetOptions = BillingOptions & SeedOptions & NotificationsOptions;
+export type ResetOptions = BillingOptions & SeedOptions & NotificationsOptions & { onboardingCompleted?: boolean };
 
 export async function resetApi(scenario: Scenario = "default", now?: Date, options: ResetOptions = {}) {
   const res = await fetch(`${mockApiUrl()}/__reset`, {

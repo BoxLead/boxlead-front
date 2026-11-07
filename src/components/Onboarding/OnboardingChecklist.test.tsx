@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/client";
 import type { AccountConnectionResponse, AgentResponse, OnboardingResponse } from "../../api/types";
 import { AuthContext, SESSION_FLAGS_OFF, type AuthContextValue } from "../../context/auth";
@@ -38,16 +38,26 @@ type Answers = {
   agents?: AgentResponse[];
 };
 
-function session(onboarding: boolean): AuthContextValue {
+const fetchMock = vi.fn<typeof fetch>();
+const refreshUser = vi.fn(async () => undefined);
+
+function session(onboarding: boolean, onboardingCompleted = false): AuthContextValue {
   return {
     ...SESSION_FLAGS_OFF,
     features: { ...SESSION_FLAGS_OFF.features, onboarding },
-    user: null,
+    user: {
+      ...SESSION_FLAGS_OFF,
+      features: { ...SESSION_FLAGS_OFF.features, onboarding },
+      userId: "u-1",
+      email: "ana@negocio.com",
+      name: "Ana",
+      onboardingCompleted,
+    },
     login: async () => undefined,
     register: async () => undefined,
     socialLogin: async () => undefined,
     logout: () => undefined,
-    refreshUser: async () => undefined,
+    refreshUser,
     isLoading: false,
     error: null,
     clearError: () => undefined,
@@ -71,10 +81,10 @@ function serve(answers: Answers) {
   return fetcher;
 }
 
-function renderChecklist(onboarding = true) {
+function renderChecklist(onboarding = true, onboardingCompleted = false) {
   return render(
     <MemoryRouter>
-      <AuthContext.Provider value={session(onboarding)}>
+      <AuthContext.Provider value={session(onboarding, onboardingCompleted)}>
         <OnboardingChecklist />
       </AuthContext.Provider>
     </MemoryRouter>,
@@ -86,10 +96,22 @@ function settle() {
 }
 
 describe("OnboardingChecklist", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+  });
+
   afterEach(() => {
     setQueryFetcher(null);
     clearQueryCache();
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
+    refreshUser.mockClear();
   });
+
+  function completions() {
+    return fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/account/onboarding/complete"));
+  }
 
   it("shows nothing and asks for nothing with the flag off", async () => {
     const fetcher = serve({});
@@ -113,11 +135,30 @@ describe("OnboardingChecklist", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("never shows up once the three steps are done", async () => {
+  it("never shows up once the three steps are done and remembers it once", async () => {
     serve({ connections: [CONNECTION], status: { agentCreated: true, agentTested: true } });
     const { container } = renderChecklist();
     await settle();
     expect(container).toBeEmptyDOMElement();
+    await waitFor(() => expect(refreshUser).toHaveBeenCalledTimes(1));
+    expect(completions()).toHaveLength(1);
+    expect(completions()[0]?.[1]?.method).toBe("POST");
+  });
+
+  it("stays away for an account that already completed it, even without a channel", async () => {
+    const fetcher = serve({});
+    const { container } = renderChecklist(true, true);
+    await settle();
+    expect(container).toBeEmptyDOMElement();
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(completions()).toHaveLength(0);
+  });
+
+  it("does not remember an onboarding that is not finished", async () => {
+    serve({ connections: [CONNECTION] });
+    renderChecklist();
+    await screen.findByRole("region", { name: "Primeros pasos" });
+    expect(completions()).toHaveLength(0);
   });
 
   it("lists the three steps for a new account and points to the first one", async () => {
