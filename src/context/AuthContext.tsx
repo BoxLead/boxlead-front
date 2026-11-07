@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api, ApiError, clearAuth } from "../api/client";
 import type { AuthUser, LegalVersion, LoginRequest, RegisterRequest } from "../api/types";
 import { Loading } from "../components/Loading";
+import { fetchAuthOptions } from "../data/account";
 import { clearQueryCache, sameData } from "../data/queryCache";
 import { onSessionRefresh } from "../data/session";
 import { startClientErrorReporting } from "../monitoring/clientErrors";
@@ -30,7 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const needsSession = SESSION_ROUTES.test(pathname);
   const signedIn = user !== null;
-  const reportsErrors = user?.features.clientErrors === true;
+  const [publicErrors, setPublicErrors] = useState<boolean | null>(null);
+  const reportsErrors = signedIn ? user.features.clientErrors === true : publicErrors === true;
   const syncing = useRef(false);
   const userRef = useRef<AuthUser | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
@@ -95,6 +97,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stop();
     };
   }, [signedIn, syncSession]);
+
+  useEffect(() => {
+    if (signedIn || publicErrors !== null || (needsSession && !sessionChecked)) return;
+    let active = true;
+    void fetchAuthOptions().then((options) => {
+      if (active) setPublicErrors(options.clientErrors);
+    });
+    return () => {
+      active = false;
+    };
+  }, [signedIn, publicErrors, needsSession, sessionChecked]);
 
   useEffect(() => {
     if (!reportsErrors) return;

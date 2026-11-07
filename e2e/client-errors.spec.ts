@@ -69,8 +69,20 @@ test("with the flag off nothing is sent", async ({ page }) => {
   expect(await received()).toEqual([]);
 });
 
-test("before login nothing is sent", async ({ page }) => {
+test("before login an error reaches core sanitized", async ({ page }) => {
   await resetApi("default", undefined, { clientErrors: true });
+  await page.goto("/login");
+  await expect(page.getByRole("button", { name: "Ingresar" })).toBeVisible();
+
+  await expect(async () => {
+    await rejectInPage(page, RAW);
+    expect((await received()).map((report) => report.message)).toEqual([CLEAN]);
+  }).toPass();
+  expect((await received())[0]?.route).toBe("/login");
+});
+
+test("before login nothing is sent with the flag off", async ({ page }) => {
+  await resetApi("default");
   const sent: string[] = [];
   page.on("request", (request) => {
     if (request.url().includes("/client-errors")) sent.push(request.url());

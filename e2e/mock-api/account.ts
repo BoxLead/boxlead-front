@@ -161,9 +161,6 @@ export async function accountRoute(
   if (path === "/__account/sent" && method === "GET") {
     return { status: 200, body: account.sent };
   }
-  if (path === "/auth/options" && method === "GET") {
-    return { status: 200, body: { passwordReset: account.options.passwordReset } };
-  }
   if (path === "/auth/password/forgot" && method === "POST") {
     if (!account.options.passwordReset) return NOT_FOUND;
     const body = await request.readBody();

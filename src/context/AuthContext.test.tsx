@@ -220,14 +220,29 @@ describe("AuthProvider reports client errors", () => {
     expect(reportedMessages(report.mock.calls)).toEqual(["with the flag on"]);
   });
 
-  it("sends nothing without a session", async () => {
+  it("sends nothing without a session while the public reports are off", async () => {
     window.addEventListener("error", swallow);
     const report = vi.spyOn(api, "report").mockResolvedValue(undefined);
     vi.spyOn(api, "me").mockRejectedValue(new ApiError("Unauthorized", 401));
+    const options = vi.spyOn(api, "get").mockResolvedValue({ passwordReset: true, clientErrors: false });
     renderProvider();
     expect(await screen.findByRole("button", { name: "registrar" })).toBeInTheDocument();
+    await waitFor(() => expect(options).toHaveBeenCalledWith("/auth/options"));
     throwOnWindow("anonymous visitor");
     expect(report).not.toHaveBeenCalled();
+  });
+
+  it("reports errors before the login when core takes them", async () => {
+    window.addEventListener("error", swallow);
+    const report = vi.spyOn(api, "report").mockResolvedValue(undefined);
+    vi.spyOn(api, "me").mockRejectedValue(new ApiError("Unauthorized", 401));
+    vi.spyOn(api, "get").mockResolvedValue({ passwordReset: false, clientErrors: true });
+    renderProvider();
+    expect(await screen.findByRole("button", { name: "registrar" })).toBeInTheDocument();
+    await waitFor(() => {
+      throwOnWindow("anonymous visitor");
+      expect(reportedMessages(report.mock.calls)).toEqual(["anonymous visitor"]);
+    });
   });
 });
 
