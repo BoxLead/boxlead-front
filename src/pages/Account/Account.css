@@ -176,6 +176,14 @@
   line-height: var(--signal-leading-normal);
 }
 
+.account-confirm {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--signal-space-2);
+}
+
 .account-form {
   display: grid;
   flex: 1 1 100%;

@@ -2,7 +2,7 @@ import i18next from "i18next";
 import type { ReactNode } from "react";
 import type { AccountFeatures, SessionFlags } from "../../api/types";
 import { CONSUMER_PAGES, type ConsumerPage, type ConsumerPageKey } from "../../util/consumerPages";
-import { BellIcon, CardIcon, ShareIcon, UserIcon } from "../icons/UiIcons";
+import { CardIcon, ShareIcon, UserIcon } from "../icons/UiIcons";
 
 export type AccountLink = ConsumerPage & {
   icon: ReactNode;
@@ -19,7 +19,6 @@ export function accountLinks({
   if (account?.settings) links.push({ to: ACCOUNT_PAGE, label: i18next.t("userMenu.yourAccount", { ns: "shell" }), icon: <UserIcon /> });
   if (features.billing) links.push({ to: "/app/billing", label: i18next.t("userMenu.billing", { ns: "shell" }), icon: <CardIcon /> });
   if (isReseller) links.push({ to: "/app/reseller", label: i18next.t("userMenu.reseller", { ns: "shell" }), icon: <ShareIcon /> });
-  if (features.notifications) links.push({ to: "/app/notificaciones", label: i18next.t("userMenu.notifications", { ns: "shell" }), icon: <BellIcon /> });
   return links;
 }
 

@@ -38,6 +38,10 @@
     "send": "Mandar el link",
     "verified": "Confirmado",
     "unverified": "Sin confirmar",
+    "confirm": "Mandar el link para confirmarlo",
+    "confirmSending": "Enviando…",
+    "confirmSent": "Te mandamos un link a {{email}}. Abrilo para confirmar el email.",
+    "confirmFailed": "No pudimos mandar el link. Probá de nuevo.",
     "pending": "Te mandamos un link a <strong>{{pending}}</strong> para confirmar el cambio. Hasta que lo abras seguís entrando con {{email}}.",
     "sameEmail": "Ese ya es el email de tu cuenta.",
     "invalid": "Revisá el email nuevo.",
@@ -88,8 +92,6 @@
     "failed": "No pudimos borrar la cuenta. Probá de nuevo."
   },
   "notifications": {
-    "title": "Notificaciones",
-    "description": "Elegí por dónde te enterás de los leads nuevos y de las conversaciones que te esperan.",
     "panelTitle": "Cómo te avisamos",
     "panelDescription": "Te avisamos cuando entra un lead nuevo o cuando una conversación necesita una persona. Los avisos nunca muestran nombres ni mensajes.",
     "loadFailed": "No pudimos cargar tus preferencias",

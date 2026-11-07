@@ -100,7 +100,8 @@ test("with the flag off nothing asks for notices and the menu has no link", asyn
   await page.getByRole("button", { name: "Cuenta" }).click();
   await expect(page.getByRole("dialog", { name: "Cuenta" }).getByRole("link", { name: "Notificaciones" })).toHaveCount(0);
   await page.goto("/app/notificaciones");
-  await expect(page).toHaveURL(/\/app\/inbox$/);
+  await expect(page).toHaveURL(/\/app\/cuenta$/);
+  await expect(page.getByRole("switch", { name: "Mail cuando entra un lead nuevo" })).toHaveCount(0);
   expect(calls).toEqual([]);
 });
 
@@ -111,13 +112,13 @@ test("the preferences toggle and persist, and the browser switch stops the notic
   await login(page, "/app/inbox");
   await page.getByRole("button", { name: "Cuenta" }).click();
   const account = page.getByRole("dialog", { name: "Cuenta" });
-  await expect(account.getByRole("link", { name: "Notificaciones" })).toBeVisible();
+  await expect(account.getByRole("link", { name: "Notificaciones" })).toHaveCount(0);
   await screenshot(page, "notifications-account-menu");
-  await account.getByRole("link", { name: "Notificaciones" }).click();
+  await account.getByRole("link", { name: "Tu cuenta" }).click();
 
-  await expect(page).toHaveURL(/\/app\/notificaciones$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Notificaciones" })).toBeVisible();
-  await expect(page).toHaveTitle("Notificaciones · BoxLead");
+  await expect(page).toHaveURL(/\/app\/cuenta$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Tu cuenta" })).toBeVisible();
+  await expect(page).toHaveTitle("Tu cuenta · BoxLead");
   const lead = page.getByRole("switch", { name: "Mail cuando entra un lead nuevo" });
   const handoff = page.getByRole("switch", { name: "Mail cuando el agente pasa una conversación a una persona" });
   const browser = page.getByRole("switch", { name: "Avisos en el navegador con la app abierta" });
@@ -150,7 +151,7 @@ test("the preferences toggle and persist, and the browser switch stops the notic
 
 test("a failed save goes back and says so", async ({ page }) => {
   await resetApi("default", undefined, { notifications: true });
-  await login(page, "/app/notificaciones");
+  await login(page, "/app/cuenta");
   const handoff = page.getByRole("switch", { name: "Mail cuando el agente pasa una conversación a una persona" });
   await expect(handoff).toBeChecked();
   await page.route(`${MOCK_API_ORIGIN}/notifications/settings`, (route) =>
@@ -198,7 +199,7 @@ test("the unsubscribe page explains a link without its token", async ({ page }) 
   await expect(page.getByRole("heading", { level: 1, name: "Dejar de recibir avisos" })).toBeVisible();
   await expect(page.getByText("A este enlace le falta una parte")).toBeVisible();
   await expect(page.getByRole("button", { name: "Dejar de recibirlos" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Ir a Notificaciones" })).toHaveAttribute("href", "/app/notificaciones");
+  await expect(page.getByRole("link", { name: "Ir a tu cuenta" })).toHaveAttribute("href", "/app/cuenta");
   await expectNoHorizontalScroll(page);
   await expectAccessible(page);
   await screenshot(page, "notifications-unsubscribe-missing");
@@ -219,7 +220,7 @@ test("the system notifications are asked only from their button", async ({ page 
     Object.defineProperty(window, "notificationRequests", { value: requests });
   });
   await resetApi("default", undefined, { notifications: true });
-  await login(page, "/app/notificaciones");
+  await login(page, "/app/cuenta");
   const activate = page.getByRole("button", { name: "Activar notificaciones del sistema" });
   await expect(activate).toBeVisible();
   await expect(page.getByText("Sin activar")).toBeVisible();
