@@ -26,13 +26,13 @@ function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-function session(sessionRevocation = false, emailChange = true): AuthContextValue {
+function session(sessionRevocation = false, emailChange = true, emailVerification = false): AuthContextValue {
   const user: AuthUser = {
     ...SESSION_FLAGS_OFF,
     userId: "u-1",
     email: "ana@negocio.com",
     name: "Ana",
-    account: { ...ACCOUNT_FEATURES_OFF, settings: true, sessionRevocation, emailChange },
+    account: { ...ACCOUNT_FEATURES_OFF, settings: true, sessionRevocation, emailChange, emailVerification },
   };
   return {
     ...SESSION_FLAGS_OFF,
@@ -48,10 +48,10 @@ function session(sessionRevocation = false, emailChange = true): AuthContextValu
   };
 }
 
-function renderAccount(sessionRevocation = false, emailChange = true) {
+function renderAccount(sessionRevocation = false, emailChange = true, emailVerification = false) {
   render(
     <MemoryRouter>
-      <AuthContext.Provider value={session(sessionRevocation, emailChange)}>
+      <AuthContext.Provider value={session(sessionRevocation, emailChange, emailVerification)}>
         <ToastContext.Provider value={toast}>
           <Account />
         </ToastContext.Provider>
@@ -83,6 +83,33 @@ describe("account page", () => {
     expect(await screen.findByText("Sin confirmar")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Formas de entrar" })).toHaveTextContent("Email y contraseñaGoogle");
     expect(screen.queryByRole("heading", { name: "Sesiones" })).not.toBeInTheDocument();
+  });
+
+  it("lets an unconfirmed account ask for the confirmation link", async () => {
+    fetchMock.mockResolvedValueOnce(json({ ...PASSWORD_ACCOUNT, emailVerified: false }));
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 202 }));
+    renderAccount(false, true, true);
+    await userEvent.click(await screen.findByRole("button", { name: "Mandar el link para confirmarlo" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Te mandamos un link a ana@negocio.com.");
+    const call = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/account/email/verification"));
+    expect(call?.[1]?.method).toBe("POST");
+    expect(screen.queryByRole("button", { name: "Mandar el link para confirmarlo" })).not.toBeInTheDocument();
+  });
+
+  it("says when the confirmation link was asked too many times", async () => {
+    fetchMock.mockResolvedValueOnce(json({ ...PASSWORD_ACCOUNT, emailVerified: false }));
+    fetchMock.mockResolvedValueOnce(json({ error: "Too many requests", message: "Demasiados intentos." }, 429));
+    renderAccount(false, true, true);
+    await userEvent.click(await screen.findByRole("button", { name: "Mandar el link para confirmarlo" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Hiciste demasiados intentos seguidos.");
+    expect(screen.getByRole("button", { name: "Mandar el link para confirmarlo" })).toBeEnabled();
+  });
+
+  it("offers no confirmation link while emails are off or once the email is confirmed", async () => {
+    fetchMock.mockResolvedValueOnce(json({ ...PASSWORD_ACCOUNT, emailVerified: false }));
+    renderAccount();
+    expect(await screen.findByText("Sin confirmar")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mandar el link para confirmarlo" })).not.toBeInTheDocument();
   });
 
   it("saves the trimmed name", async () => {
