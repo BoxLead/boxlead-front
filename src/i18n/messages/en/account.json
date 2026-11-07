@@ -38,6 +38,10 @@
     "send": "Send link",
     "verified": "Confirmed",
     "unverified": "Not confirmed",
+    "confirm": "Send the link to confirm it",
+    "confirmSending": "Sending…",
+    "confirmSent": "We sent a link to {{email}}. Open it to confirm the email.",
+    "confirmFailed": "We couldn't send the link. Please try again.",
     "pending": "We sent a link to <strong>{{pending}}</strong> to confirm the change. Until you open it you keep signing in with {{email}}.",
     "sameEmail": "That's already your account email.",
     "invalid": "Check the new email.",
@@ -88,8 +92,6 @@
     "failed": "We couldn't delete your account. Please try again."
   },
   "notifications": {
-    "title": "Notifications",
-    "description": "Choose how you hear about new leads and conversations waiting for you.",
     "panelTitle": "How we notify you",
     "panelDescription": "We let you know when a new lead comes in or when a conversation needs a person. Notifications never show names or messages.",
     "loadFailed": "We couldn't load your preferences",

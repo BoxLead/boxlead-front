@@ -133,7 +133,7 @@ describe("UserMenu in English", () => {
     expect(within(dialog).getByRole("switch", { name: "Light mode" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Log out" })).toBeInTheDocument();
     expect(within(dialog).getByRole("link", { name: "Billing" })).toHaveAttribute("href", "/app/billing");
-    expect(within(dialog).getByRole("link", { name: "Notifications" })).toHaveAttribute("href", "/app/notificaciones");
+    expect(within(dialog).queryByRole("link", { name: "Notifications" })).not.toBeInTheDocument();
     const consumer = within(dialog).getByRole("navigation", { name: "Consumer protection" });
     expect(within(consumer).getByRole("link", { name: "Withdrawal button" })).toHaveAttribute("href", "/arrepentimiento");
   });

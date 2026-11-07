@@ -6,9 +6,11 @@ import { apiErrorCode } from "../../api/errors";
 import type { AccountView } from "../../api/types";
 import { Tag } from "../../components/ui/Tag";
 import { useAuth } from "../../context/auth";
-import { ACCOUNT_KEY, changeEmail } from "../../data/account";
+import { ACCOUNT_KEY, changeEmail, resendEmailVerification } from "../../data/account";
 import { invalidateQueries } from "../../data/queryCache";
 import { AccountRow } from "./AccountRow";
+
+type Confirmation = { status: "idle" | "sending" | "sent" } | { status: "error"; message: string };
 
 function emailError(t: TFunction<"account">, error: unknown): string {
   const code = apiErrorCode(error);
@@ -31,6 +33,22 @@ export function EmailSection({ account }: { account: AccountView }) {
   const [error, setError] = useState<string | null>(null);
   const [requested, setRequested] = useState<string | null>(null);
   const pending = requested ?? account.pendingEmail;
+  const [confirmation, setConfirmation] = useState<Confirmation>({ status: "idle" });
+  const canConfirm =
+    account.hasPassword && !account.emailVerified && !pending && user?.account?.emailVerification === true;
+
+  async function sendConfirmation() {
+    setConfirmation({ status: "sending" });
+    try {
+      await resendEmailVerification();
+      setConfirmation({ status: "sent" });
+    } catch (failure) {
+      setConfirmation({
+        status: "error",
+        message: failure instanceof ApiError && failure.status === 429 ? failure.message : t("email.confirmFailed"),
+      });
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -121,6 +139,29 @@ export function EmailSection({ account }: { account: AccountView }) {
           </Tag>
         </p>
       )}
+      {canConfirm && !editing ? (
+        <div className="account-confirm">
+          {confirmation.status === "sent" ? (
+            <p className="account-note" role="status">
+              {t("email.confirmSent", { email: account.email })}
+            </p>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => void sendConfirmation()}
+              disabled={confirmation.status === "sending"}
+            >
+              {confirmation.status === "sending" ? t("email.confirmSending") : t("email.confirm")}
+            </button>
+          )}
+          {confirmation.status === "error" ? (
+            <p className="form-error" role="alert">
+              {confirmation.message}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       {pending ? (
         <p className="account-note" role="status">
           <Trans
