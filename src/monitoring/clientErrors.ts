@@ -27,8 +27,10 @@ const STOP_STATUSES = new Set([401, 403, 404, 429]);
 const EXTENSION_SOURCE = /\b[a-z-]*extension:\/\//i;
 const OPAQUE_SCRIPT_ERROR = /^script error\.?$/i;
 
+export type ReportGate = () => Promise<boolean>;
+
 export type ClientErrorReporter = {
-  setEnabled: (enabled: boolean) => void;
+  setEnabled: (enabled: boolean, gate?: ReportGate) => void;
   report: (kind: ClientErrorKind, error: unknown, source?: ClientErrorSource) => void;
 };
 
@@ -52,6 +54,7 @@ function fromElsewhere(error: unknown, source: ClientErrorSource | undefined, or
 
 export function createClientErrorReporter(deps: ReporterDeps): ClientErrorReporter {
   let enabled = false;
+  let gate: ReportGate | null = null;
   let stopped = false;
   let attempts = 0;
   const seen = new Set<string>();
@@ -77,7 +80,13 @@ export function createClientErrorReporter(deps: ReporterDeps): ClientErrorReport
         route: sanitizeRoute(deps.pathname()),
         release: sanitizeRelease(deps.release),
       };
-      deps.send(body).catch((failure: unknown) => {
+      const sending = gate
+        ? gate().then((ok) => {
+            if (ok) return deps.send(body);
+            stopped = true;
+          })
+        : deps.send(body);
+      sending.catch((failure: unknown) => {
         if (failure instanceof ApiError && STOP_STATUSES.has(failure.status)) stopped = true;
       });
     } catch {
@@ -86,8 +95,10 @@ export function createClientErrorReporter(deps: ReporterDeps): ClientErrorReport
   }
 
   return {
-    setEnabled(value: boolean) {
+    setEnabled(value: boolean, nextGate?: ReportGate) {
       enabled = value;
+      if ((nextGate ?? null) !== gate) stopped = false;
+      gate = nextGate ?? null;
     },
     report,
   };
@@ -112,8 +123,8 @@ function onRejection(event: PromiseRejectionEvent): void {
   reportClientError("unhandledrejection", event.reason);
 }
 
-export function startClientErrorReporting(): () => void {
-  clientErrors.setEnabled(true);
+export function startClientErrorReporting(gate?: ReportGate): () => void {
+  clientErrors.setEnabled(true, gate);
   window.addEventListener("error", onError);
   window.addEventListener("unhandledrejection", onRejection);
   return () => {

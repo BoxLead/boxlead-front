@@ -227,8 +227,10 @@ describe("AuthProvider reports client errors", () => {
     const options = vi.spyOn(api, "get").mockResolvedValue({ passwordReset: true, clientErrors: false });
     renderProvider();
     expect(await screen.findByRole("button", { name: "registrar" })).toBeInTheDocument();
+    expect(options).not.toHaveBeenCalled();
+    throwOnWindow("anonymous visitor off");
     await waitFor(() => expect(options).toHaveBeenCalledWith("/auth/options"));
-    throwOnWindow("anonymous visitor");
+    await act(() => new Promise((done) => setTimeout(done, 0)));
     expect(report).not.toHaveBeenCalled();
   });
 

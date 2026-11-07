@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const needsSession = SESSION_ROUTES.test(pathname);
   const signedIn = user !== null;
-  const [publicErrors, setPublicErrors] = useState<boolean | null>(null);
-  const reportsErrors = signedIn ? user.features.clientErrors === true : publicErrors === true;
+  const reportsErrors = user?.features.clientErrors === true;
+  const anonymous = !signedIn && (!needsSession || sessionChecked);
   const syncing = useRef(false);
   const userRef = useRef<AuthUser | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
@@ -99,20 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [signedIn, syncSession]);
 
   useEffect(() => {
-    if (signedIn || publicErrors !== null || (needsSession && !sessionChecked)) return;
-    let active = true;
-    void fetchAuthOptions().then((options) => {
-      if (active) setPublicErrors(options.clientErrors);
+    if (reportsErrors) return startClientErrorReporting();
+    if (!anonymous) return;
+    let allowed: Promise<boolean> | null = null;
+    return startClientErrorReporting(() => {
+      allowed ??= fetchAuthOptions().then((options) => options.clientErrors);
+      return allowed;
     });
-    return () => {
-      active = false;
-    };
-  }, [signedIn, publicErrors, needsSession, sessionChecked]);
-
-  useEffect(() => {
-    if (!reportsErrors) return;
-    return startClientErrorReporting();
-  }, [reportsErrors]);
+  }, [reportsErrors, anonymous]);
 
   const clearError = useCallback(() => setError(null), []);
 
