@@ -1,9 +1,10 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import type { AccountConnectionResponse, AgentResponse, OnboardingResponse } from "../../api/types";
 import { useAuth } from "../../context/auth";
 import { AGENTS_KEY } from "../../data/agents";
-import { needsAgents, ONBOARDING_KEY, onboardingSteps } from "../../data/onboarding";
+import { completeOnboarding, needsAgents, ONBOARDING_KEY, onboardingSteps } from "../../data/onboarding";
 import { useApiQuery } from "../../hooks/useApiQuery";
 import { CONNECTIONS_KEY } from "../../hooks/useConnectPlatform";
 import { cx } from "../../util/classNames";
@@ -12,17 +13,27 @@ import "./OnboardingChecklist.css";
 
 export function OnboardingChecklist() {
   const { t } = useTranslation("shell");
-  const { features } = useAuth();
-  const enabled = features.onboarding;
+  const { features, user, refreshUser } = useAuth();
+  const enabled = features.onboarding && user?.onboardingCompleted !== true;
   const connections = useApiQuery<AccountConnectionResponse[]>(enabled ? CONNECTIONS_KEY : null);
   const status = useApiQuery<OnboardingResponse>(enabled ? ONBOARDING_KEY : null);
   const agents = useApiQuery<AgentResponse[]>(enabled && needsAgents(status.data) ? AGENTS_KEY : null);
+  const steps = enabled ? onboardingSteps({ connections: connections.data, status: status.data, agents: agents.data }) : null;
+  const done = steps ? steps.filter((step) => step.done).length : 0;
+  const finished = steps !== null && done === steps.length;
+  const reported = useRef(false);
 
-  if (!enabled) return null;
-  const steps = onboardingSteps({ connections: connections.data, status: status.data, agents: agents.data });
-  if (!steps) return null;
-  const done = steps.filter((step) => step.done).length;
-  if (done === steps.length) return null;
+  useEffect(() => {
+    if (!finished || reported.current) return;
+    reported.current = true;
+    completeOnboarding()
+      .then(() => refreshUser())
+      .catch(() => {
+        reported.current = false;
+      });
+  }, [finished, refreshUser]);
+
+  if (!steps || finished) return null;
   const next = steps.find((step) => !step.done);
   const count = t("onboarding.count", { done, total: steps.length });
 

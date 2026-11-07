@@ -96,6 +96,7 @@ let state: MockState = buildState("default");
 let billing: BillingState = buildBilling("default");
 let account: AccountState = buildAccount();
 let notifications: NotificationsState = buildNotifications();
+let onboardingCompleted = false;
 
 type Json = Record<string, unknown> | unknown[] | null;
 
@@ -122,7 +123,7 @@ function readCookies(req: IncomingMessage): Map<string, string> {
 }
 
 function sessionUser(overrides: Partial<typeof USER> = {}) {
-  return { ...USER, ...overrides, ...sessionFields(billing) };
+  return { ...USER, ...overrides, ...sessionFields(billing), onboardingCompleted };
 }
 
 async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -486,6 +487,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     notifications = buildNotifications({ notices: typeof body.notices === "number" ? body.notices : undefined });
     clearClientErrors();
     account = buildAccount();
+    onboardingCompleted = body.onboardingCompleted === true;
     return send(res, 200, { scenario });
   }
   if (path === "/__client-errors" && method === "GET") return reply(res, receivedClientErrors());
@@ -587,6 +589,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 
   if (!isAuthed(req)) return fail(res, 401, "Unauthorized");
   if (path === "/auth/me") return send(res, 200, sessionUser());
+  if (path === "/account/onboarding/complete" && method === "POST") {
+    onboardingCompleted = true;
+    return send(res, 204);
+  }
 
   if (parts[0] === "metrics") {
     if (parts.length === 1 && method === "GET") {

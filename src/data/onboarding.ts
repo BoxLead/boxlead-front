@@ -1,4 +1,5 @@
 import i18next from "i18next";
+import { api } from "../api/client";
 import type { AccountConnectionResponse, AgentResponse, OnboardingResponse } from "../api/types";
 import { AGENT_KEY_PREFIX, invalidateQueries } from "./queryCache";
 
@@ -20,6 +21,10 @@ export type OnboardingSources = {
   status: OnboardingResponse | undefined;
   agents: AgentResponse[] | undefined;
 };
+
+export function completeOnboarding(): Promise<void> {
+  return api.post<void>("/account/onboarding/complete");
+}
 
 export function refreshOnboarding(): void {
   void invalidateQueries(ONBOARDING_KEY);

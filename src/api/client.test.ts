@@ -119,6 +119,7 @@ describe("session user", () => {
       pendingLegal: [],
       account: ACCOUNT_FEATURES_OFF,
       emailVerificationPending: false,
+      onboardingCompleted: false,
     });
   });
 

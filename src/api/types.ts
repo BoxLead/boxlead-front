@@ -72,6 +72,7 @@ export type AuthUser = SessionFlags & {
   name: string | null;
   account?: AccountFeatures;
   emailVerificationPending?: boolean;
+  onboardingCompleted?: boolean;
 };
 
 export type RegisterRequest = {
