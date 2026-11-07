@@ -54,7 +54,7 @@ describe("NotificationUnsubscribe", () => {
         "Listo, no te vamos a mandar más estos mails. Podés volver a activarlos desde Notificaciones en la app.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ir a Notificaciones" })).toHaveAttribute("href", "/app/notificaciones");
+    expect(screen.getByRole("link", { name: "Ir a tu cuenta" })).toHaveAttribute("href", "/app/cuenta");
   });
 
   it("names the handoff mails and every mail", () => {
@@ -78,6 +78,6 @@ describe("NotificationUnsubscribe", () => {
     render(page("/avisos/baja"));
     expect(screen.getByText("A este enlace le falta una parte")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Dejar de recibirlos" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ir a Notificaciones" })).toHaveAttribute("href", "/app/notificaciones");
+    expect(screen.getByRole("link", { name: "Ir a tu cuenta" })).toHaveAttribute("href", "/app/cuenta");
   });
 });

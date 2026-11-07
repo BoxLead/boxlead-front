@@ -5,11 +5,12 @@ import type { UnsubscribeScope } from "../../api/types";
 import { AuthLayout } from "../../components/AuthLayout/AuthLayout";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { BellIcon, CheckIcon } from "../../components/icons/UiIcons";
+import { ACCOUNT_PAGE } from "../../components/Sidebar/accountLinks";
 import { unsubscribeNotifications } from "../../data/notifications";
 import { readUnsubscribeLink } from "./unsubscribeLink";
 import "./NotificationUnsubscribe.css";
 
-const SETTINGS_PATH = "/app/notificaciones";
+const SETTINGS_PATH = ACCOUNT_PAGE;
 
 type Status = "idle" | "sending" | "done" | "failed";
 

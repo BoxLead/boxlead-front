@@ -51,6 +51,26 @@ test("the account shows the data, renames and changes the password", async ({ pa
   await expect(page.getByText("Cambiaste tu contraseña y cerramos las sesiones de los otros dispositivos.")).toBeVisible();
 });
 
+test("an account from before the confirmation asks for the link and confirms", async ({ page }) => {
+  await setAccountOptions({ emailVerification: true, legacyUnverified: true });
+  await login(page, "/app/cuenta");
+  await expect(page.getByText("Sin confirmar")).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await page.getByRole("button", { name: "Mandar el link para confirmarlo" }).scrollIntoViewIfNeeded();
+  await screenshot(page, "account-unconfirmed");
+  await page.getByRole("button", { name: "Mandar el link para confirmarlo" }).click();
+  await expect(page.locator("p.account-note[role=status]")).toContainText("Te mandamos un link a demo@boxlead.app");
+  await expectAccessible(page);
+  await screenshot(page, "account-confirmation-sent");
+  const token = await lastToken("EMAIL_VERIFICATION");
+
+  await page.goto(`/confirmar-email#${token}`);
+  await expect(page.locator("p.auth-notice")).toHaveText("Listo, confirmaste tu email.");
+  await page.goto("/app/cuenta");
+  await expect(page.getByText("Confirmado", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mandar el link para confirmarlo" })).toHaveCount(0);
+});
+
 test("the email changes only after the new address confirms", async ({ page }) => {
   await setAccountOptions({ emailChange: true });
   await login(page, "/app/cuenta");

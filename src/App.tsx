@@ -47,7 +47,6 @@ const ConfirmEmail = lazyRoute(() => import("./pages/EmailVerification/ConfirmEm
 const ConfirmEmailChange = lazyRoute(() => import("./pages/EmailChange/ConfirmEmailChange"), "ConfirmEmailChange");
 const Reauthenticate = lazyRoute(() => import("./pages/Reauthenticate/Reauthenticate"), "Reauthenticate");
 const Account = lazyRoute(() => import("./pages/Account/Account"), "Account");
-const Notifications = lazyRoute(() => import("./pages/Notifications/Notifications"), "Notifications");
 const NotificationUnsubscribe = lazyRoute(() => import("./pages/NotificationUnsubscribe/NotificationUnsubscribe"), "NotificationUnsubscribe");
 const DesignSystem = import.meta.env.DEV ? lazyRoute(() => import("./pages/DesignSystem/DesignSystem"), "DesignSystem") : null;
 
@@ -76,7 +75,6 @@ registerRoutePreload("/app/agents", [Layout, Agents, ...appMessages]);
 registerRoutePreload("/app/connections", [Layout, Connections, ...appMessages]);
 registerRoutePreload("/app/billing", [Layout, Billing, ...appMessages]);
 registerRoutePreload("/app/reseller", [Layout, Reseller, ...appMessages]);
-registerRoutePreload("/app/notificaciones", [Layout, Notifications, ...appMessages]);
 registerRoutePreload("/avisos/baja", [NotificationUnsubscribe]);
 registerRoutePreload("/arrepentimiento", [Withdrawal, messages("consumer")]);
 registerRoutePreload("/baja", [Cancellation, messages("consumer")]);
@@ -132,7 +130,7 @@ export default function App() {
               <Route path="categories" element={<Page><Categories /></Page>} />
               <Route path="agents" element={<Page><Agents /></Page>} />
               <Route path="connections" element={<Page><Connections /></Page>} />
-              <Route path="notificaciones" element={<Page><Notifications /></Page>} />
+              <Route path="notificaciones" element={<Navigate to="/app/cuenta" replace />} />
               <Route element={<FeatureRoute feature="billing" />}>
                 <Route path="billing" element={<Billing />} />
                 <Route path="billing/return" element={<BillingReturn />} />
