@@ -111,6 +111,11 @@ async function main() {
     const response = await fetch(`${base}${from}`, { redirect: 'manual' })
     check(`${from} redirects to ${to} with 301`, response.status === 301 && response.headers.get('location') === to, `${response.status} ${response.headers.get('location')}`)
   }
+  for (const from of ['//example.com/', '/%5Cexample.com/', '//example.com/login.html']) {
+    const response = await fetch(`${base}${from}`, { redirect: 'manual' })
+    const location = response.headers.get('location')
+    check(`${from} stays on the site`, location === null || /^\/[^/\\]/.test(location), `${response.status} ${location}`)
+  }
 
   await server.close()
   const failed = checks.filter((item) => !item.ok)

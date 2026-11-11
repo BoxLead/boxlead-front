@@ -9,6 +9,7 @@ dist
 dist-admin
 dist-admin-e2e
 terraform
+!terraform/functions/router.js
 docker-compose.yml
 Dockerfile
 *.md
