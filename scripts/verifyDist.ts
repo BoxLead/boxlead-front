@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { preview } from 'vite'
+import { TOKEN_PATHS } from '../src/util/tokenPaths.ts'
 
 type Check = { name: string; ok: boolean; detail?: string }
 
@@ -95,6 +96,11 @@ async function main() {
     const html = await response.text()
     check(`${path} is noindex`, response.status === 200 && /name="robots" content="noindex"/.test(html) && count(html, /<title>/g) === 1, String(response.status))
     check(`${path} is out of the sitemap`, !sitemapUrls.includes(`https://boxlead.app${path}`))
+  }
+
+  for (const path of TOKEN_PATHS) {
+    const html = await (await fetch(`${base}${path}`)).text()
+    check(`${path} sends no referrer`, /<meta name="referrer" content="no-referrer"/.test(html))
   }
 
   const missing = await fetch(`${base}/esto-no-existe`)

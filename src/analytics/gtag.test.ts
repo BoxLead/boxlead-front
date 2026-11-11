@@ -64,6 +64,32 @@ describe("analytics consent", () => {
     expect(gtag.isPublicPath("/avisos/baja")).toBe(false);
   });
 
+  it("sends the page location without the fragment", async () => {
+    vi.stubEnv("VITE_GA_MEASUREMENT_ID", "G-TEST");
+    writeConsent("granted");
+    window.history.replaceState(null, "", "/whatsapp?utm_source=x#precios");
+    const gtag = await import("./gtag");
+    gtag.trackPageView("/whatsapp", "WhatsApp");
+    const event = Array.from(window.dataLayer?.at(-1) ?? []);
+    expect(event).toEqual(["event", "page_view", { page_path: "/whatsapp", page_title: "WhatsApp", page_location: `${window.location.origin}/whatsapp` }]);
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("never measures the pages that read a token from the link", async () => {
+    vi.stubEnv("VITE_GA_MEASUREMENT_ID", "G-TEST");
+    writeConsent("granted");
+    const gtag = await import("./gtag");
+    for (const path of ["/nueva-clave", "/confirmar-email", "/nuevo-email", "/invitacion"]) {
+      window.history.replaceState(null, "", `${path}#secreto`);
+      expect(gtag.isPublicPath(path)).toBe(false);
+      gtag.startAnalytics(path);
+      gtag.trackPageView(path, "Token");
+    }
+    expect(window.dataLayer).toBeUndefined();
+    expect(document.head.querySelector("script")).toBeNull();
+    window.history.replaceState(null, "", "/");
+  });
+
   it("keeps the choice when the person rejects", async () => {
     vi.stubEnv("VITE_GA_MEASUREMENT_ID", "G-TEST");
     const gtag = await import("./gtag");

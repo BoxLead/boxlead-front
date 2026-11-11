@@ -6,11 +6,6 @@ export function invitationInvalidMessage(): string {
   return i18next.t("invitationErrors.invalid");
 }
 
-export function readInvitationToken(hash: string): string | null {
-  const token = hash.startsWith("#") ? hash.slice(1) : hash;
-  return token.trim() === "" ? null : token.trim();
-}
-
 export function acceptInvitationError(error: unknown, invitedEmail: string | null): string {
   const code = apiErrorCode(error);
   if (code === "INVITATION_EMAIL_MISMATCH") {

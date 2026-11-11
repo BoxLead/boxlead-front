@@ -9,7 +9,8 @@ import { longDate } from "../../components/PlanBanner/planNotice";
 import { useToast } from "../../components/ui/toast";
 import { useAuth } from "../../context/auth";
 import { acceptInvitation, previewInvitation } from "../../data/billing";
-import { acceptInvitationError, invitationInvalidMessage, readInvitationToken } from "../../util/invitation";
+import { takeFragmentToken } from "../../util/fragmentToken";
+import { acceptInvitationError, invitationInvalidMessage } from "../../util/invitation";
 import "./Invitation.css";
 
 type PreviewState =
@@ -31,17 +32,11 @@ export function Invitation() {
   const { user, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
-  const [token] = useState(() => readInvitationToken(window.location.hash));
+  const [token] = useState(takeFragmentToken);
   const [attempt, setAttempt] = useState(0);
   const [preview, setPreview] = useState<PreviewState>(() => (token ? { status: "loading" } : { status: "invalid" }));
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!window.location.hash) return;
-    const { pathname, search } = window.location;
-    window.history.replaceState(window.history.state, "", `${pathname}${search}`);
-  }, []);
 
   useEffect(() => {
     if (!token) return;

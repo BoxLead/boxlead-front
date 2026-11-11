@@ -1,3 +1,4 @@
+import { isTokenPath } from "../util/tokenPaths";
 import { readConsent, writeConsent, type Consent } from "./consent";
 
 declare global {
@@ -28,7 +29,7 @@ const push: Command = function () {
 };
 
 export function isPublicPath(pathname: string): boolean {
-  return !APP_PREFIX.test(pathname) && !EMAIL_LINK_PREFIX.test(pathname);
+  return !APP_PREFIX.test(pathname) && !EMAIL_LINK_PREFIX.test(pathname) && !isTokenPath(pathname);
 }
 
 export function isActive(pathname = window.location.pathname): boolean {
@@ -80,7 +81,7 @@ export function startAnalytics(pathname: string): void {
 
 export function trackPageView(pathname: string, title: string): void {
   if (!isActive(pathname)) return;
-  push("event", "page_view", { page_path: pathname, page_title: title, page_location: window.location.href });
+  push("event", "page_view", { page_path: pathname, page_title: title, page_location: `${window.location.origin}${pathname}` });
 }
 
 export function trackEvent(name: EventName, params: EventParams = {}): void {

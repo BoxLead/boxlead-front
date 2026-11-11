@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { titleWithBadge, useAppTitle, useTitleBadge } from "../hooks/useDocumentTitle";
 import { languageOfHtmlLang } from "../i18n/languages";
 import { PRODUCT_NAME } from "../util/company";
+import { isTokenPath } from "../util/tokenPaths";
 import { serializeJsonLd } from "./jsonLd";
 import { pageFor, pageTitle, type PublicPage } from "./pages";
 import { absoluteUrl, DEFAULT_OG_IMAGE, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "./site";
@@ -41,6 +42,7 @@ export function RouteMeta() {
       <title>{title}</title>
       <meta name="description" content={page.description} />
       {page.index ? <link rel="canonical" href={url} /> : <meta name="robots" content="noindex" />}
+      {isTokenPath(page.path) ? <meta name="referrer" content="no-referrer" /> : null}
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content={PRODUCT_NAME} />
       <meta property="og:locale" content={OG_LOCALE[page.lang]} />

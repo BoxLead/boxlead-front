@@ -6,6 +6,9 @@ import { AppProviders } from "./AppProviders";
 import { applyLanguage, initialLanguage } from "./i18n/apply";
 import { HTML_LANG } from "./i18n/languages";
 import { preloadOnIdle, preloadRoute } from "./routing";
+import { holdFragmentToken } from "./util/fragmentToken";
+
+holdFragmentToken();
 
 const prerenderedLang = document.documentElement.lang;
 const language = initialLanguage(window.location.pathname);

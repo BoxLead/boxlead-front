@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { ApiError } from "../api/client";
-import { isInvalidLink, isRateLimited, readFragmentToken } from "./fragmentToken";
+import { holdFragmentToken, isInvalidLink, isRateLimited, readFragmentToken, takeFragmentToken } from "./fragmentToken";
 
 describe("readFragmentToken", () => {
   it("reads the token with or without the hash sign", () => {
@@ -11,6 +11,43 @@ describe("readFragmentToken", () => {
   it("gives nothing for an empty fragment", () => {
     expect(readFragmentToken("")).toBeNull();
     expect(readFragmentToken("#  ")).toBeNull();
+  });
+});
+
+describe("holdFragmentToken", () => {
+  afterEach(() => {
+    takeFragmentToken();
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("moves the token of a token page from the address into memory", () => {
+    window.history.replaceState({ key: "k" }, "", "/nueva-clave?x=1#secreto");
+    holdFragmentToken();
+    expect(window.location.hash).toBe("");
+    expect(window.location.search).toBe("?x=1");
+    expect(window.history.state).toEqual({ key: "k" });
+    expect(takeFragmentToken()).toBe("secreto");
+    expect(takeFragmentToken()).toBeNull();
+  });
+
+  it("leaves the fragment of any other page in place", () => {
+    window.history.replaceState(null, "", "/whatsapp#precios");
+    holdFragmentToken();
+    expect(window.location.hash).toBe("#precios");
+    expect(takeFragmentToken()).toBeNull();
+  });
+
+  it("only hands the token to the page it came with", () => {
+    window.history.replaceState(null, "", "/invitacion#secreto");
+    holdFragmentToken();
+    window.history.replaceState(null, "", "/confirmar-email");
+    expect(takeFragmentToken()).toBeNull();
+  });
+
+  it("reads the fragment of a token page reached without a reload", () => {
+    window.history.replaceState(null, "", "/nuevo-email#otro");
+    expect(takeFragmentToken()).toBe("otro");
+    expect(window.location.hash).toBe("");
   });
 });
 
