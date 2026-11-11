@@ -31,7 +31,8 @@ export type AdminErrorCode =
   | "CONCURRENT_CHANGE"
   | "AUDIT_TARGET_TYPE_REQUIRED"
   | "WITHDRAWAL_REFUND_REJECTED"
-  | "WITHDRAWAL_REFUND_PENDING";
+  | "WITHDRAWAL_REFUND_PENDING"
+  | "CONSUMER_REQUEST_NOT_CONFIRMED";
 
 const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   ADMIN_SESSION_REQUIRED: "Tu sesión de administración venció. Ingresá un código nuevo para seguir.",
@@ -69,6 +70,8 @@ const CODE_MESSAGES: Record<AdminErrorCode, string> = {
   AUDIT_TARGET_TYPE_REQUIRED: "Elegí el tipo de objetivo para buscar por id.",
   WITHDRAWAL_REFUND_REJECTED: "Mercado Pago rechazó el reembolso. El pedido sigue abierto, revisá el pago en Pagos antes de volver a intentar.",
   WITHDRAWAL_REFUND_PENDING: "El reembolso sigue en proceso en Mercado Pago. Volvé a resolver el pedido cuando se acredite.",
+  CONSUMER_REQUEST_NOT_CONFIRMED:
+    "El cliente todavía no confirmó este pedido desde el email. Se puede cerrar cuando lo confirme. Cerrá este diálogo para ver la lista al día.",
 };
 
 const STATUS_MESSAGES: Record<number, string> = {

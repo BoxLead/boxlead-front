@@ -18,10 +18,9 @@ type Status =
 type ConsumerRequestFormProps = {
   kind: ConsumerRequestKind;
   submitLabel: string;
-  sentText: string;
 };
 
-export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerRequestFormProps) {
+export function ConsumerRequestForm({ kind, submitLabel }: ConsumerRequestFormProps) {
   const { t } = useTranslation("consumer");
   const [email, setEmail] = useState("");
   const [details, setDetails] = useState("");
@@ -64,11 +63,14 @@ export function ConsumerRequestForm({ kind, submitLabel, sentText }: ConsumerReq
         <p>{t("form.receiptCode")}</p>
         <p className="consumer-receipt-code">{status.receipt.code}</p>
         <p>
+          <Trans t={t} i18nKey="form.confirmText" values={{ email: status.email }} components={{ email: <strong /> }} />
+        </p>
+        <p>
           <Trans
             t={t}
             i18nKey="form.receiptText"
-            values={{ sent: sentText, email: status.email, support: SUPPORT_EMAIL }}
-            components={{ email: <strong />, support: <a href={`mailto:${SUPPORT_EMAIL}`} /> }}
+            values={{ support: SUPPORT_EMAIL }}
+            components={{ support: <a href={`mailto:${SUPPORT_EMAIL}`} /> }}
           />
         </p>
       </section>

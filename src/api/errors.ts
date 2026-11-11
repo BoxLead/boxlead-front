@@ -30,6 +30,7 @@ const ERROR_CODES: readonly ApiErrorCode[] = [
   "RESELLER_ACTIVE",
   "ADMIN_ACTIVE",
   "EMAIL_UNAVAILABLE",
+  "CONSUMER_REQUEST_TOKEN_INVALID",
 ];
 
 function errorBody(error: unknown): object | null {

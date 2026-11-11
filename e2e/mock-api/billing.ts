@@ -64,6 +64,10 @@ export const INVITATION_TOKENS = {
 } as const;
 export const INVITED_EMAIL = "ana@negocio.com";
 
+export function consumerRequestToken(sequence: number): string {
+  return `consumer-request-${sequence}`;
+}
+
 const DAY_MINUTES = 24 * 60;
 const PAYMENTS_PAGE_SIZE = 20;
 const DEMO_DAYS = 14;
@@ -214,7 +218,10 @@ export type BillingState = {
   pendingLegal: LegalVersion[];
   referralData: ReferralsResponse;
   consumerRequests: number;
+  consumerConfirmations: StoredConsumerConfirmation[];
 };
+
+type StoredConsumerConfirmation = { token: string; code: string; kind: "WITHDRAWAL" | "CANCELLATION"; used: boolean };
 
 type Json = Record<string, unknown> | unknown[] | null;
 
@@ -380,6 +387,7 @@ function disabled(): BillingState {
     pendingLegal: [],
     referralData: emptyReferrals(),
     consumerRequests: 0,
+    consumerConfirmations: [],
   };
 }
 
@@ -753,7 +761,16 @@ async function consumerRequest(state: BillingState, req: MockRequest): Promise<M
   if (fields.length > 0) return validation(fields);
   state.consumerRequests += 1;
   const code = `BX-${(36 ** 5 + state.consumerRequests * 7919).toString(36).toUpperCase()}`;
+  state.consumerConfirmations.push({ token: consumerRequestToken(state.consumerRequests), code, kind: body.kind === "WITHDRAWAL" ? "WITHDRAWAL" : "CANCELLATION", used: false });
   return ok({ code, createdAt: ago(0) }, 202);
+}
+
+async function confirmConsumerRequest(state: BillingState, req: MockRequest): Promise<MockReply> {
+  const { token } = await req.readBody();
+  const confirmation = state.consumerConfirmations.find((item) => item.token === token && !item.used);
+  if (!confirmation) return error(400, "The confirmation link is not valid", "CONSUMER_REQUEST_TOKEN_INVALID");
+  confirmation.used = true;
+  return ok({ code: confirmation.code, kind: confirmation.kind });
 }
 
 function referralRedirect(state: BillingState, req: MockRequest): MockReply {
@@ -797,6 +814,10 @@ export async function billingRoute(state: BillingState, req: MockRequest): Promi
 
   if (root === "legal" && second === "documents" && parts.length === 2 && method === "GET") {
     return state.legal ? ok(LEGAL_DOCUMENTS) : NOT_FOUND;
+  }
+
+  if (root === "consumer-requests" && second === "confirm" && parts.length === 2 && method === "POST") {
+    return state.legal ? confirmConsumerRequest(state, req) : NOT_FOUND;
   }
 
   if (root === "consumer-requests" && parts.length === 1 && method === "POST") {

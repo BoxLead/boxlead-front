@@ -7,20 +7,19 @@
     "intro": "If you signed up for a paid BoxLead plan you can withdraw within 10 calendar days of the first charge. We refund the full amount even if you already used BoxLead, and withdrawing costs you nothing.",
     "how": "You don't need to sign in. Leave us your account email and we give you a request code right away. The refund goes through Mercado Pago, which processed the charge.",
     "other": "If you only want to stop paying, use the [Cancellation button](/baja).",
-    "submit": "Send withdrawal request",
-    "sent": "Within 24 hours we'll write to you to confirm the request and the refund"
+    "submit": "Send withdrawal request"
   },
   "cancellation": {
     "intro": "Cancel your BoxLead subscription without signing in. Cancelling is free and we don't charge notice periods or months in advance.",
     "how": "Leave us your account email and we give you a request code right away. You keep using BoxLead until the end of the period you already paid for.",
     "other": "If it has been less than 10 days since the first charge and you want a full refund, use the [Withdrawal button](/arrepentimiento).",
-    "submit": "Send cancellation request",
-    "sent": "Within 24 hours we'll send you the cancellation receipt"
+    "submit": "Send cancellation request"
   },
   "form": {
     "receiptTitle": "We got your request",
     "receiptCode": "Your request code is",
-    "receiptText": "Keep it. {{sent}} at <email>{{email}}</email>. If it doesn't arrive, write to us at <support>{{support}}</support> with that code.",
+    "confirmText": "We sent an email to <email>{{email}}</email>. Confirm the request from the link so we can process it.",
+    "receiptText": "Keep it. If the email doesn't arrive, write to us at <support>{{support}}</support> with that code.",
     "failedTitle": "We couldn't register your request",
     "rateLimited": "Too many attempts in a row. ",
     "failedText": "Send it by email to <support>{{support}}</support> with the subject «{{subject}}» and your account email. We'll reply with the request code within 24 hours.",
@@ -31,5 +30,13 @@
     "overLimit": "characters, over the limit",
     "detailsError": "Check the details.",
     "sending": "Sending…"
+  },
+  "confirm": {
+    "title": "Confirm your request",
+    "done": "We confirmed your request {{code}}. We will reply within 24 business hours.",
+    "invalid": "This link doesn't work. It may have expired or been used already. If you still want to make the request, send it again.",
+    "limited": "Too many attempts in a row. Wait a few minutes and try again.",
+    "failed": "We couldn't confirm your request. Check your connection and try again.",
+    "retry": "Try again"
   }
 }

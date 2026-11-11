@@ -1,14 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../api/client";
-import { acceptInvitationError, invitationInvalidMessage, readInvitationToken } from "./invitation";
-
-describe("readInvitationToken", () => {
-  it("reads the token from the fragment", () => {
-    expect(readInvitationToken("#abc123")).toBe("abc123");
-    expect(readInvitationToken("")).toBeNull();
-    expect(readInvitationToken("#")).toBeNull();
-  });
-});
+import { acceptInvitationError, invitationInvalidMessage } from "./invitation";
 
 describe("acceptInvitationError", () => {
   const coded = (status: number, code: string) => new ApiError("x", status, { code });

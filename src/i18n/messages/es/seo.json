@@ -68,6 +68,10 @@
       "title": "Botón de baja de servicio",
       "description": "Pedí la baja de tu suscripción a BoxLead sin iniciar sesión, sin costo y sin preaviso."
     },
+    "consumerConfirm": {
+      "title": "Confirmar tu solicitud",
+      "description": "Confirmá tu pedido de arrepentimiento o de baja de BoxLead."
+    },
     "notFound": {
       "title": "Página no encontrada",
       "description": "El enlace puede estar mal escrito o la página ya no existe."

@@ -112,6 +112,18 @@ test.describe("consumer requests", () => {
     await expect(page.getByRole("row", { name: /BX-Q4TD8R/ })).toContainText("Cancelamos tu suscripción al final del período.");
   });
 
+  test("keeps a request the customer did not confirm from being closed", async ({ page }) => {
+    await resetOperations({ roles: ["SUPPORT"] });
+    await enterAdmin(page, "/pedidos");
+    const unconfirmed = page.getByRole("row", { name: /BX-M2PZ6K/ });
+    await expect(unconfirmed.getByText("Sin confirmar")).toBeVisible();
+    await expect(unconfirmed.getByRole("button", { name: "Cerrar pedido" })).toBeDisabled();
+    await expect(unconfirmed.getByRole("button", { name: "Cerrar pedido" })).toHaveAccessibleDescription("Sin confirmar");
+    await expect(page.getByRole("row", { name: /BX-Q4TD8R/ }).getByText("Confirmado")).toBeVisible();
+    await noSideScroll(page);
+    await expectAccessible(page);
+  });
+
   test("asks for the code and closes the request when the admin session expired in the dialog", async ({ page }) => {
     await resetOperations({ roles: ["SUPPORT"] });
     await enterAdmin(page, "/pedidos");

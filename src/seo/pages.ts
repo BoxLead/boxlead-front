@@ -187,6 +187,14 @@ export const PUBLIC_PAGES: PublicPage[] = [
     source: "src/pages/ConsumerRequest/Cancellation.tsx",
   }),
   page({
+    path: "/confirmar-solicitud",
+    followsPreference: true,
+    ...preferenceCopy("consumerConfirm"),
+    lang: "es-AR",
+    index: false,
+    source: "src/pages/ConsumerRequest/ConfirmConsumerRequest.tsx",
+  }),
+  page({
     path: "/login",
     followsPreference: true,
     ...preferenceCopy("login"),

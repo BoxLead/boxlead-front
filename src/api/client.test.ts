@@ -194,6 +194,18 @@ describe("coded errors", () => {
     });
   });
 
+  it("explains an account that is already connected to another BoxLead account", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
+    fetchMock.mockResolvedValue(
+      json({ error: "Conflict", message: "Owned by another account", code: "CONNECTION_OWNED_BY_OTHER_ACCOUNT" }, 409),
+    );
+
+    await expect(api.post("/oauth/INSTAGRAM/callback", {})).rejects.toMatchObject({
+      status: 409,
+      message: "Esta cuenta ya está conectada a otra cuenta de BoxLead. Desconectala desde esa cuenta y volvé a intentar.",
+    });
+  });
+
   it("explains a social login on a password account in Spanish", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com");
     fetchMock.mockResolvedValue(

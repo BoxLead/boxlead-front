@@ -37,7 +37,7 @@ function GrantDialog({ userId, open, onClose, run }: { userId: string; open: boo
       invalid(`Los días tienen que ser un número entero de 1 a ${MAX_DEMO_DAYS}.`);
     }
     const body = demoDays === null ? { reason } : { demoDays, reason };
-    return run(() => adminApi.post(`/admin/customers/${userId}/demo`, body), "Le otorgamos la Demo.");
+    return run(() => adminApi.post(`/admin/customers/${encodeURIComponent(userId)}/demo`, body), "Le otorgamos la Demo.");
   }
 
   return (
@@ -83,7 +83,7 @@ function ExtendDialog({
 
   function confirm(reason: string) {
     if (!isDay(day) || day < tomorrow) invalid("Elegí un día a partir de mañana.");
-    return run(() => adminApi.post(`/admin/customers/${userId}/demo/extend`, { endsAt: endOfDay(day), reason }), "Extendimos la Demo.");
+    return run(() => adminApi.post(`/admin/customers/${encodeURIComponent(userId)}/demo/extend`, { endsAt: endOfDay(day), reason }), "Extendimos la Demo.");
   }
 
   return (
@@ -151,7 +151,7 @@ export function DemoPanel({ userId, demo, canOperate, onChanged }: DemoPanelProp
             tone="danger"
             onClose={dialogs.close}
             onConfirm={(reason) =>
-              dialogs.run(() => adminApi.post(`/admin/customers/${userId}/demo/revoke`, { reason }), "Le quitamos la Demo.")
+              dialogs.run(() => adminApi.post(`/admin/customers/${encodeURIComponent(userId)}/demo/revoke`, { reason }), "Le quitamos la Demo.")
             }
           >
             {running(demo) ? (

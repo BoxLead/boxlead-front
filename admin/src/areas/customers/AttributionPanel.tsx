@@ -47,7 +47,7 @@ function CorrectDialog({ userId, current, directory, onClose, run }: CorrectDial
   function confirm(reason: string) {
     if (!selected) invalid("Elegí el revendedor.");
     return run(
-      () => adminApi.post(`/admin/customers/${userId}/attribution`, { resellerId: selected, reason }),
+      () => adminApi.post(`/admin/customers/${encodeURIComponent(userId)}/attribution`, { resellerId: selected, reason }),
       "Corregimos la atribución.",
     );
   }

@@ -39,6 +39,17 @@ describe("RouteMeta", () => {
     expect(document.querySelector('link[rel="canonical"]')).toBeNull();
   });
 
+  it("asks the browser to send no referrer from the pages that read a token", () => {
+    renderAt("/nueva-clave");
+    expect(meta('meta[name="referrer"]')).toBe("no-referrer");
+    expect(meta('meta[name="robots"]')).toBe("noindex");
+  });
+
+  it("leaves the referrer alone on the other pages", () => {
+    renderAt("/login");
+    expect(document.querySelector('meta[name="referrer"]')).toBeNull();
+  });
+
   it("links both languages of a legal page", () => {
     renderAt("/privacidad");
     const alternates = [...document.querySelectorAll('link[rel="alternate"]')].map(

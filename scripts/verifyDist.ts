@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { preview } from 'vite'
+import { TOKEN_PATHS } from '../src/util/tokenPaths.ts'
 
 type Check = { name: string; ok: boolean; detail?: string }
 
@@ -90,11 +91,16 @@ async function main() {
     }
   }
 
-  for (const path of ['/login', '/register', '/arrepentimiento', '/baja', '/avisos/baja', '/invitacion', '/social/callback', '/recuperar-clave', '/nueva-clave', '/confirmar-email', '/nuevo-email', '/reingresar', '/app/inbox', '/app']) {
+  for (const path of ['/login', '/register', '/arrepentimiento', '/baja', '/confirmar-solicitud', '/avisos/baja', '/invitacion', '/social/callback', '/recuperar-clave', '/nueva-clave', '/confirmar-email', '/nuevo-email', '/reingresar', '/app/inbox', '/app']) {
     const response = await fetch(`${base}${path}`)
     const html = await response.text()
     check(`${path} is noindex`, response.status === 200 && /name="robots" content="noindex"/.test(html) && count(html, /<title>/g) === 1, String(response.status))
     check(`${path} is out of the sitemap`, !sitemapUrls.includes(`https://boxlead.app${path}`))
+  }
+
+  for (const path of TOKEN_PATHS) {
+    const html = await (await fetch(`${base}${path}`)).text()
+    check(`${path} sends no referrer`, /<meta name="referrer" content="no-referrer"/.test(html))
   }
 
   const missing = await fetch(`${base}/esto-no-existe`)
@@ -104,6 +110,11 @@ async function main() {
   for (const [from, to] of [['/privacidad/', '/privacidad'], ['/index.html', '/'], ['/terminos.html', '/terminos']]) {
     const response = await fetch(`${base}${from}`, { redirect: 'manual' })
     check(`${from} redirects to ${to} with 301`, response.status === 301 && response.headers.get('location') === to, `${response.status} ${response.headers.get('location')}`)
+  }
+  for (const from of ['//example.com/', '/%5Cexample.com/', '//example.com/login.html']) {
+    const response = await fetch(`${base}${from}`, { redirect: 'manual' })
+    const location = response.headers.get('location')
+    check(`${from} stays on the site`, location === null || /^\/[^/\\]/.test(location), `${response.status} ${location}`)
   }
 
   await server.close()

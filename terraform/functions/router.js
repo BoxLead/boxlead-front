@@ -15,7 +15,7 @@ function redirect(location, request) {
   return {
     statusCode: 301,
     statusDescription: 'Moved Permanently',
-    headers: { location: { value: location + query } },
+    headers: { location: { value: '/' + location.replace(/^[\/\\]+/, '') + query } },
   };
 }
 

@@ -63,7 +63,7 @@ function OverrideDialog({ userId, row, onClose, run }: { userId: string; row: Ro
     if (expires && (!isDay(expires) || expires < tomorrow)) invalid("El vencimiento tiene que ser a partir de mañana.");
     const amount = unlimited ? { unlimited: true } : { value: parseValue(row.key, value) };
     const body = { ...amount, ...(expires ? { expiresAt: endOfDay(expires) } : {}), reason };
-    return run(() => adminApi.put(`/admin/customers/${userId}/overrides/${row.key}`, body), `Ajustamos ${lower(label)}.`);
+    return run(() => adminApi.put(`/admin/customers/${encodeURIComponent(userId)}/overrides/${row.key}`, body), `Ajustamos ${lower(label)}.`);
   }
 
   return (
@@ -201,7 +201,7 @@ export function LimitsPanel({ userId, entitlements, overrides, canOperate, onCha
         onClose={dialogs.close}
         onConfirm={(reason) =>
           revoking
-            ? dialogs.run(() => adminApi.delete(`/admin/customers/${userId}/overrides/${revoking.key}`, { reason }), "Quitamos el ajuste.")
+            ? dialogs.run(() => adminApi.delete(`/admin/customers/${encodeURIComponent(userId)}/overrides/${revoking.key}`, { reason }), "Quitamos el ajuste.")
             : Promise.resolve()
         }
       >

@@ -1,5 +1,6 @@
-import { ApiError } from "../../api/client";
-import type { ConsumerRequestKind, ConsumerRequestReceipt } from "../../api/types";
+import { api, ApiError } from "../../api/client";
+import { apiErrorCode } from "../../api/errors";
+import type { ConsumerRequestConfirmation, ConsumerRequestKind, ConsumerRequestReceipt } from "../../api/types";
 import { SUPPORT_EMAIL } from "../../util/company";
 
 export const DETAILS_MAX = 500;
@@ -27,4 +28,25 @@ export function fallbackMailto(kind: ConsumerRequestKind, email: string): string
 
 export function isRateLimited(error: unknown): boolean {
   return error instanceof ApiError && error.status === 429;
+}
+
+export function isConfirmation(value: unknown): value is ConsumerRequestConfirmation {
+  return (
+    isReceipt(value) &&
+    "kind" in value &&
+    (value.kind === "WITHDRAWAL" || value.kind === "CANCELLATION")
+  );
+}
+
+export async function confirmConsumerRequest(token: string): Promise<ConsumerRequestConfirmation> {
+  const confirmation = await api.post<unknown>("/consumer-requests/confirm", { token });
+  if (!isConfirmation(confirmation)) throw new Error("Invalid confirmation");
+  return confirmation;
+}
+
+export function isInvalidConfirmation(error: unknown): boolean {
+  return (
+    apiErrorCode(error) === "CONSUMER_REQUEST_TOKEN_INVALID" ||
+    (error instanceof ApiError && (error.status === 400 || error.status === 404))
+  );
 }

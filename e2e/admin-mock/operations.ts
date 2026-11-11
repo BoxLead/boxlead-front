@@ -107,13 +107,14 @@ function fixtures(now: Date): State {
     resolvedBy: null,
     resolvedAt: null,
     receiptSentAt: null,
+    confirmedAt: fields.createdAt,
     refundable: null,
     ...fields,
   });
   const requests = [
     request(1, { kind: "WITHDRAWAL", email: "lucia@agencia-norte.example", userId: lucia, subscriptionId: id("004", 1), details: "Contraté ayer y me arrepentí, no lo voy a usar.", refundable: { amountMinor: 1_890_000, currency: "ARS" }, createdAt: at(30) }),
     request(2, { kind: "CANCELLATION", email: "martin@tienda-sur.example", userId: martin, subscriptionId: id("004", 2), createdAt: at(20) }),
-    request(3, { kind: "CANCELLATION", email: "alguien@correo.example", details: "Quiero darme de baja.", createdAt: at(6) }),
+    request(3, { kind: "CANCELLATION", email: "alguien@correo.example", details: "Quiero darme de baja.", createdAt: at(6), confirmedAt: null }),
     request(4, { kind: "CANCELLATION", email: "ana@kiosco.example", status: "RESOLVED", resolution: "Cancelamos tu suscripción al final del período.", resolvedBy: id("001", 4), resolvedAt: at(70), receiptSentAt: at(70), createdAt: at(96) }),
     request(5, { kind: "WITHDRAWAL", email: "juan@feria.example", status: "REJECTED", resolution: "El pedido llegó fuera del plazo de diez días.", resolvedBy: id("001", 4), resolvedAt: at(120), createdAt: at(150) }),
   ];
@@ -330,6 +331,7 @@ function resolve(requestId: string, body: Record<string, unknown>, admin: AdminI
   if (request.kind === "WITHDRAWAL" && !hasRole(admin, "FINANCE")) return failure(403, "This action needs another admin role", "ROLE_REQUIRED");
   if (request.userId === admin.userId && (request.kind === "WITHDRAWAL" || !admin.roles.includes("OWNER"))) return failure(403, "Admins can not operate on their own account", "ADMIN_SELF_OPERATION");
   if (request.status !== "RECEIVED") return failure(409, "The request is already closed");
+  if (!request.confirmedAt) return failure(409, "The customer has not confirmed the request", "CONSUMER_REQUEST_NOT_CONFIRMED");
   if (request.kind === "WITHDRAWAL" && body.status === "RESOLVED") {
     if (withdrawalRefund === "REJECTED") return failure(409, "Mercado Pago rejected the refund, the request stays open", "WITHDRAWAL_REFUND_REJECTED");
     if (withdrawalRefund === "PENDING") return failure(409, "The refund is still in process, the request stays open", "WITHDRAWAL_REFUND_PENDING");

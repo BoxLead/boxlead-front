@@ -68,6 +68,10 @@
       "title": "Cancellation button",
       "description": "Cancel your BoxLead subscription without signing in, at no cost and without notice."
     },
+    "consumerConfirm": {
+      "title": "Confirm your request",
+      "description": "Confirm your BoxLead withdrawal or cancellation request."
+    },
     "notFound": {
       "title": "Page not found",
       "description": "The link may be mistyped or the page no longer exists."

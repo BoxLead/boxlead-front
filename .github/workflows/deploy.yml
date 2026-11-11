@@ -48,6 +48,7 @@ jobs:
         run: scripts/lastmod.sh > lastmod.txt
 
       - name: Configure AWS credentials
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -56,6 +57,7 @@ jobs:
 
       - name: Read Vite origins from SSM
         id: config
+        if: github.event_name != 'pull_request'
         run: |
           set -euo pipefail
           api=$(aws ssm get-parameter --name "${SIGNAL_FRONT_SSM_PREFIX}VITE_API_BASE_URL" --query Parameter.Value --output text)
@@ -71,6 +73,13 @@ jobs:
           echo "ga_measurement_id=$ga_measurement_id" >> "$GITHUB_OUTPUT"
           echo "site_verification=$site_verification" >> "$GITHUB_OUTPUT"
 
+      - name: Use placeholder origins for a pull request
+        id: placeholder
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "api_base_url=https://api.example.invalid" >> "$GITHUB_OUTPUT"
+          echo "agent_api_base_url=https://agent.example.invalid" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
@@ -82,8 +91,8 @@ jobs:
           load: true
           tags: boxlead-front:${{ github.sha }}
           build-args: |
-            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
-            VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url }}
+            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url || steps.placeholder.outputs.api_base_url }}
+            VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url || steps.placeholder.outputs.agent_api_base_url }}
             VITE_AUTH0_DOMAIN=${{ steps.config.outputs.auth0_domain }}
             VITE_AUTH0_CLIENT_ID=${{ steps.config.outputs.auth0_client_id }}
             VITE_GA_MEASUREMENT_ID=${{ steps.config.outputs.ga_measurement_id }}
@@ -116,8 +125,8 @@ jobs:
           sbom: false
           outputs: type=local,dest=dist
           build-args: |
-            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url }}
-            VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url }}
+            VITE_API_BASE_URL=${{ steps.config.outputs.api_base_url || steps.placeholder.outputs.api_base_url }}
+            VITE_AGENT_API_BASE_URL=${{ steps.config.outputs.agent_api_base_url || steps.placeholder.outputs.agent_api_base_url }}
             VITE_AUTH0_DOMAIN=${{ steps.config.outputs.auth0_domain }}
             VITE_AUTH0_CLIENT_ID=${{ steps.config.outputs.auth0_client_id }}
             VITE_GA_MEASUREMENT_ID=${{ steps.config.outputs.ga_measurement_id }}

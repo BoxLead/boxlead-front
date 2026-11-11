@@ -27,6 +27,20 @@ describe("OAuthCallback", () => {
     expect(screen.getByRole("link", { name: "Volver a conexiones" })).toBeInTheDocument();
   });
 
+  it("never shows the description the provider put in the link", async () => {
+    await i18n.changeLanguage("es");
+    renderCallback("/app/oauth/callback/MELI?error=server_error&error_description=Tu+cuenta+fue+suspendida.+Llam%C3%A1+al+0800");
+    expect(screen.getByRole("alert")).toHaveTextContent("MercadoLibre no autorizó la conexión (server_error).");
+    expect(screen.queryByText(/suspendida/)).toBeNull();
+  });
+
+  it("does not repeat an error code that is not a plain code", async () => {
+    await i18n.changeLanguage("es");
+    renderCallback("/app/oauth/callback/MELI?error=Tu%20cuenta%20fue%20suspendida");
+    expect(screen.getByRole("alert")).toHaveTextContent("No pudimos completar la conexión.");
+    expect(screen.queryByText(/suspendida/)).toBeNull();
+  });
+
   it("explains the failures in English", async () => {
     await i18n.changeLanguage("en");
     renderCallback("/app/oauth/callback/INSTAGRAM?error=access_denied");

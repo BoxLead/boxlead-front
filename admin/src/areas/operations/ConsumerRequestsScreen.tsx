@@ -30,6 +30,8 @@ const MAX_RESOLUTION = 1000;
 
 const RECEIPT_QUEUED: StatusLabel = { label: "En cola", tone: "success" };
 const RECEIPT_NOT_SENT: StatusLabel = { label: "Sin enviar", tone: "neutral" };
+const CONFIRMED: StatusLabel = { label: "Confirmado", tone: "success" };
+const NOT_CONFIRMED: StatusLabel = { label: "Sin confirmar", tone: "warning" };
 
 const EMPTY: Record<ConsumerRequestStatus, string> = {
   RECEIVED: "No hay pedidos pendientes",
@@ -193,21 +195,40 @@ export function ConsumerRequestsScreen() {
   ];
 
   if (status === "RECEIVED") {
-    columns.push({
-      key: "action",
-      header: "Acción",
-      type: "actions",
-      cell: (row) =>
-        row.userId === me.userId && !me.roles.includes("OWNER") ? (
-          <span className="sub-text">Es tu cuenta</span>
-        ) : canResolve(me.roles, row) ? (
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setResolving(row)}>
-            Cerrar pedido
-          </button>
-        ) : (
-          <span className="sub-text">Lo cierra Finanzas</span>
-        ),
-    });
+    columns.push(
+      {
+        key: "confirmed",
+        header: "Confirmación",
+        type: "status",
+        cell: (row) =>
+          row.confirmedAt ? (
+            <StatusBadge status={CONFIRMED} />
+          ) : (
+            <span id={`unconfirmed-${row.id}`}>
+              <StatusBadge status={NOT_CONFIRMED} />
+            </span>
+          ),
+      },
+      {
+        key: "action",
+        header: "Acción",
+        type: "actions",
+        cell: (row) =>
+          row.userId === me.userId && !me.roles.includes("OWNER") ? (
+            <span className="sub-text">Es tu cuenta</span>
+          ) : !canResolve(me.roles, row) ? (
+            <span className="sub-text">Lo cierra Finanzas</span>
+          ) : row.confirmedAt ? (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setResolving(row)}>
+              Cerrar pedido
+            </button>
+          ) : (
+            <button type="button" className="btn btn-secondary btn-sm" disabled aria-describedby={`unconfirmed-${row.id}`}>
+              Cerrar pedido
+            </button>
+          ),
+      },
+    );
   } else {
     columns.push(
       {

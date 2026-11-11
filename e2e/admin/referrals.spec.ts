@@ -156,6 +156,7 @@ test("a clicks range that ends before it starts warns in its section and keeps t
   page.on("request", (request) => {
     if (new URL(request.url()).pathname === `/admin/resellers/${NORTH}`) asked.push(new URL(request.url()).search);
   });
+  await clicks.getByLabel("Desde").fill("2026-10-01");
   await clicks.getByLabel("Hasta").fill("2026-10-10");
   await expect(clicks.getByText(/hubo/)).toBeVisible();
   await clicks.getByLabel("Desde").fill("2026-10-20");

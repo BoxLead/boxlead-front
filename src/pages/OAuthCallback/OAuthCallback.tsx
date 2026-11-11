@@ -24,11 +24,14 @@ function asPlatform(value: string | undefined): PlatformType | null {
   return match ? match.id : null;
 }
 
-function providerError(code: string, description: string | null, platformName: string): string {
+const PROVIDER_ERROR_CODE = /^[A-Za-z0-9_.-]{1,64}$/;
+
+function providerError(code: string, platformName: string): string {
   if (code === "access_denied") {
     return i18next.t("callback.cancelled", { ns: "connections", name: platformName });
   }
-  return description?.replace(/\+/g, " ") || i18next.t("callback.denied", { ns: "connections", name: platformName, code });
+  if (!PROVIDER_ERROR_CODE.test(code)) return i18next.t("callback.failed", { ns: "connections" });
+  return i18next.t("callback.denied", { ns: "connections", name: platformName, code });
 }
 
 export function OAuthCallback() {
@@ -47,15 +50,14 @@ export function OAuthCallback() {
 
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
-  const oauthDesc = searchParams.get("error_description");
 
   const blockingError = useMemo(() => {
     if (!definition) return t("callback.invalidLink");
-    if (oauthError) return providerError(oauthError, oauthDesc, definition.name);
+    if (oauthError) return providerError(oauthError, definition.name);
     if (!code) return t("callback.missingCode");
     if (!session.valid) return t("callback.unverified");
     return null;
-  }, [definition, oauthError, oauthDesc, code, session.valid, t]);
+  }, [definition, oauthError, code, session.valid, t]);
 
   useEffect(() => {
     if (blockingError || !code || !platform) return;

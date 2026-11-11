@@ -51,7 +51,7 @@ function cancelText(subscription: Subscription): string {
 
 export function SubscriptionPanel({ userId, subscription, canOperate, onChanged }: SubscriptionPanelProps) {
   const dialogs = useActionDialogs<Dialog>(onChanged);
-  const base = `/admin/customers/${userId}/subscription`;
+  const base = `/admin/customers/${encodeURIComponent(userId)}/subscription`;
   const status = subscription?.status;
   const live = subscription !== null && status !== "CANCELED";
   const settled = (failure: unknown) => {

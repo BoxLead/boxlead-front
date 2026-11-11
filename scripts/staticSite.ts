@@ -12,17 +12,21 @@ export type Resolution =
   | { kind: 'file'; file: string; status: number }
   | { kind: 'next' }
 
+function redirectTo(location: string): Resolution {
+  return { kind: 'redirect', location: `/${location.replace(/^[/\\]+/, '')}` }
+}
+
 function lastSegment(pathname: string): string {
   return pathname.slice(pathname.lastIndexOf('/') + 1)
 }
 
 export function resolveRequest(pathname: string, exists: (file: string) => boolean): Resolution {
-  if (pathname.length > 1 && pathname.endsWith('/')) return { kind: 'redirect', location: pathname.replace(/\/+$/, '') }
-  if (pathname === '/index.html') return { kind: 'redirect', location: '/' }
+  if (pathname.length > 1 && pathname.endsWith('/')) return redirectTo(pathname.replace(/\/+$/, ''))
+  if (pathname === '/index.html') return redirectTo('/')
   if (pathname === `/${APP_SHELL_FILE}` || pathname === `/${NOT_FOUND_FILE}`) {
     return { kind: 'file', file: NOT_FOUND_FILE, status: 404 }
   }
-  if (pathname.endsWith('.html')) return { kind: 'redirect', location: pathname.slice(0, -5) }
+  if (pathname.endsWith('.html')) return redirectTo(pathname.slice(0, -5))
   if (pathname === APP_PREFIX || pathname.startsWith(`${APP_PREFIX}/`)) return { kind: 'file', file: APP_SHELL_FILE, status: 200 }
   if (pathname === '/') return { kind: 'file', file: 'index.html', status: 200 }
   if (lastSegment(pathname).includes('.')) return exists(pathname.slice(1)) ? { kind: 'next' } : { kind: 'file', file: NOT_FOUND_FILE, status: 404 }

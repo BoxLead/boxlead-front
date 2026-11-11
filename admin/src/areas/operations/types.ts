@@ -59,6 +59,7 @@ export type ConsumerRequest = {
   resolvedAt: string | null;
   receiptSentAt: string | null;
   createdAt: string;
+  confirmedAt: string | null;
   refundable: Money | null;
 };
 

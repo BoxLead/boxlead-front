@@ -51,6 +51,7 @@
     "PLAN_LIMIT_REACHED": "Llegaste al límite de tu plan.",
     "ENTITLEMENTS_UNAVAILABLE": "No pudimos revisar tu plan. Probá de nuevo en unos minutos.",
     "LEGAL_ACCEPTANCE_REQUIRED": "Para seguir tenés que aceptar los términos y la política de privacidad vigentes.",
+    "CONNECTION_OWNED_BY_OTHER_ACCOUNT": "Esta cuenta ya está conectada a otra cuenta de BoxLead. Desconectala desde esa cuenta y volvé a intentar.",
     "loadFailed": "No pudimos cargar los datos. Probá de nuevo.",
     "invalidSession": "Respuesta de sesión inválida."
   },
