@@ -13,7 +13,7 @@ export function Cancellation() {
       <p>
         <RichText text={t("cancellation.other")} />
       </p>
-      <ConsumerRequestForm kind="CANCELLATION" submitLabel={t("cancellation.submit")} sentText={t("cancellation.sent")} />
+      <ConsumerRequestForm kind="CANCELLATION" submitLabel={t("cancellation.submit")} />
     </LegalLayout>
   );
 }

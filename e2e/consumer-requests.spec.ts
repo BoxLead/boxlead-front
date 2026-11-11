@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, expectAccessible, resetApi, screenshot, test } from "./support.ts";
 import { MOCK_API_ORIGIN } from "./ports.ts";
+import { consumerRequestToken } from "./mock-api/billing.ts";
 
 const BUTTONS = [
   { name: "Botón de arrepentimiento", path: "/arrepentimiento" },
@@ -83,7 +84,9 @@ test("a cancellation request answers with its code", async ({ page }) => {
 
   const receipt = page.getByRole("status").filter({ hasText: "Recibimos tu pedido" });
   await expect(receipt).toContainText(/BX-[0-9A-Z]+/);
-  await expect(receipt).toContainText("ana@negocio.com");
+  await expect(receipt).toContainText(
+    "Te mandamos un email a ana@negocio.com. Confirmá la solicitud desde el link para que podamos procesarla.",
+  );
   expect(calls).toEqual(["POST /consumer-requests"]);
   await expectNoHorizontalScroll(page);
   await expectAccessible(page);
@@ -132,4 +135,47 @@ test("a cancellation request points to the support email while core keeps the re
   await page.getByRole("button", { name: "Enviar pedido de baja" }).click();
   await expect(page.getByRole("alert")).toContainText("support@boxlead.app");
   await expect(page.getByRole("status").filter({ hasText: "Recibimos tu pedido" })).toHaveCount(0);
+});
+
+test("the link of the email confirms the request once and leaves no token behind", async ({ page }) => {
+  test.slow();
+  await resetApi("billing-none");
+  await page.goto("/baja");
+  await page.getByLabel("Email de tu cuenta").fill("ana@negocio.com");
+  await page.getByRole("button", { name: "Enviar pedido de baja" }).click();
+  const code = (await page.locator(".consumer-receipt-code").textContent()) ?? "";
+  expect(code).toMatch(/^BX-[0-9A-Z]+$/);
+
+  const token = consumerRequestToken(1);
+  const calls = apiCalls(page);
+  const confirmations: unknown[] = [];
+  page.on("request", (request) => {
+    if (request.url().endsWith("/consumer-requests/confirm")) confirmations.push(request.postDataJSON());
+  });
+  await page.goto(`/confirmar-solicitud#${token}`);
+  const done = page.getByText(`Confirmamos tu solicitud ${code}. Te respondemos dentro de las 24 horas hábiles.`);
+  await expect(done).toBeVisible();
+  await expect(page).toHaveURL(/\/confirmar-solicitud$/);
+  expect(await page.evaluate(() => window.location.href + JSON.stringify({ ...localStorage, ...sessionStorage }))).not.toContain(token);
+  expect(confirmations).toEqual([{ token }]);
+  expect(calls).toEqual(["POST /consumer-requests/confirm"]);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex");
+  await expect(page.locator('meta[name="referrer"]')).toHaveAttribute("content", "no-referrer");
+  await expect(page.getByRole("heading", { level: 1, name: "Confirmar tu solicitud" })).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+  await screenshotThemes(page, "consumer-confirm-done", async () => {
+    await expect(done).toBeVisible();
+  });
+
+  await page.goto("about:blank");
+  await page.goto(`/confirmar-solicitud#${token}`);
+  const invalid = page.getByRole("alert");
+  await expect(invalid).toContainText("Este link no sirve");
+  await expect(page.getByRole("link", { name: "Botón de baja de servicio" })).toHaveAttribute("href", "/baja");
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+  await screenshotThemes(page, "consumer-confirm-invalid", async () => {
+    await expect(invalid).toBeVisible();
+  });
 });

@@ -41,6 +41,7 @@ const Privacy = lazyRoute(() => import("./pages/Legal/Privacy"), "Privacy");
 const AdhesionContracts = lazyRoute(() => import("./pages/Legal/AdhesionContracts"), "AdhesionContracts");
 const Withdrawal = lazyRoute(() => import("./pages/ConsumerRequest/Withdrawal"), "Withdrawal");
 const Cancellation = lazyRoute(() => import("./pages/ConsumerRequest/Cancellation"), "Cancellation");
+const ConfirmConsumerRequest = lazyRoute(() => import("./pages/ConsumerRequest/ConfirmConsumerRequest"), "ConfirmConsumerRequest");
 const ForgotPassword = lazyRoute(() => import("./pages/PasswordRecovery/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyRoute(() => import("./pages/PasswordRecovery/ResetPassword"), "ResetPassword");
 const ConfirmEmail = lazyRoute(() => import("./pages/EmailVerification/ConfirmEmail"), "ConfirmEmail");
@@ -78,6 +79,7 @@ registerRoutePreload("/app/reseller", [Layout, Reseller, ...appMessages]);
 registerRoutePreload("/avisos/baja", [NotificationUnsubscribe]);
 registerRoutePreload("/arrepentimiento", [Withdrawal, messages("consumer")]);
 registerRoutePreload("/baja", [Cancellation, messages("consumer")]);
+registerRoutePreload("/confirmar-solicitud", [ConfirmConsumerRequest, messages("consumer")]);
 
 function Page({ children }: { children: ReactNode }) {
   return <RouteErrorBoundary inline>{children}</RouteErrorBoundary>;
@@ -110,6 +112,7 @@ export default function App() {
           <Route path="/contratos" element={<AdhesionContracts />} />
           <Route path="/arrepentimiento" element={<Withdrawal />} />
           <Route path="/baja" element={<Cancellation />} />
+          <Route path="/confirmar-solicitud" element={<ConfirmConsumerRequest />} />
           <Route path="/recuperar-clave" element={<ForgotPassword />} />
           <Route path="/nueva-clave" element={<ResetPassword />} />
           <Route path="/confirmar-email" element={<ConfirmEmail />} />

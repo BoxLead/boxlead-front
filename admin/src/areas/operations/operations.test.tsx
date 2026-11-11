@@ -73,6 +73,7 @@ function request(fields: Partial<ConsumerRequest> & Pick<ConsumerRequest, "id" |
     resolvedAt: null,
     receiptSentAt: null,
     createdAt: "2026-10-20T12:00:00Z",
+    confirmedAt: "2026-10-20T12:30:00Z",
     refundable: null,
     ...fields,
   };
@@ -251,6 +252,37 @@ describe("ConsumerRequestsScreen", { timeout: 20_000 }, () => {
     expect(screen.getByText(/cancela la suscripción vigente al final del período pago/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Rechazar", hidden: true }));
     expect(screen.getByText("Rechazar solo cierra el pedido. No cancela la suscripción ni reembolsa nada.")).toBeInTheDocument();
+  });
+
+  it("keeps a request the customer did not confirm from being closed", async () => {
+    renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos", () =>
+      json(200, pageOf([request({ id: "c4", kind: "CANCELLATION", confirmedAt: null }), pending[1]])),
+    );
+    const unconfirmed = (await screen.findByText("BX-C4")).closest("tr");
+    expect(unconfirmed).not.toBeNull();
+    const row = within(unconfirmed as HTMLElement);
+    expect(row.getByText("Sin confirmar")).toBeInTheDocument();
+    expect(row.getByRole("button", { name: "Cerrar pedido" })).toBeDisabled();
+    expect(row.getByRole("button", { name: "Cerrar pedido" })).toHaveAccessibleDescription("Sin confirmar");
+    const confirmed = within(screen.getByText("BX-C1").closest("tr") as HTMLElement);
+    expect(confirmed.getByText("Confirmado")).toBeInTheDocument();
+    expect(confirmed.getByRole("button", { name: "Cerrar pedido" })).toBeEnabled();
+  });
+
+  it("explains inside the dialog that core refuses a request that is not confirmed", async () => {
+    const calls = renderScreen(<ConsumerRequestsScreen />, ["SUPPORT"], "/pedidos", (method) =>
+      method === "POST"
+        ? json(409, { error: "Conflict", message: "The consumer request is not confirmed", code: "CONSUMER_REQUEST_NOT_CONFIRMED" })
+        : json(200, pageOf(pending)),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cerrar pedido" }));
+    await userEvent.type(screen.getByLabelText("Respuesta para el cliente"), "Cancelamos tu suscripción.");
+    await userEvent.type(screen.getByLabelText("Motivo"), "Baja pedida desde la web");
+    await userEvent.click(screen.getByRole("button", { name: "Resolver baja", hidden: true }));
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(await within(dialog).findByText(/El cliente todavía no confirmó este pedido desde el email/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancelar", hidden: true }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(2));
   });
 
   it("asks for the closed ones by status", async () => {

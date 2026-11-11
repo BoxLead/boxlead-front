@@ -448,7 +448,8 @@ export type ApiErrorCode =
   | "SUBSCRIPTION_OPEN"
   | "RESELLER_ACTIVE"
   | "ADMIN_ACTIVE"
-  | "EMAIL_UNAVAILABLE";
+  | "EMAIL_UNAVAILABLE"
+  | "CONSUMER_REQUEST_TOKEN_INVALID";
 
 export type FieldError = {
   field: string;
@@ -682,6 +683,11 @@ export type ConsumerRequest = {
 export type ConsumerRequestReceipt = {
   code: string;
   createdAt: string;
+};
+
+export type ConsumerRequestConfirmation = {
+  code: string;
+  kind: ConsumerRequestKind;
 };
 
 export type NotificationKind = "NEW_LEAD" | "HANDOFF";

@@ -1,4 +1,4 @@
-export const TOKEN_PATHS: readonly string[] = ["/nueva-clave", "/confirmar-email", "/nuevo-email", "/invitacion"];
+export const TOKEN_PATHS: readonly string[] = ["/nueva-clave", "/confirmar-email", "/nuevo-email", "/invitacion", "/confirmar-solicitud"];
 
 const tokenPaths = new Set(TOKEN_PATHS);
 

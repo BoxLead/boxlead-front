@@ -13,7 +13,7 @@ export function Withdrawal() {
       <p>
         <RichText text={t("withdrawal.other")} />
       </p>
-      <ConsumerRequestForm kind="WITHDRAWAL" submitLabel={t("withdrawal.submit")} sentText={t("withdrawal.sent")} />
+      <ConsumerRequestForm kind="WITHDRAWAL" submitLabel={t("withdrawal.submit")} />
     </LegalLayout>
   );
 }

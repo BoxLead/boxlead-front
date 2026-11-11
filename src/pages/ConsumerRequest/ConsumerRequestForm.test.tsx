@@ -10,7 +10,7 @@ function json(body: unknown, status: number): Response {
 }
 
 function renderForm() {
-  render(<ConsumerRequestForm kind="CANCELLATION" submitLabel="Enviar pedido de baja" sentText="Te escribimos" />);
+  render(<ConsumerRequestForm kind="CANCELLATION" submitLabel="Enviar pedido de baja" />);
 }
 
 async function submit(email = "ana@negocio.com", details = "") {
@@ -35,6 +35,9 @@ describe("consumer request form", () => {
     await submit(" ana@negocio.com ", "Quiero la baja");
     expect(await screen.findByText("BX-7KX2M9")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Recibimos tu pedido" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Te mandamos un email a ana@negocio.com. Confirmá la solicitud desde el link para que podamos procesarla.",
+    );
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toMatch(/\/consumer-requests$/);
     expect(init?.method).toBe("POST");
